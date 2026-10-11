@@ -1,0 +1,293 @@
+FlexRIC 736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8.
+Apply 73650812-kpm-timestamp.patch first.
+This cumulative patch REPLACES 73650812-pusch-rsrp.patch; do not apply both.
+Adds DU PUSCH RSRP/dBFS and SNR/dB display using the original scheduler label.
+The original SNR field retains its existing ul_sinr_dB measurement source.
+RSRQ n/a notices are local xApp capability status, not E2 measurements.
+Use configs/flexric/xapp_du_rf_metrics.conf; the DU must expose both metrics.
+header_time_us is the KPM header time, not the PHY measurement time.
+
+--- a/examples/xApp/c/monitor/xapp_oran_moni.c
++++ b/examples/xApp/c/monitor/xapp_oran_moni.c
+@@ -30,14 +30,44 @@
+ 
+ #include <stdlib.h>
+ #include <inttypes.h>
++#include <limits.h>
++#include <math.h>
+ #include <stdio.h>
++#include <string.h>
+ #include <time.h>
+ #include <unistd.h>
+ #include <signal.h>
+ #include <pthread.h>
+ 
+ static
+-pthread_mutex_t mtx;
++pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
++
++static volatile sig_atomic_t stop_requested;
++
++static void request_stop(int signal_number)
++{
++  (void)signal_number;
++  stop_requested = 1;
++}
++
++static void print_kpm_metric_context(global_e2_node_id_t const* node,
++                                     uint64_t header_time,
++                                     const char* ue_key, uint64_t ue_id,
++                                     size_t sample_index)
++{
++  printf("plmn=%03u-%0*u node_type=%d node_id=%" PRIu32,
++         node->plmn.mcc, (int)node->plmn.mnc_digit_len, node->plmn.mnc,
++         node->type, node->nb_id.nb_id);
++  if (node->cu_du_id != NULL)
++    printf(" cu_du_id=%" PRIu64, *node->cu_du_id);
++#if defined(KPM_V3_00)
++  printf(" %s=%" PRIu64 " header_time_us=%" PRIu64 " sample_idx=%zu ",
++         ue_key, ue_id, header_time, sample_index);
++#else
++  printf(" %s=%" PRIu64 " header_time_s=%" PRIu64 " sample_idx=%zu ",
++         ue_key, ue_id, header_time, sample_index);
++#endif
++}
+ 
+ ////////////
+ // Get RC Indication Messages -> begin
+@@ -80,11 +110,17 @@
+ static
+ void sm_cb_kpm(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* e2_node)
+ {
+-  assert(rd != NULL);
+-  assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+-  assert(rd->ind.type == KPM_STATS_V3_0);
++  if (rd == NULL || e2_node == NULL ||
++      rd->type != INDICATION_MSG_AGENT_IF_ANS_V0 || rd->ind.type != KPM_STATS_V3_0) {
++    fprintf(stderr, "[xApp]: ignoring unexpected KPM callback type\n");
++    return;
++  }
+ 
+   kpm_ind_data_t const* kpm = &rd->ind.kpm.ind;
++  if (kpm->hdr.type != FORMAT_1_INDICATION_HEADER) {
++    fprintf(stderr, "[xApp]: ignoring unsupported KPM header format\n");
++    return;
++  }
+   kpm_ric_ind_hdr_format_1_t const* hdr_frm_1 = &kpm->hdr.kpm_ric_ind_hdr_format_1;
+ 
+   int64_t now = time_now_us();
+@@ -121,11 +157,19 @@
+       }
+     } else if (kpm->msg.type == FORMAT_3_INDICATION_MESSAGE) {
+       kpm_ind_msg_format_3_t const* msg_frm_3 = &kpm->msg.frm_3;
++      if (msg_frm_3->ue_meas_report_lst_len > 0 && msg_frm_3->meas_report_per_ue == NULL) {
++        fprintf(stderr, "[xApp]: missing KPM UE report list\n");
++        return;
++      }
+       // Reported list of measurements per UE
+       for (size_t i = 0; i < msg_frm_3->ue_meas_report_lst_len; i++) {
++        const char* ue_key = NULL;
++        uint64_t ue_id = 0;
+         switch (msg_frm_3->meas_report_per_ue[i].ue_meas_report_lst.type)
+         {
+           case GNB_UE_ID_E2SM:
++            ue_key = "ue_amf_ngap_id";
++            ue_id = msg_frm_3->meas_report_per_ue[i].ue_meas_report_lst.gnb.amf_ue_ngap_id;
+             if (msg_frm_3->meas_report_per_ue[i].ue_meas_report_lst.gnb.gnb_cu_ue_f1ap_lst != NULL) {
+               for (size_t j = 0; j < msg_frm_3->meas_report_per_ue[i].ue_meas_report_lst.gnb.gnb_cu_ue_f1ap_lst_len; j++)
+                 printf("UE ID type = gNB-CU, gnb_cu_ue_f1ap = %u\n", msg_frm_3->meas_report_per_ue[i].ue_meas_report_lst.gnb.gnb_cu_ue_f1ap_lst[j]);
+@@ -135,49 +179,100 @@
+             break;
+ 
+           case GNB_DU_UE_ID_E2SM:
++            ue_key = "ue_f1ap_id";
++            ue_id = msg_frm_3->meas_report_per_ue[i].ue_meas_report_lst.gnb_du.gnb_cu_ue_f1ap;
+             printf("UE ID type = gNB-DU, gnb_cu_ue_f1ap = %u\n", msg_frm_3->meas_report_per_ue[i].ue_meas_report_lst.gnb_du.gnb_cu_ue_f1ap);
+             break;
+           case GNB_CU_UP_UE_ID_E2SM:
++            ue_key = "ue_e1ap_id";
++            ue_id = msg_frm_3->meas_report_per_ue[i].ue_meas_report_lst.gnb_cu_up.gnb_cu_cp_ue_e1ap;
+             printf("UE ID type = gNB-CU, gnb_cu_cp_ue_e1ap = %u\n", msg_frm_3->meas_report_per_ue[i].ue_meas_report_lst.gnb_cu_up.gnb_cu_cp_ue_e1ap);
+             break;
+ 
+           default:
+-            assert(false && "UE ID type not yet implemented");
++            fprintf(stderr, "[xApp]: skipping unsupported KPM UE ID type\n");
++            continue;
+         }
+ 
+         kpm_ind_msg_format_1_t const* msg_frm_1 = &msg_frm_3->meas_report_per_ue[i].ind_msg_format_1;
++        if ((msg_frm_1->meas_data_lst_len > 0 && msg_frm_1->meas_data_lst == NULL) ||
++            (msg_frm_1->meas_info_lst_len > 0 && msg_frm_1->meas_info_lst == NULL)) {
++          fprintf(stderr, "[xApp]: skipping missing KPM measurement lists\n");
++          continue;
++        }
+ 
+         // UE Measurements per granularity period
+         for (size_t j = 0; j<msg_frm_1->meas_data_lst_len; j++) {
++          if (msg_frm_1->meas_data_lst[j].meas_record_len > 0 &&
++              msg_frm_1->meas_data_lst[j].meas_record_lst == NULL) {
++            fprintf(stderr, "[xApp]: skipping missing KPM measurement records\n");
++            continue;
++          }
++          if (msg_frm_1->meas_data_lst[j].meas_record_len != msg_frm_1->meas_info_lst_len) {
++            // Never guess a measurement name when the mapping is unavailable.
++            fprintf(stderr, "[xApp]: skipping KPM row with mismatched name/value counts\n");
++            continue;
++          }
+           for (size_t z = 0; z<msg_frm_1->meas_data_lst[j].meas_record_len; z++) {
+             if (msg_frm_1->meas_info_lst_len > 0) {
+               switch (msg_frm_1->meas_info_lst[z].meas_type.type) {
+                 case NAME_MEAS_TYPE:
+                 {
+                   // Get the Measurement Name
+-                  char meas_info_name_str[msg_frm_1->meas_info_lst[z].meas_type.name.len + 1];
+-                  memcpy(meas_info_name_str, msg_frm_1->meas_info_lst[z].meas_type.name.buf, msg_frm_1->meas_info_lst[z].meas_type.name.len);
+-                  meas_info_name_str[msg_frm_1->meas_info_lst[z].meas_type.name.len] = '\0';
++                  size_t name_len = msg_frm_1->meas_info_lst[z].meas_type.name.len;
++                  if (name_len == 0 || name_len > INT_MAX ||
++                      msg_frm_1->meas_info_lst[z].meas_type.name.buf == NULL) {
++                    fprintf(stderr, "[xApp]: skipping invalid KPM measurement name\n");
++                    continue;
++                  }
++                  const char* name = (const char*)msg_frm_1->meas_info_lst[z].meas_type.name.buf;
++                  const char rsrp_name[] = "FALCON.PUSCH.RSRP.dBFS";
++                  const char snr_name[] = "FALCON.PUSCH.SNR.dB";
++                  bool is_rsrp = name_len == sizeof(rsrp_name) - 1 &&
++                                 memcmp(name, rsrp_name, name_len) == 0;
++                  bool is_snr = name_len == sizeof(snr_name) - 1 &&
++                                memcmp(name, snr_name, name_len) == 0;
++                  bool is_rf_metric = is_rsrp || is_snr;
++                  const char* unit = is_rsrp ? " dBFS" : (is_snr ? " dB" : "");
++
++                  print_kpm_metric_context(e2_node, hdr_frm_1->collectStartTime,
++                                           ue_key, ue_id, j);
+ 
+                   // Get the value of the Measurement
+                   switch (msg_frm_1->meas_data_lst[j].meas_record_lst[z].value)
+                   {
+                     case REAL_MEAS_VALUE:
+-                      printf("%s = %.2f\n", meas_info_name_str, msg_frm_1->meas_data_lst[j].meas_record_lst[z].real_val);
++                      if (isfinite(msg_frm_1->meas_data_lst[j].meas_record_lst[z].real_val))
++                        printf("%.*s = %.2f%s", (int)name_len, name,
++                               msg_frm_1->meas_data_lst[j].meas_record_lst[z].real_val, unit);
++                      else
++                        printf("%.*s = n/a%s (non-finite REAL)", (int)name_len, name, unit);
+                       break;
+ 
+                     case INTEGER_MEAS_VALUE:
+-                      printf("%s = %d\n", meas_info_name_str, msg_frm_1->meas_data_lst[j].meas_record_lst[z].int_val);
++                      if (is_rf_metric)
++                        printf("%.*s = n/a%s (expected REAL)", (int)name_len, name, unit);
++                      else
++                        printf("%.*s = %" PRIu32, (int)name_len, name,
++                               msg_frm_1->meas_data_lst[j].meas_record_lst[z].int_val);
+                       break;
+ 
++                    case NO_VALUE_MEAS_VALUE:
++                      printf("%.*s = n/a%s", (int)name_len, name, unit);
++                      break;
++
+                     default:
+-                      assert("Value not recognized");
++                      printf("%.*s = n/a%s (unsupported value type)", (int)name_len, name, unit);
+                   }
++                  if (msg_frm_1->meas_data_lst[j].incomplete_flag &&
++                      *msg_frm_1->meas_data_lst[j].incomplete_flag == TRUE_ENUM_VALUE)
++                    printf(" incomplete=true");
++                  printf("\n");
+                   break;
+                 }
+ 
+                 default:
+-                  assert(false && "Measurement Type not yet implemented");
++                  fprintf(stderr, "[xApp]: skipping unnamed KPM measurement type\n");
+               }
+             }
+ 
+@@ -185,6 +280,10 @@
+             if (msg_frm_1->meas_data_lst[j].incomplete_flag && *msg_frm_1->meas_data_lst[j].incomplete_flag == TRUE_ENUM_VALUE)
+               printf("Measurement Record not reliable\n");
+           }
++
++          // The local RSRQ capability notice is not an E2 measurement or subscription.
++          print_kpm_metric_context(e2_node, hdr_frm_1->collectStartTime, ue_key, ue_id, j);
++          printf("RSRQ = n/a source=xapp-capability-status reason=unavailable_in_du\n");
+         }
+       }
+     } else {
+@@ -391,6 +490,18 @@
+ 
+   //Init the xApp
+   init_xapp_api(&args);
++  // The SDK installs its own abrupt SIGINT handler during initialization.
++  // Override it only after initialization; cleanup stays in the main thread.
++  struct sigaction stop_action = {0};
++  stop_action.sa_handler = request_stop;
++  sigemptyset(&stop_action.sa_mask);
++  if (sigaction(SIGINT, &stop_action, NULL) != 0 ||
++      sigaction(SIGTERM, &stop_action, NULL) != 0) {
++    perror("[xApp]: unable to install stop handler");
++    while (try_stop_xapp_api() == false)
++      usleep(1000);
++    return EXIT_FAILURE;
++  }
+   sleep(1);
+ 
+   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
+@@ -448,8 +559,8 @@
+         if (strcasecmp(args.sub_oran_sm[j].ran_type, get_e2ap_ngran_name(n->id.type)))
+           continue;
+         printf("xApp subscribes RAN Func ID %d in E2 node idx %d, nb_id %d\n", SM_KPM_ID, i, n->id.nb_id.nb_id);
+-        kpm_handle[i] = report_sm_xapp_api(&nodes.n[i].id, SM_KPM_ID, &kpm_sub, sm_cb_kpm);
+-        assert(kpm_handle[i].success == true);
++        kpm_handle[n_kpm_handle] = report_sm_xapp_api(&nodes.n[i].id, SM_KPM_ID, &kpm_sub, sm_cb_kpm);
++        assert(kpm_handle[n_kpm_handle].success == true);
+         n_kpm_handle += 1;
+ 
+       } else if (!strcasecmp(args.sub_oran_sm[j].name, "rc")) {
+@@ -478,8 +589,8 @@
+         if (strcasecmp(args.sub_oran_sm[j].ran_type, get_e2ap_ngran_name(n->id.type)))
+           continue;
+         printf("xApp subscribes RAN Func ID %d in E2 node idx %d, nb_id %d\n", SM_RC_ID, i, n->id.nb_id.nb_id);
+-        rc_handle[i] = report_sm_xapp_api(&nodes.n[i].id, SM_RC_ID, &rc_sub, sm_cb_rc);
+-        assert(rc_handle[i].success == true);
++        rc_handle[n_rc_handle] = report_sm_xapp_api(&nodes.n[i].id, SM_RC_ID, &rc_sub, sm_cb_rc);
++        assert(rc_handle[n_rc_handle].success == true);
+         n_rc_handle += 1;
+ 
+       } else {
+@@ -490,7 +601,9 @@
+     sleep(1);
+   }
+ 
+-  sleep(10);
++  printf("[xApp]: monitoring until SIGINT/SIGTERM\n");
++  while (!stop_requested)
++    sleep(1);
+ 
+   for(int i = 0; i < n_kpm_handle; ++i) {
+     rm_report_sm_xapp_api(kpm_handle[i].u.handle);
+@@ -502,13 +615,8 @@
+     sleep(1);
+   }
+ 
+-  // free sm handel
+-  if(n_kpm_handle > 0) {
+-    free(kpm_handle);
+-  }
+-  if(n_rc_handle > 0) {
+-    free(rc_handle);
+-  }
++  free(kpm_handle);
++  free(rc_handle);
+ 
+ 
+   //Stop the xApp
+@@ -516,4 +624,5 @@
+     usleep(1000);
+ 
+   printf("Test xApp run SUCCESSFULLY\n");
+-}
++  return EXIT_SUCCESS;
++}

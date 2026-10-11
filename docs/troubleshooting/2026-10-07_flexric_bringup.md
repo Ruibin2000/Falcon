@@ -115,3 +115,100 @@ Keep these runtime details in mind:
 - The current provider accepts the example's S-NSSAI condition without enforcing a slice filter. Do not treat its output as validated per-slice isolation.
 
 Use narrow E2/KPM excerpts when diagnosing failures; keep authentication material and complete RAN INFO logs outside Git. Stop traffic/xApp and the laptop PDU first, then DU, RIC, CU and core; preserve MongoDB data.
+
+## DU RF metrics extension: offline package, 2026-10-09
+
+The cumulative [OCUDU patch](../../patches/ocudu/050a2bb-du-rf-metrics.patch), [FlexRIC monitor patch](../../patches/flexric/73650812-du-rf-metrics.patch), and [dedicated xApp configuration](../../configs/flexric/xapp_du_rf_metrics.conf) add DU PUSCH RSRP and SNR reporting. The exported name follows the DU's existing `pusch_snr_db` naming. **The SNR-named package passed offline verification; the live source checkouts, deployed binaries and services have not been updated, and live RF acceptance remains pending.** The earlier five-metric results above remain the deployed baseline. This package operates on the DU measurement path; it does not add CU measurements.
+
+These are replacements for the earlier [OCUDU RSRP patch](../../patches/ocudu/050a2bb-pusch-rsrp.patch) and [FlexRIC RSRP patch](../../patches/flexric/73650812-pusch-rsrp.patch), which are retained as historical artifacts. Apply the cumulative patches instead of the earlier RSRP patches; do not stack both versions. The current host checkouts have not received either RF package. If another checkout already has the earlier RSRP package, reverse those two patches first, preserving the existing FlexRIC timestamp repair, then check and apply the cumulative package.
+
+| Output | Source and meaning | Unit |
+|---|---|---|
+| `FALCON.PUSCH.RSRP.dBFS` | Latest scheduler-window mean of available PUSCH DM-RS received-power reports | Software dBFS |
+| `FALCON.PUSCH.SNR.dB` | Latest scheduler-window value of the DU's existing `pusch_snr_db` field | dB |
+| `RSRQ = n/a` | Local xApp capability notice: `source=xapp-capability-status reason=unavailable_in_du` | No measured value |
+
+The old provider's `RSRP` and `RSRQ` getters both returned an integer derived from the first UE's `pusch_snr_db`. The cumulative patch replaces the dummy `RSRP` registration with the vendor RSRP metric and removes the incorrect `RSRQ` registration/getter. SNR reporting reads the existing `pusch_snr_db` field without changing its calculation. Internally this field aggregates the PHY-selected `ul_sinr_dB`; the public metric uses the requested legacy SNR name. The xApp subscribes to this measured value and displays `n/a` only when a sample is missing or invalid.
+
+Both RF metrics advertise UE-level `NO_LABEL` support and reject undefined node/cell aggregation or label expansion. The provider translates each requested UE's gNB-CU UE F1AP ID into its internal DU index, then searches the matching scheduler snapshot; internal indices are not vector offsets. Finite measurements use `REAL`, preserving fractions, negative values and a measured zero. The scheduler snapshot gains `nof_pusch_snr_reports`, allowing the provider to distinguish measured `0 dB` from the legacy zero produced when no SNR samples are available. Missing, disconnected, incompatible or unmeasured UEs receive one `noValue` record per requested metric, maintaining request order and cardinality.
+
+RSRP remains software dBFS, not calibrated dBm, UE-reported downlink RSRP, or standard `L1M.UL-SRS-RSRP`. Both window means follow the existing scheduler's averaging of the reported dB values. The package does not change RU normalization or recover values already clamped by PHY/FAPI; `ovl` readings require separate investigation.
+
+The `t` console table's UL `rsrp` column and the new xApp metric read the same `pusch_rsrp_db` field. For the same UE and scheduler window, their underlying value is identical. The console formats negative values to one decimal and clamps them to at least `-99.9`; it displays `ovl` for any finite value greater than or equal to zero. The xApp reports the finite value using `REAL` and prints two decimal places without that console clamp or `ovl` substitution. For example, a raw `-12.94` appears as `-12.9` in the console and `-12.94 dBFS` in the xApp; raw `0.0` appears as `ovl` and `0.00 dBFS` respectively. Missing measurements appear as `n/a` in both. Align the UE and window when comparing: the console uses C-RNTI, while the xApp uses UE F1AP ID and reads the most recent snapshot on a separate E2 timer.
+
+The xApp subscribes to the original five DU measurements plus the two RF metrics: seven names in one Format 4 subscription at 1000 ms. Both RF values require `REAL`; `noValue`, non-finite values and incorrect integer encodings display `n/a`. Each received UE/report row also prints the local RSRQ capability notice above. This notice carries an explicit source and is not an E2 measurement, subscription or advertised RAN capability. The monitor runs until Ctrl+C or SIGTERM and then requests normal subscription deletion.
+
+Each measurement line includes PLMN, node type, gNB node ID, CU/DU ID when present, UE F1AP ID, `header_time_us` and `sample_idx`. Use the complete node/DU identity plus UE F1AP ID for multi-DU correlation: a shared CU can give several DUs the same gNB ID. F1AP UE IDs are context identifiers; they are not console C-RNTIs or subscriber IMSIs and may change or be reused after reconnection. `sample_idx` is a row index within one report, not a global sample sequence. Nodes are discovered at startup, so relaunch the xApp after adding a DU. UE discovery still depends on the existing RLC metrics path; keep both `enable_sched` and `enable_rlc` enabled. The template's S-NSSAI condition is not enforced as a slice filter by this OCUDU provider.
+
+The 1000 ms xApp setting populates the E2 event-trigger period and action granularity; the scheduler source period is configured separately through `du_report_period`. E2 collects the most recent source snapshot and the timers are not guaranteed to align. A faster subscription can repeat an older source window. `header_time_us` is the KPM header time, not a PHY sample timestamp: current OCUDU clears the message and updates the header before packing that header. `report_age_us` therefore cannot establish the RF sample's age or the full source-to-xApp delay. See the [timestamp record](2026-10-07_flexric_latency_fix.md#meaning-of-report_age_us).
+
+### Offline verification
+
+Run these checks before applying the cumulative package to the source checkouts. They reuse existing OCUDU and FlexRIC build dependencies, stage the changed sources under `/tmp`, and do not launch a network or radio service. FlexRIC must already contain the [timestamp repair](2026-10-07_flexric_latency_fix.md).
+
+```bash
+cd /home/nyu/Desktop/Falcon_repo/Falcon
+python3 scripts/ocudu/test_du_rf_metrics.py
+python3 scripts/flexric/test_du_rf_metrics.py \
+  --wire-fixture /tmp/falcon-du-rf-check/du-rf-indication.bin
+```
+
+All 13 OCUDU tests passed for the SNR-named version after supplying the new FlexRIC action fixture. They cover distinct RSRP/SNR values, sparse and reordered UE identifiers, fractions, a measured zero versus an absent SNR sample, missing/non-finite values, replaced snapshots, label/scope admission, and actual Style 4 collection and Format 3 APER encoding. The real scheduler CRC-to-report test covers an absent sample, measured zero, the expected two-sample mean, and an empty next window that resets the count and returns `noValue`.
+
+The FlexRIC check compiled and linked the monitor, exercised its callback through the real KPM decoder, encoded the actual seven-metric subscription and passed OCUDU admission. The callback cases also passed for incorrect RF integer encoding, unavailable name/value mapping, incomplete reports, different DU identities, explicit local capability notices and the stop flag. The first command alone passes 12 tests and skips the external subscription case until the second command supplies its fixture. Live SDK subscription deletion is separate acceptance work.
+
+The synthetic cross-codec fixture has three UE F1AP IDs and two RF columns:
+
+| UE F1AP ID | RSRP record | SNR record |
+|---|---|---|
+| `1007` | `REAL -13.125` | `REAL 21.75` |
+| `2091` | `REAL 0.0` | `REAL 0.0` with an available sample |
+| `3199` | `noValue` | `noValue` |
+
+The DU indication fixture is 223 bytes. It verifies serialization and UE association; its values are synthetic and do not establish live cadence. Artifacts and logs are under `/tmp/falcon-du-rf-check/` (`provider.log`) and `/tmp/falcon-du-rf-flexric-check/` (`callback.log`, `subscription.log`). The offline harness links KPM's ASN runtime before the SDK's E2AP runtime to avoid collisions between their same-named static functions. The production monitor follows its normal SDK-only link and loads service-model plugins dynamically; no new plugin installation is required.
+
+### Apply and rebuild in the operator terminal
+
+The OCUDU base is `050a2bb72e1d794cd60570d809987c1fcda3e54b`. The FlexRIC base is `736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8` with the timestamp repair already applied. If the earlier RSRP-only patches are present, use `git apply --reverse --check` and then `git apply --reverse` with those earlier paths before proceeding. Do not reverse the timestamp repair or force a patch over unrelated changes. On the current host, that RF-patch reversal is unnecessary because the RF patches have not been applied.
+
+Check the cumulative patches against both source checkouts:
+
+```bash
+git -C /home/nyu/ocudu apply --check \
+  /home/nyu/Desktop/Falcon_repo/Falcon/patches/ocudu/050a2bb-du-rf-metrics.patch
+git -C /home/nyu/flexric apply --check \
+  /home/nyu/Desktop/Falcon_repo/Falcon/patches/flexric/73650812-du-rf-metrics.patch
+```
+
+Stop current traffic and xApp, then DU and RIC through their existing terminals before applying and rebuilding. Keep the working CU/core configuration. If a check fails, inspect the local changes and base revision before proceeding.
+
+```bash
+git -C /home/nyu/ocudu apply \
+  /home/nyu/Desktop/Falcon_repo/Falcon/patches/ocudu/050a2bb-du-rf-metrics.patch
+git -C /home/nyu/flexric apply \
+  /home/nyu/Desktop/Falcon_repo/Falcon/patches/flexric/73650812-du-rf-metrics.patch
+
+cmake --build /home/nyu/ocudu/build --target odu_split_8 -j 8
+cmake --build /home/nyu/flexric/build-ocudu --target xapp_oran_moni -j 8
+```
+
+Build the complete `odu_split_8` target and its dependencies after adding the scheduler snapshot field. The changed struct is shared by metric producers and consumers; replacing only one provider object or hot-swapping a library is insufficient. This build command lets CMake rebuild all affected dependencies. The new xApp can use the already working timestamp-repaired KPM plugin; it requires no `/usr/local` binary or plugin replacement.
+
+The DU E2 overlay already enables scheduler/RLC metrics and a 1000 ms source period. Check the rebuilt DU's configuration parsing without starting RF:
+
+```bash
+/home/nyu/ocudu/build/apps/du_split_8/odu \
+  -c /home/nyu/ocudu/configs/du1_b210_n78_20mhz.yml \
+  -c /home/nyu/ocudu/configs/du1_flexric.yml --dryrun
+```
+
+Restart RIC before DU using [runbook stage 9](../full_reproduction_runbook.md#9-confirm-rf-and-start-the-du), allowing fresh E2 Setup to advertise both custom measurements. Reconnect the UE and overlap monitoring with uplink traffic. Run the rebuilt xApp directly:
+
+```bash
+/home/nyu/flexric/build-ocudu/examples/xApp/c/monitor/xapp_oran_moni \
+  -c /home/nyu/Desktop/Falcon_repo/Falcon/configs/flexric/xapp_du_rf_metrics.conf
+```
+
+Expect a successful function-ID-2 subscription, correctly associated RSRP lines in `dBFS` and SNR lines in `dB`, or explicit `n/a` for missing values. RSRQ should remain a local unavailable-capability notice. Validate measured values against the DU's corresponding scheduler window, multi-UE mapping, missing-measurement behavior, intervals and normal Ctrl+C deletion. Console formatting/clamping need not reproduce every raw decimal. Keep 1000 ms until live acceptance passes; shorter reporting requires coordinated source/xApp changes plus load and freshness checks. Neither header time nor report-age output substitutes for a PHY measurement timestamp.
+
+To revert, stop traffic/xApp/DU/RIC, check and reverse these cumulative patches, rebuild both complete targets, and return to the prior five-metric configuration. This preserves the timestamp repair and unrelated local changes. The earlier RSRP-only package remains available as a historical alternative; it is not automatically reapplied by reverting this package.
