@@ -25,7 +25,7 @@ Install these tools on a new laptop; skip this if they are already installed:
 
 ```bash
 sudo apt update
-sudo apt install -y modemmanager libqmi-utils minicom iproute2 iperf3 usbutils psmisc
+sudo apt install -y modemmanager libqmi-utils minicom iproute2 iperf3 usbutils
 sudo systemctl enable --now ModemManager
 ```
 
@@ -130,61 +130,13 @@ SSB `643680` is deterministic for the current cell configuration and derivation 
 
 ModemManager can omit working AT ports. On the reported Alienware m15-R6, the selected RM500Q exposed ttyUSB0–3 in Linux while ModemManager listed only an ignored ttyUSB0, GPS ttyUSB1, QMI and network ports; manual AT communication still worked. That observation does not assign fixed tty numbers to UE1 or UE2.
 
-Use the modem already selected in step 1. The block below lists only this modem's ttyUSB ports by matching their sysfs USB parent, skips GPS/QCDM/ignored ports, and prefers any ports explicitly marked `(at)`. You choose a displayed port; a candidate is not proof of an AT response. It checks existing serial locks and process ownership before opening minicom. `fuser` is supplied by Ubuntu's `psmisc` package.
-
-Copy and run the block in the same UE Bash terminal:
+For the current UE setup, open `/dev/ttyUSB2` directly on the UE laptop:
 
 ```bash
-open_rm500q_at() {
-  local details identity imei usb tty parent port chosen owners status
-  local -a ports=() preferred=()
-  AT_PORT=""
-  [[ -n "${MODEM:-}" && -n "${MODEM_IDENTITY:-}" && -n "${EXPECTED_MODEM_ID:-}" ]] || return 1
-  details=$(mmcli -m "$MODEM" -K) || return 1
-  identity=$(printf '%s\n' "$details" | mm_value modem.generic.device-identifier)
-  imei=$(printf '%s\n' "$details" | mm_value modem.generic.equipment-identifier)
-  if [[ "$identity" != "$MODEM_IDENTITY" || ( "$EXPECTED_MODEM_ID" != "$identity" && "$EXPECTED_MODEM_ID" != "$imei" ) ]]; then
-    printf 'Modem changed; rerun select_rm500q.\n'; return 1
-  fi
-  usb=$(readlink -e "$(printf '%s\n' "$details" | mm_value modem.generic.device)") || return 1
-  [[ -f "$usb/idVendor" ]] || { printf 'Cannot confirm USB parent; stop here.\n'; return 1; }
-  printf 'Selected modem: %s\nIMEI: %s\nUSB parent: %s\n' "$MODEM" "$imei" "$usb"
-  for tty in /sys/class/tty/ttyUSB*; do
-    parent=$(readlink -e "$tty/device") || continue
-    while [[ "$parent" != / && ! -f "$parent/idVendor" ]]; do parent=${parent%/*}; done
-    [[ "$parent" = "$usb" ]] || continue
-    port=/dev/${tty##*/}
-    [[ -c "$port" ]] || continue
-    if printf '%s\n' "$details" | grep -Eq "(${tty##*/}[[:space:]]*\((gps|qcdm|ignored)\)|ignored-ports[^:]*:.*\b${tty##*/}\b)"; then
-      printf 'Skip %s (GPS/QCDM/ignored).\n' "$port"; continue
-    fi
-    ports+=("$port")
-    if printf '%s\n' "$details" | grep -Eq "${tty##*/}[[:space:]]*\(at\)"; then preferred+=("$port"); fi
-  done
-  if [ ${#preferred[@]} -gt 0 ]; then ports=("${preferred[@]}"); fi
-  [ ${#ports[@]} -gt 0 ] || { printf 'No eligible port on this modem; inspect enumeration.\n'; return 1; }
-  printf 'Candidate ports (AT response not yet checked):\n'; printf '  %s\n' "${ports[@]}"
-  read -r -p 'Enter one candidate, including /dev/: ' chosen
-  [[ " ${ports[*]} " = *" $chosen "* && -c "$chosen" ]] || { printf 'Choose a displayed port.\n'; return 1; }
-  if [[ -e "/run/lock/LCK..${chosen##*/}" || -L "/run/lock/LCK..${chosen##*/}" ]]; then
-    printf 'Serial lock exists; close your own session before retrying.\n'; return 1
-  fi
-  command -v fuser >/dev/null || { printf 'Install psmisc for fuser before continuing.\n'; return 1; }
-  if owners=$(sudo fuser -- "$chosen" 2>&1); then
-    printf 'Port is in use; stop here: %s\n' "$owners"; return 1
-  else
-    status=$?
-    [[ "$status" -eq 1 && -z "$owners" ]] || { printf 'Cannot check port ownership: %s\n' "$owners"; return 1; }
-  fi
-  AT_PORT=$chosen
-  sudo minicom -o -D "$AT_PORT" -b 115200
-}
-open_rm500q_at
+sudo minicom -D /dev/ttyUSB2 -b 115200
 ```
 
-In minicom, type **`AT`** first and require a real **`OK`** before continuing. If no response arrives within a few seconds, exit with `Ctrl+A`, then `Q`, rerun `open_rm500q_at`, and choose another candidate. Do not infer AT capability from tty numbering or change modem configuration to test a port.
-
-Keep ModemManager running. Missing `(at)` entries alone require no reboot or `AT+CFUN`. After USB reconnection, rerun `select_rm500q` and rediscover ports. Open one AT session at a time; `minicom -o` skips initialization and lock-file checks, so keep the ownership checks above and coordinate access. The check does not reserve the port until minicom opens it. Explicitly GPS/QCDM/ignored ports need separate evidence of AT capability before manual use.
+In minicom, type **`AT`** and require **`OK`** before continuing. Keep ModemManager running. Missing `(at)` entries alone require no reboot or `AT+CFUN`. After USB reconnection, rerun `select_rm500q` and check the actual port numbering; `/dev/ttyUSB2` is this setup's chosen port, not a permanent UE identity.
 
 Enter these commands in minicom, **not in Bash**. Each configuration write must return `OK`:
 

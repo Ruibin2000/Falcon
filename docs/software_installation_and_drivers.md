@@ -314,7 +314,7 @@ The earlier working subscriber is IMSI `001010000000001`. The newly programmed O
 uname -r
 cat /etc/os-release
 sudo apt update
-sudo apt install -y modemmanager libqmi-utils minicom iproute2 iperf3 usbutils psmisc
+sudo apt install -y modemmanager libqmi-utils minicom iproute2 iperf3 usbutils
 sudo systemctl enable --now ModemManager
 mmcli --version
 qmicli --version
@@ -347,9 +347,9 @@ modinfo cdc_wdm
 sudo journalctl -k --since '5 minutes ago' --no-pager | grep -Ei 'usb|quectel|ttyUSB|qmi|cdc.wdm|disconnect'
 ```
 
-Expected device ID is `2c7c:0800` for the recorded USB composition. Historical AT ports were ttyUSB2/ttyUSB3, QMI was cdc-wdm2, and the network port was wwan0. Discover actual ports on each laptop. ModemManager reports known roles but may omit working AT ports; an existing ttyUSB can still respond to AT. With two modems, match each candidate's sysfs USB parent against the identity-selected modem's physical device, never the first ttyUSB number. ModemManager's [Device property](https://github.com/linux-mobile-broadband/ModemManager/blob/main/introspection/org.freedesktop.ModemManager1.Modem.xml) identifies the modem's physical device, and [mmcli's output fields](https://github.com/linux-mobile-broadband/ModemManager/blob/main/cli/mmcli-output.c) expose it as `modem.generic.device`. A diagnostic/GNSS/ignored ttyUSB is excluded by the helper unless separate evidence establishes AT capability.
+Expected device ID is `2c7c:0800` for the recorded USB composition. Historical AT ports were ttyUSB2/ttyUSB3, QMI was cdc-wdm2, and the network port was wwan0. Discover actual ports on each laptop. ModemManager reports known roles but may omit working AT ports; an existing ttyUSB can still respond to AT. With two modems, match each candidate's sysfs USB parent against the identity-selected modem's physical device, never the first ttyUSB number. ModemManager's [Device property](https://github.com/linux-mobile-broadband/ModemManager/blob/main/introspection/org.freedesktop.ModemManager1.Modem.xml) identifies the modem's physical device, and [mmcli's output fields](https://github.com/linux-mobile-broadband/ModemManager/blob/main/cli/mmcli-output.c) expose it as `modem.generic.device`. A diagnostic/GNSS/ignored ttyUSB is not automatically an AT-capable port.
 
-Use [UE step 2](ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell) to list ports belonging to the already selected modem, choose one explicitly, and open it after serial-lock/process checks. `fuser` comes from Ubuntu's `psmisc` package. Verify manually in `minicom -o` by typing only `AT` and requiring a real `OK`; exit an unsuccessful test with `Ctrl+A`, then `Q` before trying another candidate. Keep ModemManager running. Missing `(at)` output alone requires no reboot or firmware/USB-composition change. USB reconnection requires fresh identity-based selection.
+[UE step 2](ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell) uses `sudo minicom -D /dev/ttyUSB2 -b 115200` for the current setup. Type `AT` and require a real `OK` before configuring the modem. Keep ModemManager running. Missing `(at)` output alone requires no reboot or firmware/USB-composition change. After USB reconnection, repeat identity selection and check actual port numbering.
 
 If a module is available but not loaded, load it and reconnect the modem:
 
