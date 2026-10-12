@@ -1,6 +1,8 @@
 # UE Laptop Quick Commands
 
-Updated: 2026-10-07. Run these steps in order in **one Bash terminal per UE on the laptop** and keep that UE's variables in its terminal. Continue only after each step succeeds. For full instructions, see [Runbook stages 10–14](full_reproduction_runbook.md#10-prepare-a-new-ubuntulinux-laptop); start Spark using [Spark Quick Commands](spark_quick_commands.md).
+Updated: 2026-10-12. Run these steps in order in **one Bash terminal per UE on the laptop** and keep that UE's variables in its terminal. Continue only after each step succeeds. For full instructions, see [Runbook stages 10–14](full_reproduction_runbook.md#10-prepare-a-new-ubuntulinux-laptop); start Spark using [Spark Quick Commands](spark_quick_commands.md).
+
+For the DU1 migration to **3660 MHz**, keep this single-UE workflow and replace the cell lock with the command generated from the current DU startup output in Spark step 5. Historical 3750-MHz traffic/KPM results below do not establish acceptance at the new carrier. The matching subscriber must be prepared for the SIM actually installed; using the new SIM1 requires its own core record.
 
 The 2026-10-05 session verified single-UE registration, IPv4 connectivity, and an initial 10-second TCP uplink. The 2026-10-07 session verified five DU KPM measurements from a real UE. After the timestamp repair, the latest run received 12 reports for UE ID `7`, with `report_age_us` of **591–796 µs**, and the xApp exited normally. The ping and 30-second uplink/downlink commands below are further acceptance checks, not results demonstrated in this session.
 
@@ -122,7 +124,7 @@ For a SIM swap: finish traffic and bearer cleanup, disable the selected modem wi
 
 ## 2 Configure NR SA and lock the private cell
 
-The lock in this stage is **DU1 only**. DU2's PCI, SSB, radio serial, and addresses are not yet specified; do not reuse this lock as a DU2 template. An IMSI does not select a DU automatically. If the settings are already correct and the modem is registered, continue to stage 3. Otherwise, select an **actual `(at)` port**:
+The lock in this stage is **DU1 only**. DU2's radio and final settings remain pending; do not reuse this lock as a DU2 template. An IMSI does not select a DU automatically. First obtain the exact `AT+QNWLOCK` command from [Spark step 5](spark_quick_commands.md#5-start-du-with-e2-enabled), using this run's startup cell line. After a carrier migration, replace the old lock even if the modem still displays registration. Skip configuration only when the readback and serving cell already match the current DU. Select an **actual `(at)` port**:
 
 ```bash
 AT_PORT=$(mmcli -m "$MODEM" | grep -oE 'ttyUSB[0-9]+ \(at\)' | head -1 | awk '{print $1}')
@@ -142,13 +144,17 @@ AT+QNWPREFCFG="mode_pref"
 AT+QNWPREFCFG="nr5g_disable_mode",2
 AT+QNWPREFCFG="nr5g_disable_mode"
 AT+QNWPREFCFG="nr5g_band"
-AT+QNWLOCK="common/5g",1,649632,30,78
+```
+
+Now paste the **exact lock command printed by Spark step 5**. Its format is `AT+QNWLOCK="common/5g",<PCI>,<SSB_ARFCN>,30,78`; the angle-bracket fields are placeholders and must not be typed literally. For this migration, the carrier is `644000` / 3660 MHz; the lock uses the separately derived SSB. Then read back and check registration:
+
+```text
 AT+QNWLOCK="common/5g"
 AT+QENG="servingcell"
 AT+C5GREG?
 ```
 
-Confirm that the band selection includes 78, the lock is `PCI=1 / SSB=649632 / SCS=30 / n78`, the serving cell is `NR5G-SA / 001,01 / TAC 7`, and registration reports `+C5GREG: 0,1`. `NOCONN` can indicate an idle, camped state; use C5GREG to confirm registration. **Use SSB ARFCN 649632 for the lock, not carrier ARFCN 650000.**
+Confirm that the band selection includes 78, the readback matches the current DU's `PCI / SSB / SCS=30 / n78`, the serving cell is `NR5G-SA / 001,01 / TAC 7` on the intended DU1 cell, and registration reports `+C5GREG: 0,1`. `NOCONN` can indicate an idle, camped state; use C5GREG to confirm registration. **Historical SSB `649632` applies to the old 3750-MHz setup. Neither it nor the new carrier ARFCN `644000` is the new SSB lock value.** If the new lock write fails, stop and inspect firmware/AT responses before proceeding to the bearer steps.
 
 On this tested firmware, disable mode `2` disables NSA. Exit minicom with `Ctrl+A`, then `X`. Close duplicate AT sessions and leave ModemManager running.
 

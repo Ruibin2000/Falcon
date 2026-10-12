@@ -1,10 +1,12 @@
 # Spark Quick Commands
 
-Updated: 2026-10-07. Use this guide on the installed Spark testbed. For a new host, see [Software and Drivers](software_installation_and_drivers.md); for detailed configuration, see the [Full Reproduction Runbook](full_reproduction_runbook.md). UE commands are in [UE Laptop Quick Commands](ue_laptop_quick_commands.md). Use Bash, run one step at a time, and stop at any `FAIL` result.
+Updated: 2026-10-12. Use this guide on the installed Spark testbed. For a new host, see [Software and Drivers](software_installation_and_drivers.md); for detailed configuration, see the [Full Reproduction Runbook](full_reproduction_runbook.md). UE commands are in [UE Laptop Quick Commands](ue_laptop_quick_commands.md). Use Bash, run one step at a time, and stop at any `FAIL` result.
 
-Verified on 2026-10-07: **DU E2 Setup, all five actual UE KPM measurements, the repaired report-time display, normal subscription deletion, and successful xApp exit**. Earlier UE ID `2` had `report_age_us` values of **499–717 µs**; the latest repeat with UE ID `7` had **591–796 µs**. The current DU configuration uses TX **70** / RX **40**; the 2026-10-05 UE application traffic / TCP result used TX **80** / RX **40**. Keep these RF baselines distinct. The commands below read the current configuration without changing gains.
+Verified on 2026-10-07: **DU E2 Setup, all five actual UE KPM measurements, the repaired report-time display, normal subscription deletion, and successful xApp exit**. Earlier UE ID `2` had `report_age_us` values of **499–717 µs**; the latest repeat with UE ID `7` had **591–796 µs**. These are historical 3750-MHz results. The 2026-10-05 UE application traffic / TCP result used TX **80** / RX **40**. Read current gains from the actual configuration file in step 1; the 2026-10-12 inspection found TX **70** / RX **35**. Neither snapshot establishes current runtime status.
 
-Versions: OCUDU `050a2bb`; FlexRIC `73650812`, build directory `build-ocudu`, GCC 13.3 / Debug / `E2AP_V3` / `KPM_V3_00` / `NONE_XAPP` / `XAPP_MULTILANGUAGE=OFF`.
+This procedure uses the complete [DU1 3660-MHz configuration](../configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml), including radio, cell, F1, E2/KPM, and metrics settings, to migrate **one UE / one DU to 3660 MHz**, following [Plan 3](../plans/dual-ue-du-fr1-channels.md). New-carrier registration, traffic, and KPM acceptance remain pending. Before RF startup, use the operating conditions and authorization covering the full 3650–3670 MHz channel recorded for that plan. The new file copies the actual base gains; select and record the actual gain/attenuation for this setup before transmission. The historical SSB lock `649632` must be replaced by the value from the new DU startup output.
+
+Historical verified versions: OCUDU `050a2bb`; FlexRIC `73650812`, build directory `build-ocudu`, GCC 13.3 / Debug / `E2AP_V3` / `KPM_V3_00` / `NONE_XAPP` / `XAPP_MULTILANGUAGE=OFF`.
 
 Run checks in a diagnostics terminal. CU, FlexRIC, DU, and iperf each need their own foreground terminal. Use the same xApp Bash terminal for steps 6 and 7; shell variables are not shared between terminals.
 
@@ -29,14 +31,26 @@ else
 fi
 ```
 
-Confirm B210 serial `3271233` and `5000M` in the USB tree.
+Confirm `5000M` in the USB tree and match the discovered B210 serial to `ru_sdr.device_args` printed below.
+
+Falcon keeps the maintained configuration copy. Deploy it into OCUDU's `configs/` directory, then read the deployed file used to start DU1. Repeat this copy after editing the Falcon configuration:
 
 ```bash
-cd /home/nyu/ocudu
-rg 'tx_gain|rx_gain|srate|dl_arfcn|channel_bandwidth_MHz' configs/du1_b210_n78_20mhz.yml
+cp /home/nyu/Desktop/Falcon_repo/Falcon/configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml \
+  /home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml
+cat /home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml
 ```
 
-Expect TX 70, RX 40, 23.04 MS/s, ARFCN 650000, and 20 MHz. The UE cell lock uses SSB ARFCN **649632**.
+Use the printed radio serial, gains, sample rate, and cell values as the file snapshot for this run. The new file sets ARFCN **644000** / **3660 MHz**, n78, 20 MHz, and SCS 30 kHz. The original 3750-MHz base and E2 files remain available as historical references. SSB is derived by OCUDU and is read separately in step 5.
+
+Check that the installed DU binary accepts this configuration file without opening the radio:
+
+```bash
+/home/nyu/ocudu/build/apps/du_split_8/odu --dryrun \
+  -c /home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml
+```
+
+Require exit status 0. This binary's dry run checks parsing/autoderivation and exits before full runtime validation; successful parsing does not establish RF operation or UE acceptance.
 
 ## 2 Restore performance settings after reboot
 
@@ -130,14 +144,44 @@ stdbuf -oL -eL /usr/local/bin/flexric/ric/nearRT-RIC -c /usr/local/etc/flexric/r
 
 ## 5 Start DU with E2 enabled
 
-The existing `configs/du1_flexric.yml` enables DU1 E2/KPM and metrics. If it is missing, create it using the [full runbook](full_reproduction_runbook.md) first. Run in the **DU terminal**; this starts B210 RF transmission:
+The deployed `configs/du1_b210_n78_3660mhz.yml` already enables DU1 E2/KPM and metrics. Run in the **DU terminal**; this starts B210 RF transmission at the migrated carrier. Load this one configuration file. The `log --filename` argument directs the DU log to this run's directory:
 
 ```bash
 cd /home/nyu/ocudu
-sudo build/apps/du_split_8/odu \
-  -c configs/du1_b210_n78_20mhz.yml \
-  -c configs/du1_flexric.yml
+set -o pipefail
+DU1_RUN=$(mktemp -d /tmp/falcon-du1-3660.XXXXXXXX)
+printf 'DU1 run directory: %s\n' "$DU1_RUN"
+sudo stdbuf -oL -eL build/apps/du_split_8/odu \
+  -c configs/du1_b210_n78_3660mhz.yml \
+  log --filename "$DU1_RUN/du.log" 2>&1 | tee "$DU1_RUN/startup.log"
 ```
+
+Confirm the startup cell line shows `dl_arfcn=644000 (n78)` and `dl_freq=3660 MHz`. Read its **`dl_ssb_arfcn`**, PCI, and SCS and check the UE's observed cell after applying the new lock. Do not substitute the carrier ARFCN or calculate SSB by subtracting the historical offset.
+
+In the **diagnostics terminal**, paste the run directory printed by this launch. The following block reads this run's cell line and prints the exact AT lock command to copy to the UE laptop:
+
+```bash
+read -r -p 'DU1 run directory printed by this launch: ' DU1_RUN
+python3 - "$DU1_RUN/startup.log" <<'PY'
+import re
+import sys
+
+with open(sys.argv[1]) as source:
+    text = source.read()
+cells = re.findall(
+    r"Cell pci=(\d+),[^\n]*dl_arfcn=(\d+) \(n(\d+)\), "
+    r"dl_freq=([\d.]+) MHz, dl_ssb_arfcn=(\d+)", text)
+if len(cells) != 1:
+    sys.exit("FAIL: expected exactly one startup cell; inspect this run's log")
+pci, carrier, band, freq, ssb = cells[0]
+if (carrier, band, float(freq)) != ("644000", "78", 3660.0):
+    sys.exit("FAIL: startup carrier differs from the 3660-MHz configuration")
+print(f"Carrier={carrier} / {freq} MHz; PCI={pci}; SSB={ssb}; SCS=30 kHz")
+print(f'AT+QNWLOCK="common/5g",{pci},{ssb},30,{band}')
+PY
+```
+
+Use the printed command in [UE step 2](ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell). Require `OK`, read back the lock, then verify the actual serving cell and SA registration. `/tmp` logs are temporary; retain this run's configs, hashes, and traffic/KPM evidence before reboot or cleanup.
 
 Confirm F1-C / E2AP `completed` and `==== DU started ===` for this DU1 baseline. A future second DU requires its own reviewed configuration and per-DU evidence; the summary below proves only the current single-DU connections. FlexRIC should receive this DU's `E2 SETUP-REQUEST` and accept KPM ID `2`. In the diagnostics terminal, check the summary of the three SCTP connections:
 
@@ -295,7 +339,7 @@ For a full shutdown, finish with `sudo docker stop open5gs-mongo` and `sudo syst
 
 ```bash
 sudo journalctl -u open5gs-amfd --since '5 minutes ago' --no-pager -n 30
-sudo grep -Ei 'E2|subscription|decode|error|failure' /tmp/du.log | tail -n 30
+sudo grep -Ei 'E2|subscription|decode|error|failure' "${DU1_RUN:?Use this run directory from step 5}/du.log" | tail -n 30
 tail -n 30 /tmp/flexric-ric.log
 ```
 

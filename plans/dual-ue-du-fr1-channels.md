@@ -13,7 +13,7 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 | Task | `dual-ue-du-fr1-channels` |
 | Status | Planned; implementation and acceptance pending |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 17 : 09: 18 Oct 11, 2026 EDT |
+| Last updated at | 10 : 13: 03 Oct 12, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | To be assigned |
@@ -175,7 +175,7 @@ they already exist:
 
 | Location | Purpose |
 | --- | --- |
-| `configs/ocudu/dual_fr1/du1_cbrs.yml` | DU1 carrier migration overlay; new ARFCN, validated RF settings, and separately derived SSB |
+| `configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml` | Standalone DU1 radio/cell/F1/E2/KPM configuration; new carrier, actual file gains, and separately derived SSB; live acceptance pending |
 | `configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml` | Reviewed DU2 radio, cell, and F1 configuration with actual serial |
 | `configs/ocudu/dual_fr1/du2_flexric.yml` | DU2 E2/KPM and 1000-ms scheduler/RLC metrics |
 | `configs/flexric/xapp_du_kpm_base5.conf` | One DU-only five-metric subscription, shared with Plan 2 when available |
@@ -185,8 +185,15 @@ they already exist:
 | `scripts/dual_fr1/verify_kpm.py` | Per-link report/lifecycle/evidence checks |
 | `docs/dual_fr1_runbook.md` | Final operator procedure and actual tested settings |
 
-Use per-run local log overlays under the evidence directory for CU, DU1, and
-DU2. Do not overwrite the working DU1 base/E2 files. Keep authentication material
+Keep DU1's maintained configuration in Falcon and deploy it to
+`$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml`. DU1 parse/start commands use
+that deployed copy; repeat the copy after configuration changes and retain its
+hash in acceptance evidence. The current copy is deployed; live acceptance
+remains pending.
+
+Use per-run local log overlays under the evidence directory for CU and DU2;
+DU1 uses its standalone configuration and `log --filename` for the run's log.
+Do not overwrite the working historical DU1 base/E2 files. Keep authentication material
 and raw security-bearing logs outside Git; publish only reviewed excerpts.
 
 ## Step 1 Capture the Historical Single Link
@@ -270,9 +277,11 @@ pending until DU1 revalidation and live coexistence pass.
 
 ## Step 3 Prepare Shared CU and Two Distinct DU Configurations
 
-- [ ] Preserve the historical DU1 file and create a separate `du1_cbrs.yml`
-  overlay with `cell_cfg.dl_arfcn: 644000`, explicit n78/20 MHz/30 kHz, and
-  validated low-power RF settings. Keep its radio and cell/DU identity unchanged.
+- [ ] Preserve the historical DU1 files and prepare the standalone
+  `du1_b210_n78_3660mhz.yml` with `cell_cfg.dl_arfcn: 644000`, explicit
+  n78/20 MHz/30 kHz, radio/F1/E2/KPM settings, and validated low-power RF
+  settings. The file is prepared with actual TX 70 / RX 35 values; RF validation
+  remains pending. Keep its radio and cell/DU identity unchanged.
   Create DU2 from a reviewed copy, changing radio serial, carrier, DU ID,
   sector ID, PCI, F1 binds, and logs.
 - [ ] Keep the shared gNB ID/width consistent across CU and DUs. Verify the CU
@@ -283,16 +292,17 @@ pending until DU1 revalidation and live coexistence pass.
   core addresses unchanged while migrating DU1's RF carrier.
 - [ ] Enable scheduler/RLC metrics and a 1000-ms report period on both DUs.
   Leave CU E2 disabled for the initial two-DU inventory.
-- [ ] Generate separate CU/DU log overlays with absolute paths under this run's
-  evidence directory; use distinct pcap paths if capture is enabled.
+- [ ] Generate CU/DU2 log overlays and set DU1's log using `log --filename`,
+  with absolute paths under this run's evidence directory; use distinct pcap
+  paths if capture is enabled.
 - [ ] Measure CPU and USB resources for two DUs. If explicit CPU groups are
   needed, choose them from actual physical-core topology and reserve capacity
   for CU/RIC/core. Keep sibling threads together and recheck worker defaults
   affected by `sched_getaffinity`. Record any affinity as a separate overlay or
   launch setting; preserve the established kernel and boot configuration.
 
-DU1 carrier overlay before adding the separately reviewed gain/attenuation
-settings and run log overlay:
+DU1 carrier fields in the complete standalone configuration; review its
+gain/attenuation settings separately and select the run's log at launch:
 
 ```yaml
 cell_cfg:
@@ -365,7 +375,7 @@ socket binds, and logs; unresolved placeholders prevent startup.
   enablement, and writable distinct log paths.
 - [ ] Derive both DUs' valid SSB/Point A/CORESET0 using the exact checkout's band
   helper/configuration path. Record the result and cross-check live startup later.
-- [ ] Parse all layered configs with the available `--dryrun` mode. It returns
+- [ ] Parse each DU configuration with the available `--dryrun` mode. It returns
   before full semantic validation and radio startup; a zero exit proves parsing
   and auto-derivation only. Retain separate band/helper checks and live validation.
 - [ ] Prepare or verify both Open5GS subscribers using their corresponding
@@ -374,7 +384,7 @@ socket binds, and logs; unresolved placeholders prevent startup.
   and the installed SQN representation. Retain only nonsecret projections.
 - [ ] Confirm the `00101` identity across NRF, AMF, CU, DUs, and SIMs.
 - [ ] With DU2 stopped, start shared CU, the existing RIC, and DU1 using its
-  new CBRS overlay. Derive/confirm the new DU1 SSB, update UE1's cell lock, and
+  new standalone CBRS configuration. Derive/confirm the new DU1 SSB, update UE1's cell lock, and
   revalidate the original subscriber's SA registration, IPv4 PDU session, private
   ping and uplink/downlink traffic, actual five-metric reception, and normal
   monitor subscription/deletion/exit. Use the installed monitor for this first
@@ -383,17 +393,17 @@ socket binds, and logs; unresolved placeholders prevent startup.
   config hashes, and results as the accepted CBRS single-link baseline before
   enabling DU2 or replacing the original subscriber for dual-UE testing.
 
-Example parse-only checks after the planned configs and run log overlays exist:
+Example parse-only checks after the planned configs and CU/DU2 log overlays exist:
 
 ```bash
+cp "$FALCON_REPO/configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml" \
+  "$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml"
 "$OCUDU_SOURCE/build/apps/cu/ocu" \
   -c "$OCUDU_SOURCE/configs/cu.yml" \
   -c "$DUAL_FR1_EVIDENCE/configs/cu_logs.yml" --dryrun
 "$OCUDU_SOURCE/build/apps/du_split_8/odu" \
-  -c "$OCUDU_SOURCE/configs/du1_b210_n78_20mhz.yml" \
-  -c "$FALCON_REPO/configs/ocudu/dual_fr1/du1_cbrs.yml" \
-  -c "$OCUDU_SOURCE/configs/du1_flexric.yml" \
-  -c "$DUAL_FR1_EVIDENCE/configs/du1_logs.yml" --dryrun
+  -c "$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml" \
+  --dryrun log --filename "$DUAL_FR1_EVIDENCE/radio/du1.log"
 "$OCUDU_SOURCE/build/apps/du_split_8/odu" \
   -c "$FALCON_REPO/configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml" \
   -c "$FALCON_REPO/configs/ocudu/dual_fr1/du2_flexric.yml" \
@@ -470,7 +480,7 @@ per-DU/per-UE evidence and exit normally, independently of Plan 1/2 completion.
 
 - [ ] Use the runbook's existing core/MongoDB/host-performance procedure.
   Start shared CU, then the existing FlexRIC RIC, then DU1 and DU2 in separate
-  foreground terminals with their reviewed layered configs and log overlays.
+  foreground terminals with their reviewed configurations and per-run log paths.
 - [ ] Confirm both DUs complete F1 Setup; the CU records different DU IDs and
   CGIs. Confirm actual carrier/SSB/PCI/radio serial in each startup log.
 - [ ] Confirm two distinct E2 Setup records in the same RIC and KPM RAN function
@@ -491,21 +501,19 @@ sudo "$OCUDU_SOURCE/build/apps/du_split_8/odu" \
   -c "$DUAL_FR1_EVIDENCE/configs/du2_logs.yml"
 ```
 
-DU1 launch recipe for a separate Spark terminal; retain the migration layer:
+DU1 launch recipe for a separate Spark terminal, using its complete configuration:
 
 ```bash
 sudo "$OCUDU_SOURCE/build/apps/du_split_8/odu" \
-  -c "$OCUDU_SOURCE/configs/du1_b210_n78_20mhz.yml" \
-  -c "$FALCON_REPO/configs/ocudu/dual_fr1/du1_cbrs.yml" \
-  -c "$OCUDU_SOURCE/configs/du1_flexric.yml" \
-  -c "$DUAL_FR1_EVIDENCE/configs/du1_logs.yml"
+  -c "$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml" \
+  log --filename "$DUAL_FR1_EVIDENCE/radio/du1.log"
 ```
 
 Start the CU using Step 4's CU configuration/log layers and the runbook's
 privileged foreground launch. Use the installed RIC and existing `ric.conf`;
 its E2/E42 ports remain 36421/36422. Export this run's paths in every relevant
 terminal; values are not automatically shared across shells. Use this same
-DU1 layering for Step 4's single-link acceptance and later integration.
+DU1 standalone configuration for Step 4's single-link acceptance and later integration.
 
 **Exit criteria:** one CU and one RIC accept both uniquely identified DUs, and
 the existing five-metric xApp subscribes successfully to each.
@@ -720,9 +728,9 @@ gate below passes. Keep the existing global implementation order in
   feature patch on a reviewed branch. Preserve timestamp repair, successful-
   handle cleanup, and attribution; avoid blindly stacking cumulative patches
   touching the same monitor file.
-- [ ] Keep the accepted CBRS radio overlays, newly derived SSB locks, and
+- [ ] Keep the accepted CBRS radio configurations, newly derived SSB locks, and
   measured low-power settings throughout integration. Adapt Plan 1/runbook
-  commands to include these layers rather than copying their historical
+  commands to use these configurations rather than copying their historical
   3750-MHz carrier or 649632 lock.
 - [ ] For Plan 2 Stage A, start the accepted broker with `--metric-profile base5`
   only after both DUs are registered. Run one all-links dummy plus two exact-link

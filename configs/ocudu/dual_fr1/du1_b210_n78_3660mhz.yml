@@ -1,0 +1,61 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Standalone DU1 configuration copied from the actual DU1 B210 and FlexRIC files.
+# 3660 MHz / 20 MHz occupies the nominal interval 3650-3670 MHz.
+# Gains are the current file values; live acceptance at this carrier is pending.
+# Derive the modem SSB lock from this run's DU startup output.
+gnb_du_id: 1
+
+f1ap:
+  addrs: 127.0.10.1
+  bind_addrs: 127.0.10.2
+
+f1u:
+  socket:
+    - bind_addr: 127.0.10.2
+
+ru_sdr:
+  device_driver: uhd
+  device_args: type=b200,serial=3271233,num_recv_frames=64,num_send_frames=64
+  srate: 23.04
+  clock: internal
+  clock_ppm: 0.0
+  freq_offset: 0
+  tx_gain: 70
+  rx_gain: 35
+
+cell_cfg:
+  dl_arfcn: 644000
+  band: 78
+  channel_bandwidth_MHz: 20
+  common_scs: 30
+  plmn: "00101"
+  tac: 7
+  pci: 1
+
+log:
+  filename: /tmp/du1_3660.log
+  all_level: info
+
+pcap:
+  mac_enable: false
+  mac_filename: /tmp/du1_3660_mac.pcap
+  f1ap_enable: false
+  f1ap_filename: /tmp/du1_3660_f1ap.pcap
+  f1u_enable: false
+  f1u_filename: /tmp/du1_3660_f1u.pcap
+
+e2:
+  enable_du_e2: true
+  addrs: [127.0.0.1]
+  bind_addrs: [127.0.0.1]
+  port: 36421
+  e2sm_kpm_enabled: true
+
+metrics:
+  layers:
+    enable_sched: true
+    enable_rlc: true
+  periodicity:
+    du_report_period: 1000
