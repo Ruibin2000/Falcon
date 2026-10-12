@@ -13,7 +13,7 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 | Task | `dual-ue-du-fr1-channels` |
 | Status | Planned; implementation and acceptance pending |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 10 : 13: 03 Oct 12, 2026 EDT |
+| Last updated at | 10 : 37: 33 Oct 12, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | To be assigned |
@@ -72,7 +72,7 @@ and calibrated RF measurement work have separate acceptance requirements.
 | Channel bandwidth | 20 MHz | 20 MHz |
 | Common SCS | 30 kHz | 30 kHz |
 | Nominal channel interval | 3650–3670 MHz | 3590–3610 MHz |
-| SSB NR-ARFCN | Derive from the new DU1 configuration; confirm startup and UE scan | Derive from the final DU2 configuration; confirm startup and UE scan |
+| SSB NR-ARFCN | `643680` in operator-provided 2026-10-12 startup summary; UE confirmation pending; recheck after configuration/version changes | Derive from the final DU2 configuration; confirm startup and UE scan |
 | Radio | B210 serial `3271233`; rediscover before use | Separate B210; record the actual second serial |
 | Sample rate | 23.04 MS/s | Start from 23.04 MS/s and validate the actual selected radio |
 | Gain | Choose/record low-power gain and attenuation; historical TX 70 / RX 35 is a reference | Choose/record independently for the second RF path and verify low-power operation |

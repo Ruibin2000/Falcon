@@ -1,6 +1,6 @@
 # Software Installation, Drivers, and OCUDU Environment
 
-Updated: 2026-10-07. This document records software dependencies, device drivers and builds for DGX Spark and the UE laptop. The OCUDU/Open5GS baseline comes from the 2026-10-05 deployment; section 8 records the FlexRIC build and installation completed on 2026-10-07. Section 7.4 adds the completed Open Cells PC/SC provisioning environment and Quectel card checks for the two new UE SIMs.
+Updated: 2026-10-12. This document records software dependencies, device drivers and builds for DGX Spark and the UE laptop. The OCUDU/Open5GS baseline comes from the 2026-10-05 deployment; section 8 records the FlexRIC build and installation completed on 2026-10-07. Section 7.4 adds the completed Open Cells PC/SC provisioning environment and Quectel card checks for the two new UE SIMs.
 
 For experiment startup, modem registration, PDU sessions, traffic, and shutdown, use the [Full Reproduction Runbook](full_reproduction_runbook.md). Executable CU/DU and core configuration values are recorded in [Project Progress](project_progress_and_configuration.md#configuration-records); registration and data-session failures are in the [2026-10-05 debug record](troubleshooting/2026-10-05_sa_bringup.md).
 
@@ -314,7 +314,7 @@ The earlier working subscriber is IMSI `001010000000001`. The newly programmed O
 uname -r
 cat /etc/os-release
 sudo apt update
-sudo apt install -y modemmanager libqmi-utils minicom iproute2 iperf3 usbutils
+sudo apt install -y modemmanager libqmi-utils minicom iproute2 iperf3 usbutils psmisc
 sudo systemctl enable --now ModemManager
 mmcli --version
 qmicli --version
@@ -347,7 +347,9 @@ modinfo cdc_wdm
 sudo journalctl -k --since '5 minutes ago' --no-pager | grep -Ei 'usb|quectel|ttyUSB|qmi|cdc.wdm|disconnect'
 ```
 
-Expected device ID is `2c7c:0800` for the recorded USB composition. Historical AT ports were ttyUSB2/ttyUSB3, QMI was cdc-wdm2, and the network port was wwan0. Discover actual ports on each laptop; ModemManager identifies their roles. A diagnostic/GNSS ttyUSB port is not automatically an AT port.
+Expected device ID is `2c7c:0800` for the recorded USB composition. Historical AT ports were ttyUSB2/ttyUSB3, QMI was cdc-wdm2, and the network port was wwan0. Discover actual ports on each laptop. ModemManager reports known roles but may omit working AT ports; an existing ttyUSB can still respond to AT. With two modems, match each candidate's sysfs USB parent against the identity-selected modem's physical device, never the first ttyUSB number. ModemManager's [Device property](https://github.com/linux-mobile-broadband/ModemManager/blob/main/introspection/org.freedesktop.ModemManager1.Modem.xml) identifies the modem's physical device, and [mmcli's output fields](https://github.com/linux-mobile-broadband/ModemManager/blob/main/cli/mmcli-output.c) expose it as `modem.generic.device`. A diagnostic/GNSS/ignored ttyUSB is excluded by the helper unless separate evidence establishes AT capability.
+
+Use [UE step 2](ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell) to list ports belonging to the already selected modem, choose one explicitly, and open it after serial-lock/process checks. `fuser` comes from Ubuntu's `psmisc` package. Verify manually in `minicom -o` by typing only `AT` and requiring a real `OK`; exit an unsuccessful test with `Ctrl+A`, then `Q` before trying another candidate. Keep ModemManager running. Missing `(at)` output alone requires no reboot or firmware/USB-composition change. USB reconnection requires fresh identity-based selection.
 
 If a module is available but not loaded, load it and reconnect the modem:
 

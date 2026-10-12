@@ -2,7 +2,7 @@
 
 Updated: 2026-10-12. Run these steps in order in **one Bash terminal per UE on the laptop** and keep that UE's variables in its terminal. Continue only after each step succeeds. For full instructions, see [Runbook stages 10–14](full_reproduction_runbook.md#10-prepare-a-new-ubuntulinux-laptop); start Spark using [Spark Quick Commands](spark_quick_commands.md).
 
-For the DU1 migration to **3660 MHz**, keep this single-UE workflow and replace the cell lock with the command generated from the current DU startup output in Spark step 5. Historical 3750-MHz traffic/KPM results below do not establish acceptance at the new carrier. The matching subscriber must be prepared for the SIM actually installed; using the new SIM1 requires its own core record.
+For the DU1 migration to **3660 MHz**, use the recorded **PCI 1 / SSB 643680 / SCS 30 kHz / n78** lock in step 2 after comparing it with the current DU startup cell line. This tuple comes from the operator-provided 2026-10-12 startup summary. Historical 3750-MHz traffic/KPM results below do not establish acceptance at the new carrier. The matching subscriber must be prepared for the SIM actually installed; using the new SIM1 requires its own core record.
 
 The 2026-10-05 session verified single-UE registration, IPv4 connectivity, and an initial 10-second TCP uplink. The 2026-10-07 session verified five DU KPM measurements from a real UE. After the timestamp repair, the latest run received 12 reports for UE ID `7`, with `report_age_us` of **591–796 µs**, and the xApp exited normally. The ping and 30-second uplink/downlink commands below are further acceptance checks, not results demonstrated in this session.
 
@@ -25,7 +25,7 @@ Install these tools on a new laptop; skip this if they are already installed:
 
 ```bash
 sudo apt update
-sudo apt install -y modemmanager libqmi-utils minicom iproute2 iperf3 usbutils
+sudo apt install -y modemmanager libqmi-utils minicom iproute2 iperf3 usbutils psmisc
 sudo systemctl enable --now ModemManager
 ```
 
@@ -124,16 +124,67 @@ For a SIM swap: finish traffic and bearer cleanup, disable the selected modem wi
 
 ## 2 Configure NR SA and lock the private cell
 
-The lock in this stage is **DU1 only**. DU2's radio and final settings remain pending; do not reuse this lock as a DU2 template. An IMSI does not select a DU automatically. First obtain the exact `AT+QNWLOCK` command from [Spark step 5](spark_quick_commands.md#5-start-du-with-e2-enabled), using this run's startup cell line. After a carrier migration, replace the old lock even if the modem still displays registration. Skip configuration only when the readback and serving cell already match the current DU. Select an **actual `(at)` port**:
+The lock in this stage is **DU1 only**. DU2's radio and final settings remain pending; do not reuse this lock as a DU2 template. An IMSI does not select a DU automatically. Check that the current startup cell line in [Spark step 5](spark_quick_commands.md#5-start-du-with-e2-enabled) matches carrier `644000` / 3660 MHz, PCI `1`, and SSB `643680`. After a carrier migration, replace the old lock even if the modem still displays registration. Skip configuration only when the readback and serving cell already match the current DU.
+
+SSB `643680` is deterministic for the current cell configuration and derivation logic; restarting DU or reconnecting UE does not select a random SSB. Recheck it after changing the carrier, band, bandwidth, SCS, SSB/CORESET parameters, or OCUDU version. If startup differs from the recorded tuple, update the lock from the actual output before using it.
+
+ModemManager can omit working AT ports. On the reported Alienware m15-R6, the selected RM500Q exposed ttyUSB0–3 in Linux while ModemManager listed only an ignored ttyUSB0, GPS ttyUSB1, QMI and network ports; manual AT communication still worked. That observation does not assign fixed tty numbers to UE1 or UE2.
+
+Use the modem already selected in step 1. The block below lists only this modem's ttyUSB ports by matching their sysfs USB parent, skips GPS/QCDM/ignored ports, and prefers any ports explicitly marked `(at)`. You choose a displayed port; a candidate is not proof of an AT response. It checks existing serial locks and process ownership before opening minicom. `fuser` is supplied by Ubuntu's `psmisc` package.
+
+Copy and run the block in the same UE Bash terminal:
 
 ```bash
-AT_PORT=$(mmcli -m "$MODEM" | grep -oE 'ttyUSB[0-9]+ \(at\)' | head -1 | awk '{print $1}')
-if [ -n "$AT_PORT" ]; then
-  sudo minicom -D "/dev/$AT_PORT" -b 115200
-else
-  printf 'No AT port found; stop and inspect the modem ports.\n'
-fi
+open_rm500q_at() {
+  local details identity imei usb tty parent port chosen owners status
+  local -a ports=() preferred=()
+  AT_PORT=""
+  [[ -n "${MODEM:-}" && -n "${MODEM_IDENTITY:-}" && -n "${EXPECTED_MODEM_ID:-}" ]] || return 1
+  details=$(mmcli -m "$MODEM" -K) || return 1
+  identity=$(printf '%s\n' "$details" | mm_value modem.generic.device-identifier)
+  imei=$(printf '%s\n' "$details" | mm_value modem.generic.equipment-identifier)
+  if [[ "$identity" != "$MODEM_IDENTITY" || ( "$EXPECTED_MODEM_ID" != "$identity" && "$EXPECTED_MODEM_ID" != "$imei" ) ]]; then
+    printf 'Modem changed; rerun select_rm500q.\n'; return 1
+  fi
+  usb=$(readlink -e "$(printf '%s\n' "$details" | mm_value modem.generic.device)") || return 1
+  [[ -f "$usb/idVendor" ]] || { printf 'Cannot confirm USB parent; stop here.\n'; return 1; }
+  printf 'Selected modem: %s\nIMEI: %s\nUSB parent: %s\n' "$MODEM" "$imei" "$usb"
+  for tty in /sys/class/tty/ttyUSB*; do
+    parent=$(readlink -e "$tty/device") || continue
+    while [[ "$parent" != / && ! -f "$parent/idVendor" ]]; do parent=${parent%/*}; done
+    [[ "$parent" = "$usb" ]] || continue
+    port=/dev/${tty##*/}
+    [[ -c "$port" ]] || continue
+    if printf '%s\n' "$details" | grep -Eq "(${tty##*/}[[:space:]]*\((gps|qcdm|ignored)\)|ignored-ports[^:]*:.*\b${tty##*/}\b)"; then
+      printf 'Skip %s (GPS/QCDM/ignored).\n' "$port"; continue
+    fi
+    ports+=("$port")
+    if printf '%s\n' "$details" | grep -Eq "${tty##*/}[[:space:]]*\(at\)"; then preferred+=("$port"); fi
+  done
+  if [ ${#preferred[@]} -gt 0 ]; then ports=("${preferred[@]}"); fi
+  [ ${#ports[@]} -gt 0 ] || { printf 'No eligible port on this modem; inspect enumeration.\n'; return 1; }
+  printf 'Candidate ports (AT response not yet checked):\n'; printf '  %s\n' "${ports[@]}"
+  read -r -p 'Enter one candidate, including /dev/: ' chosen
+  [[ " ${ports[*]} " = *" $chosen "* && -c "$chosen" ]] || { printf 'Choose a displayed port.\n'; return 1; }
+  if [[ -e "/run/lock/LCK..${chosen##*/}" || -L "/run/lock/LCK..${chosen##*/}" ]]; then
+    printf 'Serial lock exists; close your own session before retrying.\n'; return 1
+  fi
+  command -v fuser >/dev/null || { printf 'Install psmisc for fuser before continuing.\n'; return 1; }
+  if owners=$(sudo fuser -- "$chosen" 2>&1); then
+    printf 'Port is in use; stop here: %s\n' "$owners"; return 1
+  else
+    status=$?
+    [[ "$status" -eq 1 && -z "$owners" ]] || { printf 'Cannot check port ownership: %s\n' "$owners"; return 1; }
+  fi
+  AT_PORT=$chosen
+  sudo minicom -o -D "$AT_PORT" -b 115200
+}
+open_rm500q_at
 ```
+
+In minicom, type **`AT`** first and require a real **`OK`** before continuing. If no response arrives within a few seconds, exit with `Ctrl+A`, then `Q`, rerun `open_rm500q_at`, and choose another candidate. Do not infer AT capability from tty numbering or change modem configuration to test a port.
+
+Keep ModemManager running. Missing `(at)` entries alone require no reboot or `AT+CFUN`. After USB reconnection, rerun `select_rm500q` and rediscover ports. Open one AT session at a time; `minicom -o` skips initialization and lock-file checks, so keep the ownership checks above and coordinate access. The check does not reserve the port until minicom opens it. Explicitly GPS/QCDM/ignored ports need separate evidence of AT capability before manual use.
 
 Enter these commands in minicom, **not in Bash**. Each configuration write must return `OK`:
 
@@ -144,17 +195,13 @@ AT+QNWPREFCFG="mode_pref"
 AT+QNWPREFCFG="nr5g_disable_mode",2
 AT+QNWPREFCFG="nr5g_disable_mode"
 AT+QNWPREFCFG="nr5g_band"
-```
-
-Now paste the **exact lock command printed by Spark step 5**. Its format is `AT+QNWLOCK="common/5g",<PCI>,<SSB_ARFCN>,30,78`; the angle-bracket fields are placeholders and must not be typed literally. For this migration, the carrier is `644000` / 3660 MHz; the lock uses the separately derived SSB. Then read back and check registration:
-
-```text
+AT+QNWLOCK="common/5g",1,643680,30,78
 AT+QNWLOCK="common/5g"
 AT+QENG="servingcell"
 AT+C5GREG?
 ```
 
-Confirm that the band selection includes 78, the readback matches the current DU's `PCI / SSB / SCS=30 / n78`, the serving cell is `NR5G-SA / 001,01 / TAC 7` on the intended DU1 cell, and registration reports `+C5GREG: 0,1`. `NOCONN` can indicate an idle, camped state; use C5GREG to confirm registration. **Historical SSB `649632` applies to the old 3750-MHz setup. Neither it nor the new carrier ARFCN `644000` is the new SSB lock value.** If the new lock write fails, stop and inspect firmware/AT responses before proceeding to the bearer steps.
+Confirm that the band selection includes 78, the readback matches `PCI=1 / SSB=643680 / SCS=30 / n78` and the current DU startup, the serving cell is `NR5G-SA / 001,01 / TAC 7` on the intended DU1 cell, and registration reports `+C5GREG: 0,1`. `NOCONN` can indicate an idle, camped state; use C5GREG to confirm registration. **Historical SSB `649632` applies to the old 3750-MHz setup. Neither it nor the new carrier ARFCN `644000` is the new SSB lock value.** If the new lock write fails, stop and inspect firmware/AT responses before proceeding to the bearer steps.
 
 On this tested firmware, disable mode `2` disables NSA. Exit minicom with `Ctrl+A`, then `X`. Close duplicate AT sessions and leave ModemManager running.
 

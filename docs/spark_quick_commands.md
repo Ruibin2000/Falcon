@@ -156,9 +156,15 @@ sudo stdbuf -oL -eL build/apps/du_split_8/odu \
   log --filename "$DU1_RUN/du.log" 2>&1 | tee "$DU1_RUN/startup.log"
 ```
 
-Confirm the startup cell line shows `dl_arfcn=644000 (n78)` and `dl_freq=3660 MHz`. Read its **`dl_ssb_arfcn`**, PCI, and SCS and check the UE's observed cell after applying the new lock. Do not substitute the carrier ARFCN or calculate SSB by subtracting the historical offset.
+Confirm the startup cell line shows `dl_arfcn=644000 (n78)` and `dl_freq=3660 MHz`. The operator-provided 2026-10-12 startup summary recorded **PCI 1 / SSB 643680 / SCS 30 kHz**. The matching lock is now written directly in [UE step 2](ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell):
 
-In the **diagnostics terminal**, paste the run directory printed by this launch. The following block reads this run's cell line and prints the exact AT lock command to copy to the UE laptop:
+```text
+AT+QNWLOCK="common/5g",1,643680,30,78
+```
+
+For unchanged cell settings and derivation logic, this SSB stays the same across restarts. Compare the recorded tuple with the current startup line; recheck it after carrier, band, bandwidth, SCS, SSB/CORESET, or OCUDU version changes. Then verify the UE's actual serving cell. Do not substitute the carrier ARFCN or calculate SSB by subtracting the historical offset.
+
+The following **optional helper** reads the current startup line and generates the lock command. Use it if the SSB differs from the recorded value or when checking a changed configuration at this carrier. In the **diagnostics terminal**, paste the run directory printed by this launch:
 
 ```bash
 read -r -p 'DU1 run directory printed by this launch: ' DU1_RUN
@@ -181,7 +187,7 @@ print(f'AT+QNWLOCK="common/5g",{pci},{ssb},30,{band}')
 PY
 ```
 
-Use the printed command in [UE step 2](ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell). Require `OK`, read back the lock, then verify the actual serving cell and SA registration. `/tmp` logs are temporary; retain this run's configs, hashes, and traffic/KPM evidence before reboot or cleanup.
+Use the command matching the current startup in [UE step 2](ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell). Require `OK`, read back the lock, then verify the actual serving cell and SA registration. The recorded SSB establishes the DU startup tuple; UE registration, traffic, and KPM acceptance remain pending. `/tmp` logs are temporary; retain this run's configs, hashes, and traffic/KPM evidence before reboot or cleanup.
 
 Confirm F1-C / E2AP `completed` and `==== DU started ===` for this DU1 baseline. A future second DU requires its own reviewed configuration and per-DU evidence; the summary below proves only the current single-DU connections. FlexRIC should receive this DU's `E2 SETUP-REQUEST` and accept KPM ID `2`. In the diagnostics terminal, check the summary of the three SCTP connections:
 
