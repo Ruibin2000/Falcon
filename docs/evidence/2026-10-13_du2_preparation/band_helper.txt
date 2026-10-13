@@ -1,0 +1,2 @@
+carrier=644000 ssb=643680 offsetToPointA=4 kSSB=4 CORESET0=2 SS0=0
+carrier=640000 ssb=639648 offsetToPointA=0 kSSB=20 CORESET0=0 SS0=0

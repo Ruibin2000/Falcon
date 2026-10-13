@@ -6,7 +6,9 @@ Falcomm is a 5G/AI-RAN experimental platform based on the NVIDIA DGX Spark. **On
 
 For daily operation, use the command booklets: **[Spark quick commands](docs/spark_quick_commands.md)** and **[UE laptop quick commands](docs/ue_laptop_quick_commands.md)**. They show compact confirmations; the full runbook retains detailed diagnostics. The [2026-10-07 FlexRIC record](docs/troubleshooting/2026-10-07_flexric_bringup.md) records the codec/version repair, successful subscription and actual UE measurements.
 
-The current checkpoint covers **uplink only**. See the [Plan 3 daily log](dev_logs/2026-10-12_ruibin.md), [retained evidence](docs/evidence/2026-10-12_du1_3660mhz/manifest.json), and [migration plan](plans/dual-ue-du-fr1-channels.md). Dual-DU operation and stability acceptance remain open.
+For the two-modem setup, use **[Dual UE / Dual DU Quick Start — UL Only](docs/dual_ue_quick_start.md)**. It covers the shared Spark startup, UE2-first validation, both modem/SIM identities, cell locks, independent laptop source-policy paths and concurrent UL.
+
+As of **2026-10-13**, [Plan 3](plans/dual-ue-du-fr1-channels.md) prioritizes DU2 and **UL-only dual-link acceptance**. Underflow remediation is deferred and count/growth alone is nonblocking for this scope. DU2 radio/cell/F1 and E2/KPM configurations are deployed for the discovered B210 `328B021` and pass offline checks; actual DU2 radio startup/F1/E2 passed; UE2 registration and single/dual-link UL remain pending. Follow the [DU2 bring-up procedure](docs/dual_fr1_runbook.md). The [2026-10-12 daily log](dev_logs/2026-10-12_ruibin.md) and [retained evidence](docs/evidence/2026-10-12_du1_3660mhz/manifest.json) remain the historical single-DU UL result.
 
 For the new cards, follow [SIM Provisioning and Dual-UE Preparation](docs/sim_provisioning_and_dual_ue.md): reader setup, personalization, authentication checks, modem verification, and the remaining Open5GS/dual-link work.
 
@@ -174,6 +176,7 @@ docs/
 ├── full_reproduction_runbook.md
 ├── spark_quick_commands.md
 ├── ue_laptop_quick_commands.md
+├── dual_ue_quick_start.md
 ├── development_handoff.md
 └── troubleshooting/
     ├── 2026-10-05_sa_bringup.md
@@ -189,6 +192,7 @@ docs/
 | [Full Reproduction Runbook](docs/full_reproduction_runbook.md) | Startup, laptop setup, registration, IPv4 data, traffic and shutdown commands |
 | [Spark quick commands](docs/spark_quick_commands.md) | Command booklet for core, CU, FlexRIC, DU, xApp, traffic and shutdown with compact checks |
 | [UE laptop quick commands](docs/ue_laptop_quick_commands.md) | Command booklet for modem selection, SA registration, IPv4 bearer, WWAN and traffic |
+| [Dual UE / Dual DU quick start](docs/dual_ue_quick_start.md) | UE2-first startup, two modem/SIM paths, source-policy routing, concurrent UL, KPM scope and cleanup |
 | [5G SA Bring-up Debug Record, 2026-10-05](docs/troubleshooting/2026-10-05_sa_bringup.md) | Dated evidence, confirmed repairs and troubleshooting decision tree/matrix |
 | [FlexRIC Bring-up Record, 2026-10-07](docs/troubleshooting/2026-10-07_flexric_bringup.md) | Version/codec repair, E2/KPM lifecycle and actual UE metrics |
 | [FlexRIC Timestamp Repair, 2026-10-07](docs/troubleshooting/2026-10-07_flexric_latency_fix.md) | Tested timestamp patch, deployment command and report-age semantics |

@@ -1,0 +1,3 @@
+DU1: DU 1, PCI 1, NCI 6733824, 3660 MHz, F1 127.0.10.2
+DU2: DU 2, PCI 2, NCI 6733825, 3600 MHz, F1 127.0.10.3
+FAIL: DU2: missing actual B210 serial; discover hardware before startup

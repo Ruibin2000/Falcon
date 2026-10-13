@@ -1,0 +1,40 @@
+{
+  "reporting_date": "2026-10-13",
+  "timezone": "America/New_York",
+  "scope": "Single DU2 radio startup and F1/E2 setup; no UE2/UL acceptance yet",
+  "outcome": "Actual B210 328B021 / USB 3 / 3600 MHz / SSB 639648 confirmed; F1 and E2 connected; RIC registered gNB 411 / DU 2 and accepted KPM ID 2",
+  "runtime": {
+    "du_banner_commit": "050a2bb",
+    "radio_serial": "328B021",
+    "carrier_arfcn": 640000,
+    "carrier_mhz": 3600,
+    "ssb_arfcn": 639648,
+    "pci": 2,
+    "band": 78,
+    "bandwidth_mhz": 20,
+    "sample_rate_msps": 23.04,
+    "du_id": 2,
+    "gnb_id": 411,
+    "du1": "Kept stopped for initial DU2 test"
+  },
+  "operator_reported_core": "MongoDB ping ok:1; all ten SA services active; CU N2 connected to AMF and F1 listener started",
+  "source_sha256": {
+    "/home/nyu/Desktop/Falcon_repo/Falcon/configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml": "78f992119b4771b6995a6f158db1ff2adc2e002507a34d1e18c67f218fcc491a",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/configs/ocudu/dual_fr1/du2_flexric.yml": "40552049db8fb4526b4f1e419fe54be40bfa2778985e8426abcc5b4c06ad3d2f",
+    "/home/nyu/ocudu/configs/du2_b210_n78_20mhz.yml": "78f992119b4771b6995a6f158db1ff2adc2e002507a34d1e18c67f218fcc491a",
+    "/home/nyu/ocudu/configs/du2_flexric.yml": "40552049db8fb4526b4f1e419fe54be40bfa2778985e8426abcc5b4c06ad3d2f"
+  },
+  "retained_artifact_sha256": {
+    "startup.txt": "52870726055cf547d3ac020ec2d6479ccbfc6278d93b3dd7e88da6ba7731335f",
+    "ric.txt": "0d66f167943549db31984724674c62e937621aed69e676edc5b2c44f05f0ba5b"
+  },
+  "limitations": [
+    "Foreground startup processes were ongoing; numeric exit statuses are not acceptance evidence",
+    "No UE2 modem/SIM/IMSI/bearer/cell ledger captured yet",
+    "New subscriber preparation, UE2 registration, IPv4 PDU and UL remain pending",
+    "KPM subscription and actual UE metrics not yet tested for DU2",
+    "Simultaneous DU1/DU2 operation remains pending",
+    "Underflow remediation remains deferred for the UL-only scope"
+  ],
+  "saved_at": "16 : 23: 59 Oct 13, 2026 EDT"
+}

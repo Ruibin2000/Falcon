@@ -1,6 +1,6 @@
 # Project Progress and System Configuration
 
-Last updated: **2026-10-12**. DU1 migrated from 3750 to **3660 MHz within n78**. Single-UE IPv4 ping, a 30-second TCP uplink (receiver **17.0 Mbit/s**, sender Retr **0**), and **12 complete five-metric KPM reports for UE F1AP ID 5** passed. The current scope is uplink only. Recurring RF underflows keep stability acceptance open; the dual-DU baseline and new-subscriber identity correlation remain pending. See the [daily log](../dev_logs/2026-10-12_ruibin.md) and [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json).
+Last updated: **2026-10-13**. DU1 migrated from 3750 to **3660 MHz within n78**. Single-UE IPv4 ping, a 30-second TCP uplink (receiver **17.0 Mbit/s**, sender Retr **0**), and **12 complete five-metric KPM reports for UE F1AP ID 5** passed. The operator now prioritizes DU2 and UL-only dual-link acceptance. Underflow remediation is deferred; count/growth alone does not block this UL scope. DU2 is configured/deployed for B210 `328B021` (USB 3) and passes offline checks. Actual DU2 radio startup/F1/E2 passed; UE2 registration/UL, the dual-link baseline and subscriber identity correlation remain pending. See the [DU2 procedure](dual_fr1_runbook.md), historical [daily log](../dev_logs/2026-10-12_ruibin.md) and [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json).
 
 ## Current verified single-link architecture
 
@@ -34,19 +34,19 @@ The tested application path is **laptop ↔ Spark over private 5G**. Management 
 
 ## Phase status
 
-| Phase | Scope | Status on 2026-10-12 |
+| Phase | Scope | Status on 2026-10-13 |
 |---|---|---|
 | 0 | DGX Spark baseline | Verified |
 | 1 | UHD / B210 #1 / USB 3 | Verified |
 | 2 | OCUDU build | Verified |
 | 3 | Single CU/DU / N2 / F1 / Open5GS | Verified |
 | 4 | RM500Q SA registration, authentication, IPv4 PDU, WWAN, local data | Initial-session baseline retained; 3660-MHz private ping and 30-second TCP uplink passed; active IMSI not captured |
-| 5 | Second DU / second radio / second UE | SIM provisioning and both modem UICC checks complete; matching Open5GS records, DU2/radio deployment and dual-link end-to-end validation pending |
-| 6 | Host real-time work | Historical tuning retained; 117 RF underflows observed by 11:39:44 EDT on 2026-10-12; stability open |
+| 5 | Second DU / second radio / second UE | SIM/modem preparation complete; DU2 configured for B210 328B021; both B210s discovered over USB 3 on separate controllers; actual DU2 radio/F1/E2 startup passed; UE2 registration and single/dual-link UL pending |
+| 6 | Host real-time work | Historical tuning retained; 117 underflows observed on 2026-10-12; remediation deferred and count/growth alone nonblocking for current UL scope |
 | 7–8 | FlexRIC / KPM xApp | At 3660 MHz: DU1 E2 Setup and 12 complete UE ID 5 reports passed; subscription/deletion and success marker retained |
 | 9–11 | MPTCP / RIC-assisted control / AI steering | Future work |
 
-First diagnose RF underflows and repeat the uplink with retained KPM timing and RF-error counts. Then prepare the two matching Open5GS subscribers and validate the intended CU + DU1 + DU2 paths using the [SIM and Dual-UE Guide](sim_provisioning_and_dual_ue.md). Preserve the working single-link configuration while doing this. KPM/application correlation, cold-start/new-laptop reproduction, traffic characterization and Baseline v1 acceptance remain separate work before active steering.
+Follow the [DU2 procedure](dual_fr1_runbook.md) to start the shared infrastructure and validate DU2 with its bound B210 `328B021`. Both B210s now pass simultaneous discovery over USB 3 on separate host controllers; recheck after reconnection. Prepare the two matching Open5GS subscribers using the [SIM and Dual-UE Guide](sim_provisioning_and_dual_ue.md). Preserve DU1's working configuration. Test UE1 UL, UE2 UL and both UL concurrently with retained identities/KPM timing; underflow remediation is deferred. KPM/application correlation, cold-start/new-laptop reproduction and active steering retain their own gates.
 
 ## Platform and prior build evidence
 
@@ -301,6 +301,6 @@ Kernel replacement, PREEMPT_RT, boot parameters, CPU isolation, IRQ pinning and 
 
 Next dual-link sequence: add/verify both matching Open5GS records (SST 1, `internet`, IPv4 type 1 and checked SQN representation) → prepare distinct DU/cell/radio identities and CU + DU1 + DU2 → confirm each modem's intended cell and registration → independent PDU sessions, WWAN interfaces and IP paths → MPTCP → extend verified DU1 FlexRIC collection to per-DU/per-UE telemetry → AI predictor/steering → blockage/QoE experiments.
 
-The current single-link checkpoint is uplink only: the 30-second TCP transfer and five-metric delivery passed. Resolve RF underflows, repeat measured uplink/KPM capture, retain subscriber/bearer identity and exact traffic timing, and test cold-start repeatability before freezing a stable baseline. Downlink, UDP, and video remain future work outside this checkpoint. SIM preparation alone does not validate these application tests or the dual RAN.
+The single-link checkpoint is uplink only: the 30-second TCP transfer and five-metric delivery passed. The current Plan 3 target is dual-link UL functionality/coexistence, with underflow remediation deferred. Retain subscriber/bearer identity, exact UL/KPM timing and repeatability. Application DL and mixed-direction tests are outside the current target; controlled UL UDP remains in the dual-link coexistence gate. SIM preparation alone does not validate the dual RAN.
 
 Follow the [Full Reproduction Runbook](full_reproduction_runbook.md), or its [Spark](spark_quick_commands.md) and [UE laptop](ue_laptop_quick_commands.md) command summaries. Shutdown order is traffic/xApp → PDU → laptop WWAN → DU → FlexRIC → CU → 5GC → optional MongoDB. Check runtime state before operation; keep SIM secrets and raw INFO logs out of Git.

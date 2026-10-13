@@ -1,0 +1,158 @@
+{
+  "reporting_date": "2026-10-13",
+  "timezone": "America/New_York",
+  "scope": "DU2 offline preparation and Plan 3 dual-link UL-only scope revision",
+  "outcome": "DU2 configured/deployed; offline checks passed; both B210s simultaneously discovered in two runs over USB 3 on separate controllers; live DU2/dual-link UL pending",
+  "acceptance_scope": {
+    "application": "UL only: each UE separately and both concurrently",
+    "underflow": "Remediation deferred; count/growth alone nonblocking",
+    "kpm": "Keep five-metric subscription; numeric DRB.UEThpUl/RRU.PrbTotUl required; DL values observed"
+  },
+  "source_revisions": {
+    "Falcon": "99204d81da8e8508e1323e0b1628339dcd35a802",
+    "OCUDU": "bc57583ec48471a88b2e9e6ebf2cc5cc2594a8ef"
+  },
+  "checks": {
+    "config_tests": {
+      "command": [
+        "python3",
+        "-B",
+        "tests/dual_fr1_config_test.py"
+      ],
+      "exit_code": 0
+    },
+    "offline_checker": {
+      "command": [
+        "python3",
+        "-B",
+        "scripts/dual_fr1/check_config.py"
+      ],
+      "exit_code": 0
+    },
+    "maintained_du2_parse": {
+      "command": [
+        "/home/nyu/ocudu/build/apps/du_split_8/odu",
+        "-c",
+        "configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml",
+        "-c",
+        "configs/ocudu/dual_fr1/du2_flexric.yml",
+        "--dryrun",
+        "log",
+        "--filename",
+        "/tmp/falcon-du2-parse-check.log"
+      ],
+      "exit_code": 0
+    },
+    "deployed_du2_parse": {
+      "command": [
+        "/home/nyu/ocudu/build/apps/du_split_8/odu",
+        "-c",
+        "/home/nyu/ocudu/configs/du2_b210_n78_20mhz.yml",
+        "-c",
+        "/home/nyu/ocudu/configs/du2_flexric.yml",
+        "--dryrun",
+        "log",
+        "--filename",
+        "/tmp/falcon-du2-deployed-parse-check.log"
+      ],
+      "exit_code": 0
+    },
+    "band_helper": {
+      "command": [
+        "/tmp/falcon-du2-band-mn3rxr9u/check"
+      ],
+      "exit_code": 0
+    },
+    "dual_radio_discovery": {
+      "command": [
+        "uhd_find_devices",
+        "--args",
+        "type=b200"
+      ],
+      "exit_code": 0,
+      "successive_runs": 2,
+      "serials": [
+        "3271233",
+        "328B021"
+      ],
+      "scope": "Simultaneous discovery only; firmware initialization, no RF streaming"
+    }
+  },
+  "du2_offline_derivation": {
+    "carrier_arfcn": 640000,
+    "band": 78,
+    "n_rbs": 51,
+    "common_scs_khz": 30,
+    "ssb_scs_khz": 30,
+    "max_coreset0_duration": 2,
+    "ss0_index": 0,
+    "ssb_arfcn": 639648,
+    "offset_to_point_A": 0,
+    "k_ssb": 20,
+    "coreset0_index": 0,
+    "live_confirmation": "Pending"
+  },
+  "source_sha256": {
+    "/home/nyu/Desktop/Falcon_repo/Falcon/configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml": "78f992119b4771b6995a6f158db1ff2adc2e002507a34d1e18c67f218fcc491a",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/configs/ocudu/dual_fr1/du2_flexric.yml": "40552049db8fb4526b4f1e419fe54be40bfa2778985e8426abcc5b4c06ad3d2f",
+    "/home/nyu/ocudu/configs/du2_b210_n78_20mhz.yml": "78f992119b4771b6995a6f158db1ff2adc2e002507a34d1e18c67f218fcc491a",
+    "/home/nyu/ocudu/configs/du2_flexric.yml": "40552049db8fb4526b4f1e419fe54be40bfa2778985e8426abcc5b4c06ad3d2f",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml": "c40667a31206aa4ca7b8f08d826f7d87320df5280b59ef388dbab34e9f9b326d",
+    "/home/nyu/ocudu/build/apps/du_split_8/odu": "f5eb2a9235a8822675227e43d09272dd4d90e34a7d05e708265f52b745defe17",
+    "/home/nyu/ocudu/build/lib/ran/libocudu_ran.a": "a2657523f1488815db5cc1d16731f41b4f6cdc70a02e9353170e768b32dd51cf",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/check_config.py": "afa60fd93e5ba41c85af24e9abe0fb78173da5d88254098bffa913c6ea6459d0",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/tests/dual_fr1_config_test.py": "be7a1a935eb01e98819bb0a8382c714bfb562b6ff47ca703021f359b90ceb5d4"
+  },
+  "retained_artifact_sha256": {
+    "band_helper.txt": "8b4016d25d5cb5f083dfaaf3000b0f7081c62a3d45d964f9d95200c6fa853509",
+    "band_helper_check.cpp": "90d0375fb0a7b655605708f785a244ff8eaac65a72b2ea3c71087739e80fa24e",
+    "config_tests.txt": "e19a86747084065fc6026e9e5463e2291a2e56061843e8a27e0424f4fed284be",
+    "deployed_du2_parse.txt": "9f9ac6a569890b2bd3a2fee1bc23e9ffd8c057c58e03780f037b2031e6561ac6",
+    "dual_radio_discovery.txt": "e89ec2c56e4cfa32a4a4f736517ee5388ac623a8a7ff9df1edd20f9ccbb33703",
+    "hardware_discovery.txt": "a08a6d0b822277ef32fc91dd2bf768381380a76ccb17dbbd76cef7c4ee6f7d0a",
+    "maintained_du2_parse.txt": "9f9ac6a569890b2bd3a2fee1bc23e9ffd8c057c58e03780f037b2031e6561ac6",
+    "offline_checker.txt": "176ceef48d191bf9ecc6c990ff9848118ef92c9254b7f0c4ce16c951f90c58e7",
+    "offline_checker_before_binding.txt": "29b1d34135dd2742ce6b1bdcb3cb933b70a104b2545a4af9890f3a69ed5e7b05"
+  },
+  "limitations": [
+    "Simultaneous USB discovery passed; concurrent dual-DU RF streaming and UL remain unverified",
+    "DU dryrun proves parsing/autoderivation, not complete semantic/RF validation",
+    "CU/RIC were not running and checked Open5GS services were inactive",
+    "No live F1/E2/UE2 registration/UL traffic was run",
+    "Operating-condition, subscriber, routing and dual-DU telemetry gates remain pending"
+  ],
+  "saved_at": "16 : 10: 45 Oct 13, 2026 EDT",
+  "du2_radio": {
+    "product": "B210",
+    "serial": "328B021",
+    "usb_path": "6-1.1",
+    "usb_speed_mbps": 5000,
+    "simultaneous_du1_presence": "Verified in two successive UHD discovery runs",
+    "host_controller": "NVDA8000:02"
+  },
+  "band_helper_build_command": [
+    "/usr/bin/clang++-18",
+    "-std=c++17",
+    "-O2",
+    "-I/home/nyu/ocudu/include",
+    "-I/home/nyu/ocudu/external",
+    "-I/home/nyu/ocudu/external/fmt/include",
+    "band_helper_check.cpp",
+    "-o",
+    "band_helper_check",
+    "/home/nyu/ocudu/build/lib/ran/libocudu_ran.a",
+    "/home/nyu/ocudu/build/lib/support/libocudu_support.a",
+    "/home/nyu/ocudu/build/lib/support/math/libocudu_support_math.a",
+    "/home/nyu/ocudu/build/lib/ocuduvec/libocuduvec.a",
+    "/home/nyu/ocudu/build/lib/ocudulog/libocudulog.a",
+    "/home/nyu/ocudu/build/external/fmt/libfmt.a",
+    "-lpthread"
+  ],
+  "du1_radio": {
+    "product": "B210",
+    "serial": "3271233",
+    "usb_path": "2-1.3",
+    "host_controller": "NVDA8000:00",
+    "usb_speed_mbps": 5000
+  }
+}

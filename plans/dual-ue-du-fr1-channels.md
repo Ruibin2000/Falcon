@@ -4,16 +4,17 @@ Extend the existing single FR1 link into two independent n78 links, each with
 its own UE, modem, radio, and OCUDU DU. Move DU1 into an authorized CBRS-range
 channel and select a separate CBRS-range channel for DU2. First revalidate DU1
 at its new carrier, then validate both links with the existing FlexRIC RIC and
-five-metric KPM xApp. Integrate the RF metrics and application broker when their
+five-metric KPM xApp, with application acceptance focused on uplink (UL).
+Integrate the RF metrics and application broker when their
 respective Plan 1 and Plan 2 acceptance gates pass.
 
 | Field | Value |
 | --- | --- |
 | Plan | 3 |
 | Task | `dual-ue-du-fr1-channels` |
-| Status | In progress: DU1 3660-MHz single-UE uplink functionality passed; RF stability and dual-link baseline pending |
+| Status | In progress: DU1 UL functionality passed; actual DU2 radio startup/F1/E2 passed; UE2 registration and single/dual-link UL pending; underflow remediation deferred |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 11 : 59: 34 Oct 12, 2026 EDT |
+| Last updated at | 16 : 46: 32 Oct 13, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | To be assigned |
@@ -38,14 +39,23 @@ claim that those services or radios are running now.
 The historical DU1 carrier is ARFCN `650000` / 3750 MHz, with SSB `649632`.
 Preserve that configuration and its historical evidence. DU1 was migrated to
 ARFCN `644000` / 3660 MHz on 2026-10-12, with newly observed SSB `643680`.
-Single-UE uplink functionality and five-metric KPM reception passed; RF stability
-and the full dual-link acceptance requirements remain pending.
+Single-UE uplink functionality and five-metric KPM reception passed. Underflow
+remediation is deferred by the operator's 2026-10-13 instruction; the dual-link
+UL acceptance requirements remain pending.
 
 The [SIM preparation record](../docs/sim_provisioning_and_dual_ue.md) identifies
 two provisioned cards and two physical RM500Q modems. Registration of their new
 subscribers, a second DU/radio, and simultaneous private IP paths remain pending.
-The current repository/source inspection has not established DU2's radio serial
-or a working DU2 configuration.
+DU2's radio/F1/cell and E2/KPM configurations are now prepared and deployed for
+B210 `328B021`, discovered over USB 3 on 2026-10-13 after reconnection. Offline
+configuration checks and DU parsing pass. After reconnecting both radios, UHD
+loaded their firmware and two successive discovery runs found both `3271233`
+and `328B021` simultaneously over USB 3. DU1 uses host controller `NVDA8000:00`
+at `2-1.3`; DU2 uses `NVDA8000:02` at `6-1.1`. DU2 subsequently started at
+3600 MHz / PCI 2 / SSB 639648 with F1/E2 completed; the RIC registered gNB 411 /
+DU ID 2 and accepted KPM RAN function ID 2. UE2 registration, UL and concurrent
+dual-DU streaming remain pending. See the
+[live startup evidence](../docs/evidence/2026-10-13_du2_startup/manifest.json).
 
 The inspected DU1 file uses TX gain **70** and RX gain **35**. Historical records
 include RX 40 and an earlier TX 80. Preserve the actual current file, record its
@@ -74,14 +84,58 @@ record startup, UE correlation, traffic, telemetry, and configuration hashes.
 - [x] Deploy the complete DU1 file at `/home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml`, preserving the historical base/E2 files; maintained/deployed hashes matched.
 - [x] Verify B210 `3271233` over USB 3, carrier `644000` / 3660 MHz, SSB `643680`, PCI 1, 20 MHz / 30 kHz, and successful F1/E2 setup for DU ID 1.
 - [x] Verify one DU, UE F1AP ID 5, IPv4 private ping (5/5, 0% loss), 30-second TCP uplink (receiver 17.0 Mbit/s; sender Retr 0), and 12 complete five-metric KPM rows with subscription/deletion and the success marker.
-- [ ] Resolve RF underflows and verify sustained/repeated uplink operation. A bounded snapshot contained 117 underflows by 11:39:44 EDT.
+- [ ] Deferred: resolve RF underflows. A bounded snapshot contained 117 underflows by 11:39:44 EDT; underflow count/growth is an observation, not a gate for the current UL baseline.
 - [ ] Retain the active IMSI/SIM/bearer and modem serving-cell readback. These were not captured in the acceptance excerpts.
 - [ ] Complete the remaining RF-condition, DU2, coexistence, identity, and cold-start gates required by the full dual-link plan.
 
-This is **Migration Successful / Uplink Functionality Passed / Stability
-Pending**, not completion of Steps 1–10. Downlink was not requested or run for
-this checkpoint. Future dual-link tests retain their own planned acceptance
-scope; missing downlink results do not block this uplink-only milestone.
+This historical checkpoint is **Migration Successful / Uplink Functionality
+Passed / Stability Pending**, not completion of Steps 1–10. The 2026-10-13 scope
+revision below also makes the future dual-link baseline UL-only and defers
+underflow remediation; it does not retroactively certify RF stability.
+
+## 2026-10-13 Execution Priority and UL Acceptance Revision
+
+The operator requested DU2 implementation first, deferral of the underflow issue,
+and acceptance focused only on UL. Apply this revision to Steps 4 and 6–10 and
+the application regression checks in Step 11:
+
+- Prepare DU2 at 3600 MHz / ARFCN 640000, DU ID 2, PCI 2, sector ID 1,
+  NCI 6733825, and F1/E2 local bind 127.0.10.3. Preserve DU1 at 3660 MHz.
+- Accept UE1-only UL, UE2-only UL, and simultaneous UE1+UE2 UL. Retain SA/PDU,
+  intended serving cell, distinct IP/WWAN paths, receiver throughput, controlled
+  UL UDP loss/jitter, identity correlation, and repeatability checks.
+- Do not require application DL or mixed UL/DL traffic trials. Radio DL
+  synchronization/control and TCP acknowledgements remain part of normal SA/UL
+  operation; this revision does not alter TDD or disable the radio downlink.
+- Keep the existing five-metric subscription for compatibility. Require numeric
+  `DRB.UEThpUl` and `RRU.PrbTotUl` with correct DU/UE attribution in the active UL
+  window; DL entries and noValue states are observations, not UL acceptance gates.
+- Record underflow counts if available, but do not block DU2 work or this UL
+  baseline solely on their count/growth. Failed UL transfers, lost SA/PDU paths,
+  process failures, incorrect identities, and routing failures still fail their
+  respective gates. Do not describe this result as RF-stability certification.
+
+Preparation completed in this revision:
+
+- [x] Create DU2 radio/cell/F1 configuration and separate E2/KPM overlay.
+- [x] Implement offline dual-DU identity, address, channel, log, metrics, and
+  missing-radio checks in `scripts/dual_fr1/check_config.py`.
+- [x] Parse maintained/deployed DU2 configuration with the installed DU binary
+  and derive SSB 639648 / offsetToPointA 0 / kSSB 20 / CORESET0 0 / SS0 0 using
+  the existing OCUDU RAN library (n78, 51 PRBs, 30-kHz common/SSB SCS, maximum
+  CORESET0 duration 2). The same helper reproduces DU1's observed SSB 643680.
+- [x] Bind independently discovered B210 `328B021`, confirm USB 3, deploy the
+  maintained configuration and pass offline identity/topology checks.
+- [x] Rediscover both B210s simultaneously in two successive runs; confirm
+  USB 3 / 5000 Mb/s and separate host-controller paths for both devices.
+- [x] Verify actual DU2 startup: B210 328B021 over USB 3, carrier 640000 /
+  3600 MHz, PCI 2, SSB 639648, F1/E2 completed, RIC gNB 411 / DU ID 2 and KPM ID 2.
+- [ ] Verify UE2 identity, registration, IPv4 PDU and UL. Repeat discovery after
+  reconnecting hardware before the later dual-DU test.
+
+See the [DU2 bring-up procedure](../docs/dual_fr1_runbook.md) and
+[preparation evidence](../docs/evidence/2026-10-13_du2_preparation/manifest.json)
+for current commands and explicit preparation-versus-live acceptance status.
 
 ## Carrier Selection and RF Contract
 
@@ -93,8 +147,8 @@ scope; missing downlink results do not block this uplink-only milestone.
 | Channel bandwidth | 20 MHz | 20 MHz |
 | Common SCS | 30 kHz | 30 kHz |
 | Nominal channel interval | 3650–3670 MHz | 3590–3610 MHz |
-| SSB NR-ARFCN | `643680` confirmed in retained 2026-10-12 startup; modem readback not retained; recheck after configuration/version changes | Derive from the final DU2 configuration; confirm startup and UE scan |
-| Radio | B210 serial `3271233`; rediscover before use | Separate B210; record the actual second serial |
+| SSB NR-ARFCN | `643680` confirmed in retained 2026-10-12 startup; modem readback not retained; recheck after configuration/version changes | `639648` confirmed in actual 2026-10-13 DU2 startup; modem lock/serving-cell readback pending |
+| Radio | B210 serial `3271233`, USB 3 at `2-1.3` / controller `NVDA8000:00`; rediscover before use | B210 serial `328B021`, USB 3 at `6-1.1` / controller `NVDA8000:02`; rediscover before use |
 | Sample rate | 23.04 MS/s | Start from 23.04 MS/s and validate the actual selected radio |
 | Gain | Choose/record low-power gain and attenuation; historical TX 70 / RX 35 is a reference | Choose/record independently for the second RF path and verify low-power operation |
 
@@ -196,21 +250,22 @@ they already exist:
 
 | Location | Purpose |
 | --- | --- |
-| `configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml` | Standalone DU1 radio/cell/F1/E2/KPM configuration; deployed and verified for single-link uplink functionality; RF stability pending |
-| `configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml` | Reviewed DU2 radio, cell, and F1 configuration with actual serial |
-| `configs/ocudu/dual_fr1/du2_flexric.yml` | DU2 E2/KPM and 1000-ms scheduler/RLC metrics |
+| `configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml` | Deployed and verified for single-link UL functionality; underflow remediation deferred |
+| `configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml` | Prepared/deployed DU2 radio/cell/F1 configuration for B210 328B021; offline checks passed, live acceptance pending |
+| `configs/ocudu/dual_fr1/du2_flexric.yml` | Prepared DU2 E2/KPM overlay and 1000-ms scheduler/RLC metrics |
 | `configs/flexric/xapp_du_kpm_base5.conf` | One DU-only five-metric subscription, shared with Plan 2 when available |
 | `patches/flexric/dual-fr1-kpm-diagnostics.patch` | Minimal monitor attribution, missing-value, and lifecycle changes |
-| `scripts/dual_fr1/check_config.py` | Offline identity, address, channel, placeholder, and file checks |
+| `scripts/dual_fr1/check_config.py` | Implemented offline identities, F1/E2, nominal channels, missing serial, metrics and writable log checks; operating authorization and SSB derivation remain separate |
 | `scripts/dual_fr1/configure_ue_routes.sh` | Guarded per-UE policy routes and precise rollback |
 | `scripts/dual_fr1/verify_kpm.py` | Per-link report/lifecycle/evidence checks |
-| `docs/dual_fr1_runbook.md` | Final operator procedure and actual tested settings |
+| `docs/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; actual startup/F1/E2 verified, UE2 UL pending |
+| `docs/dual_ue_quick_start.md` | Operator quick start for UE2-first/dual UL, real modem/SIM selection, manual guarded source-policy paths and cleanup; live dual-UE acceptance pending |
 
 Keep DU1's maintained configuration in Falcon and deploy it to
 `$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml`. DU1 parse/start commands use
 that deployed copy; repeat the copy after configuration changes and retain its
 hash in acceptance evidence. The current copy is deployed and passed the uplink functional checkpoint;
-RF stability and full dual-link acceptance remain pending.
+Underflow remediation is deferred; full dual-link UL acceptance remains pending.
 
 Use per-run local log overlays under the evidence directory for CU and DU2;
 DU1 uses its standalone configuration and `log --filename` for the run's log.
@@ -302,8 +357,8 @@ pending until DU1 revalidation and live coexistence pass.
   `du1_b210_n78_3660mhz.yml` with `cell_cfg.dl_arfcn: 644000`, explicit
   n78/20 MHz/30 kHz, radio/F1/E2/KPM settings, and validated low-power RF
   settings. The file is deployed with actual TX 70 / RX 35 values. The 2026-10-12
-  uplink functional checkpoint passed; RF stability and calibrated-condition
-  validation remain pending. Keep its radio and cell/DU identity unchanged.
+  uplink functional checkpoint passed; underflow remediation is deferred and
+  calibrated-condition validation remains pending. Keep its radio and cell/DU identity unchanged.
   Create DU2 from a reviewed copy, changing radio serial, carrier, DU ID,
   sector ID, PCI, F1 binds, and logs.
 - [ ] Keep the shared gNB ID/width consistent across CU and DUs. Verify the CU
@@ -408,11 +463,11 @@ socket binds, and logs; unresolved placeholders prevent startup.
 - [ ] With DU2 stopped, start shared CU, the existing RIC, and DU1 using its
   new standalone CBRS configuration. Derive/confirm the new DU1 SSB, update UE1's cell lock, and
   revalidate the original subscriber's SA registration, IPv4 PDU session, private
-  ping and uplink/downlink traffic, actual five-metric reception, and normal
+  ping and uplink traffic, actual KPM reception with numeric UL metrics, and normal
   monitor subscription/deletion/exit. Use the installed monitor for this first
   single-DU check; Step 5 adds dual-DU diagnostics afterward.
 - [ ] Record the new DU1 carrier/SSB, gains, attenuation, measured output/leakage,
-  config hashes, and results as the accepted CBRS single-link baseline before
+  config hashes, and results as the accepted CBRS single-link UL baseline before
   enabling DU2 or replacing the original subscriber for dual-UE testing.
 
 Example parse-only checks after the planned configs and CU/DU2 log overlays exist:
@@ -433,7 +488,7 @@ cp "$FALCON_REPO/configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml" \
 ```
 
 **Exit criteria:** parsing/offline checks pass, DU1's new CBRS single-link
-traffic/KPM baseline is accepted, and both new subscribers are prepared with
+UL traffic/KPM baseline is accepted, and both new subscribers are prepared with
 their own credentials. Their live registration is still required in Step 7.
 
 ## Step 5 Prepare the Existing Five Metric KPM Monitor
@@ -497,6 +552,8 @@ cmake --build "$FLEXRIC_DUAL_BUILD" --target xapp_oran_moni -j 8
 
 **Exit criteria:** the existing monitor can produce unambiguous five-metric
 per-DU/per-UE evidence and exit normally, independently of Plan 1/2 completion.
+Under the current UL scope, DL noValue/nonnumeric observations do not block
+acceptance; the two UL measurements must be numeric and correctly attributed.
 
 ## Step 6 Bring Up Two DUs and the Existing RIC
 
@@ -618,21 +675,22 @@ paths pass private ping, and management routing remains usable.
 - [ ] Start two separate Spark iperf3 server processes bound to `10.45.0.1`, on
   ports 5201 and 5202. Two concurrent clients must not contend for one
   single-test server process.
-- [ ] Measure UE1 alone and UE2 alone, then both concurrently. Test uplink,
-  downlink, and opposite-direction pairs; bind clients to actual source IPs and
+- [ ] Measure UE1 UL alone and UE2 UL alone, then both UL concurrently.
+  Bind clients to actual source IPs and
   verify the policy route/interface used for each transfer.
 - [ ] Retain 60-second receiver summaries, direction, bitrate, retransmissions,
-  UDP loss/jitter, IP/WWAN identity, and concurrent DU/host error growth. Use
+  UL UDP loss/jitter, IP/WWAN identity, and concurrent DU/host observations. Use
   distinct filenames per case, repetition, direction, and link.
 - [ ] Overlap traffic with repeated normally completed monitor runs. Accumulate
   at least 30 real rows for each intended link while both links are attached;
-  each active-window acceptance requires all five named entries and at least
-  one numeric observation of every metric per link. Preserve noValue explicitly.
+  each active-window acceptance requires correct attribution and numeric
+  `DRB.UEThpUl` and `RRU.PrbTotUl` observations for each link. Retain the other
+  three entries/noValue states as observations without DL pass/fail requirements.
 - [ ] Verify full DU/UE identity and timestamps, per-link report counts, both
   subscription/deletion results, and normal xApp exit. Correlate throughput
   changes with that link's traffic; KPM-layer bitrate need not equal iperf rate.
-- [ ] Do not accept an all-null run or report physical multi-link validation
-  from fixtures. If PRB values fail, retain the failing tuple and investigate
+- [ ] Do not accept an all-null UL run or report physical multi-link validation
+  from fixtures. If UL PRB values fail, retain the failing tuple and investigate
   the existing getter limitation rather than substituting zero.
 
 Spark servers, each in its own foreground terminal:
@@ -646,7 +704,7 @@ iperf3 -s -B 10.45.0.1 -p 5202
 ```
 
 Laptop uplink examples in the corresponding UE terminals, with independently
-discovered variables; add `-R` for each downlink case:
+discovered variables:
 
 ```bash
 iperf3 -c 10.45.0.1 -p 5201 -B "${UE1_IP:?Read UE1 bearer}" -t 60 -i 1 -J
@@ -657,8 +715,7 @@ iperf3 -c 10.45.0.1 -p 5202 -B "${UE2_IP:?Read UE2 bearer}" -t 60 -i 1 -J
 ```
 
 Rate-controlled UDP examples after choosing each link's offered load from the
-measured standalone capacity; repeat with `-R` for downlink and save each JSON
-result separately:
+measured standalone UL capacity; save each JSON result separately:
 
 ```bash
 iperf3 -c 10.45.0.1 -p 5201 -B "${UE1_IP:?Read UE1 bearer}" \
@@ -684,17 +741,19 @@ The current OCUDU PRB getters index a snapshot vector using an internal UE
 index. Sparse/reused indexes can produce wrong or missing values, even with one
 physical UE per DU. Five-metric delivery proves transport and attribution, not
 all getter correctness. Track getter correctness separately; an unresolved
-missing-metric failure keeps this five-metric gate pending.
+missing UL-metric failure keeps this UL gate pending. DL noValue/nonnumeric
+observations are recorded without blocking the current UL target.
 
 **Exit criteria:** both independent data paths work concurrently, and the
-existing KPM xApp receives the five measurements with correct DU/UE attribution
-for both links and completes both subscription lifecycles normally.
+existing KPM xApp receives numeric UL throughput/UL PRB measurements with correct
+DU/UE attribution for both links and completes both subscription lifecycles
+normally. The other three subscribed measurements remain observations.
 
 ## Step 10 Accept Coexistence and Repeatability
 
 - [ ] With fixed gains and recorded antenna/attenuation setup, compare each
-  link alone, the other DU transmitting idle, both uplink, both downlink, DU1 UL
-  with DU2 DL, and DU1 DL with DU2 UL. Run three 60-second trials per case.
+  link's UL alone, its UL with the other DU transmitting idle, and both links' UL
+  concurrently. Run three 60-second trials per case.
 - [ ] Select the same controlled offered load for a link in its isolated and
   simultaneous trials, at no more than 70% of its demonstrated solo capacity.
   Use receiver goodput and UDP loss/jitter; full-rate TCP tests additionally
@@ -708,9 +767,11 @@ for both links and completes both subscription lifecycles normally.
   CRC-failure/BLER increase no more than five percentage points. Record missing
   observability and its effect on the RF conclusion. Existing dummy KPM RF
   getters cannot supply this evidence; use available PHY/firmware observations.
-- [ ] Count USB/radio underflow, overflow, late events, process failures, and
-  host saturation for every case. No persistent error growth or dropped link
-  can pass. Separate RF coupling from CPU/USB/CU/UPF/routing bottlenecks and
+- [ ] Record USB/radio underflow, overflow, late events, process failures, and
+  host saturation for every case. Underflow count/growth alone is deferred and
+  nonblocking for this UL scope. Dropped SA/PDU links, failed UL traffic, process
+  failures, or persistent overflow/late failures still keep their gates pending.
+  Separate RF coupling from CPU/USB/CU/UPF/routing bottlenecks and
   repeat the failing case after a measured remedy.
 - [ ] Reattach UE2 while UE1 continues, then reverse the roles. Update changed
   F1AP IDs and verify fresh attribution, working survivor traffic, and KPM.
@@ -718,17 +779,18 @@ for both links and completes both subscription lifecycles normally.
   RIC and DUs in the documented order. Relaunch the xApp after both Setup records.
   The existing SDK has no accepted
   late-DU-join or automatic RIC-reconnection path. Repeat two-link reception.
-- [ ] After each reattachment/restart, repeat Step 9's active-window five-metric
-  gate with fresh identities and at least 30 rows per link. Missing PRB values
+- [ ] After each reattachment/restart, repeat Step 9's active-window UL-metric
+  gate with fresh identities and at least 30 rows per link. Missing UL PRB values
   or ambiguous/wrong-source tuples keep the corresponding repeatability gate
   pending; retain evidence and diagnose the source/index issue separately.
 - [ ] Repeat a complete cold start with both subscribers and retained configs.
-  Preserve the hashes/results as the accepted dual FR1 baseline.
+  Preserve the hashes/results as the accepted dual FR1 UL baseline.
 
-**Exit criteria:** coexistence passes under the recorded load/setup, both links
+**Exit criteria:** UL coexistence passes under the recorded load/setup, both links
 survive the intended independent-UE tests, and cold-start/restart procedures are
 reproducible. State the result as nominally non-overlapping carriers with tested
-coexistence; do not claim zero interference in all operating conditions.
+UL coexistence; do not claim zero interference or accepted RF stability in all
+operating conditions. Underflow remediation remains a separate deferred task.
 
 ## Step 11 Integrate Accepted Plan 1 and Plan 2 Features
 
@@ -768,7 +830,7 @@ gate below passes. Keep the existing global implementation order in
   at least 10 rows per link with both RF values valid, and no swapped/rounded/
   substituted RF measurements. Preserve unavailable values explicitly.
 - [ ] After RF integration, rerun both links in `base5`, including application
-  traffic, attribution, source-to-dummy preservation when the broker is present,
+  UL traffic, attribution, source-to-dummy preservation when the broker is present,
   and orderly lifecycle. Keep accepted baseline evidence immutable.
 - [ ] Record each integration as Accepted or Pending with its precise gate.
   If a feature is not accepted, retain the working five-metric dual baseline
