@@ -1,0 +1,9 @@
+Sanitized RIC excerpt
+Source: /tmp/flexric-ric.log
+
+[E2AP]: E2 SETUP-REQUEST rx from PLMN   1. 1 Node ID 411 RAN type ngran_gNB_DU ID 1
+[NEAR-RIC]: Accepting RAN function ID 2 with def = ORAN-E2SM-KPM 
+[E2AP]: E2 SETUP-REQUEST rx from PLMN   1. 1 Node ID 411 RAN type ngran_gNB_DU ID 1
+[NEAR-RIC]: Accepting RAN function ID 2 with def = ORAN-E2SM-KPM 
+
+The two DU1 setup entries belong to sequential connections around a restart; the accepted KPM run listed one connected node.

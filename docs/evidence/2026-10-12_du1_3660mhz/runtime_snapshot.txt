@@ -1,0 +1,18 @@
+Earlier read-only Spark inspection in the 2026-10-12 session.
+Exact command wall-clock time: Not recorded. This is not a fresh runtime query.
+
+Command:
+ps -eo pid,comm,args | awk '$2 ~ /^(odu|ocu|nearRT-RIC|xapp_oran_moni|iperf3)$/ {print}'
+
+Observed processes:
+1137076 ocu        build/apps/cu/ocu -c configs/cu.yml
+1137093 nearRT-RIC /usr/local/bin/flexric/ric/nearRT-RIC -c /usr/local/etc/flexric/ric.conf
+1141214 odu        build/apps/du_split_8/odu -c configs/du1_b210_n78_3660mhz.yml log --filename /tmp/falcon-du1-3660.DyQbKLEo/du.log
+1141306 iperf3     iperf3 -s -B 10.45.0.1
+
+Command: ip -4 addr show dev ogstun
+Observed: ogstun UP, MTU 1400, inet 10.45.0.1/16.
+
+The attempted protected Open5GS log read with sudo -n returned:
+sudo: a password is required
+No protected subscriber/authentication log contents were retained.

@@ -1,13 +1,13 @@
 # Project Progress and System Configuration
 
-Last updated: **2026-10-07**. The 2026-10-05 session established initial UE application traffic. The 2026-10-07 session installed FlexRIC and verified E2 Setup, actual UE KPM reports and subscription/deletion on the existing UHD DU. Two additional Open Cells SIMs have been personalized and verified in Quectel modems, including SIM2 in a second physical modem; new-subscriber registration and dual-DU operation remain pending. Cold-start/new-laptop data reproduction and synchronized traffic characterization also remain pending.
+Last updated: **2026-10-12**. DU1 migrated from 3750 to **3660 MHz within n78**. Single-UE IPv4 ping, a 30-second TCP uplink (receiver **17.0 Mbit/s**, sender Retr **0**), and **12 complete five-metric KPM reports for UE F1AP ID 5** passed. The current scope is uplink only. Recurring RF underflows keep stability acceptance open; the dual-DU baseline and new-subscriber identity correlation remain pending. See the [daily log](../dev_logs/2026-10-12_ruibin.md) and [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json).
 
 ## Current verified single-link architecture
 
 ```mermaid
 flowchart LR
     Laptop[Linux laptop application] <-->|USB / QMI data interface| UE[RMU500EK / RM500Q-GL]
-    UE <-->|NR SA n78: 3750 MHz| B210[USRP B210: 3271233]
+    UE <-->|NR SA n78: 3660 MHz| B210[USRP B210: 3271233]
     subgraph Spark[NVIDIA DGX Spark]
         DU[OCUDU DU1]
         CU[OCUDU CU: CP / UP]
@@ -34,19 +34,19 @@ The tested application path is **laptop ↔ Spark over private 5G**. Management 
 
 ## Phase status
 
-| Phase | Scope | Status on 2026-10-07 |
+| Phase | Scope | Status on 2026-10-12 |
 |---|---|---|
 | 0 | DGX Spark baseline | Verified |
 | 1 | UHD / B210 #1 / USB 3 | Verified |
 | 2 | OCUDU build | Verified |
 | 3 | Single CU/DU / N2 / F1 / Open5GS | Verified |
-| 4 | RM500Q SA registration, authentication, IPv4 PDU, WWAN, local data | Verified in initial session |
+| 4 | RM500Q SA registration, authentication, IPv4 PDU, WWAN, local data | Initial-session baseline retained; 3660-MHz private ping and 30-second TCP uplink passed; active IMSI not captured |
 | 5 | Second DU / second radio / second UE | SIM provisioning and both modem UICC checks complete; matching Open5GS records, DU2/radio deployment and dual-link end-to-end validation pending |
-| 6 | Host real-time work | Performance script and privileged launch applied; sustained stability open |
-| 7–8 | FlexRIC / KPM xApp | Installed; E2 Setup, actual UE reports, repaired timestamp display, subscription and deletion verified |
+| 6 | Host real-time work | Historical tuning retained; 117 RF underflows observed by 11:39:44 EDT on 2026-10-12; stability open |
+| 7–8 | FlexRIC / KPM xApp | At 3660 MHz: DU1 E2 Setup and 12 complete UE ID 5 reports passed; subscription/deletion and success marker retained |
 | 9–11 | MPTCP / RIC-assisted control / AI steering | Future work |
 
-Next, prepare the two matching Open5GS subscribers and validate the intended CU + DU1 + DU2 paths using the [SIM and Dual-UE Guide](sim_provisioning_and_dual_ue.md). Preserve the working single-link configuration while doing this. KPM/application correlation, cold-start/new-laptop reproduction, traffic characterization and Baseline v1 acceptance remain separate work before active steering.
+First diagnose RF underflows and repeat the uplink with retained KPM timing and RF-error counts. Then prepare the two matching Open5GS subscribers and validate the intended CU + DU1 + DU2 paths using the [SIM and Dual-UE Guide](sim_provisioning_and_dual_ue.md). Preserve the working single-link configuration while doing this. KPM/application correlation, cold-start/new-laptop reproduction, traffic characterization and Baseline v1 acceptance remain separate work before active steering.
 
 ## Platform and prior build evidence
 
@@ -71,7 +71,28 @@ The NVIDIA kernel supports `CONFIG_MPTCP=y`, `CONFIG_MPTCP_IPV6=y` and `net.mptc
 
 ## Configuration records
 
-The executable configuration files are in `/home/nyu/ocudu/configs`, outside this documentation repository. The base excerpts below record the 2026-10-05 traffic baseline; the gain difference observed on 2026-10-07 and the current E2 overlay are recorded separately. Editing this document does not deploy configuration.
+The current standalone configuration is maintained in Falcon and deployed to `/home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml`. It includes radio, cell, F1, E2/KPM, and metrics settings. The preserved `du1_b210_n78_20mhz.yml` and `du1_flexric.yml` files are historical references. Editing this document does not deploy configuration.
+
+### DU1 3660 MHz uplink checkpoint — 2026-10-12
+
+| Item | Recorded value |
+| --- | --- |
+| Config | [Standalone DU1 file](../configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml); deployed copy under `/home/nyu/ocudu/configs/` |
+| Carrier / SSB | `644000` / **3660 MHz**; SSB `643680` from actual startup |
+| Band / channel / SCS / PCI | n78 / 20 MHz / 30 kHz / 1 |
+| B210 / sample rate / gains | Serial `3271233`, USB 3, 23.04 MS/s, TX 70 / RX 35 |
+| Identity / F1 | gNB 411, DU 1; DU `127.0.10.2` to CU `127.0.10.1` |
+| E2 / metrics | RIC `127.0.0.1:36421`; scheduler/RLC enabled; 1000-ms period |
+| UE data path | `10.45.0.2 / wwan0` to Spark `10.45.0.1`; installed IMSI and bearer ID not recorded |
+| TCP UL | Sender 17.7 Mbit/s / Retr 0 / 30.03 s; receiver 17.0 Mbit/s / 30.24 s |
+| Ping | 5/5 replies, 0% loss; RTT min/avg/max/mdev 33.593/136.571/538.943/201.191 ms |
+| KPM | One connected DU node; UE F1AP ID 5; 12 complete five-metric rows; age 508–820 µs |
+| RF stability | Pending; 117 underflows observed by 11:39:44 EDT |
+| Config SHA-256 | `c40667a31206aa4ca7b8f08d826f7d87320df5280b59ef388dbab34e9f9b326d` for both maintained and deployed copies |
+
+The UE lock is `AT+QNWLOCK="common/5g",1,643680,30,78`. SSB was read from the new DU startup; it was not calculated using the old carrier-to-SSB offset. This checkpoint records migration and uplink functionality, with stability pending. Downlink is outside its acceptance scope. [Evidence manifest](evidence/2026-10-12_du1_3660mhz/manifest.json) retains source revisions and binary/config hashes.
+
+The following DU1 base excerpt and radio table are the **historical 3750-MHz configuration**, retained for comparison.
 
 ### DU1: `configs/du1_b210_n78_20mhz.yml`
 
@@ -264,7 +285,7 @@ Verified in the reported session: USB 3/UHD; CU/DU startup; N2/F1-C and F1-U/N3 
 
 The active bearer example was `wwan0`, `10.45.0.2/30`, gateway `10.45.0.1`, MTU 1400. Modem/bearer IDs, QMI/AT port numbers and UE IP can change and must be queried. An EPS initial bearer display of `ipv4v6` is not evidence about the active IPv4 PDU bearer.
 
-The first 10-second TCP uplink reported sender 7.50 MBytes / 6.29 Mbit/s / Retr 0, receiver 6.50 MBytes / 5.09 Mbit/s, instantaneous approximately 3.1–9.4 Mbit/s. This proves functional user traffic, not optimized throughput or sustained stability. The independent reverse ping, TCP downlink, UDP, and video procedures remain acceptance work.
+The first 10-second TCP uplink reported sender 7.50 MBytes / 6.29 Mbit/s / Retr 0, receiver 6.50 MBytes / 5.09 Mbit/s, instantaneous approximately 3.1–9.4 Mbit/s. This proves functional user traffic, not optimized throughput or sustained stability. These are historical 3750-MHz results. The 2026-10-12 3660-MHz uplink checkpoint above supersedes them for current operation; reverse ping, downlink, UDP, and video are outside the current uplink-only scope.
 
 Confirmed repairs: NRF `999/70` → `001/01`; missing subscriber provisioned; private SA cell selection/lock; subscriber type 3 → 1 after IPv4v6 rejection; host performance improvements; actual static WWAN settings applied. See the [chronological troubleshooting record](troubleshooting/2026-10-05_sa_bringup.md) for evidence and ruled-out hypotheses.
 
@@ -274,12 +295,12 @@ A later installed-monitor run verified the repaired timestamp display with actua
 
 ## Host performance and remaining work
 
-`ocudu_performance` was applied with Y/Y/Y: 20 CPU governors set to performance, DRM KMS polling disabled, four network-buffer settings set to 33554432. CU/DU run with sudo in the reproduction procedure. A sampled post-tuning check saw underflow 0, late 1. The script's network-buffer settings target Ethernet USRPs; the B210 improvement was not isolated to that setting.
+`ocudu_performance` was applied with Y/Y/Y: 20 CPU governors set to performance, DRM KMS polling disabled, four network-buffer settings set to 33554432. CU/DU run with sudo in the reproduction procedure. A historical sampled post-tuning check saw underflow 0, late 1. The 2026-10-12 run later showed recurring underflow growth, so that earlier sample does not establish current stability. The script's network-buffer settings target Ethernet USRPs; the B210 improvement was not isolated to that setting.
 
 Kernel replacement, PREEMPT_RT, boot parameters, CPU isolation, IRQ pinning and hugepage changes were not part of this repair. Earlier privilege warnings alone were non-blocking; recurring RF real-time failures required host tuning. Check runtime settings after reboot and monitor sustained error growth.
 
 Next dual-link sequence: add/verify both matching Open5GS records (SST 1, `internet`, IPv4 type 1 and checked SQN representation) → prepare distinct DU/cell/radio identities and CU + DU1 + DU2 → confirm each modem's intended cell and registration → independent PDU sessions, WWAN interfaces and IP paths → MPTCP → extend verified DU1 FlexRIC collection to per-DU/per-UE telemetry → AI predictor/steering → blockage/QoE experiments.
 
-Single-link acceptance continues alongside that preparation: synchronized KPM/application correlation, cold-start/new-laptop reproduction, 30–60-second uplink, downlink, UDP 2/4/6/8/10 Mbit/s and jitter/loss, video/latency/QoE, and a frozen Single-Link Baseline v1. SIM preparation alone does not validate these application tests or the dual RAN.
+The current single-link checkpoint is uplink only: the 30-second TCP transfer and five-metric delivery passed. Resolve RF underflows, repeat measured uplink/KPM capture, retain subscriber/bearer identity and exact traffic timing, and test cold-start repeatability before freezing a stable baseline. Downlink, UDP, and video remain future work outside this checkpoint. SIM preparation alone does not validate these application tests or the dual RAN.
 
 Follow the [Full Reproduction Runbook](full_reproduction_runbook.md), or its [Spark](spark_quick_commands.md) and [UE laptop](ue_laptop_quick_commands.md) command summaries. Shutdown order is traffic/xApp → PDU → laptop WWAN → DU → FlexRIC → CU → 5GC → optional MongoDB. Check runtime state before operation; keep SIM secrets and raw INFO logs out of Git.

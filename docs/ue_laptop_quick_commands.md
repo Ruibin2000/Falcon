@@ -2,13 +2,13 @@
 
 Updated: 2026-10-12. Run these steps in order in **one Bash terminal per UE on the laptop** and keep that UE's variables in its terminal. Continue only after each step succeeds. For full instructions, see [Runbook stages 10–14](full_reproduction_runbook.md#10-prepare-a-new-ubuntulinux-laptop); start Spark using [Spark Quick Commands](spark_quick_commands.md).
 
-For the DU1 migration to **3660 MHz**, use the recorded **PCI 1 / SSB 643680 / SCS 30 kHz / n78** lock in step 2 after comparing it with the current DU startup cell line. This tuple comes from the operator-provided 2026-10-12 startup summary. Historical 3750-MHz traffic/KPM results below do not establish acceptance at the new carrier. The matching subscriber must be prepared for the SIM actually installed; using the new SIM1 requires its own core record.
+For the DU1 migration to **3660 MHz**, use the recorded **PCI 1 / SSB 643680 / SCS 30 kHz / n78** lock in step 2 after comparing it with the current DU startup cell line. This tuple comes from the operator-provided 2026-10-12 startup summary. The 2026-10-12 new-carrier check passed **uplink functionality**: UE `10.45.0.2 / wwan0` reached Spark `10.45.0.1`, TCP receiver goodput was 17.0 Mbit/s for 30.24 seconds with sender Retr 0, and ping loss was 0%. The KPM xApp received 12 complete reports for UE F1AP ID 5. RF stability remains pending because of recurring underflows; downlink is outside the current scope. See the [daily log](../dev_logs/2026-10-12_ruibin.md). The matching subscriber must be prepared for the SIM actually installed; using the new SIM1 requires its own core record.
 
-The 2026-10-05 session verified single-UE registration, IPv4 connectivity, and an initial 10-second TCP uplink. The 2026-10-07 session verified five DU KPM measurements from a real UE. After the timestamp repair, the latest run received 12 reports for UE ID `7`, with `report_age_us` of **591–796 µs**, and the xApp exited normally. The ping and 30-second uplink/downlink commands below are further acceptance checks, not results demonstrated in this session.
+The 2026-10-05 session verified single-UE registration, IPv4 connectivity, and an initial 10-second TCP uplink. The 2026-10-07 session verified five DU KPM measurements from a real UE. After the timestamp repair, the historical UE ID `7` run received 12 reports with `report_age_us` of **591–796 µs**. The 2026-10-12 UE ID `5` run received 12 reports with **508–820 µs**, successful subscription, deletion, and the monitor success marker. These ages describe report processing and forwarding, not application RTT.
 
 ## 0 Select the SIM and subscriber plan
 
-Open Cells SIM provisioning, Milenage authentication, and Quectel USIM-readiness checks are complete for both cards. The new IMSIs have **not yet registered with the RAN/Open5GS**. The earlier single-link baseline used IMSI `001010000000001`; its traffic/KPM evidence does not establish registration of the new cards.
+Open Cells SIM provisioning, Milenage authentication, and Quectel USIM-readiness checks are complete for both cards. Registration of these specific new IMSIs has **not yet been evidenced**; the active IMSI was not captured in the current uplink excerpts. The earlier single-link baseline used IMSI `001010000000001`; its traffic/KPM evidence does not establish registration of the new cards.
 
 | Intended UE / DU | Card | IMSI | Observed modem IMEI |
 | --- | --- | --- | --- |
@@ -267,21 +267,20 @@ Show the ping summary while keeping errors visible:
 ping -q -I "$WWAN_IF" -c 5 10.45.0.1
 ```
 
-Require `0% packet loss`. Give Spark the actual `UE_IP` from the bearer summary for a reverse ping. Start `iperf3 -s -B 10.45.0.1` on Spark first.
+Require `0% packet loss`; the 2026-10-12 run received 5/5 replies. RTT min/avg/max/mdev was 33.593/136.571/538.943/201.191 ms; the first reply was slow and its cause was not established. Start `iperf3 -s -B 10.45.0.1` on Spark first.
 
-Run these **one at a time**, keeping the final sender/receiver summaries:
+The current checkpoint requires **uplink only**. Keep the final sender/receiver summaries:
 
 ```bash
-# Uplink: UE -> Spark, 30 seconds (not yet verified)
+# Uplink: UE -> Spark; functional result verified on 2026-10-12
 iperf3 -c 10.45.0.1 -B "${UE_IP:?Use the terminal where WWAN was configured}" -t 30 -i 0
-
-# Downlink: Spark -> UE, 30 seconds (not yet verified)
-iperf3 -c 10.45.0.1 -B "${UE_IP:?Use the terminal where WWAN was configured}" -R -t 30 -i 0
 ```
+
+The retained result was sender **63.5 MBytes / 17.7 Mbit/s / Retr 0** and receiver **61.1 MBytes / 17.0 Mbit/s**. A successful transfer does not close the RF stability gate; repeat uplink with concurrent RF-error monitoring after addressing the underflows.
 
 The repaired KPM library and monitor are installed and verified to match the new build. Keep **CU, DU, and FlexRIC** running on Spark; the existing iperf server can stay running. Start the 30-second uplink above in the UE terminal where WWAN was configured, then **immediately run the newly installed `xapp_oran_moni` for about 10 seconds on Spark**. See [Spark verification after installation](spark_quick_commands.md#7a-verify-reports-after-the-timestamp-repair). Require `report_age_us`, a UE ID, KPM values, and a normal exit.
 
-The earlier 2026-10-07 run received measurements for UE ID `14`. After the repair, UE ID `2` and the later UE ID `7` each produced **12 reports**, with `report_age_us` ranges of **499–717 µs** and **591–796 µs**, respectively. Subscription, deletion, and xApp exit all succeeded. An intermediate collection window subscribed successfully but received no UE reports. If the result is `NO_UE`, first confirm registration and that UE traffic covers the collection window. `report_age_us` is report age, not application RTT. Fresh ping results, 30-second application uplink/downlink throughput, reporting-period accuracy, and sustained stability remain unverified. Record direction, summary rates, retransmissions, and growth in Spark RF errors on both sides.
+The earlier 2026-10-07 run received measurements for UE ID `14`. After the repair, UE ID `2` and the later UE ID `7` each produced **12 reports**, with `report_age_us` ranges of **499–717 µs** and **591–796 µs**, respectively. Subscription, deletion, and xApp exit all succeeded. An intermediate collection window subscribed successfully but received no UE reports. If the result is `NO_UE`, first confirm registration and that UE traffic covers the collection window. `report_age_us` is report age, not application RTT. The 2026-10-12 ping and 30-second TCP uplink passed, with UE ID 5 producing 12 complete five-metric reports. Precise traffic/KPM window correlation, reporting-period accuracy, and sustained stability remain unverified. Downlink is outside the current scope. Record direction, summary rates, retransmissions, and growth in Spark RF errors on both sides.
 
 For SIM or registration problems, use the actual `(qmi)` port with `qmicli -p`; see [Runbook stage 10](full_reproduction_runbook.md#10-prepare-a-new-ubuntulinux-laptop). Use proxy mode alongside ModemManager rather than competing for a direct QMI session.
 

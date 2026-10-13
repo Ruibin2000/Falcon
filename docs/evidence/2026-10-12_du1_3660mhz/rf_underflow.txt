@@ -1,0 +1,10 @@
+Sanitized RF underflow snapshot, retained from the earlier read-only verification.
+Source: /tmp/falcon-du1-3660.DyQbKLEo/du.log
+117 underflow events were observed by 2026-10-12 11:39:44 EDT.
+Timestamps in the raw lines below are UTC. This is a bounded snapshot, not a final run total.
+2026-10-12T15:27:58.401397 [RF      ] [W] Real-time failure in RF: underflow
+2026-10-12T15:28:11.926135 [RF      ] [W] Real-time failure in RF: underflow
+2026-10-12T15:39:40.468283 [RF      ] [W] Real-time failure in RF: underflow
+2026-10-12T15:39:44.518393 [RF      ] [W] Real-time failure in RF: underflow
+2026-10-12T15:39:44.574010 [RF      ] [W] Real-time failure in RF: underflow
+2026-10-12T15:39:44.776789 [RF      ] [W] Real-time failure in RF: underflow

@@ -11,9 +11,9 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 | --- | --- |
 | Plan | 3 |
 | Task | `dual-ue-du-fr1-channels` |
-| Status | Planned; implementation and acceptance pending |
+| Status | In progress: DU1 3660-MHz single-UE uplink functionality passed; RF stability and dual-link baseline pending |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 10 : 37: 33 Oct 12, 2026 EDT |
+| Last updated at | 11 : 59: 34 Oct 12, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | To be assigned |
@@ -36,9 +36,10 @@ by real five-metric KPM reception from DU1. This is historical evidence, not a
 claim that those services or radios are running now.
 
 The historical DU1 carrier is ARFCN `650000` / 3750 MHz, with SSB `649632`.
-Archive that configuration and its evidence. The target dual-link deployment
-replaces it with a new DU1 carrier inside CBRS; it requires fresh SSB derivation,
-modem locking, and single-link traffic/KPM acceptance.
+Preserve that configuration and its historical evidence. DU1 was migrated to
+ARFCN `644000` / 3660 MHz on 2026-10-12, with newly observed SSB `643680`.
+Single-UE uplink functionality and five-metric KPM reception passed; RF stability
+and the full dual-link acceptance requirements remain pending.
 
 The [SIM preparation record](../docs/sim_provisioning_and_dual_ue.md) identifies
 two provisioned cards and two physical RM500Q modems. Registration of their new
@@ -62,9 +63,29 @@ shared-CU operation, independent host data paths, coexistence tests, and per-DU/
 per-UE KPM attribution. Pi-Radio/FR3 conversion, MPTCP steering, AI prediction,
 and calibrated RF measurement work have separate acceptance requirements.
 
+## 2026-10-12 Single-UE / DU1 Uplink Checkpoint
+
+The operator requested **uplink-only** acceptance for this checkpoint. The
+frequency migration succeeded within n78; the band itself did not change.
+[Today's log](../dev_logs/2026-10-12_ruibin.md) and the
+[retained evidence manifest](../docs/evidence/2026-10-12_du1_3660mhz/manifest.json)
+record startup, UE correlation, traffic, telemetry, and configuration hashes.
+
+- [x] Deploy the complete DU1 file at `/home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml`, preserving the historical base/E2 files; maintained/deployed hashes matched.
+- [x] Verify B210 `3271233` over USB 3, carrier `644000` / 3660 MHz, SSB `643680`, PCI 1, 20 MHz / 30 kHz, and successful F1/E2 setup for DU ID 1.
+- [x] Verify one DU, UE F1AP ID 5, IPv4 private ping (5/5, 0% loss), 30-second TCP uplink (receiver 17.0 Mbit/s; sender Retr 0), and 12 complete five-metric KPM rows with subscription/deletion and the success marker.
+- [ ] Resolve RF underflows and verify sustained/repeated uplink operation. A bounded snapshot contained 117 underflows by 11:39:44 EDT.
+- [ ] Retain the active IMSI/SIM/bearer and modem serving-cell readback. These were not captured in the acceptance excerpts.
+- [ ] Complete the remaining RF-condition, DU2, coexistence, identity, and cold-start gates required by the full dual-link plan.
+
+This is **Migration Successful / Uplink Functionality Passed / Stability
+Pending**, not completion of Steps 1–10. Downlink was not requested or run for
+this checkpoint. Future dual-link tests retain their own planned acceptance
+scope; missing downlink results do not block this uplink-only milestone.
+
 ## Carrier Selection and RF Contract
 
-| Parameter | DU1 proposed CBRS migration | DU2 proposed configuration |
+| Parameter | DU1 current carrier, uplink functionality passed | DU2 proposed configuration |
 | --- | --- | --- |
 | Band | n78, explicitly configured | n78, explicitly configured |
 | Carrier NR-ARFCN | `644000` | `640000` |
@@ -72,7 +93,7 @@ and calibrated RF measurement work have separate acceptance requirements.
 | Channel bandwidth | 20 MHz | 20 MHz |
 | Common SCS | 30 kHz | 30 kHz |
 | Nominal channel interval | 3650–3670 MHz | 3590–3610 MHz |
-| SSB NR-ARFCN | `643680` in operator-provided 2026-10-12 startup summary; UE confirmation pending; recheck after configuration/version changes | Derive from the final DU2 configuration; confirm startup and UE scan |
+| SSB NR-ARFCN | `643680` confirmed in retained 2026-10-12 startup; modem readback not retained; recheck after configuration/version changes | Derive from the final DU2 configuration; confirm startup and UE scan |
 | Radio | B210 serial `3271233`; rediscover before use | Separate B210; record the actual second serial |
 | Sample rate | 23.04 MS/s | Start from 23.04 MS/s and validate the actual selected radio |
 | Gain | Choose/record low-power gain and attenuation; historical TX 70 / RX 35 is a reference | Choose/record independently for the second RF path and verify low-power operation |
@@ -175,7 +196,7 @@ they already exist:
 
 | Location | Purpose |
 | --- | --- |
-| `configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml` | Standalone DU1 radio/cell/F1/E2/KPM configuration; new carrier, actual file gains, and separately derived SSB; live acceptance pending |
+| `configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml` | Standalone DU1 radio/cell/F1/E2/KPM configuration; deployed and verified for single-link uplink functionality; RF stability pending |
 | `configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml` | Reviewed DU2 radio, cell, and F1 configuration with actual serial |
 | `configs/ocudu/dual_fr1/du2_flexric.yml` | DU2 E2/KPM and 1000-ms scheduler/RLC metrics |
 | `configs/flexric/xapp_du_kpm_base5.conf` | One DU-only five-metric subscription, shared with Plan 2 when available |
@@ -188,8 +209,8 @@ they already exist:
 Keep DU1's maintained configuration in Falcon and deploy it to
 `$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml`. DU1 parse/start commands use
 that deployed copy; repeat the copy after configuration changes and retain its
-hash in acceptance evidence. The current copy is deployed; live acceptance
-remains pending.
+hash in acceptance evidence. The current copy is deployed and passed the uplink functional checkpoint;
+RF stability and full dual-link acceptance remain pending.
 
 Use per-run local log overlays under the evidence directory for CU and DU2;
 DU1 uses its standalone configuration and `log --filename` for the run's log.
@@ -280,8 +301,9 @@ pending until DU1 revalidation and live coexistence pass.
 - [ ] Preserve the historical DU1 files and prepare the standalone
   `du1_b210_n78_3660mhz.yml` with `cell_cfg.dl_arfcn: 644000`, explicit
   n78/20 MHz/30 kHz, radio/F1/E2/KPM settings, and validated low-power RF
-  settings. The file is prepared with actual TX 70 / RX 35 values; RF validation
-  remains pending. Keep its radio and cell/DU identity unchanged.
+  settings. The file is deployed with actual TX 70 / RX 35 values. The 2026-10-12
+  uplink functional checkpoint passed; RF stability and calibrated-condition
+  validation remain pending. Keep its radio and cell/DU identity unchanged.
   Create DU2 from a reviewed copy, changing radio serial, carrier, DU ID,
   sector ID, PCI, F1 binds, and logs.
 - [ ] Keep the shared gNB ID/width consistent across CU and DUs. Verify the CU

@@ -1,0 +1,11 @@
+Sanitized startup excerpt
+Source: /tmp/falcon-du1-3660.DyQbKLEo/startup.log
+
+--== OCUDU DU (commit 050a2bb) ==--
+Making USRP object with args 'type=b200,serial=3271233,num_recv_frames=64,num_send_frames=64'
+[INFO] [B200] Operating over USB 3.
+[INFO] [B200] Actually got clock rate 23.040000 MHz.
+Cell pci=1, bw=20 MHz, 1T1R, dl_arfcn=644000 (n78), dl_freq=3660 MHz, dl_ssb_arfcn=643680, ul_freq=3660 MHz
+F1-C: Connection to CU-CP on 127.0.10.1:38472 completed
+E2AP: Connection to Near-RT-RIC completed (configured addrs 127.0.0.1, port 36421)
+==== DU started ===

@@ -4,7 +4,7 @@ Updated: 2026-10-12. Use this guide on the installed Spark testbed. For a new ho
 
 Verified on 2026-10-07: **DU E2 Setup, all five actual UE KPM measurements, the repaired report-time display, normal subscription deletion, and successful xApp exit**. Earlier UE ID `2` had `report_age_us` values of **499–717 µs**; the latest repeat with UE ID `7` had **591–796 µs**. These are historical 3750-MHz results. The 2026-10-05 UE application traffic / TCP result used TX **80** / RX **40**. Read current gains from the actual configuration file in step 1; the 2026-10-12 inspection found TX **70** / RX **35**. Neither snapshot establishes current runtime status.
 
-This procedure uses the complete [DU1 3660-MHz configuration](../configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml), including radio, cell, F1, E2/KPM, and metrics settings, to migrate **one UE / one DU to 3660 MHz**, following [Plan 3](../plans/dual-ue-du-fr1-channels.md). New-carrier registration, traffic, and KPM acceptance remain pending. Before RF startup, use the operating conditions and authorization covering the full 3650–3670 MHz channel recorded for that plan. The new file copies the actual base gains; select and record the actual gain/attenuation for this setup before transmission. The historical SSB lock `649632` must be replaced by the value from the new DU startup output.
+This procedure uses the complete [DU1 3660-MHz configuration](../configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml), including radio, cell, F1, E2/KPM, and metrics settings, to migrate **one UE / one DU to 3660 MHz**, following [Plan 3](../plans/dual-ue-du-fr1-channels.md). The 2026-10-12 session verified new-carrier operation, IPv4 application traffic, and five-metric KPM reception. The current scope is **uplink only**: TCP receiver 17.0 Mbit/s over 30.24 seconds, sender Retr 0, ping 5/5 with 0% loss, and 12 KPM reports for UE F1AP ID 5. **RF stability remains pending**: 117 underflows were observed by 11:39:44 EDT. See the [daily log](../dev_logs/2026-10-12_ruibin.md) and [evidence manifest](evidence/2026-10-12_du1_3660mhz/manifest.json). Before RF startup, use the operating conditions and authorization covering the full 3650–3670 MHz channel recorded for that plan. The new file copies the actual base gains; select and record the actual gain/attenuation for this setup before transmission. The historical SSB lock `649632` must be replaced by the value from the new DU startup output.
 
 Historical verified versions: OCUDU `050a2bb`; FlexRIC `73650812`, build directory `build-ocudu`, GCC 13.3 / Debug / `E2AP_V3` / `KPM_V3_00` / `NONE_XAPP` / `XAPP_MULTILANGUAGE=OFF`.
 
@@ -12,7 +12,7 @@ Run checks in a diagnostics terminal. CU, FlexRIC, DU, and iperf each need their
 
 ## 0 Check the SIM and subscriber plan
 
-The new Open Cells cards OC011830 / IMSI `001010000000101` and OC011831 / IMSI `001010000000102` are provisioned, Milenage-authenticated, and verified as ready in Quectel modems. They have **not yet registered with the RAN/Open5GS**. The earlier baseline IMSI `001010000000001` and its single-DU/KPM results remain separate.
+The new Open Cells cards OC011830 / IMSI `001010000000101` and OC011831 / IMSI `001010000000102` are provisioned, Milenage-authenticated, and verified as ready in Quectel modems. Registration of these specific new IMSIs has **not yet been evidenced**; the active IMSI was not retained in the 2026-10-12 acceptance excerpts. The earlier baseline IMSI `001010000000001` and its single-DU/KPM results remain separate.
 
 Before using either new card, prepare its own matching core subscriber from protected `~/sim_du1_credentials.txt` or `~/sim_du2_credentials.txt`, SST 1, `internet`, and IPv4 type 1. Keep K/OPc private. The programming tool's recommended SQN reference `96` requires verification of the installed core's representation/current state; do not blindly insert or reset decimal 96. See [SIM assignments](sim_provisioning_and_dual_ue.md#sim-assignments) and [Open5GS preparation](sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers).
 
@@ -187,7 +187,7 @@ print(f'AT+QNWLOCK="common/5g",{pci},{ssb},30,{band}')
 PY
 ```
 
-Use the command matching the current startup in [UE step 2](ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell). Require `OK`, read back the lock, then verify the actual serving cell and SA registration. The recorded SSB establishes the DU startup tuple; UE registration, traffic, and KPM acceptance remain pending. `/tmp` logs are temporary; retain this run's configs, hashes, and traffic/KPM evidence before reboot or cleanup.
+Use the command matching the current startup in [UE step 2](ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell). Require `OK`, read back the lock, then verify the actual serving cell and SA registration. The recorded SSB establishes the DU startup tuple. The 2026-10-12 ping, TCP uplink, CU/DU UE context, and KPM excerpts establish functional operation; sustained RF stability and the run's subscriber identity record remain pending. `/tmp` logs are temporary; retain this run's configs, hashes, and traffic/KPM evidence before reboot or cleanup.
 
 Confirm F1-C / E2AP `completed` and `==== DU started ===` for this DU1 baseline. A future second DU requires its own reviewed configuration and per-DU evidence; the summary below proves only the current single-DU connections. FlexRIC should receive this DU's `E2 SETUP-REQUEST` and accept KPM ID `2`. In the diagnostics terminal, check the summary of the three SCTP connections:
 
@@ -235,7 +235,7 @@ Subscription can succeed without UE measurements. The `OK` result above confirms
 
 ## 7 Validate UE traffic and KPM reports
 
-An earlier run received all five DU measurements for UE `gnb_cu_ue_f1ap=14`. After the timestamp repair, reception passed with UE ID `2`, then with UE ID `7` in the latest repeat. The following procedure coordinates application traffic and collection; its 30-second TCP test is a procedure, not a recorded benchmark result.
+Historical runs received all five DU measurements for UE IDs `14`, `2`, and `7`. At 3660 MHz on 2026-10-12, the accepted functional run received **12 complete reports for UE F1AP ID 5**, with RLC UL throughput 15.634–22.830 Mbit/s and UL PRB usage 86–88%. The operator's 30-second TCP uplink reported sender 17.7 Mbit/s / Retr 0 and receiver 17.0 Mbit/s. The procedure below repeats this uplink check; exact wall-clock alignment of the retained TCP and KPM windows was not recorded.
 
 After UE registration, an IPv4 bearer, WWAN configuration, and ping succeed, start the server in the Spark **iperf terminal**:
 
@@ -306,7 +306,7 @@ fi
 
 A positive `UE reports` count confirms UE reports arrived in this run. `NO_UE` means subscription, deletion, and exit succeeded but no UE report arrived; check UE registration and traffic overlap. It does not establish a timestamp-repair failure. The printed path contains the full log; use step 7 in the same terminal to inspect the five measurements.
 
-`report_age_us` is in microseconds and includes report processing, queuing, and forwarding time. It is not pure network delay or application RTT. A 30-second application uplink/downlink benchmark, report-period accuracy, and sustained stability remain to be verified. For the cause and accuracy limits, see the [Timestamp Repair Record](troubleshooting/2026-10-07_flexric_latency_fix.md).
+`report_age_us` is in microseconds and includes report processing, queuing, and forwarding time. It is not pure network delay or application RTT. A 30-second TCP uplink passed on 2026-10-12. Precise traffic/KPM timing correlation, report-period accuracy, and sustained stability remain to be verified. Downlink is outside the current acceptance scope. For the cause and accuracy limits, see the [Timestamp Repair Record](troubleshooting/2026-10-07_flexric_latency_fix.md).
 
 If the repair needs reinstalling later, run the following in a Spark terminal and enter the sudo password. The script backs up and atomically replaces the KPM library and two C monitors:
 

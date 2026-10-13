@@ -1,10 +1,12 @@
 # Falcomm
 
-Falcomm is a 5G/AI-RAN experimental platform based on the NVIDIA DGX Spark. **One private 5G SA link carried application traffic on 2026-10-05; OCUDU DU1 connected to FlexRIC and delivered actual UE KPM reports to the C xApp on 2026-10-07.** Two Open Cells SIMs have now been provisioned and verified in Quectel modems, including SIM2 in a second physical modem. Their Open5GS subscriber preparation and dual-DU end-to-end registration remain pending. The longer-term objective is dual independent radio paths with FlexRIC telemetry, AI channel/rate prediction, and MPTCP video steering.
+Falcomm is a 5G/AI-RAN experimental platform based on the NVIDIA DGX Spark. **On 2026-10-12, the single UE / DU1 link migrated from 3750 to 3660 MHz within n78. A 30-second TCP uplink delivered 17.0 Mbit/s at the receiver, private ping had 0% packet loss, and the KPM xApp received 12 complete five-metric reports for UE F1AP ID 5. Uplink functionality passed; RF stability remained pending because of recurring underflows.** Earlier traffic and FlexRIC acceptance were recorded on 2026-10-05 and 2026-10-07. Two Open Cells SIMs have now been provisioned and verified in Quectel modems, including SIM2 in a second physical modem. Their Open5GS subscriber preparation and dual-DU end-to-end registration remain pending. The longer-term objective is dual independent radio paths with FlexRIC telemetry, AI channel/rate prediction, and MPTCP video steering.
 
 **Start here: [Full Reproduction Runbook](docs/full_reproduction_runbook.md)** — restart the installed Spark infrastructure, configure the RMU500EK/RM500Q on a new Ubuntu laptop, register, establish IPv4 data, configure WWAN, test local traffic and shut down. [Troubleshooting and the 2026-10-05 debug record](docs/troubleshooting/2026-10-05_sa_bringup.md) explain the repaired failures.
 
 For daily operation, use the command booklets: **[Spark quick commands](docs/spark_quick_commands.md)** and **[UE laptop quick commands](docs/ue_laptop_quick_commands.md)**. They show compact confirmations; the full runbook retains detailed diagnostics. The [2026-10-07 FlexRIC record](docs/troubleshooting/2026-10-07_flexric_bringup.md) records the codec/version repair, successful subscription and actual UE measurements.
+
+The current checkpoint covers **uplink only**. See the [Plan 3 daily log](dev_logs/2026-10-12_ruibin.md), [retained evidence](docs/evidence/2026-10-12_du1_3660mhz/manifest.json), and [migration plan](plans/dual-ue-du-fr1-channels.md). Dual-DU operation and stability acceptance remain open.
 
 For the new cards, follow [SIM Provisioning and Dual-UE Preparation](docs/sim_provisioning_and_dual_ue.md): reader setup, personalization, authentication checks, modem verification, and the remaining Open5GS/dual-link work.
 
@@ -12,7 +14,7 @@ For the new cards, follow [SIM Provisioning and Dual-UE Preparation](docs/sim_pr
 
 ```text
 Linux laptop application ↔ WWAN ↔ RMU500EK / RM500Q-GL
-    ↔ NR SA n78 ↔ B210 (3271233) ↔ OCUDU DU1
+    ↔ NR SA n78 / 3660 MHz ↔ B210 (3271233) ↔ OCUDU DU1
     ↔ F1 ↔ OCUDU CU ↔ N3 ↔ Open5GS UPF ↔ ogstun ↔ Spark application
 ```
 

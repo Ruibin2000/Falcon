@@ -1,8 +1,8 @@
 # Full Reproduction Runbook: Single-Link 5G SA
 
-Last updated: 2026-10-12. The 2026-10-05 session verified initial UE traffic; the 2026-10-07 session verified FlexRIC E2 Setup, actual UE KPM reception and subscription/deletion. Synchronized traffic characterization remains to be done. This manual explains how to start an installed Spark testbed and configure a new Ubuntu laptop. Software installation and builds are in [Installation](software_installation_and_drivers.md); daily commands with compact confirmations are in the [Spark](spark_quick_commands.md) and [UE laptop](ue_laptop_quick_commands.md) booklets.
+Last updated: 2026-10-12. The current **3660-MHz single-UE/DU1 uplink checkpoint passed** private ping, a 30-second TCP uplink with receiver 17.0 Mbit/s and sender Retr 0, and 12 complete five-metric KPM reports for UE F1AP ID 5. **RF stability remains pending** because of recurring underflows; downlink is outside the current acceptance scope. The earlier 2026-10-05 and 2026-10-07 results remain historical evidence. See the [daily log](../dev_logs/2026-10-12_ruibin.md), [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json), and [Spark](spark_quick_commands.md) / [UE](ue_laptop_quick_commands.md) quick commands.
 
-**Startup:** physical connections → USB 3 verification → host performance → clean SA service selection → MongoDB → subscriber/IPv4/NRF checks → required 5GC → `ogstun` → CU → FlexRIC → DU with E2 overlay → xApp subscription check → laptop setup → NR/SA cell lock → registration → IPv4 PDU session → active bearer → WWAN configuration → ping → traffic with KPM reception check.
+**Startup:** physical connections → USB 3 verification → host performance → clean SA service selection → MongoDB → subscriber/IPv4/NRF checks → required 5GC → `ogstun` → CU → FlexRIC → DU with complete 3660-MHz configuration → xApp subscription check → laptop setup → NR/SA cell lock → registration → IPv4 PDU session → active bearer → WWAN configuration → ping → traffic with KPM reception check.
 
 **Shutdown:** traffic and xApp subscription → PDU session → manual laptop addresses/routes → optional modem disable → DU → FlexRIC → CU → required 5GC → optional/legacy services for a full shutdown → optional WebUI/MongoDB stop.
 
@@ -12,7 +12,7 @@ Execute one numbered stage at a time. Check the stated evidence before advancing
 
 ## 1. Baseline and physical connections
 
-The verified radio baseline is n78, carrier ARFCN 650000 (3750 MHz), SSB ARFCN 649632 (3744.48 MHz), 20 MHz, 30 kHz SCS, PCI 1, PLMN `00101`, TAC 7, SST 1, DNN `internet`, and IPv4 only. B210 serial is `3271233`; the 2026-10-05 traffic baseline used **TX 80 / RX 40**, with sample rate **23.04 MS/s**. The actual base file inspected on 2026-10-07 has **TX 70 / RX 40**. Record the file's current gain before each run and preserve it; the E2 overlay changes no RF settings. Gain is not calibrated dBm or EIRP.
+The current functional uplink configuration is n78, carrier ARFCN **644000 / 3660 MHz**, SSB ARFCN **643680**, 20 MHz, 30 kHz SCS, PCI 1, PLMN `00101`, TAC 7, SST 1, DNN `internet`, and IPv4. B210 serial is `3271233`, sample rate 23.04 MS/s, and the actual new file uses **TX 70 / RX 35**. It includes E2/KPM and scheduler/RLC metrics in one file. Historical carrier 650000 / 3750 MHz and SSB 649632 remain documented in the [configuration history](project_progress_and_configuration.md#configuration-records); the old files are preserved. Record actual gains per run; gain is not calibrated dBm or EIRP.
 
 `[SPARK]` Connect B210 through USB 3; do not place the working DU on a 480M USB 2 path. Attach the verified RF antenna path before enabling transmission. Use the authorized laboratory frequency and power conditions. B210 frequency conversion for FR3 is future work.
 
@@ -176,7 +176,7 @@ Keep the baseline subscriber `001010000000001` unless intentionally retiring it.
 ```bash
 grep -n -A5 'serving:' /etc/open5gs/nrf.yaml
 grep -n -A15 -E 'guami:|tai:|plmn_support:' /etc/open5gs/amf.yaml
-grep -nE 'device_args|srate|clock:|clock_ppm|freq_offset|tx_gain|rx_gain|dl_arfcn|band:|channel_bandwidth_MHz|common_scs|plmn:|tac:|pci:|all_level' /home/nyu/ocudu/configs/du1_b210_n78_20mhz.yml
+grep -nE 'device_args|srate|clock:|clock_ppm|freq_offset|tx_gain|rx_gain|dl_arfcn|band:|channel_bandwidth_MHz|common_scs|plmn:|tac:|pci:|all_level' /home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml
 sed -n '1,85p' /home/nyu/ocudu/configs/cu.yml
 ```
 
@@ -262,39 +262,27 @@ Require the current AMF `gNB-N2 accepted` / added-gNB entry and an established N
 
 ## 9. Confirm RF and start the DU
 
-Confirm n78, ARFCN 650000, 3750 MHz, 20 MHz, 30 kHz, PLMN `00101`, TAC 7, PCI 1, B210 `3271233`, and actual TX/RX gain against stage 6. The 2026-10-07 file has TX 70 / RX 40; TX 80 belongs to the earlier traffic record. The DU command below enables RF transmission.
+Confirm n78, ARFCN 644000, 3660 MHz, 20 MHz, 30 kHz, PLMN `00101`, TAC 7, PCI 1, B210 `3271233`, and actual TX/RX gain against stage 6. The deployed file uses TX 70 / RX 35. The DU command below enables RF transmission.
 
-### 9a Prepare the DU E2 overlay
+### 9a Deploy the complete DU1 configuration
 
-Create this file once if it is absent. For an existing file, compare it with the [current overlay record](project_progress_and_configuration.md#du1-e2-and-kpm-configuration) before changing it.
+The new standalone file already contains radio, cell, F1, E2/KPM, and metrics
+settings. Copy the maintained file to the Spark deployment directory and check
+parsing; keep the historical base/E2 files available for reference.
 
 `[SPARK]`
 
 ```bash
+cp /home/nyu/Desktop/Falcon_repo/Falcon/configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml \
+  /home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml
 cd /home/nyu/ocudu
-cat > configs/du1_flexric.yml <<'EOF'
-e2:
-  enable_du_e2: true
-  addrs: [127.0.0.1]
-  bind_addrs: [127.0.0.1]
-  port: 36421
-  e2sm_kpm_enabled: true
-
-metrics:
-  layers:
-    enable_sched: true
-    enable_rlc: true
-  periodicity:
-    du_report_period: 1000
-EOF
-
-build/apps/du_split_8/odu \
-  -c configs/du1_b210_n78_20mhz.yml \
-  -c configs/du1_flexric.yml --dryrun
+build/apps/du_split_8/odu --dryrun -c configs/du1_b210_n78_3660mhz.yml
 echo "dryrun_exit=$?"
 ```
 
-Require `dryrun_exit=0`. This version's dry run checks configuration parsing and exits before radio startup; it does not validate F1/E2 connectivity. Embedded E2 is already present in OCUDU `050a2bb`; no `ENABLE_EXPORT` or ZeroMQ rebuild is required.
+Require `dryrun_exit=0`. Dry run checks parsing/autoderivation and exits before
+full runtime validation or RF startup. Embedded E2 is already present; no
+`ENABLE_EXPORT` or ZeroMQ rebuild is required.
 
 ### 9b Start FlexRIC and the DU
 
@@ -319,23 +307,27 @@ Require `127.0.0.1:36421` for E2 and `127.0.0.1:36422` for xApp E42. Start DU on
 
 ```bash
 cd /home/nyu/ocudu
-sudo build/apps/du_split_8/odu \
-  -c configs/du1_b210_n78_20mhz.yml \
-  -c configs/du1_flexric.yml
+set -o pipefail
+DU1_RUN=$(mktemp -d /tmp/falcon-du1-3660.XXXXXXXX)
+printf 'DU1 run directory: %s\n' "$DU1_RUN"
+sudo stdbuf -oL -eL build/apps/du_split_8/odu \
+  -c configs/du1_b210_n78_3660mhz.yml \
+  log --filename "$DU1_RUN/du.log" 2>&1 | tee "$DU1_RUN/startup.log"
 ```
 
-Expect B210 / USB 3 initialization, 23.04 MHz master clock, cell PCI 1 / 20 MHz / n78 / carrier ARFCN 650000 / SSB ARFCN 649632, F1-C and E2 connections completed, and `==== DU started ===`. RIC should accept `ngran_gNB_DU`, DU ID 1, node ID 411 and RAN function ID 2 (`ORAN-E2SM-KPM`). Check the running DU without opening the B210 from another tool:
+Expect B210 / USB 3 initialization, 23.04 MHz master clock, cell PCI 1 / 20 MHz / n78 / carrier ARFCN 644000 / SSB ARFCN 643680, F1-C and E2 connections completed, and `==== DU started ===`. RIC should accept `ngran_gNB_DU`, DU ID 1, node ID 411 and RAN function ID 2 (`ORAN-E2SM-KPM`). Check the running DU without opening the B210 from another tool:
 
-`[SPARK]` In a separate diagnostics terminal:
+`[SPARK]` In a separate diagnostics terminal, select this launch's log directory:
 
 ```bash
+read -r -p 'DU1 run directory printed by this launch: ' DU1_RUN
 sudo ss -anpA sctp
 sudo ss -lunp | grep 2152
-sudo grep -Ei 'PRACH|PUSCH|CRC|SINR|UE Create|underflow|overflow|late' /tmp/du.log | tail -100
+sudo grep -Ei 'PRACH|PUSCH|CRC|SINR|UE Create|underflow|overflow|late' "${DU1_RUN:?Select the current DU run directory}/du.log" | tail -100
 sudo grep -Ei 'PDUSession|Unsupported PDU Session Type|Validation.*failed' /tmp/cu.log | tail -80
-sudo grep -Eic 'underflow' /tmp/du.log
-sudo grep -Eic 'late' /tmp/du.log
-sudo grep -Eic 'overflow' /tmp/du.log
+sudo grep -Eic 'underflow' "${DU1_RUN:?Select the current DU run directory}/du.log"
+sudo grep -Eic 'late' "${DU1_RUN:?Select the current DU run directory}/du.log"
+sudo grep -Eic 'overflow' "${DU1_RUN:?Select the current DU run directory}/du.log"
 ```
 
 N2, F1-C and E2 to `:36421` must be `ESTAB`. GTP-U listeners include DU `127.0.10.2`, CU F1-U `127.0.10.1`, CU N3 `127.0.0.1`, UPF `127.0.0.7`, all port 2152. Open5GS SMF may also listen on `127.0.0.4:2152`; it is separate from the four data-path endpoints.
@@ -345,7 +337,7 @@ Counters of zero make `grep -c` return status 1; this is not itself a failure. O
 `[SPARK]` In a separate diagnostics terminal:
 
 ```bash
-sudo tail -F /tmp/du.log | grep --line-buffered -Ei 'underflow|overflow|late|RF.*failure'
+sudo tail -F "${DU1_RUN:?Select the current DU run directory}/du.log" | grep --line-buffered -Ei 'underflow|overflow|late|RF.*failure'
 ```
 
 Stop this monitor with `Ctrl+C`. Continuous RF failures require investigation; an isolated late event does not establish a stable long-duration result. The recorded post-tuning check was underflow 0, late 1, not a guaranteed result for every run.
@@ -361,7 +353,7 @@ Stop this monitor with `Ctrl+C`. Continuous RF failures require investigation; a
 
 Require `Registered E2 Nodes = 1`, `SUBSCRIPTION RESPONSE rx` and `Successfully subscribed to RAN_FUNC_ID 2`. This example collects for about 10 seconds, sends a subscription delete and exits with `Test xApp run SUCCESSFULLY`. The DU block uses KPM Format 4, a 1000 ms period and five DU metrics. Without an eligible UE, subscription can succeed with no measurement indications. Actual UE reception is checked in stage 14a.
 
-If subscription fails, consult the [2026-10-07 record](troubleshooting/2026-10-07_flexric_bringup.md). `log.all_level: info` does not override the separate E2AP logger's warning default; for detailed E2 diagnosis add `log: {e2ap_level: debug}` to the overlay and restart DU after RIC is running. Share only narrow E2/KPM excerpts, not complete RAN logs.
+If subscription fails, consult the [2026-10-07 record](troubleshooting/2026-10-07_flexric_bringup.md). `log.all_level: info` does not override the separate E2AP logger's warning default; for detailed E2 diagnosis set `log.e2ap_level: debug` in the complete DU configuration and restart DU after RIC is running. Share only narrow E2/KPM excerpts, not complete RAN logs.
 
 ## 10. Prepare a new Ubuntu/Linux laptop
 
@@ -512,11 +504,11 @@ AT+QNWPREFCFG="mode_pref"
 AT+QNWPREFCFG="nr5g_disable_mode",2
 AT+QNWPREFCFG="nr5g_disable_mode"
 AT+QNWPREFCFG="nr5g_band"
-AT+QNWLOCK="common/5g",1,649632,30,78
+AT+QNWLOCK="common/5g",1,643680,30,78
 AT+QNWLOCK="common/5g"
 ```
 
-For this tested firmware, disable mode 2 disables NSA and gives SA-only operation. The band query must include n78; the tested selection was 78. The lock parameters are **PCI 1, SSB ARFCN 649632, SCS 30, band 78**. Do not use carrier ARFCN 650000 in place of the SSB lock value. Old `QCFG` preference commands returned ERROR on this firmware. Recheck preferences and lock after every physical/CFUN reboot because they may reset.
+For this tested firmware, disable mode 2 disables NSA and gives SA-only operation. The band query must include n78; the tested selection was 78. The lock parameters are **PCI 1, SSB ARFCN 643680, SCS 30, band 78**. Do not use carrier ARFCN 644000 in place of the SSB lock value. Old `QCFG` preference commands returned ERROR on this firmware. Recheck preferences and lock after every physical/CFUN reboot because they may reset.
 
 `[RM500Q AT]`
 
@@ -526,7 +518,7 @@ AT+C5GREG?
 AT+QNWINFO
 ```
 
-Require `NR5G-SA`, PLMN `001/01`, PCI 1, TAC 7, SSB 649632, band 78 and `+C5GREG: 0,1`. `NOCONN` in QENG is acceptable idle/camped state; confirm registration with C5GREG. If not registered, use `AT+QSCAN=3` to establish whether the private cell is detectable, then follow [the troubleshooting record](troubleshooting/2026-10-05_sa_bringup.md). A scan can take time; retain its result.
+Require `NR5G-SA`, PLMN `001/01`, PCI 1, TAC 7, SSB 643680, band 78 and `+C5GREG: 0,1`. `NOCONN` in QENG is acceptable idle/camped state; confirm registration with C5GREG. If not registered, use `AT+QSCAN=3` to establish whether the private cell is detectable, then follow [the troubleshooting record](troubleshooting/2026-10-05_sa_bringup.md). A scan can take time; retain its result.
 
 Exit minicom with `Ctrl+A`, then `X`. Leave ModemManager managing the connection; do not open the same AT port in another terminal simultaneously. If another process holds the selected AT port, close the conflicting session and inspect ownership rather than resetting the firmware.
 
@@ -668,21 +660,19 @@ ping -I ogstun -c 5 "$UE_IP"
 iperf3 -s -B 10.45.0.1
 ```
 
-Keep the iperf server in its own terminal. The original successful uplink test used a 10-second default run, with sender 6.29 Mbit/s / receiver 5.09 Mbit/s and 0 sender retransmissions. That is a functional result, not optimized throughput.
+Keep the iperf server in its own terminal. The historical 3750-MHz uplink used a 10-second run (sender 6.29 / receiver 5.09 Mbit/s). At 3660 MHz on 2026-10-12, a 30-second TCP uplink passed with sender 17.7 Mbit/s / Retr 0 and receiver 17.0 Mbit/s. This establishes functionality; recurring RF underflows keep stability acceptance open.
 
-`[LAPTOP]` Run individually; 30–60-second and reverse/UDP tests remain validation work:
+`[LAPTOP]` The current checkpoint is **uplink only**. Repeat the TCP check and retain receiver goodput and sender retransmissions:
 
 ```bash
-iperf3 -c 10.45.0.1 -B "$UE_IP" -t 30
-iperf3 -c 10.45.0.1 -B "$UE_IP" -R -t 30
-iperf3 -c 10.45.0.1 -B "$UE_IP" -u -b 2M -t 30
+iperf3 -c 10.45.0.1 -B "$UE_IP" -t 30 -i 0
 ```
 
-If stable, repeat UDP at 4M, 6M, 8M, and 10M individually. Record direction, duration, sender/receiver rates, retransmissions, UDP jitter/loss, and concurrent DU RF-error counts. Do not infer UDP/video performance from the first TCP test. If routing is correct but traffic fails, check host firewall and service binding before adding forwarding/NAT.
+Downlink, UDP, and video are future work outside this checkpoint. After uplink stability is accepted, a separately scoped UDP campaign can use individually controlled offered rates. Record direction, duration, sender/receiver rates, retransmissions, UDP jitter/loss, and concurrent DU RF-error counts. Do not infer UDP/video performance from the first TCP test. If routing is correct but traffic fails, check host firewall and service binding before adding forwarding/NAT.
 
 ### 14a Validate UE KPM reports during traffic
 
-Initial actual UE reception passed on 2026-10-07: gNB-DU UE F1AP ID `14` produced all five measurements. The procedure below repeats reception during a controlled application test; a synchronized 30-second benchmark has not yet been recorded. The installed timestamp-repair library and monitor match the repaired build. **Keep CU, RIC and DU running; this repair does not require their restart.** Reuse the existing iperf server or start it using stage 14, and complete stages 12–14 on the laptop.
+Initial actual UE reception passed on 2026-10-07: gNB-DU UE F1AP ID `14` produced all five measurements. The 2026-10-12 run at 3660 MHz received 12 complete five-metric reports for UE F1AP ID 5, ages 508–820 µs, and subscription/deletion plus the monitor success marker. A 30-second TCP uplink result was recorded in the same session; exact wall-clock alignment of the retained application and KPM windows was not captured. The procedure below repeats the uplink check with fresh logs. The installed timestamp-repair library and monitor match the repaired build. **Keep CU, RIC and DU running; this repair does not require their restart.** Reuse the existing iperf server or start it using stage 14, and complete stages 12–14 on the laptop.
 
 `[LAPTOP]` In the same Bash terminal used to configure WWAN, start the uplink:
 
@@ -862,6 +852,6 @@ FlexRIC E2 Setup, actual UE KPM reception and subscription/deletion passed on 20
 
 Completed: OC011830 / IMSI `001010000000101` and OC011831 / IMSI `001010000000102` personalization, independent K/OPc generation, Milenage authentication, and Quectel SIM/USIM reads. SIM2 was also checked in the second physical modem. This does not extend the older baseline's registration, user-plane, or KPM result to those two new IMSIs.
 
-Next: prepare both correctly matched core records and verify SQN handling; provide and review DU2's configuration, radio serial, cell/SSB/PCI, and distinct DU/network identifiers and addresses; start Open5GS → shared CU → FlexRIC → DU1 → DU2 with their corresponding RF paths; then validate each modem's actual serving cell, `5gnr / 00101 / home / attached`, active IPv4 bearer, and independent WWAN/IP path. Start FlexRIC before either DU using the E2 overlay. The existing launch and cell-lock commands cover DU1 only. IMSI does not select a DU automatically.
+Next: prepare both correctly matched core records and verify SQN handling; provide and review DU2's configuration, radio serial, cell/SSB/PCI, and distinct DU/network identifiers and addresses; start Open5GS → shared CU → FlexRIC → DU1 → DU2 with their corresponding RF paths; then validate each modem's actual serving cell, `5gnr / 00101 / home / attached`, active IPv4 bearer, and independent WWAN/IP path. Start FlexRIC before either DU; DU1 uses its complete 3660-MHz configuration and DU2 requires its own reviewed E2 settings. The existing launch and cell-lock commands cover DU1 only. IMSI does not select a DU automatically.
 
 Two simultaneous paths, source/interface-specific routing, MPTCP, and per-DU/per-UE metrics for path steering remain unverified. See [Validate two UE paths](sim_provisioning_and_dual_ue.md#validate-two-ue-paths) for the required evidence and [SIM troubleshooting lessons](sim_provisioning_and_dual_ue.md#troubleshooting-and-lessons-learned).

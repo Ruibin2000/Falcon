@@ -1,0 +1,97 @@
+Sanitized KPM excerpt
+Source: /tmp/flexric-kpm.0CD6hX.log
+
+[LibConf]: format 4, RAN type ngran_gNB, actions = DRB.PdcpSduVolumeDL DRB.PdcpSduVolumeUL DRB.RlcSduDelayDl DRB.UEThpDl DRB.UEThpUl RRU.PrbTotDl RRU.PrbTotUl CARR.WBCQIDist.BinX 
+[LibConf]: format 4, RAN type ngran_gNB_DU, actions = DRB.RlcSduDelayDl DRB.UEThpDl DRB.UEThpUl RRU.PrbTotDl RRU.PrbTotUl 
+[LibConf]: format 4, RAN type ngran_gNB_CU, actions = DRB.PdcpSduVolumeDL DRB.PdcpSduVolumeUL 
+[xApp]: Registered E2 Nodes = 1 
+Connected E2 nodes = 1
+xApp subscribes RAN Func ID 2 in E2 node idx 0, nb_id 411
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+KPM-v3 report_age_us = 625 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 5
+DRB.RlcSduDelayDl = 12.80
+DRB.UEThpDl = 169.00
+DRB.UEThpUl = 15634.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+KPM-v3 report_age_us = 649 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 5
+DRB.RlcSduDelayDl = 11.80
+DRB.UEThpDl = 274.00
+DRB.UEThpUl = 16512.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+KPM-v3 report_age_us = 596 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 5
+DRB.RlcSduDelayDl = 13.00
+DRB.UEThpDl = 285.00
+DRB.UEThpUl = 19998.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+KPM-v3 report_age_us = 741 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 5
+DRB.RlcSduDelayDl = 13.80
+DRB.UEThpDl = 324.00
+DRB.UEThpUl = 22830.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+KPM-v3 report_age_us = 770 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 5
+DRB.RlcSduDelayDl = 13.40
+DRB.UEThpDl = 274.00
+DRB.UEThpUl = 21321.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+KPM-v3 report_age_us = 820 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 5
+DRB.RlcSduDelayDl = 13.10
+DRB.UEThpDl = 205.00
+DRB.UEThpUl = 18400.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+KPM-v3 report_age_us = 739 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 5
+DRB.RlcSduDelayDl = 13.20
+DRB.UEThpDl = 259.00
+DRB.UEThpUl = 20356.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+KPM-v3 report_age_us = 782 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 5
+DRB.RlcSduDelayDl = 12.50
+DRB.UEThpDl = 247.00
+DRB.UEThpUl = 19106.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+KPM-v3 report_age_us = 644 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 5
+DRB.RlcSduDelayDl = 12.50
+DRB.UEThpDl = 242.00
+DRB.UEThpUl = 19416.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+KPM-v3 report_age_us = 662 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 5
+DRB.RlcSduDelayDl = 12.20
+DRB.UEThpDl = 236.00
+DRB.UEThpUl = 18163.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+KPM-v3 report_age_us = 597 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 5
+DRB.RlcSduDelayDl = 11.90
+DRB.UEThpDl = 194.00
+DRB.UEThpUl = 17252.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+[xApp]: E42 RIC_SUBSCRIPTION_DELETE_REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
+KPM-v3 report_age_us = 508 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 5
+DRB.RlcSduDelayDl = 11.90
+DRB.UEThpDl = 194.00
+DRB.UEThpUl = 17252.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+[xApp]: E42 SUBSCRIPTION DELETE RESPONSE rx
+Test xApp run SUCCESSFULLY
