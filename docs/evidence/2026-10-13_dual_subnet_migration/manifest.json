@@ -1,0 +1,50 @@
+{
+  "recorded_at": "18 : 11: 37 Oct 13, 2026 EDT",
+  "status": "Core migration checks passed; fresh UE/PDU/UL pending",
+  "bundle": "/tmp/falcon-dual-subnets.Ir8TjqjO",
+  "runtime_evidence": {
+    "file": "operator_stdout.txt",
+    "source": "Operator-provided stdout, shell prompts omitted; not an independent service probe",
+    "sha256": "432e82a3b8f300f7af8d2238517fce4e2f078a88f572d1b07e8525087c72bee1"
+  },
+  "file_inspection": "Read-only deployed-file inspection independently matched the prepared bundle",
+  "files": {
+    "smf.yaml": {
+      "deployed_path": "/etc/open5gs/smf.yaml",
+      "sha256": "21a403fe8ede46a599632720d591a3b2c28df0ec3e39a3ba5f6993cfb86af004",
+      "matches_prepared_bundle": true
+    },
+    "upf.yaml": {
+      "deployed_path": "/etc/open5gs/upf.yaml",
+      "sha256": "ef1345cc68c0f61143fc84fd53d1d9123d6f8b7749b2f699b19b26df209e460f",
+      "matches_prepared_bundle": true
+    },
+    "99-open5gs.network": {
+      "deployed_path": "/etc/systemd/network/99-open5gs.network",
+      "sha256": "f685c171478aa7a1fe544dac2a93afcc91f94a1ad95bbba06d6591919f7b4d49",
+      "matches_prepared_bundle": true
+    }
+  },
+  "ue1": {
+    "imsi": "001010000000101",
+    "dnn": "internet",
+    "pool": "10.45.0.0/16",
+    "server": "10.45.0.1"
+  },
+  "ue2": {
+    "imsi": "001010000000102",
+    "dnn": "internet2",
+    "pool": "10.46.0.0/16",
+    "server": "10.46.0.1",
+    "pre_migration_modem": 5,
+    "pre_migration_imei": "863305041980706",
+    "pre_migration_state": "disabled / detached"
+  },
+  "pending": [
+    "Fresh UE2 identity/cell/registration",
+    "internet2 IPv4 PDU and actual UE IP",
+    "Host source-policy path and UL",
+    "Concurrent dual-UE UL and attributed KPM",
+    "Cold-start persistence"
+  ]
+}

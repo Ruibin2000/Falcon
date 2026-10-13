@@ -12,9 +12,9 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 | --- | --- |
 | Plan | 3 |
 | Task | `dual-ue-du-fr1-channels` |
-| Status | In progress: DU1 UL functionality passed; actual DU2 radio startup/F1/E2 passed; UE2 registration and single/dual-link UL pending; underflow remediation deferred |
+| Status | In progress: DU1 historical UL and DU2 single-link UL functionality/KPM smoke passed; new UE1 DU1 SA/lock, IPv4 PDU and private ping passed; new UE1 60-second TCP UL passed; concurrent dual-link UL/KPM pending; underflow remediation deferred |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 16 : 46: 32 Oct 13, 2026 EDT |
+| Last updated at | 19 : 47: 31 Oct 13, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | To be assigned |
@@ -44,8 +44,8 @@ remediation is deferred by the operator's 2026-10-13 instruction; the dual-link
 UL acceptance requirements remain pending.
 
 The [SIM preparation record](../docs/sim_provisioning_and_dual_ue.md) identifies
-two provisioned cards and two physical RM500Q modems. Registration of their new
-subscribers, a second DU/radio, and simultaneous private IP paths remain pending.
+two provisioned cards and two physical RM500Q modems. Both new subscribers have now registered on their intended cells. Two DU/radios
+have started; simultaneous private IP paths and full UL acceptance remain pending.
 DU2's radio/F1/cell and E2/KPM configurations are now prepared and deployed for
 B210 `328B021`, discovered over USB 3 on 2026-10-13 after reconnection. Offline
 configuration checks and DU parsing pass. After reconnecting both radios, UHD
@@ -53,8 +53,8 @@ loaded their firmware and two successive discovery runs found both `3271233`
 and `328B021` simultaneously over USB 3. DU1 uses host controller `NVDA8000:00`
 at `2-1.3`; DU2 uses `NVDA8000:02` at `6-1.1`. DU2 subsequently started at
 3600 MHz / PCI 2 / SSB 639648 with F1/E2 completed; the RIC registered gNB 411 /
-DU ID 2 and accepted KPM RAN function ID 2. UE2 registration, UL and concurrent
-dual-DU streaming remain pending. See the
+DU ID 2 and accepted KPM RAN function ID 2. UE2 registration and single-link UL subsequently passed as recorded below;
+concurrent dual-link UL acceptance remains pending. See the
 [live startup evidence](../docs/evidence/2026-10-13_du2_startup/manifest.json).
 
 The inspected DU1 file uses TX gain **70** and RX gain **35**. Historical records
@@ -72,6 +72,56 @@ This task covers two FR1 cells, cell selection, subscriber/session preparation,
 shared-CU operation, independent host data paths, coexistence tests, and per-DU/
 per-UE KPM attribution. Pi-Radio/FR3 conversion, MPTCP steering, AI prediction,
 and calibrated RF measurement work have separate acceptance requirements.
+
+The operator subsequently requested separate UE/server subnets. The prepared
+[migration](../docs/dual_ue_subnets.md) retains UE1 `internet / 10.45.0.0/16`
+and assigns UE2 `internet2 / 10.46.0.0/16`, with Spark endpoints `10.45.0.1`
+and `10.46.0.1` on the shared `ogstun`. The operator applied the migration:
+SMF/UPF were active, UE2 read back `internet2`, and both gateway addresses/routes
+were present. Deployed files independently match the prepared bundle. See the
+[core migration evidence](../docs/evidence/2026-10-13_dual_subnet_migration/manifest.json).
+UE2 was disabled/detached before application; the subsequent identity/PDU/ping
+checkpoint below now passed, followed by single-link UL/KPM smoke; cold-start
+persistence remains pending. Core migration alone
+does not complete the dual-link acceptance steps.
+
+After the migration, UE2 modem 5 / IMEI `863305041980706` / IMSI
+`001010000000102` registered on NR5G-SA / PLMN `00101`. Its AT readback confirmed
+DU2 NCI `00066C001` (decimal `6733825`), PCI 2, TAC 7, SSB `639648` and n78,
+with C5GREG `0,1`. The initial 902 lock failure was followed by a successful
+write/readback `2,639648,30,78`; its exact earlier failure cause is not proven.
+See [UE2 registration evidence](../docs/evidence/2026-10-13_du2_registration/manifest.json).
+UE2 subsequently established bearer 3: connected yes, suspended no, APN
+`internet2`, IPv4/static `10.46.0.2/30`, `wwan0`, gateway `10.46.0.1`, MTU 1400.
+Old `internet` bearer 2 was disconnected. The laptop route lookup resolved
+through `wwan0 / table 152`; ping received 5/5 with zero loss, RTT
+min/avg/max/mdev 37.127/116.899/422.149/152.655 ms, and Wi-Fi remained the default
+route. See [IPv4 path evidence](../docs/evidence/2026-10-13_du2_ipv4_path/manifest.json).
+Full dual-link UL/KPM, path-loss/survivor checks, restart retention, and lock enforcement with
+both DUs present remain pending; Steps 7/8's two-UE acceptance is not complete.
+
+## 2026-10-13 UE2 / DU2 Single-Link UL Checkpoint
+
+[Evidence](../docs/evidence/2026-10-13_du2_ul/manifest.json) retains the operator's
+client/server output, actual Spark KPM log, parsed rows and current artifact hashes.
+
+- [x] Verify UE2 IMSI `001010000000102` / IMEI `863305041980706`, SA on DU2 PCI 2 / NCI `6733825` / SSB `639648`, and successful lock write/readback.
+- [x] Establish `internet2` IPv4 bearer 3 / `10.46.0.2/30` / `wwan0`; route over table 152 and private ping 5/5 with zero loss while preserving Wi-Fi defaults.
+- [x] Complete 60-second TCP UL: receiver **15.5 Mbit/s over 60.34 s**, sender **15.8 Mbit/s / Retr 1**; client and server summaries agree.
+- [x] Receive **12 complete five-metric KPM reports for UE F1AP 67** with numeric `DRB.UEThpUl` / `RRU.PrbTotUl`, successful subscription/delete responses and the stock success marker. Only DU2 was active; report age 574–896 us.
+- [x] Start DU1 alongside DU2: actual serial `3271233` / USB 3 / PCI 1 / SSB `643680`, F1/E2 completed and RIC accepted DU ID 1; both DU processes observed. See [startup evidence](../docs/evidence/2026-10-13_dual_du_startup/manifest.json).
+- [x] Recheck UE2 after DU1 joins: intended DU2 NCI/PCI/SSB and SA retained; private ping 5/5, zero loss. This is idle coexistence, not deliberate path-loss testing.
+- [x] Verify UE1 IMEI `863305041978437` / active SIM IMSI `001010000000101`, AT port `/dev/ttyUSB6`, NR5G-SA on DU1 PCI 1 / NCI `6733824` / SSB `643680`; lock write/readback `1,643680,30,78` passed. IPv4 `internet` simple-connect succeeded and listed bearer 4; subsequent actual metadata/path checks are recorded below. See [UE1 registration and UE2 coexistence evidence](../docs/evidence/2026-10-13_du1_registration/manifest.json).
+- [x] Read connected, non-suspended UE1 `internet` bearer 4 / `10.45.0.2/30` / `wwan1` / gateway `10.45.0.1` / MTU 1400. UE1 lookup resolved to table 151 / wwan1, private ping was 5/5 with zero loss, both role lookup/guard rules read back, and UE2 returned echo sequences 1–5 after UE1 configuration. Latest Wi-Fi default-route output was not included. See [dual IPv4 path evidence](../docs/evidence/2026-10-13_dual_ipv4_paths/manifest.json).
+- [x] Complete new UE1 60-second TCP UL / UE2 test traffic idle: receiver **10.5 Mbit/s over 60.23 s**, sender **10.9 Mbit/s / Retr 0**, pipeline exit **0**, timestamped 19:15:26–19:16:27 EDT. Wi-Fi default route read back unchanged. Both DUs had been instructed to remain running; no UE1 KPM capture was supplied. Sender one-second transfer varied, including four zero-transfer intervals, so only UL functionality passes. See [UE1 UL evidence](../docs/evidence/2026-10-13_du1_ul/manifest.json).
+- [x] Verify both DU nodes in the diagnostic xApp and two KPM subscription/delete responses with pipeline exit 0. The 19:29:23–19:30:14 EDT probe received **zero UE callback blocks**; this is subscription/lifecycle evidence, not two-link KPM data. See [subscription evidence](../docs/evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
+- [ ] Complete concurrent UL, streaming and deliberate path-survivor checks. The earlier concurrent launcher's `wait`/`printf` lost variable expansions; its printed zero statuses and end timestamp are invalid. Retain real child statuses with the Python launcher in the laptop booklet.
+- [ ] Accumulate at least 30 real UL-window rows per link, explicit two-DU/UE row attribution, captured exit codes, full lifecycle checks and the remaining repeated/UDP/cold-start gates.
+
+This checkpoint is **DU2 Single-Link UL Functionality / KPM Smoke Passed**.
+It does not complete the dual-link baseline or certify RF stability. Underflow
+count/growth remediation remains deferred. The stock callback's common gNB ID
+is contextual attribution with one DU, not proof of attribution with two DUs.
 
 ## 2026-10-12 Single-UE / DU1 Uplink Checkpoint
 
@@ -147,7 +197,7 @@ for current commands and explicit preparation-versus-live acceptance status.
 | Channel bandwidth | 20 MHz | 20 MHz |
 | Common SCS | 30 kHz | 30 kHz |
 | Nominal channel interval | 3650–3670 MHz | 3590–3610 MHz |
-| SSB NR-ARFCN | `643680` confirmed in retained 2026-10-12 startup; modem readback not retained; recheck after configuration/version changes | `639648` confirmed in actual 2026-10-13 DU2 startup; modem lock/serving-cell readback pending |
+| SSB NR-ARFCN | `643680` confirmed in startup and 2026-10-13 UE1 lock/serving-cell readback | `639648` confirmed in startup and 2026-10-13 UE2 lock/serving-cell readback |
 | Radio | B210 serial `3271233`, USB 3 at `2-1.3` / controller `NVDA8000:00`; rediscover before use | B210 serial `328B021`, USB 3 at `6-1.1` / controller `NVDA8000:02`; rediscover before use |
 | Sample rate | 23.04 MS/s | Start from 23.04 MS/s and validate the actual selected radio |
 | Gain | Choose/record low-power gain and attenuation; historical TX 70 / RX 35 is a reference | Choose/record independently for the second RF path and verify low-power operation |
@@ -213,7 +263,8 @@ flowchart LR
 | Cell sector ID | Current first-cell default `0`; confirm | Explicit proposed `1` |
 | PCI | `1` | Proposed `2` |
 | NR cell identity | Expected `6733824` | Proposed `6733825` |
-| TAC / SST / DNN | `7` / `1` / `internet` | Same core/session settings |
+| TAC / SST / DNN | `7` / `1` / `internet` | `7` / `1` / `internet2` after subnet migration |
+| UE IPv4 pool / Spark endpoint | `10.45.0.0/16` / `10.45.0.1` | `10.46.0.0/16` / `10.46.0.1` after subnet migration |
 | DU F1-C bind | `127.0.10.2` | Proposed `127.0.10.3` |
 | DU F1-U bind | `127.0.10.2:2152` | Proposed `127.0.10.3:2152` |
 | CU F1 endpoints | `127.0.10.1:38472` SCTP and `127.0.10.1:2152` UDP | Shared CU listeners |
@@ -251,15 +302,18 @@ they already exist:
 | Location | Purpose |
 | --- | --- |
 | `configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml` | Deployed and verified for single-link UL functionality; underflow remediation deferred |
-| `configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml` | Prepared/deployed DU2 radio/cell/F1 configuration for B210 328B021; offline checks passed, live acceptance pending |
+| `configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml` | Prepared/deployed DU2 radio/cell/F1 configuration for B210 328B021; offline checks and actual radio/F1/E2 plus UE2 solo UL passed; full dual-link acceptance pending |
 | `configs/ocudu/dual_fr1/du2_flexric.yml` | Prepared DU2 E2/KPM overlay and 1000-ms scheduler/RLC metrics |
 | `configs/flexric/xapp_du_kpm_base5.conf` | One DU-only five-metric subscription, shared with Plan 2 when available |
 | `patches/flexric/dual-fr1-kpm-diagnostics.patch` | Minimal monitor attribution, missing-value, and lifecycle changes |
 | `scripts/dual_fr1/check_config.py` | Implemented offline identities, F1/E2, nominal channels, missing serial, metrics and writable log checks; operating authorization and SSB derivation remain separate |
 | `scripts/dual_fr1/configure_ue_routes.sh` | Guarded per-UE policy routes and precise rollback |
 | `scripts/dual_fr1/verify_kpm.py` | Per-link report/lifecycle/evidence checks |
-| `docs/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; actual startup/F1/E2 verified, UE2 UL pending |
-| `docs/dual_ue_quick_start.md` | Operator quick start for UE2-first/dual UL, real modem/SIM selection, manual guarded source-policy paths and cleanup; live dual-UE acceptance pending |
+| `docs/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; actual startup/F1/E2 and UE2 solo UL verified; concurrent UL/KPM pending |
+| `docs/dual_ue_laptop_quick_commands.md` | Laptop commands for IMEI/SIM selection, both locks/DNNs, actual IPv4 bearers, guarded source-policy paths, recorded concurrent UL and cleanup |
+| `docs/dual_ue_spark_quick_commands.md` | Spark commands for core/CU/RIC/two-DU startup, both server endpoints, DU-tagged KPM capture and shutdown |
+| `scripts/dual_fr1/xapp_oran_moni_dual.c` / `scripts/dual_fr1/build_kpm_monitor.sh` | Built isolated diagnostic using pinned FlexRIC API/library; labels each callback with DU ID, supports finite capture, fixes dense subscription cleanup; two-node subscription/deletion passed, actual two-link callbacks pending |
+| `docs/dual_ue_subnets.md` / `scripts/dual_fr1/prepare_dual_subnets.py` / `scripts/dual_fr1/apply_dual_subnets.sh` / `scripts/dual_fr1/ue2_dnn.js` | Dual-subnet migration, backups, saved apply command, targeted UE2 DNN rename and rollback; six mocked apply tests passed; operator-applied core checks, both registered IPv4/private-ping paths and both role UL functionality checkpoints passed; concurrent UL/KPM pending |
 
 Keep DU1's maintained configuration in Falcon and deploy it to
 `$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml`. DU1 parse/start commands use
@@ -610,7 +664,9 @@ the existing five-metric xApp subscribes successfully to each.
   replace it for this deployment. Require each
   configuration write to return OK; read back lock and serving-cell details.
 - [ ] Require private PLMN `00101`, intended cell/PCI/SSB, SA registration,
-  attached packet service, and connected non-suspended IPv4 `internet` bearer.
+  attached packet service, and connected non-suspended IPv4 bearer: UE1
+  `internet / 10.45.0.0/16`, UE2 `internet2 / 10.46.0.0/16` after the
+  [subnet migration](../docs/dual_ue_subnets.md).
   A ready SIM, high signal indicator, or idle `NOCONN` text alone is insufficient.
 - [ ] Attach both concurrently. Record actual bearer IDs, WWAN interfaces,
   addresses/prefix/MTU/gateway, serving cells, and CU/DU UE contexts.
@@ -634,7 +690,8 @@ source-policy route setup for this dual-link test instead.
   151/152 use lookup priorities 10151/10161 and guard priorities 10152/10162;
   all require conflict checks before use.
 - [ ] For each actual UE address, add a rule scoped to that source and the
-  private Spark destination. Its table routes `10.45.0.1/32` directly over that
+  role's private Spark destination. Its table routes UE1 `10.45.0.1/32` or UE2
+  `10.46.0.1/32` directly over that
   WWAN with the same source address, matching the existing verified QMI path.
   Revalidate this recipe if the bearer/network model differs.
 - [ ] Add a narrowly scoped `unreachable` rule immediately after each source/
@@ -661,10 +718,10 @@ source-policy route setup for this dual-link test instead.
 Verification commands in each UE's own terminal after guarded route setup:
 
 ```bash
-ip -4 route get 10.45.0.1 from "${UE_IP:?Read the current bearer first}"
+ip -4 route get "${SERVER_IP:?Select the role endpoint}" from "${UE_IP:?Read the current bearer first}"
 ip -4 rule show
 ip -4 route show default
-ping -q -I "$UE_IP" -c 20 10.45.0.1
+ping -q -I "$UE_IP" -c 20 "$SERVER_IP"
 ```
 
 **Exit criteria:** each source address resolves over the correct WWAN, both
@@ -672,8 +729,8 @@ paths pass private ping, and management routing remains usable.
 
 ## Step 9 Validate Dual Link Traffic and Existing KPM
 
-- [ ] Start two separate Spark iperf3 server processes bound to `10.45.0.1`, on
-  ports 5201 and 5202. Two concurrent clients must not contend for one
+- [ ] Start two separate Spark iperf3 server processes bound to `10.45.0.1:5201`
+  and `10.46.0.1:5202` after migration. Two concurrent clients must not contend for one
   single-test server process.
 - [ ] Measure UE1 UL alone and UE2 UL alone, then both UL concurrently.
   Bind clients to actual source IPs and
@@ -700,7 +757,7 @@ iperf3 -s -B 10.45.0.1 -p 5201
 ```
 
 ```bash
-iperf3 -s -B 10.45.0.1 -p 5202
+iperf3 -s -B 10.46.0.1 -p 5202
 ```
 
 Laptop uplink examples in the corresponding UE terminals, with independently
@@ -711,7 +768,7 @@ iperf3 -c 10.45.0.1 -p 5201 -B "${UE1_IP:?Read UE1 bearer}" -t 60 -i 1 -J
 ```
 
 ```bash
-iperf3 -c 10.45.0.1 -p 5202 -B "${UE2_IP:?Read UE2 bearer}" -t 60 -i 1 -J
+iperf3 -c 10.46.0.1 -p 5202 -B "${UE2_IP:?Read UE2 bearer}" -t 60 -i 1 -J
 ```
 
 Rate-controlled UDP examples after choosing each link's offered load from the
@@ -724,7 +781,7 @@ iperf3 -c 10.45.0.1 -p 5201 -B "${UE1_IP:?Read UE1 bearer}" \
 ```
 
 ```bash
-iperf3 -c 10.45.0.1 -p 5202 -B "${UE2_IP:?Read UE2 bearer}" \
+iperf3 -c 10.46.0.1 -p 5202 -B "${UE2_IP:?Read UE2 bearer}" \
   -u -b "${UE2_OFFERED_RATE:?Choose the measured controlled rate}" \
   -t 60 -i 1 --get-server-output -J
 ```

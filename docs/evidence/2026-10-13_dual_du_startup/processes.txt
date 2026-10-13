@@ -1,0 +1,2 @@
+1175664 build/apps/du_split_8/odu -c configs/du2_b210_n78_20mhz.yml -c configs/du2_flexric.yml log --filename /tmp/falcon-du2-3600.ES9ZwX9p/du.log
+1181637 build/apps/du_split_8/odu -c configs/du1_b210_n78_3660mhz.yml log --filename /tmp/falcon-du1-3660.70HJUlpe/du.log

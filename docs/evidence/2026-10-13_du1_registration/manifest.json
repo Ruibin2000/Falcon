@@ -1,0 +1,80 @@
+{
+  "recorded_at": "19 : 12: 31 Oct 13, 2026 EDT",
+  "source": "Operator-provided sequential modem/SIM/serial/AT/connection readbacks; selected fields and whitespace normalized; no fresh automated laptop probe",
+  "status": "UE1 modem/SIM/DU1 SA and lock write/readback passed; IPv4 simple-connect succeeded with bearer 4; actual bearer IP, host path and UL remain pending",
+  "modem": {
+    "index": 6,
+    "imei": "863305041978437",
+    "imsi": "001010000000101",
+    "sim_path": "/org/freedesktop/ModemManager1/SIM/6",
+    "sim_active": true,
+    "iccid": "89860061100000000830",
+    "usb_device": "4-4",
+    "at_port": "/dev/ttyUSB6",
+    "firmware": "RM500QGLABR13A03M4G"
+  },
+  "cell": {
+    "du_id": 1,
+    "plmn": "00101",
+    "pci": 1,
+    "tac": 7,
+    "nci_hex": "00066C000",
+    "nci_decimal": 6733824,
+    "ssb_arfcn": 643680,
+    "band": 78,
+    "rat": "NR5G-SA",
+    "qeng_state": "NOCONN",
+    "c5greg": "0,1"
+  },
+  "lock": {
+    "write": "OK",
+    "readback": "1,643680,30,78",
+    "cold_restart_retention": "not yet tested",
+    "enforcement": "intended serving cell observed with both DUs active; forced cell reselection/restart enforcement not yet tested"
+  },
+  "pdu_request": {
+    "apn": "internet",
+    "ip_type": "ipv4",
+    "simple_connect": "successfully connected the modem",
+    "bearer_paths": [
+      "/org/freedesktop/ModemManager1/Bearer/4"
+    ],
+    "bearer_ipv4_configuration": "not yet read"
+  },
+  "ue2_after_du1_start": {
+    "imsi": "001010000000102",
+    "du_id": 2,
+    "pci": 2,
+    "nci_hex": "00066C001",
+    "ssb_arfcn": 639648,
+    "lock_readback": "2,639648,30,78",
+    "c5greg": "0,1",
+    "ping_source": "10.46.0.2",
+    "ping_destination": "10.46.0.1",
+    "ping_sent": 5,
+    "ping_received": 5,
+    "ping_loss_percent": 0,
+    "rtt_ms": {
+      "min": 39.126,
+      "avg": 152.103,
+      "max": 475.168,
+      "mdev": 168.417
+    },
+    "scope": "Idle coexistence check only; deliberate path-loss/survivor test remains pending"
+  },
+  "files": {
+    "operator_ue1_readback.txt": {
+      "sha256": "8b807b1073fa888b47728d0ddf3b6d4c7c2026d6e0c6bea13d09698ee3c0421a"
+    },
+    "operator_ue2_coexistence_readback.txt": {
+      "sha256": "67a055c4ca26ce42482d5d7d8ff57a4efe1962c6be9baf59d0a4be805c02490b"
+    }
+  },
+  "pending": [
+    "Read bearer 4 connected/APN/IPv4/WWAN/gateway/MTU metadata",
+    "UE1 policy route and private ping while preserving UE2/Wi-Fi",
+    "New UE1 solo UL and simultaneous dual-link UL",
+    "Per-DU/UE KPM attribution and at least 30 real UL rows per link",
+    "Deliberate path-loss guard/survivor checks and cold-start retention"
+  ]
+}

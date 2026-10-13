@@ -3,7 +3,7 @@
 Updated: 2026-10-13. Use this guide on the installed Spark testbed. For a new host, see [Software and Drivers](software_installation_and_drivers.md); for detailed configuration, see the [Full Reproduction Runbook](full_reproduction_runbook.md). UE commands are in [UE Laptop Quick Commands](ue_laptop_quick_commands.md). Use Bash, run one step at a time, and stop at any `FAIL` result.
 
 For the 2026-10-13 two-DU/two-modem workflow and current UL-only scope, use
-[Dual UE Quick Start](dual_ue_quick_start.md), including the supplied DU2 config,
+[Dual UE Spark quick commands](dual_ue_spark_quick_commands.md), including the supplied DU2 config,
 its verified SSB, and separate laptop source-policy routes.
 
 Verified on 2026-10-07: **DU E2 Setup, all five actual UE KPM measurements, the repaired report-time display, normal subscription deletion, and successful xApp exit**. Earlier UE ID `2` had `report_age_us` values of **499–717 µs**; the latest repeat with UE ID `7` had **591–796 µs**. These are historical 3750-MHz results. The 2026-10-05 UE application traffic / TCP result used TX **80** / RX **40**. Read current gains from the actual configuration file in step 1; the 2026-10-12 inspection found TX **70** / RX **35**. Neither snapshot establishes current runtime status.
@@ -16,11 +16,11 @@ Run checks in a diagnostics terminal. CU, FlexRIC, DU, and iperf each need their
 
 ## 0 Check the SIM and subscriber plan
 
-The new Open Cells cards OC011830 / IMSI `001010000000101` and OC011831 / IMSI `001010000000102` are provisioned, Milenage-authenticated, and verified as ready in Quectel modems. Registration of these specific new IMSIs has **not yet been evidenced**; the active IMSI was not retained in the 2026-10-12 acceptance excerpts. The earlier baseline IMSI `001010000000001` and its single-DU/KPM results remain separate.
+The new Open Cells cards OC011830 / IMSI `001010000000101` and OC011831 / IMSI `001010000000102` are provisioned, Milenage-authenticated, and verified as ready in Quectel modems. The 2026-10-12 excerpts did not retain the active IMSI. Both new IMSIs subsequently registered on their intended DUs on 2026-10-13, with separate IPv4/private-ping and role UL functionality checkpoints; see the current dual-UE booklets. The earlier baseline IMSI `001010000000001` and its single-DU/KPM results remain separate.
 
-Before using either new card, prepare its own matching core subscriber from protected `~/sim_du1_credentials.txt` or `~/sim_du2_credentials.txt`, SST 1, `internet`, and IPv4 type 1. Keep K/OPc private. The programming tool's recommended SQN reference `96` requires verification of the installed core's representation/current state; do not blindly insert or reset decimal 96. See [SIM assignments](sim_provisioning_and_dual_ue.md#sim-assignments) and [Open5GS preparation](sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers).
+Before using either new card, prepare its own matching core subscriber from protected `~/sim_du1_credentials.txt` or `~/sim_du2_credentials.txt`, SST 1 and IPv4 type 1. The migrated deployment uses UE1 `internet` and UE2 `internet2`; use the paired dual-UE booklets for that topology. Keep K/OPc private. The programming tool's recommended SQN reference `96` requires verification of the installed core's representation/current state; do not blindly insert or reset decimal 96. See [SIM assignments](sim_provisioning_and_dual_ue.md#sim-assignments) and [Open5GS preparation](sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers).
 
-These launch commands cover **DU1 only**. The supplied DU2 config, actual B210 `328B021`, PCI 2 / SSB 639648, and distinct DU/network identities are covered by [Dual UE Quick Start](dual_ue_quick_start.md). IMSI does not automatically bind a UE to a DU; verify serving-cell readback. Two registered WWAN/IP paths and MPTCP remain pending; see [dual-UE validation](sim_provisioning_and_dual_ue.md#validate-two-ue-paths).
+These launch commands cover **DU1 only**. The supplied DU2 config, actual B210 `328B021`, PCI 2 / SSB 639648, and distinct DU/network identities are covered by [Dual UE Spark quick commands](dual_ue_spark_quick_commands.md). IMSI does not automatically bind a UE to a DU; verify serving-cell readback. Both registered WWAN/IP paths have now passed private ping; concurrent UL/KPM acceptance and MPTCP remain pending; see [dual-UE validation](sim_provisioning_and_dual_ue.md#validate-two-ue-paths).
 
 ## 1 Check before startup
 

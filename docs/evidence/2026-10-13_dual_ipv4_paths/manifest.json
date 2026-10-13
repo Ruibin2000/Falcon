@@ -1,0 +1,129 @@
+{
+  "recorded_at": "19 : 17: 29 Oct 13, 2026 EDT",
+  "source": "Operator-provided bearer/preflight/policy-route and sequential source-bound ping readbacks; selected fields and whitespace normalized; no fresh automated laptop probe",
+  "status": "Both intended modem/SIM/cell registrations established; UE1 internet IPv4 metadata and host route/private ping passed; both policy lookups/guards read back and UE2 returned all five requested echo replies; UE1 UL and concurrent UL/KPM pending",
+  "registration_evidence": "../2026-10-13_du1_registration/manifest.json",
+  "ue1": {
+    "modem": 6,
+    "imei": "863305041978437",
+    "imsi": "001010000000101",
+    "du_id": 1,
+    "pci": 1,
+    "nci_decimal": 6733824,
+    "ssb_arfcn": 643680,
+    "bearer": {
+      "id": 4,
+      "connected": true,
+      "suspended": false,
+      "multiplexed": false,
+      "apn": "internet",
+      "ip_type": "ipv4",
+      "method": "static",
+      "address": "10.45.0.2",
+      "prefix": 30,
+      "interface": "wwan1",
+      "gateway": "10.45.0.1",
+      "mtu": 1400,
+      "start_date_utc": "2026-10-13T23:07:52Z"
+    },
+    "host_before": {
+      "state": "DOWN",
+      "mtu": 1500,
+      "ipv4_addresses": [],
+      "table_151": "not present",
+      "priorities_10151_10152": "unused"
+    },
+    "host_route_observed": {
+      "source": "10.45.0.2",
+      "destination": "10.45.0.1",
+      "interface": "wwan1",
+      "table": 151
+    },
+    "ping": {
+      "sent": 5,
+      "received": 5,
+      "loss_percent": 0,
+      "duration_ms": 4007,
+      "rtt_ms": {
+        "min": 28.669,
+        "avg": 110.292,
+        "max": 405.296,
+        "mdev": 147.605
+      }
+    }
+  },
+  "ue2": {
+    "modem": 5,
+    "imei": "863305041980706",
+    "imsi": "001010000000102",
+    "du_id": 2,
+    "address": "10.46.0.2",
+    "interface": "wwan0",
+    "destination": "10.46.0.1",
+    "lookup_table_readback": 152,
+    "ping": {
+      "requested_count": 5,
+      "reply_sequences": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "final_statistics": "not included in the latest excerpt"
+    }
+  },
+  "policy_rules_observed": [
+    {
+      "priority": 10151,
+      "source": "10.45.0.2/32",
+      "destination": "10.45.0.1/32",
+      "lookup": 151
+    },
+    {
+      "priority": 10152,
+      "source": "10.45.0.2/32",
+      "destination": "10.45.0.1/32",
+      "action": "unreachable"
+    },
+    {
+      "priority": 10161,
+      "source": "10.46.0.2/32",
+      "destination": "10.46.0.1/32",
+      "lookup": 152
+    },
+    {
+      "priority": 10162,
+      "source": "10.46.0.2/32",
+      "destination": "10.46.0.1/32",
+      "action": "unreachable"
+    }
+  ],
+  "configuration_requested": {
+    "ue1_host_mtu": 1400,
+    "ue1_address_mode": "noprefixroute",
+    "table_151_route": "10.45.0.1/32 dev wwan1 src 10.45.0.2",
+    "post_configuration_mtu_addr_readback": "not included; route and source-bound ping observed"
+  },
+  "management_default": {
+    "earlier_observation": "Wi-Fi via 10.20.0.1 dev wlp0s20f3 src 10.20.91.243 metric 600",
+    "latest_recheck": "command supplied, output not included"
+  },
+  "files": {
+    "operator_path_readback.txt": {
+      "sha256": "5c48da23815157f802f15a9b46a94dd9155402a1c30cd3aa07532e4364027cab"
+    }
+  },
+  "pending": [
+    "UE1 60-second TCP UL with both DUs active and UE2 traffic idle",
+    "Concurrent dual-UE UL and per-DU/UE KPM attribution",
+    "Guard negative tests, packet-path attribution and deliberate link-loss/survivor checks",
+    "Latest Wi-Fi default-route and host MTU/address readbacks",
+    "Repeated/controlled UDP and cold-start gates"
+  ],
+  "notes": [
+    "Two pings were sequential, not a concurrent throughput test.",
+    "Policy guards were read back but deliberate route-loss behavior has not been tested.",
+    "Higher initial ping latency is retained without assigning a cause."
+  ]
+}

@@ -1,0 +1,11 @@
+[E2AP]: E2 SETUP-REQUEST rx from PLMN   1. 1 Node ID 411 RAN type ngran_gNB_DU ID 2
+[NEAR-RIC]: Accepting RAN function ID 2 with def = ORAN-E2SM-KPM 
+[E2AP]: SCTP_SHUTDOWN_EVENT 
+[NEAR-RIC]: Removing E2 Node MCC 1 MNC 1 NB_ID 411 
+[E2AP]: E2 SETUP-REQUEST rx from PLMN   1. 1 Node ID 411 RAN type ngran_gNB_DU ID 2
+[NEAR-RIC]: Accepting RAN function ID 2 with def = ORAN-E2SM-KPM 
+[E2AP]: E2 SETUP-REQUEST rx from PLMN   1. 1 Node ID 411 RAN type ngran_gNB_DU ID 1
+[NEAR-RIC]: Accepting RAN function ID 2 with def = ORAN-E2SM-KPM 
+[iApp]: send E42 UPDATE-E2-NODE to xApp id 7
+[E2AP]: SCTP_SEND_FAILED 
+[NEAR-RIC]: xApp 7 disconnected!

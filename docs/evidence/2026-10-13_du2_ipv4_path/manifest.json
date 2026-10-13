@@ -1,0 +1,88 @@
+{
+  "recorded_at": "18 : 33: 14 Oct 13, 2026 EDT",
+  "source": "Operator-provided bearer and route/ping readbacks; path excerpt layout normalized; no fresh remote laptop probe",
+  "status": "UE2 internet2 IPv4 PDU and private ping passed; UL/KPM and dual-path independence pending",
+  "identity": {
+    "modem": 5,
+    "imei": "863305041980706",
+    "imsi": "001010000000102",
+    "du_id": 2,
+    "pci": 2,
+    "nci_decimal": 6733825,
+    "ssb_arfcn": 639648
+  },
+  "bearer": {
+    "id": 3,
+    "connected": true,
+    "suspended": false,
+    "multiplexed": false,
+    "apn": "internet2",
+    "ip_type": "ipv4",
+    "method": "static",
+    "interface": "wwan0",
+    "address": "10.46.0.2",
+    "prefix": 30,
+    "gateway": "10.46.0.1",
+    "mtu": 1400,
+    "start_date_utc": "2026-10-13T22:22:26Z"
+  },
+  "old_bearer": {
+    "id": 2,
+    "apn": "internet",
+    "connected": false
+  },
+  "host_before_configuration": {
+    "interface": "wwan0",
+    "state": "DOWN",
+    "mtu": 1500,
+    "ipv4_addresses": [],
+    "policy_rules": "local/main/default only"
+  },
+  "path_observed": {
+    "destination": "10.46.0.1",
+    "source": "10.46.0.2",
+    "interface": "wwan0",
+    "table": 152,
+    "management_default": {
+      "via": "10.20.0.1",
+      "interface": "wlp0s20f3",
+      "source": "10.20.91.243",
+      "metric": 600
+    }
+  },
+  "policy_requested": {
+    "lookup_priority": 10161,
+    "guard_priority": 10162,
+    "guard_action": "unreachable",
+    "source": "10.46.0.2/32",
+    "destination": "10.46.0.1/32",
+    "negative_test": "pending; guard not independently read back in this excerpt"
+  },
+  "ping": {
+    "sent": 5,
+    "received": 5,
+    "loss_percent": 0,
+    "rtt_ms": {
+      "min": 37.127,
+      "avg": 116.899,
+      "max": 422.149,
+      "mdev": 152.655
+    }
+  },
+  "files": {
+    "operator_path_readback.txt": {
+      "sha256": "565039acdd28a06252a5016b9c5f36c5dde466e5943e40192ae75c9ea3d0b261"
+    }
+  },
+  "pending": [
+    "DU2 solo UL receiver result",
+    "UL-window KPM metrics and lifecycle",
+    "Path-loss guard/survivor and packet attribution checks",
+    "New UE1 registration/PDU and simultaneous UL",
+    "Cold-start retention and lock enforcement"
+  ],
+  "notes": [
+    "High first ping RTT is recorded without assigning a cause.",
+    "Only current bearer metadata and private ping are accepted here; no throughput or RF stability is claimed."
+  ]
+}

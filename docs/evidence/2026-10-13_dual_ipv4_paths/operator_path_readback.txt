@@ -1,0 +1,63 @@
+Operator-provided UE1 bearer/preflight and subsequent two-path readbacks.
+Selected fields and whitespace normalized. No fresh automated laptop probe.
+
+mmcli -b 4 (selected fields):
+path: /org/freedesktop/ModemManager1/Bearer/4
+connected: yes
+suspended: no
+multiplexed: no
+interface: wwan1
+apn: internet
+ip type: ipv4
+method: static
+address: 10.45.0.2
+prefix: 30
+gateway: 10.45.0.1
+mtu: 1400
+start date: 2026-10-13T23:07:52Z
+
+Host preflight:
+10: wwan1: <POINTOPOINT,MULTICAST,NOARP> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+wwan1 had no IPv4 address in the supplied IPv4 address list.
+wwan0: 10.46.0.2/30 scope global noprefixroute
+wlp0s20f3: 10.20.91.243/17 scope global dynamic noprefixroute
+ip -4 rule show
+0: from all lookup local
+10161: from 10.46.0.2 to 10.46.0.1 lookup 152
+10162: from 10.46.0.2 to 10.46.0.1 unreachable
+32766: from all lookup main
+32767: from all lookup default
+ip -4 route show table 151
+Error: ipv4: FIB table does not exist.
+Dump terminated
+
+Subsequent host path readbacks:
+ip -4 route get 10.45.0.1 from 10.45.0.2
+10.45.0.1 from 10.45.0.2 dev wwan1 table 151 uid 1000
+    cache
+ip -4 rule show
+0: from all lookup local
+10151: from 10.45.0.2 to 10.45.0.1 lookup 151
+10152: from 10.45.0.2 to 10.45.0.1 unreachable
+10161: from 10.46.0.2 to 10.46.0.1 lookup 152
+10162: from 10.46.0.2 to 10.46.0.1 unreachable
+32766: from all lookup main
+32767: from all lookup default
+ping -I 10.45.0.2 -c 5 10.45.0.1
+PING 10.45.0.1 (10.45.0.1) from 10.45.0.2 : 56(84) bytes of data.
+64 bytes from 10.45.0.1: icmp_seq=1 ttl=64 time=405 ms
+64 bytes from 10.45.0.1: icmp_seq=2 ttl=64 time=44.2 ms
+64 bytes from 10.45.0.1: icmp_seq=3 ttl=64 time=32.7 ms
+64 bytes from 10.45.0.1: icmp_seq=4 ttl=64 time=40.6 ms
+64 bytes from 10.45.0.1: icmp_seq=5 ttl=64 time=28.7 ms
+--- 10.45.0.1 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4007ms
+rtt min/avg/max/mdev = 28.669/110.292/405.296/147.605 ms
+ping -I 10.46.0.2 -c 5 10.46.0.1
+PING 10.46.0.1 (10.46.0.1) from 10.46.0.2 : 56(84) bytes of data.
+64 bytes from 10.46.0.1: icmp_seq=1 ttl=64 time=394 ms
+64 bytes from 10.46.0.1: icmp_seq=2 ttl=64 time=43.3 ms
+64 bytes from 10.46.0.1: icmp_seq=3 ttl=64 time=61.7 ms
+64 bytes from 10.46.0.1: icmp_seq=4 ttl=64 time=39.1 ms
+64 bytes from 10.46.0.1: icmp_seq=5 ttl=64 time=38.1 ms
+[Supplied excerpt ends here. UE2 final summary and latest default-route output were not included.]

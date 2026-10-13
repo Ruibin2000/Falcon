@@ -6,7 +6,24 @@ Underflow remediation is deferred; record counts without using count/growth
 alone as a pass/fail gate. UL failures and lost SA/PDU sessions still fail.
 
 For the compact end-to-end operator flow, use the
-[Dual UE quick start](dual_ue_quick_start.md). This runbook retains checkpoint
+[Dual UE laptop commands](dual_ue_laptop_quick_commands.md) and
+[Dual UE Spark commands](dual_ue_spark_quick_commands.md). The operator completed the requested
+[two-subnet migration](dual_ue_subnets.md): core service/DNN/address checks passed
+for UE2 `internet2` / Spark `10.46.0.1`. UE2 subsequently established IPv4 bearer 3 /
+`10.46.0.2/30` / `wwan0`, passed ping 5/5 over table 152 with the Wi-Fi default
+preserved, and completed 60-second TCP UL at receiver 15.5 Mbit/s / sender Retr 1.
+The KPM smoke run delivered 12 complete reports for UE F1AP 67 with numeric UL
+metrics and successful subscription/deletion/completion. See the
+[UL checkpoint](evidence/2026-10-13_du2_ul/manifest.json); full dual-link acceptance
+remains pending.
+DU1 subsequently joined with F1/E2 complete. Both new SIMs registered on their
+intended cells and both policy paths/private pings passed; new UE1 UL delivered
+receiver 10.5 Mbit/s / Retr 0 / pipeline exit 0 with UE2 test traffic idle. The
+DU-tagged diagnostic xApp found both E2 nodes and subscribed/deleted twice with
+exit 0, but received zero UE callback blocks. Concurrent UL and actual two-link
+KPM remain pending; see [UE1 UL](evidence/2026-10-13_du1_ul/manifest.json) and
+[two-DU subscription evidence](evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
+This runbook retains checkpoint
 details and the full Plan 3 acceptance context.
 
 ## Preparation status
@@ -22,8 +39,9 @@ DU1 `3271233` at `2-1.3` / controller `NVDA8000:00`, and DU2 `328B021` at
 startup subsequently confirmed B210 328B021 / USB 3 / 3600 MHz / PCI 2 /
 SSB 639648, F1/E2 completion and RIC gNB 411 / DU ID 2 / KPM function ID 2.
 MongoDB, ten SA services, CU and RIC were started for this run, while DU1 stayed
-stopped. UE2 identity/registration/PDU/UL and actual UE KPM reception remain
-pending. See the [live startup evidence](evidence/2026-10-13_du2_startup/manifest.json).
+stopped. UE2 subsequently passed identity/cell/SA, the new IPv4 PDU/private ping,
+and the single-link UL/KPM smoke checkpoint above. Both DUs and both private UE paths were subsequently observed; concurrent
+UL/KPM acceptance remains pending. See the [live startup evidence](evidence/2026-10-13_du2_startup/manifest.json).
 The [preparation evidence](evidence/2026-10-13_du2_preparation/manifest.json)
 retains configuration hashes, parse results, collision tests and the band-helper
 derivation. A successful preparation check is not live acceptance.
@@ -37,7 +55,7 @@ derivation. A successful preparation check is not live acceptance.
 | PCI / sector / expected NCI | 1 / 0 / 6733824 | 2 / 1 / 6733825 |
 | F1-C / F1-U local bind | 127.0.10.2 | 127.0.10.3 |
 | E2 local bind / shared destination | 127.0.0.1 / 127.0.0.1:36421 | 127.0.10.3 / 127.0.0.1:36421 |
-| SSB lock | 643680 from accepted startup | 639648 confirmed in live startup; modem readback pending |
+| SSB lock | 643680 from accepted startup | 639648 confirmed in startup and UE2 lock/serving-cell readback |
 | Intended new subscriber | 001010000000101 | 001010000000102 |
 
 DU2 preserves the initial sample rate 23.04 MS/s, internal clock, TX 70/RX 35,
@@ -130,7 +148,8 @@ prerequisites separately, covering both full channels.
 4. On the **UE laptop**, select the second RM500Q by current IMEI
    `863305041980706` and verify SIM IMSI `001010000000102`. Prepare its matching
    subscriber using the [SIM guide](sim_provisioning_and_dual_ue.md), with its own
-   protected credentials, SST 1, DNN `internet`, IPv4 type 1 and verified SQN
+   protected credentials, SST 1, UE1 DNN `internet` / UE2 DNN `internet2` after
+   subnet migration, IPv4 type 1 and verified SQN
    representation. Do not replace the established subscriber or reuse SIM1 keys.
 5. Use the [UE procedure](ue_laptop_quick_commands.md) on that modem's actual AT
    port. Lock PCI 2 using **DU2's observed SSB**, common SCS 30 and n78. Retain
@@ -153,7 +172,7 @@ iperf3 -s -B 10.45.0.1 -p 5201
 ```
 
 ```bash
-iperf3 -s -B 10.45.0.1 -p 5202
+iperf3 -s -B 10.46.0.1 -p 5202
 ```
 
 On the **UE laptop**, in each modem's own terminal with its discovered source IP:
@@ -164,8 +183,8 @@ iperf3 -c 10.45.0.1 -p 5201 -B "$UE1_IP" -t 60 -i 1 --get-server-output -J
 ```
 
 ```bash
-ip -4 route get 10.45.0.1 from "${UE2_IP:?Read the actual UE2 bearer}"
-iperf3 -c 10.45.0.1 -p 5202 -B "$UE2_IP" -t 60 -i 1 --get-server-output -J
+ip -4 route get 10.46.0.1 from "${UE2_IP:?Read the actual UE2 bearer}"
+iperf3 -c 10.46.0.1 -p 5202 -B "$UE2_IP" -t 60 -i 1 --get-server-output -J
 ```
 
 Save outputs with exact wall-clock windows, link identity, case and repetition.

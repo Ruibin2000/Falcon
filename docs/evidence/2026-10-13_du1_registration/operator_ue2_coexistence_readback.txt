@@ -1,0 +1,19 @@
+Operator-provided UE2 recheck after DU1 startup; whitespace normalized.
+This is an idle coexistence cell/ping check, not a link-removal survivor test.
+
+AT+CIMI
+001010000000102
+OK
+AT+QNWLOCK="common/5g"
++QNWLOCK: "common/5g",2,639648,30,78
+OK
+AT+QENG="servingcell"
++QENG: "servingcell","NOCONN","NR5G-SA","TDD", 001,01,00066C001,2,7,639648,78,1,-90,-11,24,1,40
+OK
+AT+C5GREG?
++C5GREG: 0,1
+OK
+
+ping -I 10.46.0.2 -c 5 10.46.0.1
+5 packets transmitted, 5 received, 0% packet loss, time 4005ms
+rtt min/avg/max/mdev = 39.126/152.103/475.168/168.417 ms

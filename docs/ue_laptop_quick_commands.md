@@ -3,7 +3,7 @@
 Updated: 2026-10-13. Run these steps in order in **one Bash terminal per UE on the laptop** and keep that UE's variables in its terminal. Continue only after each step succeeds. For full instructions, see [Runbook stages 10–14](full_reproduction_runbook.md#10-prepare-a-new-ubuntulinux-laptop); start Spark using [Spark Quick Commands](spark_quick_commands.md).
 
 For simultaneous UE1/UE2 and the current UL-only scope, use
-[Dual UE Quick Start](dual_ue_quick_start.md), which supplies both locks and
+[Dual UE laptop quick commands](dual_ue_laptop_quick_commands.md), which supplies both locks and
 separate source-policy routes. This booklet retains the single-UE route recipe.
 
 For the DU1 migration to **3660 MHz**, use the recorded **PCI 1 / SSB 643680 / SCS 30 kHz / n78** lock in step 2 after comparing it with the current DU startup cell line. This tuple comes from the operator-provided 2026-10-12 startup summary. The 2026-10-12 new-carrier check passed **uplink functionality**: UE `10.45.0.2 / wwan0` reached Spark `10.45.0.1`, TCP receiver goodput was 17.0 Mbit/s for 30.24 seconds with sender Retr 0, and ping loss was 0%. The KPM xApp received 12 complete reports for UE F1AP ID 5. RF stability remains pending because of recurring underflows; downlink is outside the current scope. See the [daily log](../dev_logs/2026-10-12_ruibin.md). The matching subscriber must be prepared for the SIM actually installed; using the new SIM1 requires its own core record.
@@ -12,14 +12,14 @@ The 2026-10-05 session verified single-UE registration, IPv4 connectivity, and a
 
 ## 0 Select the SIM and subscriber plan
 
-Open Cells SIM provisioning, Milenage authentication, and Quectel USIM-readiness checks are complete for both cards. Registration of these specific new IMSIs has **not yet been evidenced**; the active IMSI was not captured in the current uplink excerpts. The earlier single-link baseline used IMSI `001010000000001`; its traffic/KPM evidence does not establish registration of the new cards.
+Open Cells SIM provisioning, Milenage authentication, and Quectel USIM-readiness checks are complete for both cards. The historical single-link uplink excerpts did not retain the active IMSI. Both new IMSIs subsequently registered on their intended DUs on 2026-10-13; their current dual-subnet workflow and evidence are in the paired dual-UE booklets. The earlier single-link baseline used IMSI `001010000000001`; its traffic/KPM evidence does not establish registration of the new cards.
 
 | Intended UE / DU | Card | IMSI | Observed modem IMEI |
 | --- | --- | --- | --- |
 | UE1 / DU1 | OC011830 | `001010000000101` | `863305041978437` |
 | UE2 / DU2 | OC011831 | `001010000000102` | `863305041980706` |
 
-Before connecting either new UE, prepare its matching Open5GS subscriber using the protected `~/sim_du1_credentials.txt` or `~/sim_du2_credentials.txt`, SST 1, DNN `internet`, and IPv4 session type 1. K/OPc must remain private. The utility recommended SQN reference `96` after its authentication test; verify the installed core's representation and current SQN before using it. See [SIM assignments](sim_provisioning_and_dual_ue.md#sim-assignments), [subscriber preparation](sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers), and [dual-path validation](sim_provisioning_and_dual_ue.md#validate-two-ue-paths).
+Before connecting either new UE, prepare its matching Open5GS subscriber using the protected `~/sim_du1_credentials.txt` or `~/sim_du2_credentials.txt`, SST 1 and IPv4 session type 1. In the migrated dual deployment use UE1 DNN `internet` and UE2 DNN `internet2`; follow the dual-UE booklet for UE2 and simultaneous paths. K/OPc must remain private. The utility recommended SQN reference `96` after its authentication test; verify the installed core's representation and current SQN before using it. See [SIM assignments](sim_provisioning_and_dual_ue.md#sim-assignments), [subscriber preparation](sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers), and [dual-path validation](sim_provisioning_and_dual_ue.md#validate-two-ue-paths).
 
 Do not select a second modem in a terminal retaining the first UE's bearer/WWAN variables. Separate terminals protect variables, but share the laptop's routing tables. The single-link route recipe below does **not** implement two simultaneous IP paths or MPTCP.
 
@@ -128,7 +128,7 @@ For a SIM swap: finish traffic and bearer cleanup, disable the selected modem wi
 
 ## 2 Configure NR SA and lock the private cell
 
-The lock in this stage is **DU1 only**. DU2's actual startup confirmed PCI 2 / SSB 639648 / 3600 MHz; its modem procedure is in [Dual UE Quick Start](dual_ue_quick_start.md). An IMSI does not select a DU automatically. Check that the current startup cell line in [Spark step 5](spark_quick_commands.md#5-start-du-with-e2-enabled) matches carrier `644000` / 3660 MHz, PCI `1`, and SSB `643680`. After a carrier migration, replace the old lock even if the modem still displays registration. Skip configuration only when the readback and serving cell already match the current DU.
+The lock in this stage is **DU1 only**. DU2's actual startup confirmed PCI 2 / SSB 639648 / 3600 MHz; its modem procedure is in [Dual UE laptop quick commands](dual_ue_laptop_quick_commands.md). An IMSI does not select a DU automatically. Check that the current startup cell line in [Spark step 5](spark_quick_commands.md#5-start-du-with-e2-enabled) matches carrier `644000` / 3660 MHz, PCI `1`, and SSB `643680`. After a carrier migration, replace the old lock even if the modem still displays registration. Skip configuration only when the readback and serving cell already match the current DU.
 
 SSB `643680` is deterministic for the current cell configuration and derivation logic; restarting DU or reconnecting UE does not select a random SSB. Recheck it after changing the carrier, band, bandwidth, SCS, SSB/CORESET parameters, or OCUDU version. If startup differs from the recorded tuple, update the lock from the actual output before using it.
 

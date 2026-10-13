@@ -1,0 +1,65 @@
+{
+  "recorded_at": "19 : 41: 32 Oct 13, 2026 EDT",
+  "status": "Two DU E2 nodes and successful simultaneous KPM subscriptions/deletions verified; actual two-link UE KPM data pending",
+  "source": "Actual isolated diagnostic xApp log on Spark, not synthetic reports or an operator transcript",
+  "window": {
+    "start": "2026-10-13T19:29:23,982406224-04:00",
+    "end": "2026-10-13T19:30:14,995573599-04:00",
+    "requested_capture_seconds": 45
+  },
+  "xapp_id": 8,
+  "nodes": [
+    {
+      "index": 0,
+      "gnb_id": 411,
+      "ran_type": "ngran_gNB_DU",
+      "du_id": 2
+    },
+    {
+      "index": 1,
+      "gnb_id": 411,
+      "ran_type": "ngran_gNB_DU",
+      "du_id": 1
+    }
+  ],
+  "subscriptions": {
+    "ran_function": 2,
+    "requests": 2,
+    "successful_responses": 2,
+    "deletion_responses": 2,
+    "callback_blocks": 0,
+    "pipeline_exit_code": 0,
+    "normal_stop": true
+  },
+  "traffic_context": "Operator reported simultaneous iperf had not started when asked; later supplied a concurrent launcher transcript timestamped before this capture. No overlap with this capture has been demonstrated.",
+  "files": {
+    "xapp.log": {
+      "sha256": "8f347aba4a1dfb3dffe42af5b7871f2a387ffece69edd6ba7a351a0604ff30c8"
+    }
+  },
+  "artifacts": {
+    "scripts/dual_fr1/xapp_oran_moni_dual.c": {
+      "sha256": "3aa9f9fd67d05209eb515cd640758bb48f5933f3a6b2cc72e853ef19aca266fa"
+    },
+    "scripts/dual_fr1/build_kpm_monitor.sh": {
+      "sha256": "e91a886396b6292fb8e534aa6eb8703a131e7ed35889373d6ca21d8606374667"
+    },
+    "/tmp/falcon-xapp-oran-moni-dual": {
+      "sha256": "ec75260f180866b5fa19e02fde769c1e588529d0d69c42337c274d3ed05d02c5"
+    },
+    "/usr/local/etc/flexric/xapp_oran_sm.conf": {
+      "sha256": "ce35820f73c33c496c52644ba5550bb9bf5ebf380a0e722cb4a58f0f1d176c6c"
+    }
+  },
+  "pending": [
+    "Capture real callbacks from both DU IDs during overlapping dual-UE UL",
+    "Associate each DU/F1AP UE with modem/SIM/cell/bearer",
+    "At least 30 complete numeric UL-window rows per link",
+    "Concurrent receiver summaries, trustworthy exit codes and timestamps"
+  ],
+  "notes": [
+    "An exit-0 success marker and successful subscriptions alone do not prove UE KPM delivery.",
+    "The attempted automatic 120-second follow-up was rejected before execution; manual commands were provided.",
+    "The earlier concurrent laptop launcher lost shell variable expansions in wait/printf; its printed exit=0 values and immediate end timestamp are invalid. Preserve its logs; rerun with the documented Python launcher."
+  ]
+}

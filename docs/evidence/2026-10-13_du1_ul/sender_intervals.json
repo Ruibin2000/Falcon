@@ -1,0 +1,602 @@
+[
+  {
+    "start_seconds": 0.0,
+    "end_seconds": 1.0,
+    "transfer_displayed": 1.62,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 13.6,
+    "retransmissions": 0,
+    "cwnd_displayed": 143.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 1.0,
+    "end_seconds": 2.0,
+    "transfer_displayed": 1.88,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 15.7,
+    "retransmissions": 0,
+    "cwnd_displayed": 233.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 2.0,
+    "end_seconds": 3.0,
+    "transfer_displayed": 640.0,
+    "transfer_unit": "KBytes",
+    "mbit_per_second": 5.24,
+    "retransmissions": 0,
+    "cwnd_displayed": 261.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 3.0,
+    "end_seconds": 4.0,
+    "transfer_displayed": 1.5,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 12.6,
+    "retransmissions": 0,
+    "cwnd_displayed": 329.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 4.0,
+    "end_seconds": 5.0,
+    "transfer_displayed": 1.62,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 13.6,
+    "retransmissions": 0,
+    "cwnd_displayed": 408.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 5.0,
+    "end_seconds": 6.0,
+    "transfer_displayed": 2.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 17.8,
+    "retransmissions": 0,
+    "cwnd_displayed": 491.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 6.0,
+    "end_seconds": 7.0,
+    "transfer_displayed": 1.25,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 10.5,
+    "retransmissions": 0,
+    "cwnd_displayed": 554.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 7.0,
+    "end_seconds": 8.0,
+    "transfer_displayed": 768.0,
+    "transfer_unit": "KBytes",
+    "mbit_per_second": 6.29,
+    "retransmissions": 0,
+    "cwnd_displayed": 579.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 8.0,
+    "end_seconds": 9.0,
+    "transfer_displayed": 2.0,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 16.8,
+    "retransmissions": 0,
+    "cwnd_displayed": 579.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 9.0,
+    "end_seconds": 10.0,
+    "transfer_displayed": 640.0,
+    "transfer_unit": "KBytes",
+    "mbit_per_second": 5.24,
+    "retransmissions": 0,
+    "cwnd_displayed": 579.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 10.0,
+    "end_seconds": 11.0,
+    "transfer_displayed": 768.0,
+    "transfer_unit": "KBytes",
+    "mbit_per_second": 6.29,
+    "retransmissions": 0,
+    "cwnd_displayed": 579.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 11.0,
+    "end_seconds": 12.0,
+    "transfer_displayed": 0.0,
+    "transfer_unit": "Bytes",
+    "mbit_per_second": 0.0,
+    "retransmissions": 0,
+    "cwnd_displayed": 579.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 12.0,
+    "end_seconds": 13.0,
+    "transfer_displayed": 640.0,
+    "transfer_unit": "KBytes",
+    "mbit_per_second": 5.24,
+    "retransmissions": 0,
+    "cwnd_displayed": 579.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 13.0,
+    "end_seconds": 14.0,
+    "transfer_displayed": 768.0,
+    "transfer_unit": "KBytes",
+    "mbit_per_second": 6.29,
+    "retransmissions": 0,
+    "cwnd_displayed": 579.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 14.0,
+    "end_seconds": 15.0,
+    "transfer_displayed": 640.0,
+    "transfer_unit": "KBytes",
+    "mbit_per_second": 5.24,
+    "retransmissions": 0,
+    "cwnd_displayed": 579.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 15.0,
+    "end_seconds": 16.0,
+    "transfer_displayed": 640.0,
+    "transfer_unit": "KBytes",
+    "mbit_per_second": 5.24,
+    "retransmissions": 0,
+    "cwnd_displayed": 579.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 16.0,
+    "end_seconds": 17.0,
+    "transfer_displayed": 768.0,
+    "transfer_unit": "KBytes",
+    "mbit_per_second": 6.29,
+    "retransmissions": 0,
+    "cwnd_displayed": 579.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 17.0,
+    "end_seconds": 18.0,
+    "transfer_displayed": 640.0,
+    "transfer_unit": "KBytes",
+    "mbit_per_second": 5.24,
+    "retransmissions": 0,
+    "cwnd_displayed": 579.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 18.0,
+    "end_seconds": 19.0,
+    "transfer_displayed": 768.0,
+    "transfer_unit": "KBytes",
+    "mbit_per_second": 6.29,
+    "retransmissions": 0,
+    "cwnd_displayed": 579.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 19.0,
+    "end_seconds": 20.0,
+    "transfer_displayed": 2.88,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 24.1,
+    "retransmissions": 0,
+    "cwnd_displayed": 802.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 20.0,
+    "end_seconds": 21.0,
+    "transfer_displayed": 2.25,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 18.9,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 21.0,
+    "end_seconds": 22.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 22.0,
+    "end_seconds": 23.0,
+    "transfer_displayed": 2.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 17.8,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 23.0,
+    "end_seconds": 24.0,
+    "transfer_displayed": 2.25,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 18.9,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 24.0,
+    "end_seconds": 25.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.43,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 25.0,
+    "end_seconds": 26.0,
+    "transfer_displayed": 2.25,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 18.9,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 26.0,
+    "end_seconds": 27.0,
+    "transfer_displayed": 0.0,
+    "transfer_unit": "Bytes",
+    "mbit_per_second": 0.0,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 27.0,
+    "end_seconds": 28.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.43,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 28.0,
+    "end_seconds": 29.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 29.0,
+    "end_seconds": 30.0,
+    "transfer_displayed": 0.0,
+    "transfer_unit": "Bytes",
+    "mbit_per_second": 0.0,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 30.0,
+    "end_seconds": 31.0,
+    "transfer_displayed": 1.0,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 8.39,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 31.0,
+    "end_seconds": 32.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 32.0,
+    "end_seconds": 33.0,
+    "transfer_displayed": 0.0,
+    "transfer_unit": "Bytes",
+    "mbit_per_second": 0.0,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 33.0,
+    "end_seconds": 34.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 34.0,
+    "end_seconds": 35.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 35.0,
+    "end_seconds": 36.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 36.0,
+    "end_seconds": 37.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 37.0,
+    "end_seconds": 38.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 38.0,
+    "end_seconds": 39.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 39.0,
+    "end_seconds": 40.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 40.0,
+    "end_seconds": 41.0,
+    "transfer_displayed": 1.0,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 8.39,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 41.0,
+    "end_seconds": 42.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 42.0,
+    "end_seconds": 43.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 43.0,
+    "end_seconds": 44.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 44.0,
+    "end_seconds": 45.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 45.0,
+    "end_seconds": 46.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 46.0,
+    "end_seconds": 47.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 47.0,
+    "end_seconds": 48.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 48.0,
+    "end_seconds": 49.0,
+    "transfer_displayed": 2.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 17.8,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 49.0,
+    "end_seconds": 50.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 50.0,
+    "end_seconds": 51.0,
+    "transfer_displayed": 1.25,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 10.5,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 51.0,
+    "end_seconds": 52.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 52.0,
+    "end_seconds": 53.0,
+    "transfer_displayed": 1.0,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 8.39,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 53.0,
+    "end_seconds": 54.0,
+    "transfer_displayed": 1.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 9.44,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 54.0,
+    "end_seconds": 55.0,
+    "transfer_displayed": 2.25,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 18.9,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 55.0,
+    "end_seconds": 56.0,
+    "transfer_displayed": 2.25,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 18.9,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 56.0,
+    "end_seconds": 57.0,
+    "transfer_displayed": 3.38,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 28.3,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 57.0,
+    "end_seconds": 58.0,
+    "transfer_displayed": 2.12,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 17.8,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 58.0,
+    "end_seconds": 59.0,
+    "transfer_displayed": 2.25,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 18.9,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  },
+  {
+    "start_seconds": 59.0,
+    "end_seconds": 60.0,
+    "transfer_displayed": 3.38,
+    "transfer_unit": "MBytes",
+    "mbit_per_second": 28.3,
+    "retransmissions": 0,
+    "cwnd_displayed": 970.0,
+    "cwnd_unit": "KBytes"
+  }
+]
