@@ -89,12 +89,15 @@ def discover_roles():
             value for key, value in info.items() if key.startswith("modem.generic.ports"))))
         require(re.fullmatch(r"(?:wwan|wwp|rmnet)[A-Za-z0-9_.-]*", interface) and interface in ports,
                 f"{tag}: bearer interface does not belong to the selected modem")
-        require(bearer.get("bearer.ipv4-config.gateway") == server, f"{tag}: unexpected bearer gateway")
+        # Record the bearer default gateway; verify_routes checks the server's host route.
+        gateway = bearer.get("bearer.ipv4-config.gateway") or None
+        if gateway == "--":
+            gateway = None
         identity = info.get("modem.generic.device-identifier", "")
         require(identity not in ("", "--"), f"{tag}: missing current modem device identifier")
         result.append({"ue": ue, "imei": imei, "imsi": imsi, "apn": apn, "modem": modem,
                        "device_identifier": identity, "sim": sim, "bearer": bearer_path,
-                       "source": source, "prefix": prefix, "interface": interface,
+                       "source": source, "prefix": prefix, "interface": interface, "gateway": gateway,
                        "server": server, "port": port, "table": table})
     require(len({role["source"] for role in result}) == 2 and len({role["interface"] for role in result}) == 2,
             "The two roles must have different current source addresses and dedicated WWAN interfaces")
@@ -131,7 +134,8 @@ def run(seconds=60, check_only=False, output_root="/tmp"):
     verify_routes(roles)
     for role in roles:
         print(f"UE{role['ue']}: IMEI={role['imei']} IMSI={role['imsi']} bearer={role['bearer']} "
-              f"{role['source']}/{role['prefix']} dev={role['interface']} table={role['table']} -> {role['server']}:{role['port']}", flush=True)
+              f"{role['source']}/{role['prefix']} dev={role['interface']} table={role['table']} "
+              f"gateway={role['gateway'] or 'not reported'} -> {role['server']}:{role['port']}", flush=True)
     if check_only:
         print("Both current bearer/host routes checked; no iperf traffic started")
         return 0

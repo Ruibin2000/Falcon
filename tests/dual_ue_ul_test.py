@@ -25,7 +25,7 @@ SPEC.loader.exec_module(UL)
 class Network:
     def __init__(self):
         self.modems, self.sims, self.bearers = {}, {}, {}
-        self.addresses, self.routes = [], {}
+        self.addresses, self.routes, self.bound_sources = [], {}, {}
         self.sources = ("10.45.0.3", "10.46.0.8")
         for ue, imei, imsi, apn, _, server, _, table in UL.ROLES:
             modem = f"/org/freedesktop/ModemManager1/Modem/{100 + ue}"
@@ -45,6 +45,7 @@ class Network:
                 "bearer.ipv4-config.gateway": server, "bearer.status.interface": interface}
             self.addresses.append({"ifname": interface, "addr_info": [{"local": source, "prefixlen": 29}]})
             self.routes[server] = {"dev": interface, "table": table, "prefsrc": source}
+            self.bound_sources[server] = source
         self.iperf = []
         self.processes = []
         self.codes = (0, 0)
@@ -68,8 +69,7 @@ class Network:
         if command[:6] == ("ip", "-N", "-j", "-4", "route", "get"):
             route = copy.deepcopy(self.routes[command[6]])
             if "from" in command:
-                expected = next(bearer["bearer.ipv4-config.address"] for bearer in self.bearers.values()
-                    if bearer["bearer.ipv4-config.gateway"] == command[6] and bearer["bearer.status.connected"] == "yes")
+                expected = self.bound_sources[command[6]]
                 if command[-1] != expected:
                     raise ValueError("stale source address")
             return json.dumps([route])
@@ -157,6 +157,31 @@ class DualULTest(unittest.TestCase):
         self.network.modems["/org/freedesktop/ModemManager1/Modem/102"]["modem.generic.state"] = "registered"
         self.assert_preflight_failure("UE2: modem is not connected")
 
+    def test_gateway_can_differ_from_server_and_is_recorded(self):
+        gateways = ["10.45.0.4", "10.46.0.9"]
+        for bearer, gateway in zip(self.network.bearers.values(), gateways):
+            bearer["bearer.ipv4-config.gateway"] = gateway
+        self.assertEqual(self.run_launcher(), 0)
+        self.assertEqual([link["gateway"] for link in self.summary()["links"]], gateways)
+        self.assertEqual(len(self.network.iperf), 2)
+        for gateway in gateways:
+            self.assertIn(f"gateway={gateway}", self.stdout.getvalue())
+
+    def test_unreported_gateway_does_not_block_verified_host_routes(self):
+        for value in (None, "", "--"):
+            with self.subTest(gateway=value):
+                for bearer in self.network.bearers.values():
+                    if value is None:
+                        bearer.pop("bearer.ipv4-config.gateway", None)
+                    else:
+                        bearer["bearer.ipv4-config.gateway"] = value
+                roles = UL.discover_roles()
+                self.assertEqual([role["gateway"] for role in roles], [None, None])
+                self.assertEqual(self.run_launcher(check_only=True), 0)
+                self.assertEqual(self.network.iperf, [])
+                self.assertEqual(list(Path(self.temp.name).iterdir()), [])
+        self.assertIn("gateway=not reported", self.stdout.getvalue())
+
     def test_wrong_sim_starts_neither_client(self):
         self.network.sims["/org/freedesktop/ModemManager1/SIM/201"]["sim.properties.imsi"] = "wrong-imsi"
         self.assert_preflight_failure("UE1: active SIM")
@@ -200,8 +225,19 @@ class DualULTest(unittest.TestCase):
         self.assert_preflight_failure("exactly one connected internet bearer")
 
     def test_wifi_route_is_not_accepted(self):
+        self.network.bearers["/org/freedesktop/ModemManager1/Bearer/301"]["bearer.ipv4-config.gateway"] = "10.45.0.4"
         self.network.routes["10.45.0.1"] = {"dev": "wifi", "table": 254, "prefsrc": "10.20.91.243"}
         self.assert_preflight_failure("does not use its WWAN")
+
+    def test_wrong_table_is_rejected_with_different_gateway(self):
+        self.network.bearers["/org/freedesktop/ModemManager1/Bearer/301"]["bearer.ipv4-config.gateway"] = "10.45.0.4"
+        self.network.routes["10.45.0.1"]["table"] = 152
+        self.assert_preflight_failure("does not use its WWAN/table 151")
+
+    def test_wrong_ordinary_source_is_rejected_with_unreported_gateway(self):
+        del self.network.bearers["/org/freedesktop/ModemManager1/Bearer/301"]["bearer.ipv4-config.gateway"]
+        self.network.routes["10.45.0.1"]["prefsrc"] = "10.45.0.2"
+        self.assert_preflight_failure("ordinary traffic selects the wrong source address")
 
     def test_missing_destination_rule_is_not_accepted(self):
         original = self.network.read

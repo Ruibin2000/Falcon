@@ -30,7 +30,9 @@ role's identity, lock/cell, bearer, complete host IPv4 reset and new-path verifi
 The latest modem readback identifies UE1 as modem `9` and UE2 as modem `10`,
 both connected with `5gnr`, PLMN `00101` and registration `home`. The previous
 launcher falsely rejected UE1 by reading the parent access-technology key
-instead of its `.value[1]` array entry; the saved launcher must be updated.
+instead of its `.value[1]` array entry, then by requiring the bearer default
+gateway to equal the server endpoint. Both checks are corrected in section 3;
+overwrite the saved laptop launcher with that version before rerunning preflight.
 An earlier host readback had UE1 `10.45.0.3/29` on `wwan0` with table-151 source
 rules/route intact. Read both current bearer allocations/routes again rather
 than reusing these historical values. No historical allocation is needed for
@@ -1174,12 +1176,15 @@ def discover_roles():
             value for key, value in info.items() if key.startswith("modem.generic.ports"))))
         require(re.fullmatch(r"(?:wwan|wwp|rmnet)[A-Za-z0-9_.-]*", interface) and interface in ports,
                 f"{tag}: bearer interface does not belong to the selected modem")
-        require(bearer.get("bearer.ipv4-config.gateway") == server, f"{tag}: unexpected bearer gateway")
+        # Record the bearer default gateway; verify_routes checks the server's host route.
+        gateway = bearer.get("bearer.ipv4-config.gateway") or None
+        if gateway == "--":
+            gateway = None
         identity = info.get("modem.generic.device-identifier", "")
         require(identity not in ("", "--"), f"{tag}: missing current modem device identifier")
         result.append({"ue": ue, "imei": imei, "imsi": imsi, "apn": apn, "modem": modem,
                        "device_identifier": identity, "sim": sim, "bearer": bearer_path,
-                       "source": source, "prefix": prefix, "interface": interface,
+                       "source": source, "prefix": prefix, "interface": interface, "gateway": gateway,
                        "server": server, "port": port, "table": table})
     require(len({role["source"] for role in result}) == 2 and len({role["interface"] for role in result}) == 2,
             "The two roles must have different current source addresses and dedicated WWAN interfaces")
@@ -1216,7 +1221,8 @@ def run(seconds=60, check_only=False, output_root="/tmp"):
     verify_routes(roles)
     for role in roles:
         print(f"UE{role['ue']}: IMEI={role['imei']} IMSI={role['imsi']} bearer={role['bearer']} "
-              f"{role['source']}/{role['prefix']} dev={role['interface']} table={role['table']} -> {role['server']}:{role['port']}", flush=True)
+              f"{role['source']}/{role['prefix']} dev={role['interface']} table={role['table']} "
+              f"gateway={role['gateway'] or 'not reported'} -> {role['server']}:{role['port']}", flush=True)
     if check_only:
         print("Both current bearer/host routes checked; no iperf traffic started")
         return 0
@@ -1291,6 +1297,12 @@ The launcher reads `mmcli -K` access technologies from `.value[n]` array
 entries as well as a scalar value. An absent parent key is not evidence of
 a non-5G connection. Missing actual technology reports and LTE-only reports
 still fail preflight. See the [ModemManager output implementation](https://github.com/linux-mobile-broadband/ModemManager/blob/main/cli/mmcli-output.c).
+
+The bearer gateway is its reported default gateway; the launcher records it in
+the role summary and `summary.json`. It can differ from the server address or
+be unreported. The actual source-bound and ordinary routes to each server must
+still select that role's current WWAN, table 151/152 and current bearer address.
+See the [ModemManager bearer IP configuration](https://github.com/linux-mobile-broadband/ModemManager/blob/main/introspection/org.freedesktop.ModemManager1.Bearer.xml).
 
 Read-only preflight, without starting iperf or creating traffic logs:
 

@@ -28,7 +28,9 @@ After a modem power cycle, repeat the affected role's complete laptop sequence
 lock query `0`; its lock must be restored and the actual serving cell verified.
 The latest laptop modem readback has UE1 modem 9 and UE2 modem 10, both
 connected / 5GNR / PLMN 00101 / home. The launcher's access-technology array
-parsing has been corrected; update the laptop copy before rerunning preflight.
+parsing and gateway check have been corrected: the reported bearer default
+gateway is recorded, while actual routes determine the server path. Update the
+laptop copy before rerunning preflight.
 UE1's earlier `10.45.0.3/29` / `wwan0` and UE2's earlier bearer 5 /
 `10.46.0.3/29` are historical. Keep the Spark `.1` endpoints and discover both
 current laptop bearer allocations and host routes with the updated launcher.
