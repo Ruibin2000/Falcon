@@ -21,9 +21,15 @@ Run all commands in this file on the UE laptop. Use Bash, one terminal per UE
 for modem/bearer/path variables, and stop at failed checks. Spark startup, servers
 and KPM capture are in [Dual UE Spark Quick Commands](dual_ue_spark_quick_commands.md).
 
-For the current running session, resume at step 6 after Spark starts its KPM
-capture. Both laptop paths already exist; verify them rather than reinstalling
-them. The earlier concurrent launcher lost variable expansions in `wait`/`printf`;
+After a modem power cycle/reconnection, repeat steps 1–4 before traffic:
+rediscover identities/ports, restore and verify the intended lock and actual
+cell, then refresh bearer/path ownership. The operator reported lock query `0`.
+The latest UE2 bearer is **5 / wwan0 / 10.46.0.3/29 / MTU 1400**; rules 10161/10162
+still reference the previous `10.46.0.2`. Its restored host path remains pending;
+the new-path collision check correctly stops at `Rule priority already occupied`.
+Inspect and remove only verified old UE2 entries before installing the new path.
+Once both paths are verified, run step 6 after Spark starts KPM capture.
+The earlier concurrent launcher lost variable expansions in `wait`/`printf`;
 its printed zero exit codes and immediate end timestamp are invalid. Preserve
 its `01` logs and use the Python launcher below for a fresh recorded test.
 
@@ -51,7 +57,7 @@ sudo systemctl enable --now ModemManager
 | Proposed policy table / lookup / guard priority | `151` / `10151` / `10152` | `152` / `10161` / `10162` |
 | WWAN / UE IP / modem / bearer / AT port | Discover each run | Discover each run |
 
-| Observed this session | UE1 | UE2 |
+| Observed before the latest modem power cycle | UE1 | UE2 |
 | --- | --- | --- |
 | Modem / SIM / bearer | `6` / `6` / `4` | `5` / `5` / `3` |
 | WWAN / IPv4 | `wwan1` / `10.45.0.2/30` | `wwan0` / `10.46.0.2/30` |
@@ -60,6 +66,9 @@ sudo systemctl enable --now ModemManager
 
 Rediscover these dynamic values after modem restart/reconnection. Both cells use
 PLMN `00101`, TAC 7 and SST 1. DNN selects the UE pool; cell lock selects the DU.
+The latest UE2 readback is bearer 5 / `10.46.0.3/29` on `wwan0`; revalidate its
+cell, gateway and host configuration before testing. UE1's previous values also
+need fresh confirmation before the next dual test.
 
 <a id="ue2-selection"></a>
 
@@ -189,14 +198,19 @@ PCI/SSB, and serving cell `NR5G-SA / 001,01` on that cell: UE1 NCI `00066C000`, 
 `+C5GREG: 0,1` and corroborate with ModemManager below. Exit minicom with `Ctrl+A`,
 then `X`. Recheck identity/lock after reconnecting or rebooting the modem.
 
-Do not rewrite an already matching lock before every PDU connection. Quectel's
+Treat this deployment's lock as requiring restoration after modem power or
+reconnection. The operator reported a post-power-cycle query of `0`; the affected
+role and a complete controlled transcript were not supplied. See the
+[power-cycle observation](evidence/2026-10-13_modem_lock_power_cycle/manifest.json).
+Do not rewrite an already matching lock before an ordinary PDU connection.
+Quectel's
 [RMU500-EK support response](https://forums.quectel.com/t/rmu500-ek-to-prevent-from-handover/11554)
-states the 5G lock is saved to NV and takes effect after restart. The current
-`RM500QGLABR13A03M4G` run confirms successful write/readback and the intended
-serving cell; power-cycle retention and enforcement with both DUs present are
-still unverified. After a modem restart/reconnection, read the lock first; skip
-rewriting a matching tuple, reapply a missing/wrong tuple, and verify the actual
-serving cell. Include restart/retention in the later cold-start acceptance.
+describes NV saving, but that general support statement does not establish
+retention on this device. Require the actual lock tuple, intended PCI/NCI/SSB
+and SA registration before PDU/route setup. An `OK` write or a correct APN/subnet
+alone is insufficient. If the lock reads correctly but the serving cell is wrong,
+stop before traffic. Recheck the cell after PDU establishment and before UL.
+Controlled cold-start restoration and enforced selection remain pending.
 
 ## 3. Registration, IPv4 PDU and the actual bearer
 
@@ -249,9 +263,119 @@ adds only a source-specific path to the role's Spark service IP, leaving managem
 intact. Resolve WWAN ownership with NetworkManager first; this recipe requires
 a dedicated QMI interface with no existing IPv4 address or default route.
 
-In the current session, both paths already exist. If their readbacks match the
-role, skip installation and continue with traffic checks. For a new path,
-inspect current rules and the role's proposed table first:
+### 4a. Inspect both tables and record the old path before cleanup
+
+Tables 151 and 152 are **laptop** policy-routing tables. Inspect both explicitly:
+
+```bash
+ip -o -4 addr show
+ip -4 rule show
+ip -4 route show table 151
+ip -4 route show table 152
+ip -4 route show default
+```
+
+`FIB table does not exist` means the selected table has no routes. Record the
+old source/prefix, destination, interface, table and lookup/guard priorities
+separately from the new bearer values. A reconnect can delete the old interface
+and its routes while leaving policy rules behind.
+
+Stop the affected UE's test traffic before cleanup. Keep its newly verified PDU
+connected during a host-only rebind; stop/disconnect it only if its modem/SIM/cell
+validation failed. Use only the selected role's cleanup below. The literal old
+values are retained session evidence, not a guess about every future run. If an
+old value differs, reconstruct it from the recorded ledger and inspected state
+before editing that role's commands. Never flush shared rules, tables or WWANs.
+If the role already has a verified current bearer/address/route, skip its old-path
+cleanup and new-path installation and go directly to the checks in 4e.
+
+The functions skip already-absent entries, stop on a failed deletion, and keep
+the old source guard until the old address is absent everywhere. If that address
+is present on a different interface or with a different prefix, they stop before
+deleting anything. Verify the actual modem/interface ownership, not tty/WWAN
+number order. A priority occupied by another configuration remains a collision.
+
+### 4b. Clean only UE1's recorded old path — table 151
+
+Run in the identity-verified UE1 terminal. Recorded old path:
+`10.45.0.2/30 / wwan1 / 10.45.0.1 / table 151`.
+
+```bash
+cleanup_old_ue1_path() {
+  local current
+  current=$(mmcli -m "$MODEM" -K) || return 1
+  [[ "$(printf '%s\n' "$current" | mm_value modem.generic.equipment-identifier)" = 863305041978437 ]] || return 1
+  if ip -o -4 addr show | grep -Eq 'inet 10[.]45[.]0[.]2/'; then
+    ip -o -4 addr show dev wwan1 | grep -Fq 'inet 10.45.0.2/30 ' || {
+      printf 'STOP: old UE1 address/interface/prefix differs; inspect ownership.\n'; return 1;
+    }
+    printf '%s\n' "$current" | grep -Fq 'wwan1 (net)' || return 1
+  fi
+  if ip -4 rule show | grep -Eq '^10151:[[:space:]]+from 10[.]45[.]0[.]2(/32)? to 10[.]45[.]0[.]1(/32)? lookup 151([[:space:]]|$)'; then
+    sudo ip -4 rule del pref 10151 from 10.45.0.2/32 to 10.45.0.1/32 lookup 151 || return 1
+  fi
+  if ip -4 route show table 151 10.45.0.1/32 2>/dev/null | grep -Eq '^10[.]45[.]0[.]1(/32)? dev wwan1 .*src 10[.]45[.]0[.]2([[:space:]]|$)'; then
+    sudo ip -4 route del table 151 10.45.0.1/32 dev wwan1 src 10.45.0.2 || return 1
+  fi
+  if ip -o -4 addr show dev wwan1 2>/dev/null | grep -Fq 'inet 10.45.0.2/30 '; then
+    sudo ip -4 addr del 10.45.0.2/30 dev wwan1 || return 1
+  fi
+  if ip -o -4 addr show | grep -Eq 'inet 10[.]45[.]0[.]2/'; then
+    printf 'STOP: old UE1 source remains; keep its guard.\n'; return 1
+  fi
+  if ip -4 rule show | grep -Eq '^10152:[[:space:]]+from 10[.]45[.]0[.]2(/32)? to 10[.]45[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
+    sudo ip -4 rule del pref 10152 from 10.45.0.2/32 to 10.45.0.1/32 type unreachable || return 1
+  fi
+  printf 'Matching old UE1 entries removed; inspect table 151 and its priorities.\n'
+}
+cleanup_old_ue1_path
+```
+
+### 4c. Clean only UE2's recorded old path — table 152
+
+Run in the identity-verified UE2 terminal. Recorded old path:
+`10.46.0.2/30 / wwan0 / 10.46.0.1 / table 152`.
+
+```bash
+cleanup_old_ue2_path() {
+  local current
+  current=$(mmcli -m "$MODEM" -K) || return 1
+  [[ "$(printf '%s\n' "$current" | mm_value modem.generic.equipment-identifier)" = 863305041980706 ]] || return 1
+  if ip -o -4 addr show | grep -Eq 'inet 10[.]46[.]0[.]2/'; then
+    ip -o -4 addr show dev wwan0 | grep -Fq 'inet 10.46.0.2/30 ' || {
+      printf 'STOP: old UE2 address/interface/prefix differs; inspect ownership.\n'; return 1;
+    }
+    printf '%s\n' "$current" | grep -Fq 'wwan0 (net)' || return 1
+  fi
+  if ip -4 rule show | grep -Eq '^10161:[[:space:]]+from 10[.]46[.]0[.]2(/32)? to 10[.]46[.]0[.]1(/32)? lookup 152([[:space:]]|$)'; then
+    sudo ip -4 rule del pref 10161 from 10.46.0.2/32 to 10.46.0.1/32 lookup 152 || return 1
+  fi
+  if ip -4 route show table 152 10.46.0.1/32 2>/dev/null | grep -Eq '^10[.]46[.]0[.]1(/32)? dev wwan0 .*src 10[.]46[.]0[.]2([[:space:]]|$)'; then
+    sudo ip -4 route del table 152 10.46.0.1/32 dev wwan0 src 10.46.0.2 || return 1
+  fi
+  if ip -o -4 addr show dev wwan0 2>/dev/null | grep -Fq 'inet 10.46.0.2/30 '; then
+    sudo ip -4 addr del 10.46.0.2/30 dev wwan0 || return 1
+  fi
+  if ip -o -4 addr show | grep -Eq 'inet 10[.]46[.]0[.]2/'; then
+    printf 'STOP: old UE2 source remains; keep its guard.\n'; return 1
+  fi
+  if ip -4 rule show | grep -Eq '^10162:[[:space:]]+from 10[.]46[.]0[.]2(/32)? to 10[.]46[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
+    sudo ip -4 rule del pref 10162 from 10.46.0.2/32 to 10.46.0.1/32 type unreachable || return 1
+  fi
+  printf 'Matching old UE2 entries removed; inspect table 152 and its priorities.\n'
+}
+cleanup_old_ue2_path
+```
+
+### 4d. Rebuild UE1 table 151 or UE2 table 152 from the fresh bearer
+
+After cleaning the selected role, run the explicit inspections in 4a again.
+Require its own table and priorities to be free before the new-path preflight
+below. Leave the other UE's entries in place. If the selected path was already
+configured with the current verified bearer values, inspect route/ping instead
+of cleaning and rebuilding it a second time.
+
+Inspect the selected role again:
 
 ```bash
 ip -4 rule show
@@ -262,6 +386,13 @@ ip -4 route show default
 An absent table may report `FIB table does not exist`; that means it has no routes.
 The table and both priorities must be unused. If other policy rules already
 match this UE source before the proposed priority, review them before proceeding.
+This check is for a **new path**. After reattachment, old role-owned rules can
+remain while the modem gets a different IP/prefix. Do not bypass the check or
+delete rules only by priority: inspect the old source, destination, table and
+interface ownership, remove only that role's recorded lookup/route/address,
+and remove its old guard only after the old source address is absent. Use step 7
+for the cleanup order without disconnecting a newly verified PDU unnecessarily.
+Preserve the other UE and Wi-Fi entries, then install the fresh bearer values.
 The following preflight rejects collisions and matching earlier rules:
 
 ```bash
@@ -307,6 +438,13 @@ partial failure, stop and use step 7 with the captured `PATH_*` values.
 ```bash
 prepare_dual_path() {
   local mgmt_dev
+  case "$UE" in
+    1) [[ "$APN" = internet && "$SERVER_IP" = 10.45.0.1 &&
+          "$ROUTE_TABLE" = 151 && "$RULE_PREF" = 10151 && "$GUARD_PREF" = 10152 ]] || return 1 ;;
+    2) [[ "$APN" = internet2 && "$SERVER_IP" = 10.46.0.1 &&
+          "$ROUTE_TABLE" = 152 && "$RULE_PREF" = 10161 && "$GUARD_PREF" = 10162 ]] || return 1 ;;
+    *) printf 'FAIL: select UE 1 or 2 first.\n'; return 1 ;;
+  esac
   [[ "$WWAN_IF" =~ ^(wwan|wwp|rmnet)[[:alnum:]_.-]*$ ]] || return 1
   [[ "$(basename "$(readlink -f "/sys/class/net/$WWAN_IF/device/driver")")" = qmi_wwan ]] || return 1
   printf '%s\n' "$MODEM_KV" | grep -Fq "$WWAN_IF (net)" || return 1
@@ -328,11 +466,22 @@ prepare_dual_path() {
   declare -p MODEM MODEM_IDENTITY EXPECTED_IMEI EXPECTED_IMSI BEARER \
     APN UE_SUBNET PATH_SERVER PATH_IP PATH_CIDR PATH_IF PATH_TABLE PATH_RULE PATH_GUARD PATH_OLD_MTU PATH_WAS_UP \
     > "$UE_RUN/route-state.txt"
-  sudo ip -4 rule add pref "$PATH_GUARD" from "$PATH_IP/32" to "$PATH_SERVER/32" type unreachable &&
-  sudo ip link set dev "$PATH_IF" mtu "$UE_MTU" up &&
-  sudo ip -4 addr add "$PATH_CIDR" dev "$PATH_IF" noprefixroute &&
-  sudo ip -4 route add table "$PATH_TABLE" "$PATH_SERVER/32" dev "$PATH_IF" src "$PATH_IP" &&
-  sudo ip -4 rule add pref "$PATH_RULE" from "$PATH_IP/32" to "$PATH_SERVER/32" lookup "$PATH_TABLE"
+  case "$UE" in
+    1)
+      sudo ip -4 rule add pref 10152 from "$PATH_IP/32" to 10.45.0.1/32 type unreachable &&
+      sudo ip link set dev "$PATH_IF" mtu "$UE_MTU" up &&
+      sudo ip -4 addr add "$PATH_CIDR" dev "$PATH_IF" noprefixroute &&
+      sudo ip -4 route add table 151 10.45.0.1/32 dev "$PATH_IF" src "$PATH_IP" &&
+      sudo ip -4 rule add pref 10151 from "$PATH_IP/32" to 10.45.0.1/32 lookup 151
+      ;;
+    2)
+      sudo ip -4 rule add pref 10162 from "$PATH_IP/32" to 10.46.0.1/32 type unreachable &&
+      sudo ip link set dev "$PATH_IF" mtu "$UE_MTU" up &&
+      sudo ip -4 addr add "$PATH_CIDR" dev "$PATH_IF" noprefixroute &&
+      sudo ip -4 route add table 152 10.46.0.1/32 dev "$PATH_IF" src "$PATH_IP" &&
+      sudo ip -4 rule add pref 10161 from "$PATH_IP/32" to 10.46.0.1/32 lookup 152
+      ;;
+  esac
 }
 if prepare_dual_path; then
   ip -4 route get "$PATH_SERVER" from "$PATH_IP"
@@ -348,6 +497,40 @@ unchanged management defaults. Save the `PATH_*` values until cleanup even if a
 later bearer read changes `UE_IP`. If reverse-path filtering rejects return
 traffic, inspect the selected WWAN settings using Plan 3 Step 8; record any
 reviewed per-interface change and its rollback instead of changing all interfaces.
+
+### 4e. Verify both rebuilt tables and private paths
+
+Inspect both tables after each selected-role rebuild:
+
+```bash
+ip -4 rule show
+ip -4 route show table 151
+ip -4 route show table 152
+ip -4 route show default
+```
+
+After both roles are configured, require UE1's `.1/32` route in table 151 and
+UE2's `.1/32` route in table 152, each with its own current source/interface.
+Before that, an unconfigured role can still have an absent table.
+
+In the **UE1 terminal**, after its fresh bearer/IP/path values are verified:
+
+```bash
+ip -4 route get 10.45.0.1 from "$UE_IP"
+ping -I "$UE_IP" -c 5 10.45.0.1
+```
+
+Require UE1's actual interface and `table 151`. In the **UE2 terminal**:
+
+```bash
+ip -4 route get 10.46.0.1 from "$UE_IP"
+ping -I "$UE_IP" -c 5 10.46.0.1
+```
+
+Require UE2's actual interface and `table 152`. The latest reported UE2 source is
+`10.46.0.3`, not its old `10.46.0.2`; installation uses the current `UE_IP` and
+`UE_PREFIX` read from bearer 5 (`/29`). Keep the Wi-Fi default route and test the
+other UE's private ping after rebinding one role before starting concurrent UL.
 
 ## 5. Measure each link's TCP UL
 
@@ -393,7 +576,7 @@ def stamp():
 
 roles = [
     (1, "10.45.0.1", "10.45.0.2", "5201", "wwan1", 151),
-    (2, "10.46.0.1", "10.46.0.2", "5202", "wwan0", 152),
+    (2, "10.46.0.1", "10.46.0.3", "5202", "wwan0", 152),
 ]
 for ue, server, source, port, interface, table in roles:
     routes = json.loads(subprocess.check_output(

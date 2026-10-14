@@ -2,7 +2,20 @@
 
 Updated: 2026-10-13. Continue from **DU1 3660-MHz UL functionality/KPM verified; actual DU2 USB 3 / 3600-MHz startup and F1/E2 verified; UE2 identity/cell/SA, internet2 IPv4 PDU and private ping passed; DU2 single-link UL/KPM smoke passed; new UE1 DU1 registration/lock, internet IPv4 PDU and private ping passed; new UE1 60-second TCP UL passed (receiver 10.5 Mbit/s, Retr 0, exit 0); two-DU KPM subscription/deletion verified, actual callbacks and concurrent UL/KPM pending**. The operator requested DU2 first, UL-only acceptance, and deferral of underflow remediation. Read the [Dual UE laptop commands](dual_ue_laptop_quick_commands.md) and [Dual UE Spark commands](dual_ue_spark_quick_commands.md), the [DU2 procedure](dual_fr1_runbook.md), [Progress and Configuration](project_progress_and_configuration.md), the [Full Reproduction Runbook](full_reproduction_runbook.md), the [FlexRIC record](troubleshooting/2026-10-07_flexric_bringup.md), and [SIM Provisioning and Dual-UE Preparation](sim_provisioning_and_dual_ue.md). Daily commands are summarized separately for [Spark](spark_quick_commands.md) and the [UE laptop](ue_laptop_quick_commands.md).
 
-The current operator documentation is split by host. Start Spark step 7's
+The current operator documentation is split by host. The operator subsequently
+reported a modem power-cycle lock query of `0`; its affected role is unspecified.
+First repeat laptop steps 1–4: identify the modem/SIM/AT port, restore and verify
+its lock/actual cell/SA, refresh bearer/path ownership, and recheck cell before UL.
+Previous live mappings are historical until revalidated. The latest UE2 bearer
+is 5 / `10.46.0.3/29` / `wwan0`, while rules 10161/10162 still select the old
+`10.46.0.2`; inspect full bearer/link/address/table-152 state and rebind only
+owned UE2 entries before testing. Laptop step 4 now includes explicit table 151/152
+inspection, independent UE1/UE2 scoped old-path cleanup, fresh-bearer rebuild
+branches for both tables and private route/ping checks for both roles. Cleanup
+passed seven offline fixtures covering both roles, vanished addresses/routes,
+wrong modem/interface/prefix refusal and guard retention after failed address
+deletion; actual laptop restoration remains pending. See [reattachment evidence](evidence/2026-10-13_ue2_reattach/manifest.json).
+Then start Spark step 7's
 DU-tagged 120-second capture, then laptop step 6's Python concurrent launcher.
 The previous laptop `wait`/`printf` transcript lost variable expansions, so its
 printed exit codes and immediate end timestamp are invalid; preserve its logs

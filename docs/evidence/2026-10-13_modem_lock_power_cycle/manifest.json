@@ -1,0 +1,45 @@
+{
+  "recorded_at": "19 : 59: 16 Oct 13, 2026 EDT",
+  "source": "Operator statement and clarification in chat; not a new automated modem probe or a complete controlled cold-start trial",
+  "observation": {
+    "event": "UE modem repowered",
+    "command": "AT+QNWLOCK=\"common/5g\"",
+    "reported_lock_readback": "0",
+    "affected_role": "not specified",
+    "firmware_after_event": "not reread"
+  },
+  "operational_policy": "Treat the observed cell lock as requiring restoration after modem power/reconnection. Rediscover IMEI/SIM/AT ownership, reapply the role lock, require exact actual serving cell and SA before PDU, then verify fresh bearer/path and serving cell again before UL.",
+  "expected_roles": {
+    "UE1": {
+      "imei": "863305041978437",
+      "imsi": "001010000000101",
+      "lock": "1,643680,30,78",
+      "nci_hex": "00066C000",
+      "apn": "internet",
+      "subnet": "10.45.0.0/16"
+    },
+    "UE2": {
+      "imei": "863305041980706",
+      "imsi": "001010000000102",
+      "lock": "2,639648,30,78",
+      "nci_hex": "00066C001",
+      "apn": "internet2",
+      "subnet": "10.46.0.0/16"
+    }
+  },
+  "files": {
+    "operator_note.txt": {
+      "sha256": "f805101d991f5511ee2c3c6d05f944eebcde916c58f9e908feba5b1506039d3c"
+    }
+  },
+  "pending": [
+    "Identify affected role and retain a complete controlled power-cycle transcript",
+    "Demonstrate restored lock plus intended actual cell/SA/PDU/private path/UL",
+    "Enforced selection after reselection and repeated cold-start recovery"
+  ],
+  "notes": [
+    "Earlier successful lock write/readback did not prove nonvolatile retention.",
+    "Do not infer that both modems lost their locks from this unspecified-role report.",
+    "Correct APN/subnet alone does not bind a subscriber to the intended DU in the shared PLMN."
+  ]
+}

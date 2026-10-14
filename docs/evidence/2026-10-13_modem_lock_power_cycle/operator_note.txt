@@ -1,0 +1,6 @@
+Operator report in chat:
+After repowering the UE modem, cell locking is not retained.
+Clarification: the AT+QNWLOCK="common/5g" query reads back 0.
+
+No full AT transcript, affected modem/role, firmware reread or post-restore
+serving-cell/PDU/UL readback was supplied in this observation.

@@ -21,6 +21,16 @@ Run all commands in this file on Spark. Use Bash and separate foreground
 terminals for CU, RIC, each DU, each iperf server and xApp. Modem/AT/routing/client
 commands are in [Dual UE Laptop Quick Commands](dual_ue_laptop_quick_commands.md).
 Resume at steps 6–7 in the current running session; steps 1–5 are for cold start.
+After a modem power cycle, repeat laptop steps 1–4 first. The operator reported
+lock query `0`; its lock must be restored and the actual serving cell verified.
+UE2 now reports bearer 5 / `10.46.0.3/29` / `wwan0`, while old host rules still
+use `10.46.0.2`; host-path restoration is pending. Keep the Spark `.1` endpoints
+and update the laptop source binding from verified current bearer metadata.
+The explicit table-151/table-152 inspection, separate UE1/UE2 old-address/rule/
+route cleanup, guarded rebuilding and both private-path checks are in
+[laptop step 4](dual_ue_laptop_quick_commands.md#4-install-and-verify-each-source-policy-path).
+These tables belong to the laptop. Spark keeps service addresses `10.45.0.1`
+and `10.46.0.1`, and its two iperf listeners continue to use the same bindings.
 
 ## 0. Role assignments and core preparation
 

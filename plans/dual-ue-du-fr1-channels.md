@@ -14,7 +14,7 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 | Task | `dual-ue-du-fr1-channels` |
 | Status | In progress: DU1 historical UL and DU2 single-link UL functionality/KPM smoke passed; new UE1 DU1 SA/lock, IPv4 PDU and private ping passed; new UE1 60-second TCP UL passed; concurrent dual-link UL/KPM pending; underflow remediation deferred |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 19 : 47: 31 Oct 13, 2026 EDT |
+| Last updated at | 20 : 09: 55 Oct 13, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | To be assigned |
@@ -117,11 +117,19 @@ client/server output, actual Spark KPM log, parsed rows and current artifact has
 - [x] Verify both DU nodes in the diagnostic xApp and two KPM subscription/delete responses with pipeline exit 0. The 19:29:23–19:30:14 EDT probe received **zero UE callback blocks**; this is subscription/lifecycle evidence, not two-link KPM data. See [subscription evidence](../docs/evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
 - [ ] Complete concurrent UL, streaming and deliberate path-survivor checks. The earlier concurrent launcher's `wait`/`printf` lost variable expansions; its printed zero statuses and end timestamp are invalid. Retain real child statuses with the Python launcher in the laptop booklet.
 - [ ] Accumulate at least 30 real UL-window rows per link, explicit two-DU/UE row attribution, captured exit codes, full lifecycle checks and the remaining repeated/UDP/cold-start gates.
+- [ ] Restore and verify connections after modem power cycle: the operator reported `AT+QNWLOCK="common/5g"` readback `0` (affected role unspecified). Treat locks as requiring boot restoration, reselect by IMEI/SIM, reapply each intended lock and require actual PCI/NCI/SSB/SA before PDU; refresh bearer/path and recheck cell before UL. Prior live mappings do not certify restored connections. See [power-cycle observation](../docs/evidence/2026-10-13_modem_lock_power_cycle/manifest.json).
 
 This checkpoint is **DU2 Single-Link UL Functionality / KPM Smoke Passed**.
 It does not complete the dual-link baseline or certify RF stability. Underflow
 count/growth remediation remains deferred. The stock callback's common gNB ID
 is contextual attribution with one DU, not proof of attribution with two DUs.
+
+After the modem power/reconnection event, UE2 reported successful IPv4 connection
+with bearer 5 / `10.46.0.3/29` / `wwan0` / MTU 1400. Existing rules 10161/10162
+still used `10.46.0.2`; the new-path preflight correctly refused the collision.
+Fresh serving-cell/bearer/host ownership checks and precise UE2 route rebinding
+remain pending; previous path/UL checkpoints are historical until restored. See
+[UE2 reattachment evidence](../docs/evidence/2026-10-13_ue2_reattach/manifest.json).
 
 ## 2026-10-12 Single-UE / DU1 Uplink Checkpoint
 
@@ -310,7 +318,7 @@ they already exist:
 | `scripts/dual_fr1/configure_ue_routes.sh` | Guarded per-UE policy routes and precise rollback |
 | `scripts/dual_fr1/verify_kpm.py` | Per-link report/lifecycle/evidence checks |
 | `docs/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; actual startup/F1/E2 and UE2 solo UL verified; concurrent UL/KPM pending |
-| `docs/dual_ue_laptop_quick_commands.md` | Laptop commands for IMEI/SIM selection, both locks/DNNs, actual IPv4 bearers, guarded source-policy paths, recorded concurrent UL and cleanup |
+| `docs/dual_ue_laptop_quick_commands.md` | Laptop commands for IMEI/SIM selection, both locks/DNNs, actual IPv4 bearers, guarded source-policy paths, recorded concurrent UL; explicit table 151/152 inspection, separate scoped old-address/rule/route cleanup and fresh-bearer rebuild for both roles; seven offline cleanup fixtures passed, restored live paths pending |
 | `docs/dual_ue_spark_quick_commands.md` | Spark commands for core/CU/RIC/two-DU startup, both server endpoints, DU-tagged KPM capture and shutdown |
 | `scripts/dual_fr1/xapp_oran_moni_dual.c` / `scripts/dual_fr1/build_kpm_monitor.sh` | Built isolated diagnostic using pinned FlexRIC API/library; labels each callback with DU ID, supports finite capture, fixes dense subscription cleanup; two-node subscription/deletion passed, actual two-link callbacks pending |
 | `docs/dual_ue_subnets.md` / `scripts/dual_fr1/prepare_dual_subnets.py` / `scripts/dual_fr1/apply_dual_subnets.sh` / `scripts/dual_fr1/ue2_dnn.js` | Dual-subnet migration, backups, saved apply command, targeted UE2 DNN rename and rollback; six mocked apply tests passed; operator-applied core checks, both registered IPv4/private-ping paths and both role UL functionality checkpoints passed; concurrent UL/KPM pending |
@@ -658,7 +666,7 @@ the existing five-metric xApp subscribes successfully to each.
 - [ ] Validate UE1 alone on DU1 with SIM1/new subscriber, then UE2 alone on DU2
   with SIM2/new subscriber. Preserve each successful standalone result.
 - [ ] Apply the firmware-verified NR SA/n78 selection and cell-lock workflow
-  from the [UE booklet](../docs/ue_laptop_quick_commands.md). Use DU1 PCI 1 /
+  from the [dual UE laptop booklet](../docs/dual_ue_laptop_quick_commands.md#2-at-communication-and-cell-lock). Use DU1 PCI 1 /
   its newly derived and observed CBRS SSB, and DU2 PCI 2 / its own derived and
   observed SSB. The booklet's historical 649632 lock applies only to 3750 MHz;
   replace it for this deployment. Require each
@@ -841,6 +849,10 @@ normally. The other three subscribed measurements remain observations.
   or ambiguous/wrong-source tuples keep the corresponding repeatability gate
   pending; retain evidence and diagnose the source/index issue separately.
 - [ ] Repeat a complete cold start with both subscribers and retained configs.
+  A post-power lock query of `0` has been reported; reapply and verify the target
+  lock and actual serving cell rather than assuming NV retention. Recheck the
+  cell after PDU establishment and before UL; wrong identity/cell must stop
+  that role's setup/test.
   Preserve the hashes/results as the accepted dual FR1 UL baseline.
 
 **Exit criteria:** UL coexistence passes under the recorded load/setup, both links
