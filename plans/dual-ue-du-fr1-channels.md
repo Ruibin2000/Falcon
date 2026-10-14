@@ -14,7 +14,7 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 | Task | `dual-ue-du-fr1-channels` |
 | Status | In progress: DU1 historical UL and DU2 single-link UL functionality/KPM smoke passed; new UE1 DU1 SA/lock, IPv4 PDU and private ping passed; new UE1 60-second TCP UL passed; concurrent dual-link UL/KPM pending; underflow remediation deferred |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 20 : 18: 08 Oct 13, 2026 EDT |
+| Last updated at | 21 : 05: 57 Oct 13, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | To be assigned |
@@ -103,7 +103,7 @@ both DUs present remain pending; Steps 7/8's two-UE acceptance is not complete.
 The operator's latest daily workflow starts the shared core/CU/RIC, then both
 DU1 and DU2 and both iperf servers before any laptop UE setup. The laptop booklet
 now contains a complete ordered UE1 sequence followed by a complete ordered UE2
-sequence, each with its own identity/lock/PDU/old-path cleanup/table/ping/UL.
+sequence, each with its own identity/lock/PDU/complete role reset/table/ping/UL.
 Keep both DUs and both verified PDU paths active for concurrent UL/KPM. Earlier
 single-DU checkpoints remain historical evidence; full acceptance stays pending.
 
@@ -325,7 +325,8 @@ they already exist:
 | `scripts/dual_fr1/configure_ue_routes.sh` | Guarded per-UE policy routes and precise rollback |
 | `scripts/dual_fr1/verify_kpm.py` | Per-link report/lifecycle/evidence checks |
 | `docs/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; actual startup/F1/E2 and UE2 solo UL verified; concurrent UL/KPM pending |
-| `docs/dual_ue_laptop_quick_commands.md` | Separate complete ordered UE1 and UE2 laptop sequences for IMEI/SIM selection, their own locks/DNNs, actual IPv4 bearers, guarded source-policy paths and recorded concurrent UL; explicit table 151/152 inspection, separate scoped old-address/rule/route cleanup and fresh-bearer rebuild for both roles; seven offline cleanup fixtures passed, restored live paths pending |
+| `docs/dual_ue_laptop_quick_commands.md` | Separate ordered UE1/UE2 sequences, source/server-destination rules and complete per-role IPv4 reset using current state only. Latest UE1 host path is `10.45.0.3/29` / `wwan0` / table 151; it can be reused or fully reset before rebuilding. UE2 is not connected. Live unbound ping/Wi-Fi-off and full dual-path restoration remain pending |
+| `scripts/dual_fr1/reset_ue_network.py` / `tests/dual_ue_reset_test.py` | Implemented reset of the selected role's dedicated table, all reserved/extra table-reference rules, matching WWAN IPv4 addresses and legacy main routes; discovers current IMEI/ports, supports no-modem stale-state cleanup, duplicate rules, a fixed DOWN/MTU-1500 baseline, dry run and optional PDU disconnect. Requires no previous allocation/ledger. Twenty offline stateful tests passed; no live laptop reset executed by the agent |
 | `docs/dual_ue_spark_quick_commands.md` | Spark commands for core/CU/RIC/two-DU startup, both server endpoints, DU-tagged KPM capture and shutdown |
 | `scripts/dual_fr1/xapp_oran_moni_dual.c` / `scripts/dual_fr1/build_kpm_monitor.sh` | Built isolated diagnostic using pinned FlexRIC API/library; labels each callback with DU ID, supports finite capture, fixes dense subscription cleanup; two-node subscription/deletion passed, actual two-link callbacks pending |
 | `docs/dual_ue_subnets.md` / `scripts/dual_fr1/prepare_dual_subnets.py` / `scripts/dual_fr1/apply_dual_subnets.sh` / `scripts/dual_fr1/ue2_dnn.js` | Dual-subnet migration, backups, saved apply command, targeted UE2 DNN rename and rollback; six mocked apply tests passed; operator-applied core checks, both registered IPv4/private-ping paths and both role UL functionality checkpoints passed; concurrent UL/KPM pending |
@@ -724,7 +725,12 @@ source-policy route setup for this dual-link test instead.
   stopped and that run's source address is removed during cleanup.
 - [ ] Track every address, MTU change, route, rule, and any per-interface sysctl
   in a run-owned ledger. Reject conflicts and clean partial failures precisely;
-  never flush shared routing tables or replace another run's entries.
+  never flush an entire shared routing table or replace another role's entries.
+  Complete role reset is now available in `reset_ue_network.py --ue 1/2`:
+  clear its dedicated table/reserved priorities and current WWAN IPv4 state,
+  using current IMEI/address/rule inventory without historical session values.
+  Reset uses the defined DOWN / MTU-1500 baseline; retained ledgers remain
+  evidence rather than cleanup prerequisites. Live reset/rebuild is pending.
 - [ ] Check actual packet paths and reverse-path filtering. If strict filtering
   rejects the intended multihomed return path, record and review a change on
   only the affected WWAN interface, then restore it during cleanup. Linux uses

@@ -26,11 +26,13 @@ infrastructure during modem recovery; steps 1–5 cover a stopped testbed.
 After a modem power cycle, repeat the affected role's complete laptop sequence
 ([UE1](dual_ue_laptop_quick_commands.md#ue1-start) / [UE2](dual_ue_laptop_quick_commands.md#ue2-start)) before traffic. The operator reported
 lock query `0`; its lock must be restored and the actual serving cell verified.
-UE2 now reports bearer 5 / `10.46.0.3/29` / `wwan0`, while old host rules still
-use `10.46.0.2`; host-path restoration is pending. Keep the Spark `.1` endpoints
-and update the laptop source binding from verified current bearer metadata.
-The explicit table-151/table-152 inspection, separate UE1/UE2 old-address/rule/
-route cleanup, guarded rebuilding and both private-path checks are in
+The latest laptop readback has UE1 `10.45.0.3/29` on `wwan0` and its table-151
+source route/rules intact; add its destination rules without rebuilding that
+path. UE2 is currently not connected, with only old `10.46.0.2` source rules
+listed. Its earlier bearer 5 / `10.46.0.3/29` is historical. Keep the Spark `.1`
+endpoints and update laptop bindings from fresh verified bearer metadata.
+The explicit table-151/table-152 inspection, complete per-role host IPv4 reset
+without old-session parameters, guarded rebuilding and both private-path checks are in
 [UE1 recovery](dual_ue_laptop_quick_commands.md#ue1-clean-old-path) and
 [UE2 recovery](dual_ue_laptop_quick_commands.md#ue2-clean-old-path).
 These tables belong to the laptop. Spark keeps service addresses `10.45.0.1`
@@ -286,7 +288,7 @@ Require `Server listening` on both ports. Reuse existing listeners rather than
 starting duplicate servers. Keep both listeners, both DUs, CU and RIC running.
 The laptop then follows the [complete UE1 sequence](dual_ue_laptop_quick_commands.md#ue1-start)
 in its own terminal, followed by the [complete UE2 sequence](dual_ue_laptop_quick_commands.md#ue2-start)
-in another terminal. Each sequence includes identity/cell/PDU, old-path cleanup,
+in another terminal. Each sequence includes identity/cell/PDU, complete role reset,
 its own table/rules, private ping and individual UL with the other UE's test
 traffic idle. Keep both PDU paths active for the concurrent test in step 7.
 
@@ -363,7 +365,7 @@ is inspected.
 
 ## 8. Shutdown and retained evidence
 
-Stop laptop clients and clean each recorded path using [separate laptop cleanup](dual_ue_laptop_quick_commands.md#cleanup).
+Stop laptop clients and reset each role using [separate laptop cleanup](dual_ue_laptop_quick_commands.md#cleanup).
 Allow the finite xApp to delete subscriptions and stop naturally. Stop both iperf
 server terminals, then each DU, RIC and CU in their own terminals with Ctrl+C.
 Stop the shared core only after both DUs have finished using it:

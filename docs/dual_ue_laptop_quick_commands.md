@@ -25,10 +25,15 @@ Follow the complete **UE1 sequence first**, then the complete **UE2 sequence**
 in another fresh Bash terminal. Both DUs and both Spark servers must already be
 running; Spark startup is in the paired booklet. Keep UE1's verified PDU/path
 active while preparing UE2. After a power/reconnection event, repeat the affected
-role's identity, lock/cell, bearer, old-path cleanup and new-path verification.
+role's identity, lock/cell, bearer, complete host IPv4 reset and new-path verification.
 
-The latest UE2 report is bearer 5 / `wwan0` / `10.46.0.3/29` / MTU 1400;
-old rules 10161/10162 still used `10.46.0.2`, so restored routing remains pending.
+The latest laptop readback shows UE1 `10.45.0.3/29` on `wwan0`, its source
+lookup/guard at 10151/10152, and the server route in table 151. Reuse that path
+via 1.6, or use 1.4's complete role reset before rebuilding in 1.5. No historical
+allocation is needed for reset. UE2 is not connected per the operator; old
+rules 10161/10162 remain, but no `10.46.*` address was listed. Reconnect and
+read UE2's actual identity/cell/bearer values before its setup or dual traffic.
+Destination-only routing and Wi-Fi-off ping verification are still pending.
 The earlier concurrent launcher's printed exit codes/time bounds were invalid
 because its `wait`/`printf` lost variable expansions. Preserve its logs and use
 section 3's Python launcher after both role paths pass.
@@ -42,6 +47,200 @@ sudo apt update
 sudo apt install -y modemmanager libqmi-utils minicom iproute2 iperf3 usbutils python3
 sudo systemctl enable --now ModemManager
 ```
+
+### 0.1. Install the role reset helper once on the laptop
+
+Copy the following block once. It creates the same self-contained helper as
+[`reset_ue_network.py`](../scripts/dual_fr1/reset_ue_network.py); a Falcon checkout
+on the laptop is optional. The two role sequences then use short commands with
+no previous IP, CIDR, modem index, interface name or run-directory variables.
+The helper reads current modem ownership by IMEI, plus kernel addresses/rules/
+routes. It clears the role's IPv4 addresses, its dedicated table and all reserved
+rules (including duplicates and extra rules referencing that table), removes
+legacy main-table WWAN routes and resets its WWAN to DOWN / MTU 1500. Wi-Fi and
+the other UE's normal configuration are preserved. Without a modem/address,
+stale rules and routes can still be cleared. A regular reset keeps the current
+PDU; `--disconnect` also disconnects the selected IMEI's connected PDU.
+
+```bash
+cat > ~/falcon-reset-ue-network.py <<'FALCON_RESET_PY'
+#!/usr/bin/env python3
+"""Reset one Falcon laptop IPv4 role from current state, without session history."""
+
+import argparse
+import ipaddress
+import json
+import os
+from pathlib import Path
+import re
+import shlex
+import subprocess
+import sys
+
+
+ROLES = {
+    1: ("863305041978437", "10.45.0.0/16", "10.45.0.1", 151, (10151, 10152, 10153, 10154)),
+    2: ("863305041980706", "10.46.0.0/16", "10.46.0.1", 152, (10161, 10162, 10163, 10164)),
+}
+WWAN = re.compile(r"(?:wwan|wwp|rmnet)[A-Za-z0-9_.-]*")
+
+
+def read(*command):
+    return subprocess.check_output(command, text=True, stderr=subprocess.PIPE,
+                                   env=dict(os.environ, LC_ALL="C"))
+
+
+def change(*command):
+    print("+ " + shlex.join(command), flush=True)
+    subprocess.run(command, check=True, env=dict(os.environ, LC_ALL="C"))
+
+
+def ip_json(*args):
+    try:
+        return json.loads(read("ip", "-j", "-4", *args))
+    except subprocess.CalledProcessError as error:
+        if args[:3] == ("route", "show", "table") and "FIB table does not exist" in (error.stderr or ""):
+            return []
+        raise
+
+
+def table_aliases():
+    aliases = {"local": 255, "main": 254, "default": 253}
+    for directory in (Path("/etc/iproute2"), Path("/usr/lib/iproute2")):
+        for path in [directory / "rt_tables", *sorted((directory / "rt_tables.d").glob("*"))]:
+            if path.is_file():
+                for line in path.read_text().splitlines():
+                    fields = line.split("#", 1)[0].split()
+                    if len(fields) == 2 and fields[0].isdigit():
+                        aliases[fields[1]] = int(fields[0])
+    return aliases
+
+
+def modem_inventory():
+    inventory = []
+    for path in sorted(set(re.findall(r"/org/freedesktop/ModemManager1/Modem/\d+", read("mmcli", "-L")))):
+        kv = dict(line.split(":", 1) for line in read("mmcli", "-m", path, "-K").splitlines() if ":" in line)
+        kv = {key.strip(): value.strip() for key, value in kv.items()}
+        ports = set(re.findall(r"([A-Za-z0-9_.-]+)\s+\(net\)", "\n".join(
+            value for key, value in kv.items() if key.startswith("modem.generic.ports"))))
+        inventory.append((path, kv.get("modem.generic.equipment-identifier"), ports, kv.get("modem.generic.state")))
+    return inventory
+
+
+def reset(ue, dry_run=False, disconnect=False):
+    imei, subnet, server, table, priorities = ROLES[ue]
+    pool = ipaddress.IPv4Network(subnet)
+    aliases = table_aliases()
+
+    def table_number(value):
+        return int(value) if str(value).isdigit() else aliases.get(value)
+
+    def role_rule(rule):
+        return rule.get("priority") in priorities or table_number(rule.get("table")) == table
+
+    addresses = ip_json("addr", "show")
+    rules = ip_json("rule", "show")
+    routes = ip_json("route", "show", "table", "main")
+    private_routes = ip_json("route", "show", "table", str(table))
+    if any(info.get("local") == server for device in addresses for info in device.get("addr_info", [])):
+        raise ValueError("Spark service address is local; run this helper on the UE laptop")
+    if any(table_number(rule.get("table")) == table and rule.get("priority") in (0, 32766, 32767) for rule in rules):
+        raise ValueError("A built-in policy priority references the role table; resolve that conflict first")
+    pool_devices = {device["ifname"] for device in addresses if any(
+        ipaddress.IPv4Address(info["local"]) in pool for info in device.get("addr_info", []))}
+    if any(not WWAN.fullmatch(device) for device in pool_devices):
+        raise ValueError("Role addresses exist on a non-WWAN interface; inspect that interface")
+    try:
+        inventory = modem_inventory()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        if pool_devices:
+            raise ValueError("Cannot read current modem ownership; start ModemManager before address reset") from None
+        inventory = []
+    selected = [modem for modem in inventory if modem[1] == imei]
+    if len(selected) > 1:
+        raise ValueError("Expected IMEI matches multiple modems")
+    owned = set().union(*(modem[2] for modem in selected)) if selected else set()
+    if any(not WWAN.fullmatch(device) for device in owned):
+        raise ValueError("Selected modem exposes an unexpected network interface")
+    targets = (owned & {device["ifname"] for device in addresses}) | pool_devices
+    if any(ports & targets for _, other_imei, ports, _ in inventory if other_imei != imei):
+        raise ValueError("A candidate interface belongs to another modem")
+    if any(device["ifname"] in targets and any(ipaddress.IPv4Address(info["local"]) not in pool
+           for info in device.get("addr_info", [])) for device in addresses):
+        raise ValueError("Candidate WWAN also has addresses outside this role's pool")
+    legacy_devices = {route["dev"] for route in routes if WWAN.fullmatch(route.get("dev", ""))
+        and route.get("dst", "default") != "default"
+        and ipaddress.IPv4Network(route["dst"], strict=False).subnet_of(pool)} - targets
+    commands = []
+    if disconnect and selected and selected[0][3] == "connected":
+        commands.append(("mmcli", "-m", selected[0][0], "--simple-disconnect"))
+    if private_routes:
+        commands.append(("ip", "-4", "route", "flush", "table", str(table)))
+    for device in sorted(targets):
+        commands.extend([
+            ("ip", "-4", "route", "flush", "table", "main", "dev", device),
+            ("ip", "-4", "addr", "flush", "dev", device, "to", subnet),
+            ("ip", "link", "set", "dev", device, "mtu", "1500", "down"),
+        ])
+    for device in sorted(legacy_devices):
+        commands.append(("ip", "-4", "route", "flush", "table", "main", "dev", device, "to", subnet))
+    print(f"UE{ue}: IMEI={imei}; reset table={table}, priorities={priorities}, pool={subnet}, WWAN={sorted(targets)}")
+    if dry_run:
+        for command in commands:
+            print("would run: " + shlex.join(command))
+        for rule in rules:
+            if role_rule(rule):
+                print("would remove rule: " + json.dumps(rule, sort_keys=True))
+        return
+    for command in commands:
+        change(*command)
+    if any(ipaddress.IPv4Address(info["local"]) in pool for device in ip_json("addr", "show")
+           for info in device.get("addr_info", [])):
+        raise ValueError("Role address remains or was recreated; keep its guards and stop")
+    for rule in ip_json("rule", "show"):
+        if role_rule(rule):
+            command = ["ip", "-4", "rule", "del", "pref", str(rule["priority"])]
+            if rule["priority"] not in priorities:
+                command.extend(["lookup", str(table)])
+            change(*command)
+    remaining_routes = ip_json("route", "show", "table", "main")
+    remaining_addresses = ip_json("addr", "show")
+    if (any(ipaddress.IPv4Address(info["local"]) in pool for device in remaining_addresses for info in device.get("addr_info", []))
+            or ip_json("route", "show", "table", str(table)) or any(role_rule(rule) for rule in ip_json("rule", "show"))
+            or any(route.get("dev") in targets or (route.get("dev") in legacy_devices
+                   and route.get("dst", "default") != "default"
+                   and ipaddress.IPv4Network(route["dst"], strict=False).subnet_of(pool)) for route in remaining_routes)):
+        raise ValueError("Role IPv4 addresses/routes/rules remain or were recreated; reset is incomplete")
+    print(f"UE{ue} reset complete: role IPv4 addresses, routes and policy rules cleared; WWAN baseline DOWN / MTU 1500")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--ue", required=True, type=int, choices=(1, 2))
+    parser.add_argument("--dry-run", action="store_true", help="Show the current reset scope without changes")
+    parser.add_argument("--disconnect", action="store_true", help="Also disconnect this IMEI's current connected PDU")
+    args = parser.parse_args()
+    if not args.dry_run and os.geteuid() != 0:
+        parser.error("Run reset with sudo; --dry-run can run without sudo")
+    try:
+        reset(args.ue, args.dry_run, args.disconnect)
+    except (ValueError, OSError, subprocess.SubprocessError) as error:
+        print(f"STOP: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+FALCON_RESET_PY
+python3 ~/falcon-reset-ue-network.py --help
+```
+
+For inspection only, run `python3 ~/falcon-reset-ue-network.py --ue 1 --dry-run`
+or the same command with `--ue 2`. Apply commands appear in each role's sequence.
+The script reports complete only after checking that addresses/routes/rules are
+gone. If a command fails or another manager recreates the configuration, it
+reports incomplete; address-removal failures retain the existing guards.
 
 | Parameter | UE1 / DU1 | UE2 / DU2 |
 | --- | --- | --- |
@@ -67,9 +266,9 @@ sudo systemctl enable --now ModemManager
 
 Rediscover these dynamic values after modem restart/reconnection. Both cells use
 PLMN `00101`, TAC 7 and SST 1. DNN selects the UE pool; cell lock selects the DU.
-The latest UE2 readback is bearer 5 / `10.46.0.3/29` on `wwan0`; revalidate its
-cell, gateway and host configuration before testing. UE1's previous values also
-need fresh confirmation before the next dual test.
+UE1's latest host allocation is `10.45.0.3/29` on `wwan0`; verify its current
+cell and bearer before testing. UE2's earlier bearer 5 / `10.46.0.3/29` is
+historical: it is currently not connected and needs fresh discovery.
 
 Treat locks as needing restoration after modem power/reconnection: the
 operator reported a lock query of `0`, with affected role unspecified. See the
@@ -267,71 +466,38 @@ Require APN `internet`, an address in `10.45.0.0/16`, static IPv4, a non-suspend
 connected bearer and the modem's own dedicated interface. Keep the actual
 `UE_IP`, `UE_PREFIX`, `UE_MTU` and `WWAN_IF`; never substitute an old allocation.
 Recheck 1.2's cell before rebuilding the host path. The fresh `PATH_*`
-address/table fields also support a verified existing path; original rollback
-MTU/state must come from its recorded ledger, not the current configured link.
+address/table fields also support a verified existing path. Full cleanup uses
+the role reset helper and its defined interface baseline, without old-session
+metadata.
 
 <a id="ue1-clean-old-path"></a>
 
-### 1.4. Inspect and remove only UE1's old path
+### 1.4. Reset all UE1 host IPv4 state for a rebuild
 
-Stop this UE's test traffic. Keep a newly identity/cell-verified PDU connected
-during a host-only rebind. Inspect old addresses/rules/routes first:
+Stop UE1's test traffic. For a fresh rebuild, run this role reset without
+entering any historical IP/prefix/interface. It clears table `151`, priorities
+`10151`–`10154`, any other IPv4 rule referencing table
+`151`, and all `10.45.0.0/16` addresses on this role's current/orphan WWANs.
+The helper also removes its legacy WWAN IPv4 routes in the main table and sets
+the role's interfaces to DOWN / MTU 1500. Table 152 and the other UE's
+addresses remain available. The current PDU stays connected for rebuilding.
+
+If the existing path already matches the current verified bearer and works,
+reuse it by going to 1.6. Otherwise execute the reset, require
+`UE1 reset complete`, then proceed to 1.5:
 
 ```bash
+sudo python3 ~/falcon-reset-ue-network.py --ue 1
 ip -o -4 addr show
 ip -4 rule show
 ip -4 route show table 151
 ip -4 route show default
 ```
 
-Table `151` belongs to the laptop. An absent table can report
-`FIB table does not exist`; old rules may remain after USB/interface loss.
-Record the old path separately from the new bearer. If the current path already
-uses the verified new allocation and works, skip cleanup/installation and go to
-1.6. Otherwise remove only this role's recorded entries.
-
-The following cleanup uses the retained old session values. If its old IP,
-prefix or interface differs from inspected state, reconstruct the owned values
-before editing the commands. It skips absent entries, refuses a wrong modem or
-old address/interface/prefix, and keeps the guard until the old address is absent
-everywhere. Preserve the other UE and Wi-Fi; never flush shared routing tables.
-
-```bash
-cleanup_old_ue1_path() {
-  local current
-  current=$(mmcli -m "$MODEM" -K) || return 1
-  [[ "$(printf '%s\n' "$current" | mm_value modem.generic.equipment-identifier)" = 863305041978437 ]] || return 1
-  if ip -o -4 addr show | grep -Eq 'inet 10[.]45[.]0[.]2/'; then
-    ip -o -4 addr show dev wwan1 | grep -Fq 'inet 10.45.0.2/30 ' || {
-      printf 'STOP: old UE1 address/interface/prefix differs; inspect ownership.\n'; return 1;
-    }
-    printf '%s\n' "$current" | grep -Fq 'wwan1 (net)' || return 1
-  fi
-  if ip -4 rule show | grep -Eq '^10153:[[:space:]]+from all to 10[.]45[.]0[.]1(/32)? lookup 151([[:space:]]|$)'; then
-    sudo ip -4 rule del pref 10153 to 10.45.0.1/32 lookup 151 || return 1
-  fi
-  if ip -4 rule show | grep -Eq '^10151:[[:space:]]+from 10[.]45[.]0[.]2(/32)? to 10[.]45[.]0[.]1(/32)? lookup 151([[:space:]]|$)'; then
-    sudo ip -4 rule del pref 10151 from 10.45.0.2/32 to 10.45.0.1/32 lookup 151 || return 1
-  fi
-  if ip -4 route show table 151 10.45.0.1/32 2>/dev/null | grep -Eq '^10[.]45[.]0[.]1(/32)? dev wwan1 .*src 10[.]45[.]0[.]2([[:space:]]|$)'; then
-    sudo ip -4 route del table 151 10.45.0.1/32 dev wwan1 src 10.45.0.2 || return 1
-  fi
-  if ip -o -4 addr show dev wwan1 2>/dev/null | grep -Fq 'inet 10.45.0.2/30 '; then
-    sudo ip -4 addr del 10.45.0.2/30 dev wwan1 || return 1
-  fi
-  if ip -o -4 addr show | grep -Eq 'inet 10[.]45[.]0[.]2/'; then
-    printf 'STOP: old UE1 source remains; keep its guard.\n'; return 1
-  fi
-  if ip -4 rule show | grep -Eq '^10152:[[:space:]]+from 10[.]45[.]0[.]2(/32)? to 10[.]45[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
-    sudo ip -4 rule del pref 10152 from 10.45.0.2/32 to 10.45.0.1/32 type unreachable || return 1
-  fi
-  if ip -4 rule show | grep -Eq '^10154:[[:space:]]+from all to 10[.]45[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
-    sudo ip -4 rule del pref 10154 to 10.45.0.1/32 type unreachable || return 1
-  fi
-  printf 'Matching old UE1 entries removed; inspect table 151 and its priorities.\n'
-}
-cleanup_old_ue1_path
-```
+An empty/absent table can report `FIB table does not exist`; that is expected
+after reset. Keep the new bearer parameters read in 1.3 for 1.5; refresh
+them if the modem/bearer/interface changed meanwhile. **Run 1.5's empty-table
+preflight only after reset, never on an existing valid path.**
 
 <a id="ue1-build-path"></a>
 
@@ -363,7 +529,7 @@ def contains(selector, value):
 rules = json.loads(subprocess.check_output(['ip', '-j', '-4', 'rule', 'show']))
 for rule in rules:
     priority = int(rule.get('priority', 0))
-    assert priority not in (int(lookup), int(guard)), 'Rule priority already occupied'
+    assert priority not in (int(lookup), int(guard)), f'Rule priority {priority} already occupied: {rule}'
     assert table_number(rule.get('table')) != int(table), 'Routing table already referenced'
     if priority < int(lookup) and not (priority == 0 and table_number(rule.get('table')) == 255):
         assert not rule.get('not') and 'not' not in rule.get('flags', []), 'Inverted earlier policy rule requires review'
@@ -421,7 +587,8 @@ else
 fi
 ```
 
-Stop on a setup failure and preserve `route-state.txt` for precise cleanup.
+Stop on a setup failure and use the same role reset helper before retrying.
+Keep `route-state.txt` as evidence; reset does not depend on it.
 The setup requires a dedicated QMI interface with no existing IPv4 address or
 default route. Resolve unexpected interface ownership before continuing.
 
@@ -440,9 +607,9 @@ and the unchanged Wi-Fi default route. Save `PATH_*` values even if a later
 bearer allocation changes. Recheck cell/SA after reconnect/reattachment.
 
 The source rules above support programs that bind UE1's IP, including the
-iperf commands below. To also let ordinary `ping 10.45.0.1` and other programs
-automatically select UE1, add a destination lookup and guard. Table 151's
-existing route supplies the current UE1 preferred source address. Run this
+iperf commands below. **Complete the destination lookup/guard installation here
+to make ordinary `ping 10.45.0.1` select UE1. Reset plus 1.5 alone does not do
+that.** Table 151's existing route supplies the current UE1 preferred source. Run this
 after the source-bound checks pass and verify priorities `10153/10154` are
 unused; inspect an occupied slot rather than adding duplicates.
 
@@ -451,12 +618,27 @@ ip -4 rule show
 if ip -4 rule show | grep -Eq '^(10153|10154):'; then
   printf 'STOP: UE1 destination priorities occupied; inspect existing rules.\n'
 else
-  printf 'destination_lookup=10153 destination_guard=10154 server=10.45.0.1 table=151\n' > "$UE_RUN/server-route-state.txt" &&
-  sudo ip -4 rule add pref 10154 to 10.45.0.1/32 type unreachable &&
-  sudo ip -4 rule add pref 10153 to 10.45.0.1/32 lookup 151
+  if printf 'destination_lookup=10153 destination_guard=10154 server=10.45.0.1 table=151\n' > "$UE_RUN/server-route-state.txt" &&
+     sudo ip -4 rule add pref 10154 to 10.45.0.1/32 type unreachable &&
+     sudo ip -4 rule add pref 10153 to 10.45.0.1/32 lookup 151; then
+    if python3 - "$WWAN_IF" "$UE_IP" <<'PY'
+import json, subprocess, sys
+interface, source = sys.argv[1:]
+routes = json.loads(subprocess.check_output(['ip', '-N', '-j', '-4', 'route', 'get', '10.45.0.1'], text=True))
+assert len(routes) == 1, 'UE1: expected one unbound route'
+route = routes[0]
+assert route.get('dev') == interface and int(route.get('table', -1)) == 151 and route.get('prefsrc') == source, f'UE1: wrong unbound route: {route}'
+print('UE1 unbound route: OK', route)
+PY
+    then
+      ping -c 5 10.45.0.1
+    else
+      printf 'FAIL: ordinary traffic is not routed over UE1; stop before UL.\n'
+    fi
+  else
+    printf 'FAIL: UE1 destination installation incomplete; stop before UL.\n'
+  fi
 fi
-ip -4 route get 10.45.0.1
-ping -c 5 10.45.0.1
 ```
 
 Require UE1's current WWAN, `table 151`, `src` equal to `$UE_IP`, and ping
@@ -465,6 +647,8 @@ to Wi-Fi if table 151 loses its server route. The Wi-Fi default stays available
 for other destinations. With Wi-Fi off, repeat both the unbound and source-bound
 checks; both must use UE1. This configuration targets only `10.45.0.1/32`.
 The previous source-only recipe did not guarantee routing for an unbound ping.
+Ping success over the Wi-Fi interface is not a passing UE check. The gate above
+checks the unbound route's interface, table and source before sending the ping.
 
 ### 1.7. Run UE1's 60-second TCP UL, then keep it connected
 
@@ -676,71 +860,38 @@ Require APN `internet2`, an address in `10.46.0.0/16`, static IPv4, a non-suspen
 connected bearer and the modem's own dedicated interface. Keep the actual
 `UE_IP`, `UE_PREFIX`, `UE_MTU` and `WWAN_IF`; never substitute an old allocation.
 Recheck 2.2's cell before rebuilding the host path. The fresh `PATH_*`
-address/table fields also support a verified existing path; original rollback
-MTU/state must come from its recorded ledger, not the current configured link.
+address/table fields also support a verified existing path. Full cleanup uses
+the role reset helper and its defined interface baseline, without old-session
+metadata.
 
 <a id="ue2-clean-old-path"></a>
 
-### 2.4. Inspect and remove only UE2's old path
+### 2.4. Reset all UE2 host IPv4 state for a rebuild
 
-Stop this UE's test traffic. Keep a newly identity/cell-verified PDU connected
-during a host-only rebind. Inspect old addresses/rules/routes first:
+Stop UE2's test traffic. For a fresh rebuild, run this role reset without
+entering any historical IP/prefix/interface. It clears table `152`, priorities
+`10161`–`10164`, any other IPv4 rule referencing table
+`152`, and all `10.46.0.0/16` addresses on this role's current/orphan WWANs.
+The helper also removes its legacy WWAN IPv4 routes in the main table and sets
+the role's interfaces to DOWN / MTU 1500. Table 151 and the other UE's
+addresses remain available. The current PDU stays connected for rebuilding.
+
+If the existing path already matches the current verified bearer and works,
+reuse it by going to 2.6. Otherwise execute the reset, require
+`UE2 reset complete`, then proceed to 2.5:
 
 ```bash
+sudo python3 ~/falcon-reset-ue-network.py --ue 2
 ip -o -4 addr show
 ip -4 rule show
 ip -4 route show table 152
 ip -4 route show default
 ```
 
-Table `152` belongs to the laptop. An absent table can report
-`FIB table does not exist`; old rules may remain after USB/interface loss.
-Record the old path separately from the new bearer. If the current path already
-uses the verified new allocation and works, skip cleanup/installation and go to
-2.6. Otherwise remove only this role's recorded entries.
-
-The following cleanup uses the retained old session values. If its old IP,
-prefix or interface differs from inspected state, reconstruct the owned values
-before editing the commands. It skips absent entries, refuses a wrong modem or
-old address/interface/prefix, and keeps the guard until the old address is absent
-everywhere. Preserve the other UE and Wi-Fi; never flush shared routing tables.
-
-```bash
-cleanup_old_ue2_path() {
-  local current
-  current=$(mmcli -m "$MODEM" -K) || return 1
-  [[ "$(printf '%s\n' "$current" | mm_value modem.generic.equipment-identifier)" = 863305041980706 ]] || return 1
-  if ip -o -4 addr show | grep -Eq 'inet 10[.]46[.]0[.]2/'; then
-    ip -o -4 addr show dev wwan0 | grep -Fq 'inet 10.46.0.2/30 ' || {
-      printf 'STOP: old UE2 address/interface/prefix differs; inspect ownership.\n'; return 1;
-    }
-    printf '%s\n' "$current" | grep -Fq 'wwan0 (net)' || return 1
-  fi
-  if ip -4 rule show | grep -Eq '^10163:[[:space:]]+from all to 10[.]46[.]0[.]1(/32)? lookup 152([[:space:]]|$)'; then
-    sudo ip -4 rule del pref 10163 to 10.46.0.1/32 lookup 152 || return 1
-  fi
-  if ip -4 rule show | grep -Eq '^10161:[[:space:]]+from 10[.]46[.]0[.]2(/32)? to 10[.]46[.]0[.]1(/32)? lookup 152([[:space:]]|$)'; then
-    sudo ip -4 rule del pref 10161 from 10.46.0.2/32 to 10.46.0.1/32 lookup 152 || return 1
-  fi
-  if ip -4 route show table 152 10.46.0.1/32 2>/dev/null | grep -Eq '^10[.]46[.]0[.]1(/32)? dev wwan0 .*src 10[.]46[.]0[.]2([[:space:]]|$)'; then
-    sudo ip -4 route del table 152 10.46.0.1/32 dev wwan0 src 10.46.0.2 || return 1
-  fi
-  if ip -o -4 addr show dev wwan0 2>/dev/null | grep -Fq 'inet 10.46.0.2/30 '; then
-    sudo ip -4 addr del 10.46.0.2/30 dev wwan0 || return 1
-  fi
-  if ip -o -4 addr show | grep -Eq 'inet 10[.]46[.]0[.]2/'; then
-    printf 'STOP: old UE2 source remains; keep its guard.\n'; return 1
-  fi
-  if ip -4 rule show | grep -Eq '^10162:[[:space:]]+from 10[.]46[.]0[.]2(/32)? to 10[.]46[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
-    sudo ip -4 rule del pref 10162 from 10.46.0.2/32 to 10.46.0.1/32 type unreachable || return 1
-  fi
-  if ip -4 rule show | grep -Eq '^10164:[[:space:]]+from all to 10[.]46[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
-    sudo ip -4 rule del pref 10164 to 10.46.0.1/32 type unreachable || return 1
-  fi
-  printf 'Matching old UE2 entries removed; inspect table 152 and its priorities.\n'
-}
-cleanup_old_ue2_path
-```
+An empty/absent table can report `FIB table does not exist`; that is expected
+after reset. Keep the new bearer parameters read in 2.3 for 2.5; refresh
+them if the modem/bearer/interface changed meanwhile. **Run 2.5's empty-table
+preflight only after reset, never on an existing valid path.**
 
 <a id="ue2-build-path"></a>
 
@@ -772,7 +923,7 @@ def contains(selector, value):
 rules = json.loads(subprocess.check_output(['ip', '-j', '-4', 'rule', 'show']))
 for rule in rules:
     priority = int(rule.get('priority', 0))
-    assert priority not in (int(lookup), int(guard)), 'Rule priority already occupied'
+    assert priority not in (int(lookup), int(guard)), f'Rule priority {priority} already occupied: {rule}'
     assert table_number(rule.get('table')) != int(table), 'Routing table already referenced'
     if priority < int(lookup) and not (priority == 0 and table_number(rule.get('table')) == 255):
         assert not rule.get('not') and 'not' not in rule.get('flags', []), 'Inverted earlier policy rule requires review'
@@ -830,7 +981,8 @@ else
 fi
 ```
 
-Stop on a setup failure and preserve `route-state.txt` for precise cleanup.
+Stop on a setup failure and use the same role reset helper before retrying.
+Keep `route-state.txt` as evidence; reset does not depend on it.
 The setup requires a dedicated QMI interface with no existing IPv4 address or
 default route. Resolve unexpected interface ownership before continuing.
 
@@ -849,9 +1001,9 @@ and the unchanged Wi-Fi default route. Save `PATH_*` values even if a later
 bearer allocation changes. Recheck cell/SA after reconnect/reattachment.
 
 The source rules above support programs that bind UE2's IP, including the
-iperf commands below. To also let ordinary `ping 10.46.0.1` and other programs
-automatically select UE2, add a destination lookup and guard. Table 152's
-existing route supplies the current UE2 preferred source address. Run this
+iperf commands below. **Complete the destination lookup/guard installation here
+to make ordinary `ping 10.46.0.1` select UE2. Reset plus 2.5 alone does not do
+that.** Table 152's existing route supplies the current UE2 preferred source. Run this
 after the source-bound checks pass and verify priorities `10163/10164` are
 unused; inspect an occupied slot rather than adding duplicates.
 
@@ -860,12 +1012,27 @@ ip -4 rule show
 if ip -4 rule show | grep -Eq '^(10163|10164):'; then
   printf 'STOP: UE2 destination priorities occupied; inspect existing rules.\n'
 else
-  printf 'destination_lookup=10163 destination_guard=10164 server=10.46.0.1 table=152\n' > "$UE_RUN/server-route-state.txt" &&
-  sudo ip -4 rule add pref 10164 to 10.46.0.1/32 type unreachable &&
-  sudo ip -4 rule add pref 10163 to 10.46.0.1/32 lookup 152
+  if printf 'destination_lookup=10163 destination_guard=10164 server=10.46.0.1 table=152\n' > "$UE_RUN/server-route-state.txt" &&
+     sudo ip -4 rule add pref 10164 to 10.46.0.1/32 type unreachable &&
+     sudo ip -4 rule add pref 10163 to 10.46.0.1/32 lookup 152; then
+    if python3 - "$WWAN_IF" "$UE_IP" <<'PY'
+import json, subprocess, sys
+interface, source = sys.argv[1:]
+routes = json.loads(subprocess.check_output(['ip', '-N', '-j', '-4', 'route', 'get', '10.46.0.1'], text=True))
+assert len(routes) == 1, 'UE2: expected one unbound route'
+route = routes[0]
+assert route.get('dev') == interface and int(route.get('table', -1)) == 152 and route.get('prefsrc') == source, f'UE2: wrong unbound route: {route}'
+print('UE2 unbound route: OK', route)
+PY
+    then
+      ping -c 5 10.46.0.1
+    else
+      printf 'FAIL: ordinary traffic is not routed over UE2; stop before UL.\n'
+    fi
+  else
+    printf 'FAIL: UE2 destination installation incomplete; stop before UL.\n'
+  fi
 fi
-ip -4 route get 10.46.0.1
-ping -c 5 10.46.0.1
 ```
 
 Require UE2's current WWAN, `table 152`, `src` equal to `$UE_IP`, and ping
@@ -874,6 +1041,8 @@ to Wi-Fi if table 152 loses its server route. The Wi-Fi default stays available
 for other destinations. With Wi-Fi off, repeat both the unbound and source-bound
 checks; both must use UE2. This configuration targets only `10.46.0.1/32`.
 The previous source-only recipe did not guarantee routing for an unbound ping.
+Ping success over the Wi-Fi interface is not a passing UE check. The gate above
+checks the unbound route's interface, table and source before sending the ping.
 
 ### 2.7. Run UE2's 60-second TCP UL, then keep it connected
 
@@ -1011,110 +1180,37 @@ acceptance.
 
 <a id="cleanup"></a>
 
-## 4. Finish tests and clean each role in its own terminal
+## 4. Finish tests and reset each role
 
 Stop clients and let the finite Spark xApp delete subscriptions and finish.
-Clean one role at a time with its saved run metadata; preserve the other UE and
-Wi-Fi. Skip already-absent owned entries after inspecting them. If an interface
-disappeared, retain its source guard until the old source address is absent.
+Use the same helper for a complete role reset and add `--disconnect` to end its
+current connected PDU. No saved `PATH_*`, original IP/CIDR/interface, modem index
+or old MTU/state is needed. This resets the role to the defined DOWN / MTU 1500
+baseline rather than reconstructing an earlier session.
 
-### 4.1. Final UE1 cleanup — table 151
-
-Run only in the UE1 terminal retaining its `MODEM`, `PATH_*` and
-`route-state.txt`. Verify identity and interface ownership first:
+### 4.1. Final UE1 reset — table 151
 
 ```bash
-mmcli -m "$MODEM"
-CURRENT_MODEM_KV=$(mmcli -m "$MODEM" -K)
-printf '%s\n' "$CURRENT_MODEM_KV" | mm_value modem.generic.device-identifier
-printf 'Expected identity: %s; recorded WWAN: %s\n' "$MODEM_IDENTITY" "$PATH_IF"
-```
-
-Require IMEI `863305041978437` and that modem's recorded interface before deleting
-owned state. Disconnect its PDU and remove only its saved lookup/route/address:
-
-```bash
-sudo mmcli -m "$MODEM" --simple-disconnect
-if ip -4 rule show | grep -Eq '^10153:[[:space:]]+from all to 10[.]45[.]0[.]1(/32)? lookup 151([[:space:]]|$)'; then
-  sudo ip -4 rule del pref 10153 to 10.45.0.1/32 lookup 151
-fi
-sudo ip -4 rule del pref 10151 from "$PATH_IP/32" to 10.45.0.1/32 lookup 151
-sudo ip -4 route del table 151 10.45.0.1/32 dev "$PATH_IF" src "$PATH_IP"
-sudo ip -4 addr del "$PATH_CIDR" dev "$PATH_IF"
-```
-
-Only after its source address is absent everywhere, remove its guard and
-restore this run's recorded interface MTU/state:
-
-```bash
-if [[ -z "$(ip -o -4 addr show | awk -v wanted="$PATH_IP" '{split($4,a,"/"); if(a[1]==wanted) print}')" ]]; then
-  sudo ip -4 rule del pref 10152 from "$PATH_IP/32" to 10.45.0.1/32 type unreachable
-  if ip -4 rule show | grep -Eq '^10154:[[:space:]]+from all to 10[.]45[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
-    sudo ip -4 rule del pref 10154 to 10.45.0.1/32 type unreachable
-  fi
-  if [[ -n "${PATH_OLD_MTU:-}" && -n "${PATH_WAS_UP:-}" ]]; then
-    sudo ip link set dev "$PATH_IF" mtu "$PATH_OLD_MTU"
-    if [[ "$PATH_WAS_UP" = no ]]; then sudo ip link set dev "$PATH_IF" down; fi
-  else
-    printf 'Original MTU/state not recorded; inspect the owned ledger before link restoration.\n'
-  fi
-else
-  printf 'FAIL: source address remains; keep the guard and inspect cleanup.\n'
-fi
+sudo python3 ~/falcon-reset-ue-network.py --ue 1 --disconnect
+ip -o -4 addr show
 ip -4 rule show
+ip -4 route show table 151
 ip -4 route show default
 ```
 
-### 4.2. Final UE2 cleanup — table 152
+Require `UE1 reset complete`. UE2 and Wi-Fi remain available.
 
-Run only in the UE2 terminal retaining its `MODEM`, `PATH_*` and
-`route-state.txt`. Verify identity and interface ownership first:
-
-```bash
-mmcli -m "$MODEM"
-CURRENT_MODEM_KV=$(mmcli -m "$MODEM" -K)
-printf '%s\n' "$CURRENT_MODEM_KV" | mm_value modem.generic.device-identifier
-printf 'Expected identity: %s; recorded WWAN: %s\n' "$MODEM_IDENTITY" "$PATH_IF"
-```
-
-Require IMEI `863305041980706` and that modem's recorded interface before deleting
-owned state. Disconnect its PDU and remove only its saved lookup/route/address:
+### 4.2. Final UE2 reset — table 152
 
 ```bash
-sudo mmcli -m "$MODEM" --simple-disconnect
-if ip -4 rule show | grep -Eq '^10163:[[:space:]]+from all to 10[.]46[.]0[.]1(/32)? lookup 152([[:space:]]|$)'; then
-  sudo ip -4 rule del pref 10163 to 10.46.0.1/32 lookup 152
-fi
-sudo ip -4 rule del pref 10161 from "$PATH_IP/32" to 10.46.0.1/32 lookup 152
-sudo ip -4 route del table 152 10.46.0.1/32 dev "$PATH_IF" src "$PATH_IP"
-sudo ip -4 addr del "$PATH_CIDR" dev "$PATH_IF"
-```
-
-Only after its source address is absent everywhere, remove its guard and
-restore this run's recorded interface MTU/state:
-
-```bash
-if [[ -z "$(ip -o -4 addr show | awk -v wanted="$PATH_IP" '{split($4,a,"/"); if(a[1]==wanted) print}')" ]]; then
-  sudo ip -4 rule del pref 10162 from "$PATH_IP/32" to 10.46.0.1/32 type unreachable
-  if ip -4 rule show | grep -Eq '^10164:[[:space:]]+from all to 10[.]46[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
-    sudo ip -4 rule del pref 10164 to 10.46.0.1/32 type unreachable
-  fi
-  if [[ -n "${PATH_OLD_MTU:-}" && -n "${PATH_WAS_UP:-}" ]]; then
-    sudo ip link set dev "$PATH_IF" mtu "$PATH_OLD_MTU"
-    if [[ "$PATH_WAS_UP" = no ]]; then sudo ip link set dev "$PATH_IF" down; fi
-  else
-    printf 'Original MTU/state not recorded; inspect the owned ledger before link restoration.\n'
-  fi
-else
-  printf 'FAIL: source address remains; keep the guard and inspect cleanup.\n'
-fi
+sudo python3 ~/falcon-reset-ue-network.py --ue 2 --disconnect
+ip -o -4 addr show
 ip -4 rule show
+ip -4 route show table 152
 ip -4 route show default
 ```
 
-The earlier literal-command sessions did not capture `route-state.txt`; their
-preflight interfaces were DOWN / MTU 1500. Reconstruct missing cleanup metadata
-only from verified ownership and evidence. Future setup above saves a new ledger
-for each role. After both laptop paths are cleaned, use [Spark step 8](dual_ue_spark_quick_commands.md#8-shutdown-and-retained-evidence)
+Require `UE2 reset complete`. After both laptop roles are reset, use
+[Spark step 8](dual_ue_spark_quick_commands.md#8-shutdown-and-retained-evidence)
 for server/RAN/core shutdown. Retain identity/cell/bearer/path/UL/KPM correlation
 and restart/guard/survivor observations; full acceptance remains pending.

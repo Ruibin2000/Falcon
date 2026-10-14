@@ -211,7 +211,9 @@ sudo mmcli -m "$MODEM" --simple-connect="apn=internet2,ip-type=ipv4"
 
 The Quick Start now sets `APN`, `UE_SUBNET` and `SERVER_IP` per role, checks the
 bearer's matching APN, rejects an address outside the role's pool, installs
-source-policy routes to that server, and records `PATH_SERVER` for cleanup.
+source-policy routes to that server, and records `PATH_SERVER` for traffic/evidence.
+Complete laptop cleanup selects `--ue 1` or `--ue 2` and discovers current state;
+it does not require the old address/interface ledger.
 Do not merely change iperf's destination while retaining old route rules.
 
 ## 6. Spark + UE laptop — verify each UL path
