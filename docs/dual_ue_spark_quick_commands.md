@@ -20,15 +20,19 @@ telemetry still keep their acceptance gates pending. See
 Run all commands in this file on Spark. Use Bash and separate foreground
 terminals for CU, RIC, each DU, each iperf server and xApp. Modem/AT/routing/client
 commands are in [Dual UE Laptop Quick Commands](dual_ue_laptop_quick_commands.md).
-Resume at steps 6–7 in the current running session; steps 1–5 are for cold start.
-After a modem power cycle, repeat laptop steps 1–4 first. The operator reported
+Daily order: shared core/CU/RIC → both DUs → both servers → complete laptop
+UE1 sequence → complete laptop UE2 sequence → concurrent UL/KPM. Reuse running
+infrastructure during modem recovery; steps 1–5 cover a stopped testbed.
+After a modem power cycle, repeat the affected role's complete laptop sequence
+([UE1](dual_ue_laptop_quick_commands.md#ue1-start) / [UE2](dual_ue_laptop_quick_commands.md#ue2-start)) before traffic. The operator reported
 lock query `0`; its lock must be restored and the actual serving cell verified.
 UE2 now reports bearer 5 / `10.46.0.3/29` / `wwan0`, while old host rules still
 use `10.46.0.2`; host-path restoration is pending. Keep the Spark `.1` endpoints
 and update the laptop source binding from verified current bearer metadata.
 The explicit table-151/table-152 inspection, separate UE1/UE2 old-address/rule/
 route cleanup, guarded rebuilding and both private-path checks are in
-[laptop step 4](dual_ue_laptop_quick_commands.md#4-install-and-verify-each-source-policy-path).
+[UE1 recovery](dual_ue_laptop_quick_commands.md#ue1-clean-old-path) and
+[UE2 recovery](dual_ue_laptop_quick_commands.md#ue2-clean-old-path).
 These tables belong to the laptop. Spark keeps service addresses `10.45.0.1`
 and `10.46.0.1`, and its two iperf listeners continue to use the same bindings.
 
@@ -209,40 +213,13 @@ stdbuf -oL -eL /usr/local/bin/flexric/ric/nearRT-RIC \
 Require E2 port `36421`, E42 port `36422` and KPM SM ID `2` loaded. Keep RIC
 running; a RIC restart requires restarting DUs before the next E2/xApp test.
 
-## 5. Start DU2 first
+## 5. Start DU1 and DU2 in separate terminals and keep both running
 
-**DU2 terminal:**
+Complete the shared MongoDB/core/CU/RIC startup first. Start each DU in its own
+foreground terminal before beginning either laptop UE sequence. Both DUs stay
+running while UE1 and UE2 are prepared and measured.
 
-```bash
-cd /home/nyu/ocudu
-DU2_RUN=$(mktemp -d /tmp/falcon-du2-3600.XXXXXXXX)
-printf 'DU2 run directory: %s\n' "$DU2_RUN"
-set -o pipefail
-sudo stdbuf -oL -eL build/apps/du_split_8/odu \
-  -c configs/du2_b210_n78_20mhz.yml -c configs/du2_flexric.yml \
-  log --filename "$DU2_RUN/du.log" 2>&1 | tee "$DU2_RUN/startup.log"
-```
-
-Require radio `328B021`, USB 3, PCI 2, carrier `640000` / 3600 MHz, SSB `639648`,
-F1-C/E2AP completed, and `==== DU started ===`. RIC must show
-`Node ID 411 ... ngran_gNB_DU ID 2` and accept KPM function ID 2.
-
-For a cold-start isolated UE2 test, keep DU1 stopped and complete laptop steps
-1–5 after starting its server below. This phase passed in the current session;
-both DUs are running, so continue at steps 6–7 without restarting them.
-
-## 6. Start both iperf servers and add DU1 after UE2 passes
-
-Spark UE2 server terminal:
-
-```bash
-iperf3 -s -B 10.46.0.1 -p 5202
-```
-
-Require `Server listening on 5202`. Have the laptop complete UE2 identity/cell/PDU/
-private ping and 60-second UL with DU2 only; use Spark step 7 for KPM.
-This initial UE2 phase already passed in the current session.
-After UE2 passes, start DU1 in its own terminal while retaining CU/RIC/DU2:
+### 5a. Spark DU1 terminal
 
 ```bash
 cd /home/nyu/ocudu
@@ -252,49 +229,80 @@ set -o pipefail
 sudo stdbuf -oL -eL build/apps/du_split_8/odu \
   -c configs/du1_b210_n78_3660mhz.yml \
   log --filename "$DU1_RUN/du.log" 2>&1 | tee "$DU1_RUN/startup.log"
+
 ```
 
 Require radio `3271233` / USB 3, PCI 1 / carrier `644000` / SSB `643680`,
-F1/E2 completed and RIC accepted DU ID 1. Retain actual CU NR CGI/F1AP evidence.
-This DU1 startup also passed in the current session.
+F1/E2 completed, `==== DU started ===`, and RIC accepted gNB 411 / DU ID 1.
+Leave this terminal running.
 
-Spark UE1 server terminal:
+### 5b. Spark DU2 terminal
+
+```bash
+cd /home/nyu/ocudu
+DU2_RUN=$(mktemp -d /tmp/falcon-du2-3600.XXXXXXXX)
+printf 'DU2 run directory: %s\n' "$DU2_RUN"
+set -o pipefail
+sudo stdbuf -oL -eL build/apps/du_split_8/odu \
+  -c configs/du2_b210_n78_20mhz.yml -c configs/du2_flexric.yml \
+  log --filename "$DU2_RUN/du.log" 2>&1 | tee "$DU2_RUN/startup.log"
+
+```
+
+Require radio `328B021` / USB 3, PCI 2 / carrier `640000` / SSB `639648`,
+F1/E2 completed, `==== DU started ===`, and RIC accepted gNB 411 / DU ID 2.
+Leave this terminal running.
+
+### 5c. Confirm the two-DU startup before UE setup
+
+In a Spark diagnostics terminal:
+
+```bash
+pgrep -a -x odu
+```
+
+Require two actual DU processes with the two distinct configuration paths.
+RIC must show both DU IDs and accept KPM function 2 for each; retain actual
+CU NR CGI/F1AP and startup evidence. Starting the two foreground terminals
+separately results in concurrent operation; it does not establish synchronized
+RF timing. Keep the recorded clock/RF settings and the remaining Plan 3 gates.
+If both DUs are already running correctly, reuse them for modem recovery.
+
+## 6. Start both iperf servers before the laptop sequences
+
+In the Spark UE1 server terminal:
 
 ```bash
 iperf3 -s -B 10.45.0.1 -p 5201
 ```
 
-Require `Server listening on 5201`. Both listeners must stay running for concurrent
-UL; reuse existing server terminals rather than creating duplicate listeners.
-The laptop selects/locks/connects UE1 and measures UE1 UL / DU2 test traffic idle
-before the concurrent case. That UE1 UL phase already passed this session.
+In the Spark UE2 server terminal:
+
+```bash
+iperf3 -s -B 10.46.0.1 -p 5202
+```
+
+Require `Server listening` on both ports. Reuse existing listeners rather than
+starting duplicate servers. Keep both listeners, both DUs, CU and RIC running.
+The laptop then follows the [complete UE1 sequence](dual_ue_laptop_quick_commands.md#ue1-start)
+in its own terminal, followed by the [complete UE2 sequence](dual_ue_laptop_quick_commands.md#ue2-start)
+in another terminal. Each sequence includes identity/cell/PDU, old-path cleanup,
+its own table/rules, private ping and individual UL with the other UE's test
+traffic idle. Keep both PDU paths active for the concurrent test in step 7.
 
 ## 7. KPM subscriptions and actual two-link metric delivery
 
 RIC must have registered `gnb=411 / DU ID 1` and `gnb=411 / DU ID 2`, accepting KPM
 RAN function ID 2 for both. Keep both DUs and RIC running. Complete any existing
 finite monitor before launching another. Start the 120-second capture first;
-after both subscriptions succeed, run laptop step 6's concurrent clients.
+after both subscriptions succeed, run [laptop section 3](dual_ue_laptop_quick_commands.md#dual-ul)'s concurrent clients.
 
-### 7a. Stock single-DU smoke monitor
-
-For the initial DU2-only UL test, use the installed finite monitor:
-
-```bash
-XAPP_RUN=$(mktemp -d /tmp/falcon-kpm-solo.XXXXXXXX)
-set -o pipefail
-stdbuf -oL -eL /usr/local/bin/flexric/xApp/c/xapp_oran_moni \
-  -c /usr/local/etc/flexric/xapp_oran_sm.conf 2>&1 | tee "$XAPP_RUN/kpm.log"
-XAPP_RC=$?
-printf 'pipeline_exit=%d\n' "$XAPP_RC" | tee "$XAPP_RUN/exit.txt"
-```
-
-Require exit 0, actual UE reports, numeric `DRB.UEThpUl` / `RRU.PrbTotUl`, report
-age, subscription/delete responses and normal stop. The stock callback prints
-the common gNB ID without DU ID; use the diagnostic below for two-DU attribution.
+The historical DU2-only stock-monitor run remains retained evidence. Its
+callback prints the shared gNB ID without DU ID. Use the DU-tagged diagnostic
+below for the current two-DU workflow; require actual reports from both nodes.
 DL values remain observations; report age is not application RTT.
 
-### 7b. Build the DU-tagged diagnostic
+### 7a. Build the DU-tagged diagnostic
 
 The maintained source derives from the pinned local FlexRIC monitor. It adds
 DU identity to every callback block, configurable finite capture duration and
@@ -310,7 +318,7 @@ binaries and the running RIC/DUs intact. It expects the current E2AP v3 / KPM v3
 build under `/home/nyu/flexric/build-ocudu`; compare build flags before using a
 different FlexRIC build.
 
-### 7c. Capture while both UEs upload
+### 7b. Capture while both UEs upload
 
 Run in the Spark xApp terminal:
 
@@ -355,7 +363,7 @@ is inspected.
 
 ## 8. Shutdown and retained evidence
 
-Stop laptop clients and clean each recorded path using [laptop step 7](dual_ue_laptop_quick_commands.md#7-cleanup-and-retained-evidence).
+Stop laptop clients and clean each recorded path using [separate laptop cleanup](dual_ue_laptop_quick_commands.md#cleanup).
 Allow the finite xApp to delete subscriptions and stop naturally. Stop both iperf
 server terminals, then each DU, RIC and CU in their own terminals with Ctrl+C.
 Stop the shared core only after both DUs have finished using it:

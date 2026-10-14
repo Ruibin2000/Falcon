@@ -23,6 +23,9 @@ DU-tagged diagnostic xApp found both E2 nodes and subscribed/deleted twice with
 exit 0, but received zero UE callback blocks. Concurrent UL and actual two-link
 KPM remain pending; see [UE1 UL](evidence/2026-10-13_du1_ul/manifest.json) and
 [two-DU subscription evidence](evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
+For daily operation, start both DUs and both server endpoints before the
+laptop's ordered UE1 and UE2 sequences. Keep both DUs active during these role
+traffic tests and concurrent UL/KPM.
 This runbook retains checkpoint
 details and the full Plan 3 acceptance context.
 

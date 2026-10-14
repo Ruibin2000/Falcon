@@ -144,7 +144,7 @@ sudo mmcli -m "$MODEM" --disable
 
 If no PDU was connected, no disconnect is needed. Use recorded identity, not a
 remembered modem index. Clean any old run's addresses/rules/routes using its
-ledger and [laptop cleanup step 7](dual_ue_laptop_quick_commands.md#7-cleanup-and-retained-evidence).
+ledger and [separate laptop cleanup](dual_ue_laptop_quick_commands.md#cleanup).
 The old shared-endpoint layout used `10.45.0.1` for **both** roles. Its old ledger
 does not contain `PATH_SERVER`: reconstruct that value as `10.45.0.1` only after
 confirming the recorded route destination. Never substitute the new UE2 target

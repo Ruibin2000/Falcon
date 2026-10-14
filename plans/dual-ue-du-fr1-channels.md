@@ -14,7 +14,7 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 | Task | `dual-ue-du-fr1-channels` |
 | Status | In progress: DU1 historical UL and DU2 single-link UL functionality/KPM smoke passed; new UE1 DU1 SA/lock, IPv4 PDU and private ping passed; new UE1 60-second TCP UL passed; concurrent dual-link UL/KPM pending; underflow remediation deferred |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 20 : 09: 55 Oct 13, 2026 EDT |
+| Last updated at | 20 : 18: 08 Oct 13, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | To be assigned |
@@ -99,6 +99,13 @@ min/avg/max/mdev 37.127/116.899/422.149/152.655 ms, and Wi-Fi remained the defau
 route. See [IPv4 path evidence](../docs/evidence/2026-10-13_du2_ipv4_path/manifest.json).
 Full dual-link UL/KPM, path-loss/survivor checks, restart retention, and lock enforcement with
 both DUs present remain pending; Steps 7/8's two-UE acceptance is not complete.
+
+The operator's latest daily workflow starts the shared core/CU/RIC, then both
+DU1 and DU2 and both iperf servers before any laptop UE setup. The laptop booklet
+now contains a complete ordered UE1 sequence followed by a complete ordered UE2
+sequence, each with its own identity/lock/PDU/old-path cleanup/table/ping/UL.
+Keep both DUs and both verified PDU paths active for concurrent UL/KPM. Earlier
+single-DU checkpoints remain historical evidence; full acceptance stays pending.
 
 ## 2026-10-13 UE2 / DU2 Single-Link UL Checkpoint
 
@@ -318,7 +325,7 @@ they already exist:
 | `scripts/dual_fr1/configure_ue_routes.sh` | Guarded per-UE policy routes and precise rollback |
 | `scripts/dual_fr1/verify_kpm.py` | Per-link report/lifecycle/evidence checks |
 | `docs/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; actual startup/F1/E2 and UE2 solo UL verified; concurrent UL/KPM pending |
-| `docs/dual_ue_laptop_quick_commands.md` | Laptop commands for IMEI/SIM selection, both locks/DNNs, actual IPv4 bearers, guarded source-policy paths, recorded concurrent UL; explicit table 151/152 inspection, separate scoped old-address/rule/route cleanup and fresh-bearer rebuild for both roles; seven offline cleanup fixtures passed, restored live paths pending |
+| `docs/dual_ue_laptop_quick_commands.md` | Separate complete ordered UE1 and UE2 laptop sequences for IMEI/SIM selection, their own locks/DNNs, actual IPv4 bearers, guarded source-policy paths and recorded concurrent UL; explicit table 151/152 inspection, separate scoped old-address/rule/route cleanup and fresh-bearer rebuild for both roles; seven offline cleanup fixtures passed, restored live paths pending |
 | `docs/dual_ue_spark_quick_commands.md` | Spark commands for core/CU/RIC/two-DU startup, both server endpoints, DU-tagged KPM capture and shutdown |
 | `scripts/dual_fr1/xapp_oran_moni_dual.c` / `scripts/dual_fr1/build_kpm_monitor.sh` | Built isolated diagnostic using pinned FlexRIC API/library; labels each callback with DU ID, supports finite capture, fixes dense subscription cleanup; two-node subscription/deletion passed, actual two-link callbacks pending |
 | `docs/dual_ue_subnets.md` / `scripts/dual_fr1/prepare_dual_subnets.py` / `scripts/dual_fr1/apply_dual_subnets.sh` / `scripts/dual_fr1/ue2_dnn.js` | Dual-subnet migration, backups, saved apply command, targeted UE2 DNN rename and rollback; six mocked apply tests passed; operator-applied core checks, both registered IPv4/private-ping paths and both role UL functionality checkpoints passed; concurrent UL/KPM pending |
@@ -666,7 +673,8 @@ the existing five-metric xApp subscribes successfully to each.
 - [ ] Validate UE1 alone on DU1 with SIM1/new subscriber, then UE2 alone on DU2
   with SIM2/new subscriber. Preserve each successful standalone result.
 - [ ] Apply the firmware-verified NR SA/n78 selection and cell-lock workflow
-  from the [dual UE laptop booklet](../docs/dual_ue_laptop_quick_commands.md#2-at-communication-and-cell-lock). Use DU1 PCI 1 /
+  from the separate [UE1 lock sequence](../docs/dual_ue_laptop_quick_commands.md#ue1-cell-lock)
+  and [UE2 lock sequence](../docs/dual_ue_laptop_quick_commands.md#ue2-cell-lock). Use DU1 PCI 1 /
   its newly derived and observed CBRS SSB, and DU2 PCI 2 / its own derived and
   observed SSB. The booklet's historical 649632 lock applies only to 3750 MHz;
   replace it for this deployment. Require each
