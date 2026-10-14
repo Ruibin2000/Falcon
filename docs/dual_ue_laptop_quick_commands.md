@@ -27,13 +27,15 @@ running; Spark startup is in the paired booklet. Keep UE1's verified PDU/path
 active while preparing UE2. After a power/reconnection event, repeat the affected
 role's identity, lock/cell, bearer, complete host IPv4 reset and new-path verification.
 
-The latest laptop readback shows UE1 `10.45.0.3/29` on `wwan0`, its source
-lookup/guard at 10151/10152, and the server route in table 151. Reuse that path
-via 1.6, or use 1.4's complete role reset before rebuilding in 1.5. No historical
-allocation is needed for reset. UE2 is not connected per the operator; old
-rules 10161/10162 remain, but no `10.46.*` address was listed. Reconnect and
-read UE2's actual identity/cell/bearer values before its setup or dual traffic.
-Destination-only routing and Wi-Fi-off ping verification are still pending.
+The latest modem readback identifies UE1 as modem `9` and UE2 as modem `10`,
+both connected with `5gnr`, PLMN `00101` and registration `home`. The previous
+launcher falsely rejected UE1 by reading the parent access-technology key
+instead of its `.value[1]` array entry; the saved launcher must be updated.
+An earlier host readback had UE1 `10.45.0.3/29` on `wwan0` with table-151 source
+rules/route intact. Read both current bearer allocations/routes again rather
+than reusing these historical values. No historical allocation is needed for
+role reset. Current cell/bearer/path preflight, ordinary ping/Wi-Fi-off checks
+and measured dual UL/KPM are pending.
 The earlier concurrent launcher's printed exit codes/time bounds were invalid
 because its `wait`/`printf` lost variable expansions. Preserve its logs and use
 section 3's Python launcher after both role paths pass.
@@ -266,9 +268,9 @@ reports incomplete; address-removal failures retain the existing guards.
 
 Rediscover these dynamic values after modem restart/reconnection. Both cells use
 PLMN `00101`, TAC 7 and SST 1. DNN selects the UE pool; cell lock selects the DU.
-UE1's latest host allocation is `10.45.0.3/29` on `wwan0`; verify its current
-cell and bearer before testing. UE2's earlier bearer 5 / `10.46.0.3/29` is
-historical: it is currently not connected and needs fresh discovery.
+UE1's earlier host allocation was `10.45.0.3/29` on `wwan0`; UE2's earlier
+bearer 5 / `10.46.0.3/29` is also historical. Both now report connected 5GNR
+under modem paths 9/10, but current SIM/cell/bearer/host-path checks remain needed.
 
 Treat locks as needing restoration after modem power/reconnection: the
 operator reported a lock query of `0`, with affected role unspecified. See the
@@ -1121,6 +1123,19 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def field_values(info, name):
+    """Read mmcli -K array .value[n] entries, or a scalar/comma-separated value."""
+    indexed = []
+    pattern = re.compile(re.escape(name) + r"\.value\[(\d+)\]")
+    for key, value in info.items():
+        match = pattern.fullmatch(key)
+        if match:
+            indexed.append((int(match[1]), value))
+    values = [value for _, value in sorted(indexed)] if indexed else [info.get(name, "")]
+    return {token.strip().lower() for value in values for token in value.split(",")
+            if token.strip() not in ("", "--")}
+
+
 def discover_roles():
     paths = sorted(set(re.findall(r"/org/freedesktop/ModemManager1/Modem/\d+", read("mmcli", "-L"))))
     modems = [(path, kv("mmcli", "-m", path, "-K")) for path in paths]
@@ -1131,7 +1146,9 @@ def discover_roles():
         require(len(matches) == 1, f"{tag}: IMEI {imei} must match exactly one current modem")
         modem, info = matches[0]
         require(info.get("modem.generic.state") == "connected", f"{tag}: modem is not connected; complete its PDU/path sequence first")
-        require("5gnr" in info.get("modem.generic.access-technologies", ""), f"{tag}: current access technology is not 5GNR")
+        technologies = field_values(info, "modem.generic.access-technologies")
+        require("5gnr" in technologies,
+                f"{tag}: current access technology is not 5GNR; reported={sorted(technologies) or 'not reported'}")
         require(info.get("modem.3gpp.operator-code") == "00101", f"{tag}: wrong registered PLMN")
         sim = info.get("modem.generic.sim", "")
         require(re.fullmatch(r"/org/freedesktop/ModemManager1/SIM/\d+", sim), f"{tag}: no active SIM path")
@@ -1269,6 +1286,11 @@ if __name__ == "__main__":
     sys.exit(main())
 FALCON_DUAL_UL_PY
 ```
+
+The launcher reads `mmcli -K` access technologies from `.value[n]` array
+entries as well as a scalar value. An absent parent key is not evidence of
+a non-5G connection. Missing actual technology reports and LTE-only reports
+still fail preflight. See the [ModemManager output implementation](https://github.com/linux-mobile-broadband/ModemManager/blob/main/cli/mmcli-output.c).
 
 Read-only preflight, without starting iperf or creating traffic logs:
 

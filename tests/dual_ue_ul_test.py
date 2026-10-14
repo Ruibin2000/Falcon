@@ -34,7 +34,8 @@ class Network:
             source, interface = self.sources[ue - 1], f"wwan{ue + 5}"
             self.modems[modem] = {"modem.generic.equipment-identifier": imei,
                 "modem.generic.device-identifier": f"identity-{ue}", "modem.generic.state": "connected",
-                "modem.generic.access-technologies": "5gnr", "modem.3gpp.operator-code": "00101",
+                "modem.generic.access-technologies.length": "1", "modem.generic.access-technologies.value[1]": "5gnr",
+                "modem.3gpp.operator-code": "00101",
                 "modem.generic.sim": sim, "modem.generic.ports.value[1]": f"{interface} (net)",
                 "modem.generic.bearers.value[1]": bearer}
             self.sims[sim] = {"sim.properties.active": "yes", "sim.properties.imsi": imsi}
@@ -159,6 +160,31 @@ class DualULTest(unittest.TestCase):
     def test_wrong_sim_starts_neither_client(self):
         self.network.sims["/org/freedesktop/ModemManager1/SIM/201"]["sim.properties.imsi"] = "wrong-imsi"
         self.assert_preflight_failure("UE1: active SIM")
+
+    def test_mmcli_indexed_access_technology_array_passes(self):
+        self.assertEqual(self.run_launcher(check_only=True), 0)
+        self.assertEqual(self.network.iperf, [])
+
+    def test_scalar_access_technology_is_also_supported(self):
+        for info in self.network.modems.values():
+            del info["modem.generic.access-technologies.length"]
+            info["modem.generic.access-technologies"] = info.pop("modem.generic.access-technologies.value[1]")
+        self.assertEqual(self.run_launcher(check_only=True), 0)
+
+    def test_multiple_indexed_access_technologies_include_nr(self):
+        for info in self.network.modems.values():
+            info["modem.generic.access-technologies.length"] = "2"
+            info["modem.generic.access-technologies.value[1]"] = "lte"
+            info["modem.generic.access-technologies.value[2]"] = "5gnr"
+        self.assertEqual(self.run_launcher(check_only=True), 0)
+
+    def test_lte_only_is_still_rejected_before_traffic(self):
+        self.network.modems["/org/freedesktop/ModemManager1/Modem/101"]["modem.generic.access-technologies.value[1]"] = "lte"
+        self.assert_preflight_failure("not 5GNR.*lte")
+
+    def test_missing_access_technology_is_reported_and_rejected(self):
+        del self.network.modems["/org/freedesktop/ModemManager1/Modem/101"]["modem.generic.access-technologies.value[1]"]
+        self.assert_preflight_failure("not 5GNR.*not reported")
 
     def test_ignores_disconnected_old_bearer(self):
         path = "/org/freedesktop/ModemManager1/Bearer/9"

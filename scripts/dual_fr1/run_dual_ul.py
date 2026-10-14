@@ -38,6 +38,19 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def field_values(info, name):
+    """Read mmcli -K array .value[n] entries, or a scalar/comma-separated value."""
+    indexed = []
+    pattern = re.compile(re.escape(name) + r"\.value\[(\d+)\]")
+    for key, value in info.items():
+        match = pattern.fullmatch(key)
+        if match:
+            indexed.append((int(match[1]), value))
+    values = [value for _, value in sorted(indexed)] if indexed else [info.get(name, "")]
+    return {token.strip().lower() for value in values for token in value.split(",")
+            if token.strip() not in ("", "--")}
+
+
 def discover_roles():
     paths = sorted(set(re.findall(r"/org/freedesktop/ModemManager1/Modem/\d+", read("mmcli", "-L"))))
     modems = [(path, kv("mmcli", "-m", path, "-K")) for path in paths]
@@ -48,7 +61,9 @@ def discover_roles():
         require(len(matches) == 1, f"{tag}: IMEI {imei} must match exactly one current modem")
         modem, info = matches[0]
         require(info.get("modem.generic.state") == "connected", f"{tag}: modem is not connected; complete its PDU/path sequence first")
-        require("5gnr" in info.get("modem.generic.access-technologies", ""), f"{tag}: current access technology is not 5GNR")
+        technologies = field_values(info, "modem.generic.access-technologies")
+        require("5gnr" in technologies,
+                f"{tag}: current access technology is not 5GNR; reported={sorted(technologies) or 'not reported'}")
         require(info.get("modem.3gpp.operator-code") == "00101", f"{tag}: wrong registered PLMN")
         sim = info.get("modem.generic.sim", "")
         require(re.fullmatch(r"/org/freedesktop/ModemManager1/SIM/\d+", sim), f"{tag}: no active SIM path")

@@ -26,11 +26,12 @@ infrastructure during modem recovery; steps 1–5 cover a stopped testbed.
 After a modem power cycle, repeat the affected role's complete laptop sequence
 ([UE1](dual_ue_laptop_quick_commands.md#ue1-start) / [UE2](dual_ue_laptop_quick_commands.md#ue2-start)) before traffic. The operator reported
 lock query `0`; its lock must be restored and the actual serving cell verified.
-The latest laptop readback has UE1 `10.45.0.3/29` on `wwan0` and its table-151
-source route/rules intact; add its destination rules without rebuilding that
-path. UE2 is currently not connected, with only old `10.46.0.2` source rules
-listed. Its earlier bearer 5 / `10.46.0.3/29` is historical. Keep the Spark `.1`
-endpoints and update laptop bindings from fresh verified bearer metadata.
+The latest laptop modem readback has UE1 modem 9 and UE2 modem 10, both
+connected / 5GNR / PLMN 00101 / home. The launcher's access-technology array
+parsing has been corrected; update the laptop copy before rerunning preflight.
+UE1's earlier `10.45.0.3/29` / `wwan0` and UE2's earlier bearer 5 /
+`10.46.0.3/29` are historical. Keep the Spark `.1` endpoints and discover both
+current laptop bearer allocations and host routes with the updated launcher.
 The explicit table-151/table-152 inspection, complete per-role host IPv4 reset
 without old-session parameters, guarded rebuilding and both private-path checks are in
 [UE1 recovery](dual_ue_laptop_quick_commands.md#ue1-clean-old-path) and
