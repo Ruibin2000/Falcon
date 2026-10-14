@@ -1,0 +1,1522 @@
+{
+  "recorded_at": "2026-10-13T22:33:46.574511-04:00",
+  "status": "Concurrent TCP UL functionality and simultaneous two-DU UE KPM observed; full Plan 3 acceptance pending",
+  "source": "Spark raw KPM/RIC logs; selected CU/PUSCH observations; operator-provided laptop transcript and simultaneous clock readbacks",
+  "clock": {
+    "estimated_spark_minus_laptop_seconds": 199.272821,
+    "precision": "Approximate manually simultaneous readbacks; not a calibrated clock measurement",
+    "corrected_laptop_start": "2026-10-13T22:17:25.532481-04:00",
+    "corrected_laptop_end": "2026-10-13T22:18:27.453786-04:00"
+  },
+  "application": {
+    "source_directory": "/tmp/falcon-dual-ul-iakb3ttb",
+    "source": "Operator transcript, selected fields normalized",
+    "status": "completed",
+    "links": [
+      {
+        "ue": 1,
+        "source": "10.45.0.6",
+        "source_tcp_port": 57395,
+        "server": "10.45.0.1",
+        "server_tcp_port": 5201,
+        "sender": {
+          "seconds": 60.0,
+          "transfer_mib": 102,
+          "mean_mbps": 14.3,
+          "retransmissions": 0
+        },
+        "receiver": {
+          "seconds": 61.02,
+          "transfer_mib": 101,
+          "mean_mbps": 13.8
+        },
+        "server_receiver_summary_agrees": true,
+        "iperf_done": true,
+        "exit_code": 0
+      },
+      {
+        "ue": 2,
+        "source": "10.46.0.5",
+        "source_tcp_port": 49791,
+        "server": "10.46.0.1",
+        "server_tcp_port": 5202,
+        "sender": {
+          "seconds": 60.0,
+          "transfer_mib": 127,
+          "mean_mbps": 17.7,
+          "retransmissions": 0
+        },
+        "receiver": {
+          "seconds": 60.25,
+          "transfer_mib": 124,
+          "mean_mbps": 17.3
+        },
+        "server_receiver_summary_agrees": true,
+        "iperf_done": true,
+        "exit_code": 0
+      }
+    ],
+    "sum_of_reported_receiver_mean_mbps": 31.1
+  },
+  "runs": [
+    {
+      "source_directory": "/tmp/falcon-dual-kpm.X95e8zHm",
+      "start": "2026-10-13T22:14:38,287448749-04:00",
+      "end": "2026-10-13T22:16:44,716153249-04:00",
+      "lifecycle": {
+        "subscriptions": 2,
+        "deletion_responses": 2,
+        "success_marker": true,
+        "normal_stop": true,
+        "pipeline_exit": 0
+      },
+      "kpm_sha256": "d7ab59df27870698d8d56991bd5b8e9925965bdcdf8d099716cfe13343578d35",
+      "links": [
+        {
+          "du_id": 1,
+          "f1ap_ue_id": 11,
+          "callbacks": 123,
+          "ul_positive_rows": 57,
+          "complete_five_metric_ul_positive_rows": 57,
+          "missing_metric_rows": {
+            "DRB.RlcSduDelayDl": 66,
+            "DRB.UEThpDl": 0,
+            "DRB.UEThpUl": 0,
+            "RRU.PrbTotDl": 0,
+            "RRU.PrbTotUl": 0
+          },
+          "unreliable_rows": 0,
+          "ul_active_start": "2026-10-13T22:14:42.293020-04:00",
+          "ul_active_end": "2026-10-13T22:15:38.293303-04:00",
+          "ul_mbps_active_samples": {
+            "count": 57,
+            "min": 0.002,
+            "mean": 17.57463157894737,
+            "median": 18.191,
+            "p95": 22.150399999999998,
+            "max": 23.779
+          },
+          "ul_prb_percent_active_samples": {
+            "count": 57,
+            "min": 0.0,
+            "mean": 84.49122807017544,
+            "median": 86.0,
+            "p95": 88.0,
+            "max": 88.0
+          },
+          "rlc_dl_delay_ms_active_samples": {
+            "count": 57,
+            "min": 1.1400000000000001,
+            "mean": 1.3531578947368421,
+            "median": 1.33,
+            "p95": 1.452,
+            "max": 1.9899999999999998
+          },
+          "report_age_us": {
+            "count": 123,
+            "min": 376,
+            "mean": 578.8211382113822,
+            "median": 576,
+            "p95": 730.6999999999999,
+            "max": 1054
+          },
+          "callback_gap_seconds": {
+            "count": 122,
+            "min": 0.209501,
+            "mean": 0.9935264180327869,
+            "median": 0.9999955,
+            "p95": 1.00026685,
+            "max": 1.000432
+          },
+          "gaps_over_1_5_seconds": 0,
+          "relative_profile_comparison": {
+            "method": "Pair first positive KPM report and first server interval, without shifting or fitting",
+            "samples": 57,
+            "pearson_r": 0.13180242955087612
+          }
+        },
+        {
+          "du_id": 2,
+          "f1ap_ue_id": 7,
+          "callbacks": 123,
+          "ul_positive_rows": 56,
+          "complete_five_metric_ul_positive_rows": 56,
+          "missing_metric_rows": {
+            "DRB.RlcSduDelayDl": 67,
+            "DRB.UEThpDl": 0,
+            "DRB.UEThpUl": 0,
+            "RRU.PrbTotDl": 0,
+            "RRU.PrbTotUl": 0
+          },
+          "unreliable_rows": 0,
+          "ul_active_start": "2026-10-13T22:14:41.291446-04:00",
+          "ul_active_end": "2026-10-13T22:15:36.291764-04:00",
+          "ul_mbps_active_samples": {
+            "count": 56,
+            "min": 7.151,
+            "mean": 16.589339285714285,
+            "median": 17.0195,
+            "p95": 19.59075,
+            "max": 20.15
+          },
+          "ul_prb_percent_active_samples": {
+            "count": 56,
+            "min": 84.0,
+            "mean": 85.89285714285714,
+            "median": 86.0,
+            "p95": 86.0,
+            "max": 86.0
+          },
+          "rlc_dl_delay_ms_active_samples": {
+            "count": 56,
+            "min": 1.33,
+            "mean": 1.4335714285714285,
+            "median": 1.4300000000000002,
+            "p95": 1.49,
+            "max": 1.54
+          },
+          "report_age_us": {
+            "count": 123,
+            "min": 398,
+            "mean": 649.5853658536586,
+            "median": 639,
+            "p95": 958.3999999999997,
+            "max": 1148
+          },
+          "callback_gap_seconds": {
+            "count": 122,
+            "min": 0.002197,
+            "mean": 0.9918269262295082,
+            "median": 1.0000025,
+            "p95": 1.00047825,
+            "max": 1.00058
+          },
+          "gaps_over_1_5_seconds": 0,
+          "relative_profile_comparison": {
+            "method": "Pair first positive KPM report and first server interval, without shifting or fitting",
+            "samples": 56,
+            "pearson_r": -0.03287692412359174
+          }
+        }
+      ],
+      "simultaneous_complete_ul_pairs": {
+        "count": 55,
+        "matching_tolerance_us": 50000,
+        "first": "2026-10-13T22:14:42.291949-04:00",
+        "last": "2026-10-13T22:15:36.293281-04:00"
+      }
+    },
+    {
+      "source_directory": "/tmp/falcon-dual-kpm.0B8F17Sp",
+      "start": "2026-10-13T22:17:11,334359806-04:00",
+      "end": "2026-10-13T22:19:17,765032939-04:00",
+      "lifecycle": {
+        "subscriptions": 2,
+        "deletion_responses": 2,
+        "success_marker": true,
+        "normal_stop": true,
+        "pipeline_exit": 0
+      },
+      "kpm_sha256": "74c98b9b672bef8d012e43bedf2776f95350d3ef6062e26f728b35bde9a109da",
+      "links": [
+        {
+          "du_id": 1,
+          "f1ap_ue_id": 11,
+          "callbacks": 123,
+          "ul_positive_rows": 63,
+          "complete_five_metric_ul_positive_rows": 63,
+          "missing_metric_rows": {
+            "DRB.RlcSduDelayDl": 60,
+            "DRB.UEThpDl": 0,
+            "DRB.UEThpUl": 0,
+            "RRU.PrbTotDl": 0,
+            "RRU.PrbTotUl": 0
+          },
+          "unreliable_rows": 0,
+          "ul_active_start": "2026-10-13T22:17:26.339875-04:00",
+          "ul_active_end": "2026-10-13T22:18:28.339857-04:00",
+          "ul_mbps_active_samples": {
+            "count": 63,
+            "min": 0.425,
+            "mean": 14.349047619047619,
+            "median": 14.249,
+            "p95": 24.6668,
+            "max": 24.885
+          },
+          "ul_prb_percent_active_samples": {
+            "count": 63,
+            "min": 0.0,
+            "mean": 85.33333333333333,
+            "median": 88.0,
+            "p95": 88.0,
+            "max": 88.0
+          },
+          "rlc_dl_delay_ms_active_samples": {
+            "count": 63,
+            "min": 1.1,
+            "mean": 1.3295238095238096,
+            "median": 1.34,
+            "p95": 1.458,
+            "max": 1.59
+          },
+          "report_age_us": {
+            "count": 123,
+            "min": 282,
+            "mean": 531.7073170731708,
+            "median": 517,
+            "p95": 731.1999999999998,
+            "max": 1070
+          },
+          "callback_gap_seconds": {
+            "count": 122,
+            "min": 0.209345,
+            "mean": 0.9935272295081967,
+            "median": 1.0000045,
+            "p95": 1.0003212499999998,
+            "max": 1.00063
+          },
+          "gaps_over_1_5_seconds": 0,
+          "complete_ul_rows_in_clock_corrected_laptop_window": 62,
+          "relative_profile_comparison": {
+            "method": "Pair first positive KPM report and first server interval, without shifting or fitting",
+            "samples": 60,
+            "pearson_r": 0.963220649347344
+          }
+        },
+        {
+          "du_id": 2,
+          "f1ap_ue_id": 7,
+          "callbacks": 123,
+          "ul_positive_rows": 61,
+          "complete_five_metric_ul_positive_rows": 61,
+          "missing_metric_rows": {
+            "DRB.RlcSduDelayDl": 62,
+            "DRB.UEThpDl": 0,
+            "DRB.UEThpUl": 0,
+            "RRU.PrbTotDl": 0,
+            "RRU.PrbTotUl": 0
+          },
+          "unreliable_rows": 0,
+          "ul_active_start": "2026-10-13T22:17:26.339382-04:00",
+          "ul_active_end": "2026-10-13T22:18:26.339470-04:00",
+          "ul_mbps_active_samples": {
+            "count": 61,
+            "min": 9.84,
+            "mean": 18.06216393442623,
+            "median": 18.152,
+            "p95": 19.429,
+            "max": 20.064
+          },
+          "ul_prb_percent_active_samples": {
+            "count": 61,
+            "min": 0.0,
+            "mean": 84.1311475409836,
+            "median": 86.0,
+            "p95": 86.0,
+            "max": 86.0
+          },
+          "rlc_dl_delay_ms_active_samples": {
+            "count": 61,
+            "min": 1.3199999999999998,
+            "mean": 1.3932786885245902,
+            "median": 1.3900000000000001,
+            "p95": 1.45,
+            "max": 1.48
+          },
+          "report_age_us": {
+            "count": 123,
+            "min": 425,
+            "mean": 667.4878048780488,
+            "median": 647,
+            "p95": 900.6999999999999,
+            "max": 1086
+          },
+          "callback_gap_seconds": {
+            "count": 122,
+            "min": 0.001475,
+            "mean": 0.9918194262295081,
+            "median": 1.0000125,
+            "p95": 1.00038835,
+            "max": 1.000722
+          },
+          "gaps_over_1_5_seconds": 0,
+          "complete_ul_rows_in_clock_corrected_laptop_window": 61,
+          "relative_profile_comparison": {
+            "method": "Pair first positive KPM report and first server interval, without shifting or fitting",
+            "samples": 60,
+            "pearson_r": 0.5546517665441417
+          }
+        }
+      ],
+      "simultaneous_complete_ul_pairs": {
+        "count": 61,
+        "matching_tolerance_us": 50000,
+        "first": "2026-10-13T22:17:26.339382-04:00",
+        "last": "2026-10-13T22:18:26.340063-04:00"
+      }
+    }
+  ],
+  "phy_observations": [
+    {
+      "du_id": 1,
+      "rnti": "0x460c",
+      "source_file": "/tmp/falcon-du1-3660.0BgECAjI/du.log",
+      "window_utc": [
+        "2026-10-14T02:17:26+00:00",
+        "2026-10-14T02:18:29+00:00"
+      ],
+      "end_exclusive": true,
+      "pusch_attempts": 36831,
+      "crc": {
+        "OK": 31259,
+        "KO": 5572
+      },
+      "crc_failed_attempt_percent": 15.128560180282914,
+      "modulation_counts": {
+        "256QAM": 21629,
+        "64QAM": 9760,
+        "16QAM": 4279,
+        "QPSK": 1163
+      },
+      "rv_counts": {
+        "0": 36831
+      },
+      "sinr_db": {
+        "count": 36831,
+        "min": -15.0,
+        "mean": 22.593918166761696,
+        "median": 22.4,
+        "p95": 33.2,
+        "max": 36.0
+      },
+      "tbs_bytes": {
+        "count": 36831,
+        "min": 96,
+        "mean": 3984.838369851484,
+        "median": 3777,
+        "p95": 6273.0,
+        "max": 6273
+      },
+      "per_second": [
+        {
+          "utc": "2026-10-14T02:17:26+00:00",
+          "attempts": 598,
+          "crc_ok": 487,
+          "crc_ko": 111,
+          "crc_failed_attempt_percent": 18.561872909698998,
+          "sinr_mean_db": 23.25083612040134
+        },
+        {
+          "utc": "2026-10-14T02:17:27+00:00",
+          "attempts": 600,
+          "crc_ok": 564,
+          "crc_ko": 36,
+          "crc_failed_attempt_percent": 6.0,
+          "sinr_mean_db": 24.224333333333334
+        },
+        {
+          "utc": "2026-10-14T02:17:28+00:00",
+          "attempts": 600,
+          "crc_ok": 580,
+          "crc_ko": 20,
+          "crc_failed_attempt_percent": 3.3333333333333335,
+          "sinr_mean_db": 25.820166666666665
+        },
+        {
+          "utc": "2026-10-14T02:17:29+00:00",
+          "attempts": 600,
+          "crc_ok": 555,
+          "crc_ko": 45,
+          "crc_failed_attempt_percent": 7.5,
+          "sinr_mean_db": 25.502666666666666
+        },
+        {
+          "utc": "2026-10-14T02:17:30+00:00",
+          "attempts": 600,
+          "crc_ok": 575,
+          "crc_ko": 25,
+          "crc_failed_attempt_percent": 4.166666666666667,
+          "sinr_mean_db": 25.433666666666667
+        },
+        {
+          "utc": "2026-10-14T02:17:31+00:00",
+          "attempts": 600,
+          "crc_ok": 599,
+          "crc_ko": 1,
+          "crc_failed_attempt_percent": 0.16666666666666666,
+          "sinr_mean_db": 26.159333333333333
+        },
+        {
+          "utc": "2026-10-14T02:17:32+00:00",
+          "attempts": 600,
+          "crc_ok": 597,
+          "crc_ko": 3,
+          "crc_failed_attempt_percent": 0.5,
+          "sinr_mean_db": 26.1495
+        },
+        {
+          "utc": "2026-10-14T02:17:33+00:00",
+          "attempts": 600,
+          "crc_ok": 598,
+          "crc_ko": 2,
+          "crc_failed_attempt_percent": 0.3333333333333333,
+          "sinr_mean_db": 26.196666666666665
+        },
+        {
+          "utc": "2026-10-14T02:17:34+00:00",
+          "attempts": 600,
+          "crc_ok": 585,
+          "crc_ko": 15,
+          "crc_failed_attempt_percent": 2.5,
+          "sinr_mean_db": 26.032166666666665
+        },
+        {
+          "utc": "2026-10-14T02:17:35+00:00",
+          "attempts": 600,
+          "crc_ok": 567,
+          "crc_ko": 33,
+          "crc_failed_attempt_percent": 5.5,
+          "sinr_mean_db": 23.875
+        },
+        {
+          "utc": "2026-10-14T02:17:36+00:00",
+          "attempts": 600,
+          "crc_ok": 579,
+          "crc_ko": 21,
+          "crc_failed_attempt_percent": 3.5,
+          "sinr_mean_db": 23.43016666666667
+        },
+        {
+          "utc": "2026-10-14T02:17:37+00:00",
+          "attempts": 600,
+          "crc_ok": 483,
+          "crc_ko": 117,
+          "crc_failed_attempt_percent": 19.5,
+          "sinr_mean_db": 21.041333333333334
+        },
+        {
+          "utc": "2026-10-14T02:17:38+00:00",
+          "attempts": 600,
+          "crc_ok": 599,
+          "crc_ko": 1,
+          "crc_failed_attempt_percent": 0.16666666666666666,
+          "sinr_mean_db": 22.366666666666667
+        },
+        {
+          "utc": "2026-10-14T02:17:39+00:00",
+          "attempts": 600,
+          "crc_ok": 585,
+          "crc_ko": 15,
+          "crc_failed_attempt_percent": 2.5,
+          "sinr_mean_db": 21.854166666666668
+        },
+        {
+          "utc": "2026-10-14T02:17:40+00:00",
+          "attempts": 600,
+          "crc_ok": 552,
+          "crc_ko": 48,
+          "crc_failed_attempt_percent": 8.0,
+          "sinr_mean_db": 22.974666666666668
+        },
+        {
+          "utc": "2026-10-14T02:17:41+00:00",
+          "attempts": 600,
+          "crc_ok": 492,
+          "crc_ko": 108,
+          "crc_failed_attempt_percent": 18.0,
+          "sinr_mean_db": 21.731833333333334
+        },
+        {
+          "utc": "2026-10-14T02:17:42+00:00",
+          "attempts": 600,
+          "crc_ok": 489,
+          "crc_ko": 111,
+          "crc_failed_attempt_percent": 18.5,
+          "sinr_mean_db": 21.332
+        },
+        {
+          "utc": "2026-10-14T02:17:43+00:00",
+          "attempts": 600,
+          "crc_ok": 462,
+          "crc_ko": 138,
+          "crc_failed_attempt_percent": 23.0,
+          "sinr_mean_db": 21.602
+        },
+        {
+          "utc": "2026-10-14T02:17:44+00:00",
+          "attempts": 600,
+          "crc_ok": 477,
+          "crc_ko": 123,
+          "crc_failed_attempt_percent": 20.5,
+          "sinr_mean_db": 20.797333333333334
+        },
+        {
+          "utc": "2026-10-14T02:17:45+00:00",
+          "attempts": 600,
+          "crc_ok": 492,
+          "crc_ko": 108,
+          "crc_failed_attempt_percent": 18.0,
+          "sinr_mean_db": 20.9865
+        },
+        {
+          "utc": "2026-10-14T02:17:46+00:00",
+          "attempts": 600,
+          "crc_ok": 458,
+          "crc_ko": 142,
+          "crc_failed_attempt_percent": 23.666666666666668,
+          "sinr_mean_db": 21.889666666666667
+        },
+        {
+          "utc": "2026-10-14T02:17:47+00:00",
+          "attempts": 600,
+          "crc_ok": 448,
+          "crc_ko": 152,
+          "crc_failed_attempt_percent": 25.333333333333332,
+          "sinr_mean_db": 21.824
+        },
+        {
+          "utc": "2026-10-14T02:17:48+00:00",
+          "attempts": 600,
+          "crc_ok": 468,
+          "crc_ko": 132,
+          "crc_failed_attempt_percent": 22.0,
+          "sinr_mean_db": 21.233333333333334
+        },
+        {
+          "utc": "2026-10-14T02:17:49+00:00",
+          "attempts": 600,
+          "crc_ok": 460,
+          "crc_ko": 140,
+          "crc_failed_attempt_percent": 23.333333333333332,
+          "sinr_mean_db": 21.7955
+        },
+        {
+          "utc": "2026-10-14T02:17:50+00:00",
+          "attempts": 600,
+          "crc_ok": 454,
+          "crc_ko": 146,
+          "crc_failed_attempt_percent": 24.333333333333332,
+          "sinr_mean_db": 21.909
+        },
+        {
+          "utc": "2026-10-14T02:17:51+00:00",
+          "attempts": 600,
+          "crc_ok": 456,
+          "crc_ko": 144,
+          "crc_failed_attempt_percent": 24.0,
+          "sinr_mean_db": 22.193666666666665
+        },
+        {
+          "utc": "2026-10-14T02:17:52+00:00",
+          "attempts": 600,
+          "crc_ok": 490,
+          "crc_ko": 110,
+          "crc_failed_attempt_percent": 18.333333333333332,
+          "sinr_mean_db": 21.756333333333334
+        },
+        {
+          "utc": "2026-10-14T02:17:53+00:00",
+          "attempts": 600,
+          "crc_ok": 461,
+          "crc_ko": 139,
+          "crc_failed_attempt_percent": 23.166666666666668,
+          "sinr_mean_db": 22.049833333333332
+        },
+        {
+          "utc": "2026-10-14T02:17:54+00:00",
+          "attempts": 600,
+          "crc_ok": 461,
+          "crc_ko": 139,
+          "crc_failed_attempt_percent": 23.166666666666668,
+          "sinr_mean_db": 22.316666666666666
+        },
+        {
+          "utc": "2026-10-14T02:17:55+00:00",
+          "attempts": 600,
+          "crc_ok": 464,
+          "crc_ko": 136,
+          "crc_failed_attempt_percent": 22.666666666666668,
+          "sinr_mean_db": 22.889333333333333
+        },
+        {
+          "utc": "2026-10-14T02:17:56+00:00",
+          "attempts": 600,
+          "crc_ok": 481,
+          "crc_ko": 119,
+          "crc_failed_attempt_percent": 19.833333333333332,
+          "sinr_mean_db": 22.927
+        },
+        {
+          "utc": "2026-10-14T02:17:57+00:00",
+          "attempts": 600,
+          "crc_ok": 479,
+          "crc_ko": 121,
+          "crc_failed_attempt_percent": 20.166666666666668,
+          "sinr_mean_db": 23.0185
+        },
+        {
+          "utc": "2026-10-14T02:17:58+00:00",
+          "attempts": 600,
+          "crc_ok": 473,
+          "crc_ko": 127,
+          "crc_failed_attempt_percent": 21.166666666666668,
+          "sinr_mean_db": 23.50883333333333
+        },
+        {
+          "utc": "2026-10-14T02:17:59+00:00",
+          "attempts": 600,
+          "crc_ok": 505,
+          "crc_ko": 95,
+          "crc_failed_attempt_percent": 15.833333333333334,
+          "sinr_mean_db": 22.769833333333334
+        },
+        {
+          "utc": "2026-10-14T02:18:00+00:00",
+          "attempts": 600,
+          "crc_ok": 472,
+          "crc_ko": 128,
+          "crc_failed_attempt_percent": 21.333333333333332,
+          "sinr_mean_db": 23.2295
+        },
+        {
+          "utc": "2026-10-14T02:18:01+00:00",
+          "attempts": 600,
+          "crc_ok": 477,
+          "crc_ko": 123,
+          "crc_failed_attempt_percent": 20.5,
+          "sinr_mean_db": 23.885666666666665
+        },
+        {
+          "utc": "2026-10-14T02:18:02+00:00",
+          "attempts": 600,
+          "crc_ok": 504,
+          "crc_ko": 96,
+          "crc_failed_attempt_percent": 16.0,
+          "sinr_mean_db": 22.754
+        },
+        {
+          "utc": "2026-10-14T02:18:03+00:00",
+          "attempts": 600,
+          "crc_ok": 490,
+          "crc_ko": 110,
+          "crc_failed_attempt_percent": 18.333333333333332,
+          "sinr_mean_db": 23.8355
+        },
+        {
+          "utc": "2026-10-14T02:18:04+00:00",
+          "attempts": 600,
+          "crc_ok": 489,
+          "crc_ko": 111,
+          "crc_failed_attempt_percent": 18.5,
+          "sinr_mean_db": 23.772
+        },
+        {
+          "utc": "2026-10-14T02:18:05+00:00",
+          "attempts": 600,
+          "crc_ok": 486,
+          "crc_ko": 114,
+          "crc_failed_attempt_percent": 19.0,
+          "sinr_mean_db": 23.886666666666667
+        },
+        {
+          "utc": "2026-10-14T02:18:06+00:00",
+          "attempts": 600,
+          "crc_ok": 497,
+          "crc_ko": 103,
+          "crc_failed_attempt_percent": 17.166666666666668,
+          "sinr_mean_db": 24.199166666666667
+        },
+        {
+          "utc": "2026-10-14T02:18:07+00:00",
+          "attempts": 600,
+          "crc_ok": 507,
+          "crc_ko": 93,
+          "crc_failed_attempt_percent": 15.5,
+          "sinr_mean_db": 23.949333333333332
+        },
+        {
+          "utc": "2026-10-14T02:18:08+00:00",
+          "attempts": 600,
+          "crc_ok": 497,
+          "crc_ko": 103,
+          "crc_failed_attempt_percent": 17.166666666666668,
+          "sinr_mean_db": 24.340666666666667
+        },
+        {
+          "utc": "2026-10-14T02:18:09+00:00",
+          "attempts": 600,
+          "crc_ok": 496,
+          "crc_ko": 104,
+          "crc_failed_attempt_percent": 17.333333333333332,
+          "sinr_mean_db": 24.409333333333333
+        },
+        {
+          "utc": "2026-10-14T02:18:10+00:00",
+          "attempts": 600,
+          "crc_ok": 520,
+          "crc_ko": 80,
+          "crc_failed_attempt_percent": 13.333333333333334,
+          "sinr_mean_db": 24.568833333333334
+        },
+        {
+          "utc": "2026-10-14T02:18:11+00:00",
+          "attempts": 600,
+          "crc_ok": 510,
+          "crc_ko": 90,
+          "crc_failed_attempt_percent": 15.0,
+          "sinr_mean_db": 24.4865
+        },
+        {
+          "utc": "2026-10-14T02:18:12+00:00",
+          "attempts": 600,
+          "crc_ok": 514,
+          "crc_ko": 86,
+          "crc_failed_attempt_percent": 14.333333333333334,
+          "sinr_mean_db": 24.3415
+        },
+        {
+          "utc": "2026-10-14T02:18:13+00:00",
+          "attempts": 600,
+          "crc_ok": 539,
+          "crc_ko": 61,
+          "crc_failed_attempt_percent": 10.166666666666666,
+          "sinr_mean_db": 24.453666666666667
+        },
+        {
+          "utc": "2026-10-14T02:18:14+00:00",
+          "attempts": 600,
+          "crc_ok": 494,
+          "crc_ko": 106,
+          "crc_failed_attempt_percent": 17.666666666666668,
+          "sinr_mean_db": 24.444333333333333
+        },
+        {
+          "utc": "2026-10-14T02:18:15+00:00",
+          "attempts": 600,
+          "crc_ok": 489,
+          "crc_ko": 111,
+          "crc_failed_attempt_percent": 18.5,
+          "sinr_mean_db": 24.0925
+        },
+        {
+          "utc": "2026-10-14T02:18:16+00:00",
+          "attempts": 600,
+          "crc_ok": 574,
+          "crc_ko": 26,
+          "crc_failed_attempt_percent": 4.333333333333333,
+          "sinr_mean_db": 24.18016666666667
+        },
+        {
+          "utc": "2026-10-14T02:18:17+00:00",
+          "attempts": 600,
+          "crc_ok": 564,
+          "crc_ko": 36,
+          "crc_failed_attempt_percent": 6.0,
+          "sinr_mean_db": 21.415
+        },
+        {
+          "utc": "2026-10-14T02:18:18+00:00",
+          "attempts": 600,
+          "crc_ok": 544,
+          "crc_ko": 56,
+          "crc_failed_attempt_percent": 9.333333333333334,
+          "sinr_mean_db": 22.316333333333333
+        },
+        {
+          "utc": "2026-10-14T02:18:19+00:00",
+          "attempts": 600,
+          "crc_ok": 568,
+          "crc_ko": 32,
+          "crc_failed_attempt_percent": 5.333333333333333,
+          "sinr_mean_db": 20.602833333333333
+        },
+        {
+          "utc": "2026-10-14T02:18:20+00:00",
+          "attempts": 600,
+          "crc_ok": 562,
+          "crc_ko": 38,
+          "crc_failed_attempt_percent": 6.333333333333333,
+          "sinr_mean_db": 21.1665
+        },
+        {
+          "utc": "2026-10-14T02:18:21+00:00",
+          "attempts": 600,
+          "crc_ok": 585,
+          "crc_ko": 15,
+          "crc_failed_attempt_percent": 2.5,
+          "sinr_mean_db": 16.300833333333333
+        },
+        {
+          "utc": "2026-10-14T02:18:22+00:00",
+          "attempts": 600,
+          "crc_ok": 595,
+          "crc_ko": 5,
+          "crc_failed_attempt_percent": 0.8333333333333334,
+          "sinr_mean_db": 18.143333333333334
+        },
+        {
+          "utc": "2026-10-14T02:18:23+00:00",
+          "attempts": 600,
+          "crc_ok": 424,
+          "crc_ko": 176,
+          "crc_failed_attempt_percent": 29.333333333333332,
+          "sinr_mean_db": 20.877666666666666
+        },
+        {
+          "utc": "2026-10-14T02:18:24+00:00",
+          "attempts": 600,
+          "crc_ok": 441,
+          "crc_ko": 159,
+          "crc_failed_attempt_percent": 26.5,
+          "sinr_mean_db": 15.340833333333332
+        },
+        {
+          "utc": "2026-10-14T02:18:25+00:00",
+          "attempts": 600,
+          "crc_ok": 396,
+          "crc_ko": 204,
+          "crc_failed_attempt_percent": 34.0,
+          "sinr_mean_db": 15.289166666666667
+        },
+        {
+          "utc": "2026-10-14T02:18:26+00:00",
+          "attempts": 600,
+          "crc_ok": 388,
+          "crc_ko": 212,
+          "crc_failed_attempt_percent": 35.333333333333336,
+          "sinr_mean_db": 16.612333333333332
+        },
+        {
+          "utc": "2026-10-14T02:18:27+00:00",
+          "attempts": 232,
+          "crc_ok": 161,
+          "crc_ko": 71,
+          "crc_failed_attempt_percent": 30.603448275862068,
+          "sinr_mean_db": 18.7125
+        },
+        {
+          "utc": "2026-10-14T02:18:28+00:00",
+          "attempts": 1,
+          "crc_ok": 1,
+          "crc_ko": 0,
+          "crc_failed_attempt_percent": 0.0,
+          "sinr_mean_db": 19.8
+        }
+      ]
+    },
+    {
+      "du_id": 2,
+      "rnti": "0x4608",
+      "source_file": "/tmp/falcon-du2-3600.K2QXgUiY/du.log",
+      "window_utc": [
+        "2026-10-14T02:17:26+00:00",
+        "2026-10-14T02:18:29+00:00"
+      ],
+      "end_exclusive": true,
+      "pusch_attempts": 36078,
+      "crc": {
+        "OK": 33442,
+        "KO": 2636
+      },
+      "crc_failed_attempt_percent": 7.306391706857364,
+      "modulation_counts": {
+        "64QAM": 13342,
+        "256QAM": 22672,
+        "16QAM": 64
+      },
+      "rv_counts": {
+        "0": 36078
+      },
+      "sinr_db": {
+        "count": 36078,
+        "min": 15.7,
+        "mean": 23.684877210488388,
+        "median": 23.8,
+        "p95": 26.4,
+        "max": 29.7
+      },
+      "tbs_bytes": {
+        "count": 36078,
+        "min": 512,
+        "mean": 4191.30733410943,
+        "median": 4227.0,
+        "p95": 6021.0,
+        "max": 6273
+      },
+      "per_second": [
+        {
+          "utc": "2026-10-14T02:17:26+00:00",
+          "attempts": 600,
+          "crc_ok": 557,
+          "crc_ko": 43,
+          "crc_failed_attempt_percent": 7.166666666666667,
+          "sinr_mean_db": 21.908166666666666
+        },
+        {
+          "utc": "2026-10-14T02:17:27+00:00",
+          "attempts": 600,
+          "crc_ok": 570,
+          "crc_ko": 30,
+          "crc_failed_attempt_percent": 5.0,
+          "sinr_mean_db": 22.616666666666667
+        },
+        {
+          "utc": "2026-10-14T02:17:28+00:00",
+          "attempts": 600,
+          "crc_ok": 556,
+          "crc_ko": 44,
+          "crc_failed_attempt_percent": 7.333333333333333,
+          "sinr_mean_db": 23.896166666666666
+        },
+        {
+          "utc": "2026-10-14T02:17:29+00:00",
+          "attempts": 600,
+          "crc_ok": 534,
+          "crc_ko": 66,
+          "crc_failed_attempt_percent": 11.0,
+          "sinr_mean_db": 23.624333333333333
+        },
+        {
+          "utc": "2026-10-14T02:17:30+00:00",
+          "attempts": 600,
+          "crc_ok": 558,
+          "crc_ko": 42,
+          "crc_failed_attempt_percent": 7.0,
+          "sinr_mean_db": 23.97
+        },
+        {
+          "utc": "2026-10-14T02:17:31+00:00",
+          "attempts": 600,
+          "crc_ok": 541,
+          "crc_ko": 59,
+          "crc_failed_attempt_percent": 9.833333333333334,
+          "sinr_mean_db": 24.135
+        },
+        {
+          "utc": "2026-10-14T02:17:32+00:00",
+          "attempts": 600,
+          "crc_ok": 543,
+          "crc_ko": 57,
+          "crc_failed_attempt_percent": 9.5,
+          "sinr_mean_db": 24.024833333333333
+        },
+        {
+          "utc": "2026-10-14T02:17:33+00:00",
+          "attempts": 600,
+          "crc_ok": 558,
+          "crc_ko": 42,
+          "crc_failed_attempt_percent": 7.0,
+          "sinr_mean_db": 23.825
+        },
+        {
+          "utc": "2026-10-14T02:17:34+00:00",
+          "attempts": 600,
+          "crc_ok": 570,
+          "crc_ko": 30,
+          "crc_failed_attempt_percent": 5.0,
+          "sinr_mean_db": 23.718833333333333
+        },
+        {
+          "utc": "2026-10-14T02:17:35+00:00",
+          "attempts": 600,
+          "crc_ok": 540,
+          "crc_ko": 60,
+          "crc_failed_attempt_percent": 10.0,
+          "sinr_mean_db": 23.932333333333332
+        },
+        {
+          "utc": "2026-10-14T02:17:36+00:00",
+          "attempts": 600,
+          "crc_ok": 555,
+          "crc_ko": 45,
+          "crc_failed_attempt_percent": 7.5,
+          "sinr_mean_db": 24.144166666666667
+        },
+        {
+          "utc": "2026-10-14T02:17:37+00:00",
+          "attempts": 600,
+          "crc_ok": 559,
+          "crc_ko": 41,
+          "crc_failed_attempt_percent": 6.833333333333333,
+          "sinr_mean_db": 23.89666666666667
+        },
+        {
+          "utc": "2026-10-14T02:17:38+00:00",
+          "attempts": 600,
+          "crc_ok": 556,
+          "crc_ko": 44,
+          "crc_failed_attempt_percent": 7.333333333333333,
+          "sinr_mean_db": 23.661
+        },
+        {
+          "utc": "2026-10-14T02:17:39+00:00",
+          "attempts": 600,
+          "crc_ok": 538,
+          "crc_ko": 62,
+          "crc_failed_attempt_percent": 10.333333333333334,
+          "sinr_mean_db": 23.908333333333335
+        },
+        {
+          "utc": "2026-10-14T02:17:40+00:00",
+          "attempts": 600,
+          "crc_ok": 559,
+          "crc_ko": 41,
+          "crc_failed_attempt_percent": 6.833333333333333,
+          "sinr_mean_db": 24.326166666666666
+        },
+        {
+          "utc": "2026-10-14T02:17:41+00:00",
+          "attempts": 600,
+          "crc_ok": 552,
+          "crc_ko": 48,
+          "crc_failed_attempt_percent": 8.0,
+          "sinr_mean_db": 23.737666666666666
+        },
+        {
+          "utc": "2026-10-14T02:17:42+00:00",
+          "attempts": 600,
+          "crc_ok": 562,
+          "crc_ko": 38,
+          "crc_failed_attempt_percent": 6.333333333333333,
+          "sinr_mean_db": 23.910833333333333
+        },
+        {
+          "utc": "2026-10-14T02:17:43+00:00",
+          "attempts": 600,
+          "crc_ok": 560,
+          "crc_ko": 40,
+          "crc_failed_attempt_percent": 6.666666666666667,
+          "sinr_mean_db": 24.032166666666665
+        },
+        {
+          "utc": "2026-10-14T02:17:44+00:00",
+          "attempts": 600,
+          "crc_ok": 553,
+          "crc_ko": 47,
+          "crc_failed_attempt_percent": 7.833333333333333,
+          "sinr_mean_db": 23.879166666666666
+        },
+        {
+          "utc": "2026-10-14T02:17:45+00:00",
+          "attempts": 600,
+          "crc_ok": 545,
+          "crc_ko": 55,
+          "crc_failed_attempt_percent": 9.166666666666666,
+          "sinr_mean_db": 23.543
+        },
+        {
+          "utc": "2026-10-14T02:17:46+00:00",
+          "attempts": 600,
+          "crc_ok": 557,
+          "crc_ko": 43,
+          "crc_failed_attempt_percent": 7.166666666666667,
+          "sinr_mean_db": 23.666166666666665
+        },
+        {
+          "utc": "2026-10-14T02:17:47+00:00",
+          "attempts": 600,
+          "crc_ok": 556,
+          "crc_ko": 44,
+          "crc_failed_attempt_percent": 7.333333333333333,
+          "sinr_mean_db": 23.593333333333334
+        },
+        {
+          "utc": "2026-10-14T02:17:48+00:00",
+          "attempts": 600,
+          "crc_ok": 560,
+          "crc_ko": 40,
+          "crc_failed_attempt_percent": 6.666666666666667,
+          "sinr_mean_db": 23.944666666666667
+        },
+        {
+          "utc": "2026-10-14T02:17:49+00:00",
+          "attempts": 600,
+          "crc_ok": 559,
+          "crc_ko": 41,
+          "crc_failed_attempt_percent": 6.833333333333333,
+          "sinr_mean_db": 23.804666666666666
+        },
+        {
+          "utc": "2026-10-14T02:17:50+00:00",
+          "attempts": 600,
+          "crc_ok": 541,
+          "crc_ko": 59,
+          "crc_failed_attempt_percent": 9.833333333333334,
+          "sinr_mean_db": 23.559166666666666
+        },
+        {
+          "utc": "2026-10-14T02:17:51+00:00",
+          "attempts": 600,
+          "crc_ok": 558,
+          "crc_ko": 42,
+          "crc_failed_attempt_percent": 7.0,
+          "sinr_mean_db": 23.513833333333334
+        },
+        {
+          "utc": "2026-10-14T02:17:52+00:00",
+          "attempts": 600,
+          "crc_ok": 549,
+          "crc_ko": 51,
+          "crc_failed_attempt_percent": 8.5,
+          "sinr_mean_db": 23.808666666666667
+        },
+        {
+          "utc": "2026-10-14T02:17:53+00:00",
+          "attempts": 600,
+          "crc_ok": 548,
+          "crc_ko": 52,
+          "crc_failed_attempt_percent": 8.666666666666666,
+          "sinr_mean_db": 23.180333333333333
+        },
+        {
+          "utc": "2026-10-14T02:17:54+00:00",
+          "attempts": 600,
+          "crc_ok": 561,
+          "crc_ko": 39,
+          "crc_failed_attempt_percent": 6.5,
+          "sinr_mean_db": 23.613833333333332
+        },
+        {
+          "utc": "2026-10-14T02:17:55+00:00",
+          "attempts": 600,
+          "crc_ok": 554,
+          "crc_ko": 46,
+          "crc_failed_attempt_percent": 7.666666666666667,
+          "sinr_mean_db": 23.791
+        },
+        {
+          "utc": "2026-10-14T02:17:56+00:00",
+          "attempts": 600,
+          "crc_ok": 545,
+          "crc_ko": 55,
+          "crc_failed_attempt_percent": 9.166666666666666,
+          "sinr_mean_db": 23.437333333333335
+        },
+        {
+          "utc": "2026-10-14T02:17:57+00:00",
+          "attempts": 600,
+          "crc_ok": 546,
+          "crc_ko": 54,
+          "crc_failed_attempt_percent": 9.0,
+          "sinr_mean_db": 23.462
+        },
+        {
+          "utc": "2026-10-14T02:17:58+00:00",
+          "attempts": 600,
+          "crc_ok": 556,
+          "crc_ko": 44,
+          "crc_failed_attempt_percent": 7.333333333333333,
+          "sinr_mean_db": 23.3255
+        },
+        {
+          "utc": "2026-10-14T02:17:59+00:00",
+          "attempts": 600,
+          "crc_ok": 561,
+          "crc_ko": 39,
+          "crc_failed_attempt_percent": 6.5,
+          "sinr_mean_db": 23.355833333333333
+        },
+        {
+          "utc": "2026-10-14T02:18:00+00:00",
+          "attempts": 600,
+          "crc_ok": 572,
+          "crc_ko": 28,
+          "crc_failed_attempt_percent": 4.666666666666667,
+          "sinr_mean_db": 23.669333333333334
+        },
+        {
+          "utc": "2026-10-14T02:18:01+00:00",
+          "attempts": 600,
+          "crc_ok": 556,
+          "crc_ko": 44,
+          "crc_failed_attempt_percent": 7.333333333333333,
+          "sinr_mean_db": 23.225
+        },
+        {
+          "utc": "2026-10-14T02:18:02+00:00",
+          "attempts": 600,
+          "crc_ok": 551,
+          "crc_ko": 49,
+          "crc_failed_attempt_percent": 8.166666666666666,
+          "sinr_mean_db": 23.597
+        },
+        {
+          "utc": "2026-10-14T02:18:03+00:00",
+          "attempts": 600,
+          "crc_ok": 579,
+          "crc_ko": 21,
+          "crc_failed_attempt_percent": 3.5,
+          "sinr_mean_db": 23.4995
+        },
+        {
+          "utc": "2026-10-14T02:18:04+00:00",
+          "attempts": 600,
+          "crc_ok": 539,
+          "crc_ko": 61,
+          "crc_failed_attempt_percent": 10.166666666666666,
+          "sinr_mean_db": 23.112333333333332
+        },
+        {
+          "utc": "2026-10-14T02:18:05+00:00",
+          "attempts": 600,
+          "crc_ok": 578,
+          "crc_ko": 22,
+          "crc_failed_attempt_percent": 3.6666666666666665,
+          "sinr_mean_db": 23.398666666666667
+        },
+        {
+          "utc": "2026-10-14T02:18:06+00:00",
+          "attempts": 600,
+          "crc_ok": 579,
+          "crc_ko": 21,
+          "crc_failed_attempt_percent": 3.5,
+          "sinr_mean_db": 23.556333333333335
+        },
+        {
+          "utc": "2026-10-14T02:18:07+00:00",
+          "attempts": 600,
+          "crc_ok": 566,
+          "crc_ko": 34,
+          "crc_failed_attempt_percent": 5.666666666666667,
+          "sinr_mean_db": 23.605833333333333
+        },
+        {
+          "utc": "2026-10-14T02:18:08+00:00",
+          "attempts": 600,
+          "crc_ok": 563,
+          "crc_ko": 37,
+          "crc_failed_attempt_percent": 6.166666666666667,
+          "sinr_mean_db": 23.644333333333332
+        },
+        {
+          "utc": "2026-10-14T02:18:09+00:00",
+          "attempts": 600,
+          "crc_ok": 550,
+          "crc_ko": 50,
+          "crc_failed_attempt_percent": 8.333333333333334,
+          "sinr_mean_db": 23.437333333333335
+        },
+        {
+          "utc": "2026-10-14T02:18:10+00:00",
+          "attempts": 600,
+          "crc_ok": 568,
+          "crc_ko": 32,
+          "crc_failed_attempt_percent": 5.333333333333333,
+          "sinr_mean_db": 23.2405
+        },
+        {
+          "utc": "2026-10-14T02:18:11+00:00",
+          "attempts": 600,
+          "crc_ok": 564,
+          "crc_ko": 36,
+          "crc_failed_attempt_percent": 6.0,
+          "sinr_mean_db": 23.810666666666666
+        },
+        {
+          "utc": "2026-10-14T02:18:12+00:00",
+          "attempts": 600,
+          "crc_ok": 543,
+          "crc_ko": 57,
+          "crc_failed_attempt_percent": 9.5,
+          "sinr_mean_db": 23.597333333333335
+        },
+        {
+          "utc": "2026-10-14T02:18:13+00:00",
+          "attempts": 600,
+          "crc_ok": 558,
+          "crc_ko": 42,
+          "crc_failed_attempt_percent": 7.0,
+          "sinr_mean_db": 23.662
+        },
+        {
+          "utc": "2026-10-14T02:18:14+00:00",
+          "attempts": 600,
+          "crc_ok": 553,
+          "crc_ko": 47,
+          "crc_failed_attempt_percent": 7.833333333333333,
+          "sinr_mean_db": 23.918833333333332
+        },
+        {
+          "utc": "2026-10-14T02:18:15+00:00",
+          "attempts": 600,
+          "crc_ok": 556,
+          "crc_ko": 44,
+          "crc_failed_attempt_percent": 7.333333333333333,
+          "sinr_mean_db": 23.374833333333335
+        },
+        {
+          "utc": "2026-10-14T02:18:16+00:00",
+          "attempts": 600,
+          "crc_ok": 568,
+          "crc_ko": 32,
+          "crc_failed_attempt_percent": 5.333333333333333,
+          "sinr_mean_db": 23.7955
+        },
+        {
+          "utc": "2026-10-14T02:18:17+00:00",
+          "attempts": 600,
+          "crc_ok": 569,
+          "crc_ko": 31,
+          "crc_failed_attempt_percent": 5.166666666666667,
+          "sinr_mean_db": 23.776666666666667
+        },
+        {
+          "utc": "2026-10-14T02:18:18+00:00",
+          "attempts": 600,
+          "crc_ok": 545,
+          "crc_ko": 55,
+          "crc_failed_attempt_percent": 9.166666666666666,
+          "sinr_mean_db": 23.713666666666665
+        },
+        {
+          "utc": "2026-10-14T02:18:19+00:00",
+          "attempts": 600,
+          "crc_ok": 551,
+          "crc_ko": 49,
+          "crc_failed_attempt_percent": 8.166666666666666,
+          "sinr_mean_db": 23.939666666666668
+        },
+        {
+          "utc": "2026-10-14T02:18:20+00:00",
+          "attempts": 600,
+          "crc_ok": 563,
+          "crc_ko": 37,
+          "crc_failed_attempt_percent": 6.166666666666667,
+          "sinr_mean_db": 24.0425
+        },
+        {
+          "utc": "2026-10-14T02:18:21+00:00",
+          "attempts": 600,
+          "crc_ok": 556,
+          "crc_ko": 44,
+          "crc_failed_attempt_percent": 7.333333333333333,
+          "sinr_mean_db": 23.895166666666668
+        },
+        {
+          "utc": "2026-10-14T02:18:22+00:00",
+          "attempts": 600,
+          "crc_ok": 555,
+          "crc_ko": 45,
+          "crc_failed_attempt_percent": 7.5,
+          "sinr_mean_db": 24.246333333333332
+        },
+        {
+          "utc": "2026-10-14T02:18:23+00:00",
+          "attempts": 600,
+          "crc_ok": 563,
+          "crc_ko": 37,
+          "crc_failed_attempt_percent": 6.166666666666667,
+          "sinr_mean_db": 24.524166666666666
+        },
+        {
+          "utc": "2026-10-14T02:18:24+00:00",
+          "attempts": 600,
+          "crc_ok": 563,
+          "crc_ko": 37,
+          "crc_failed_attempt_percent": 6.166666666666667,
+          "sinr_mean_db": 24.1885
+        },
+        {
+          "utc": "2026-10-14T02:18:25+00:00",
+          "attempts": 600,
+          "crc_ok": 542,
+          "crc_ko": 58,
+          "crc_failed_attempt_percent": 9.666666666666666,
+          "sinr_mean_db": 23.797333333333334
+        },
+        {
+          "utc": "2026-10-14T02:18:26+00:00",
+          "attempts": 78,
+          "crc_ok": 75,
+          "crc_ko": 3,
+          "crc_failed_attempt_percent": 3.8461538461538463,
+          "sinr_mean_db": 24.273076923076925
+        }
+      ]
+    }
+  ],
+  "units": {
+    "throughput": "DRB.UEThpUl: kbps; plotted as decimal Mbit/s",
+    "prb": "RRU.PrbTotUl: percent",
+    "rlc_dl_delay": "DRB.RlcSduDelayDl: 0.1 ms, converted by /10",
+    "report_age": "Microseconds; processing/queues/clock offset included, not application RTT"
+  },
+  "notes": [
+    "The latest capture matches the clock-corrected operator UL window and UE1 rate profile (r about 0.96); precise synchronization remains unverified.",
+    "Missing idle DRB.RlcSduDelayDl values are left blank, never changed to zero; this monitor does not explicitly print noValue records.",
+    "Additional positive KPM reports can outlast the application process due to measurement aggregation and queued traffic.",
+    "PUSCH CRC failure is measured over logged decoding attempts, not TCP packet loss or a calibrated first-transmission BLER.",
+    "Normal xApp cleanup did not reproduce the earlier RIC deletion-failure abort; the failure-path bug was not repaired by this analysis.",
+    "CU confirms (DU1, F1AP11, PCI1, rnti460c) and (DU2, F1AP7, PCI2, rnti4608); direct modem/SIM-to-F1AP correlation is not carried in KPM.",
+    "Full repeated solo/concurrent, UDP, deliberate guard/survivor and cold-start acceptance is pending; underflow remediation is deferred."
+  ],
+  "pending": [
+    "Precisely synchronized host timestamps",
+    "Complete cross-layer modem/SIM/cell/F1AP/bearer ledger",
+    "Three same-condition solo/concurrent repetitions and remaining UDP/guard/survivor/cold-start gates"
+  ],
+  "files": {
+    "analyze.py": {
+      "sha256": "ef1a93d25c7c01a822311a6163b5f7632ece452bbc95096c95b9d99ada05b3f8"
+    },
+    "cu_identity_excerpt.log": {
+      "sha256": "9dcfadb90e1d1ccb4e5d231686371c29582da85ff058f7a5147377fbac819e6c"
+    },
+    "dual_ul_kpm.png": {
+      "sha256": "f106970981f0dcad68c71d2a3da4d78583866d74e65d5c8ee30e203657403066"
+    },
+    "dual_ul_kpm.svg": {
+      "sha256": "f717a51bdcbf7cb3e2d23a760d49dd1ab7b534815871b264e5a0ce0d91af8cfd"
+    },
+    "operator_inputs.json": {
+      "sha256": "82b9b37bbc8a89970f689feeafd9a9faaf974f129b1d03500e189db6c36a75c8"
+    },
+    "phy_per_second.csv": {
+      "sha256": "48591e02295eac0de49a004d2baff17f3ca58c423cd9955e5ceae381873ef2b0"
+    },
+    "ric.log": {
+      "sha256": "5bd4a0d8415c6130d1556c34bcccf70de23e421f88ce5b5ae597af07cd1b6499"
+    },
+    "run-01/end.txt": {
+      "sha256": "704e2c951f9fc980d6b484536714997a7678553d67caa5299be2ca3a4347328a"
+    },
+    "run-01/exit.txt": {
+      "sha256": "1c6cdd98aabe8cc6a19697747d8232fa351bebca9be8fb9fed2a05d396c3b854"
+    },
+    "run-01/kpm.log": {
+      "sha256": "d7ab59df27870698d8d56991bd5b8e9925965bdcdf8d099716cfe13343578d35"
+    },
+    "run-01/rows.csv": {
+      "sha256": "a4e5e1ab9b55b70a9bb31c71954c9f913f378e92936ff82216b8ba4317c03b66"
+    },
+    "run-01/start.txt": {
+      "sha256": "31293d1e429cc5edba0d92623c936ca239722bdd079c81aa858db413ba74dc36"
+    },
+    "run-02/end.txt": {
+      "sha256": "06b6bba5dd050c51f7f0f5ab890d8e271f6ffdf8549ea2098fbdf474dfd71eb3"
+    },
+    "run-02/exit.txt": {
+      "sha256": "1c6cdd98aabe8cc6a19697747d8232fa351bebca9be8fb9fed2a05d396c3b854"
+    },
+    "run-02/kpm.log": {
+      "sha256": "74c98b9b672bef8d012e43bedf2776f95350d3ef6062e26f728b35bde9a109da"
+    },
+    "run-02/rows.csv": {
+      "sha256": "df5ca89763a7b6d747d6e1b86565cc3a01dea55e6bffb4996131c99fefa654e1"
+    },
+    "run-02/start.txt": {
+      "sha256": "2a126a450d18acf8edae09a353dec6f8ccf78139ad254e11ea27558ae88ea923"
+    },
+    "du1_startup.log": {
+      "sha256": "22dc9b85d847cc6611800800007aa9dfc7c7d6c8fd8b450530df3274d2f27c94"
+    },
+    "du2_startup.log": {
+      "sha256": "bd5f573e65c03c6a7848dd64a533a64a785fa9dc8f603b2d6ffae79aa928e389"
+    }
+  },
+  "report": "../../reports/dual_ue_ul_experiment_report_2026-10-13.md",
+  "startup_sources": {
+    "du1_startup.log": "/tmp/falcon-du1-3660.0BgECAjI/startup.log",
+    "du2_startup.log": "/tmp/falcon-du2-3600.K2QXgUiY/startup.log"
+  }
+}

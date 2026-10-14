@@ -8,10 +8,18 @@ traffic idle passed at receiver 10.5 Mbit/s / Retr 0 / pipeline exit 0. See
 [UE2 UL evidence](evidence/2026-10-13_du2_ul/manifest.json) and
 [dual IPv4 path evidence](evidence/2026-10-13_dual_ipv4_paths/manifest.json).
 
-The latest Spark diagnostic discovered both DU IDs, subscribed twice and deleted
-both subscriptions with exit 0, but received zero UE callback blocks. Actual
-two-link KPM delivery and trustworthy concurrent UL results remain pending; see
-[subscription-only evidence](evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
+The latest measured concurrent TCP UL passed: receiver **UE1 13.8 Mbit/s /
+UE2 17.3 Mbit/s**, both sender Retr 0, both process exits 0. Spark received
+**123 UE callbacks per DU**, including 63/61 complete UL-active five-metric rows;
+approximately 62/61 fall inside the clock-corrected laptop run window. Both
+subscription/deletion pairs and normal xApp exit passed. See
+[dual UL/KPM evidence and plots](evidence/2026-10-13_dual_kpm_reports/manifest.json).
+The manually simultaneous clock readbacks put Spark about **199.27 seconds
+ahead of Laptop**; the corrected latest window is 22:17:25–22:18:27 EDT.
+Precise clock synchronization, full cross-layer identity correlation and the
+remaining repeated/UDP/guard/survivor/cold-start acceptance are pending.
+The earlier [subscription-only probe](evidence/2026-10-13_dual_kpm_subscriptions/manifest.json)
+received zero UE callbacks and remains historical evidence.
 UL is the acceptance target; underflow count/growth remediation is deferred.
 Wrong-cell attachment, lost SA/PDU, wrong IP paths, failed UL and missing UL
 telemetry still keep their acceptance gates pending. See
@@ -26,11 +34,14 @@ infrastructure during modem recovery; steps 1–5 cover a stopped testbed.
 After a modem power cycle, repeat the affected role's complete laptop sequence
 ([UE1](dual_ue_laptop_quick_commands.md#ue1-start) / [UE2](dual_ue_laptop_quick_commands.md#ue2-start)) before traffic. The operator reported
 lock query `0`; its lock must be restored and the actual serving cell verified.
-The latest laptop modem readback has UE1 modem 9 and UE2 modem 10, both
-connected / 5GNR / PLMN 00101 / home. The launcher's access-technology array
-parsing and gateway check have been corrected: the reported bearer default
-gateway is recorded, while actual routes determine the server path. Update the
-laptop copy before rerunning preflight.
+The latest measured laptop launcher record has UE1 modem/SIM 13 / bearer 9 /
+`10.45.0.6/30` / `wwan0` / table 151, and UE2 modem/SIM 14 / bearer 10 /
+`10.46.0.5/30` / `wwan1` / table 152. Identity, bearer and both source-bound /
+ordinary routes passed before traffic. CU records tie DU1 / PCI1 to F1AP UE 11
+and DU2 / PCI2 to F1AP UE 7. Full modem/SIM-to-F1AP correlation remains a
+separate ledger. Earlier modem 9/10 and bearer 7/8 preflight allocations are
+historical. The launcher supports indexed access-tech fields and records the
+bearer default gateway while actual routes determine the server path.
 UE1's earlier `10.45.0.3/29` / `wwan0` and UE2's earlier bearer 5 /
 `10.46.0.3/29` are historical. Keep the Spark `.1` endpoints and discover both
 current laptop bearer allocations and host routes with the updated launcher.
@@ -366,13 +377,21 @@ Refresh the mapping after UE ID changes.
 The completed 19:29:23–19:30:14 EDT probe discovered both DU IDs, subscribed
 twice, deleted twice and exited 0, but received zero UE callback blocks. The
 automatic follow-up did not execute; manual capture commands were supplied.
-Actual two-link KPM remains pending until overlapping traffic/capture evidence
-is inspected.
+Two subsequent 120-second captures completed normally with 123 callbacks per
+DU. The latest `0B8F17Sp` capture aligns with the operator's concurrent UL after
+the approximate +199.27-second clock correction; it contains 61 near-simultaneous
+complete UL-active row pairs. See the [retained analysis](evidence/2026-10-13_dual_kpm_reports/manifest.json).
+Normal completion did not exercise the earlier disconnected-xApp deletion-failure
+abort path. That FlexRIC failure-path defect remains unfixed; both delete
+responses and normal exit are still required for each new capture.
 
 ## 8. Shutdown and retained evidence
 
-Stop laptop clients and reset each role using [separate laptop cleanup](dual_ue_laptop_quick_commands.md#cleanup).
-Allow the finite xApp to delete subscriptions and stop naturally. Stop both iperf
+Finish laptop traffic and allow the finite xApp to receive both subscription
+delete responses and stop naturally. Then follow [separate laptop shutdown](dual_ue_laptop_quick_commands.md#cleanup):
+UE1 first, then UE2, using the updated helper's `--shutdown` to disconnect the PDU,
+clear host IPv4 configuration, delete each modem's bearers and disable it.
+After both laptop shutdown success markers, stop both iperf
 server terminals, then each DU, RIC and CU in their own terminals with Ctrl+C.
 Stop the shared core only after both DUs have finished using it:
 

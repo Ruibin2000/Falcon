@@ -1,0 +1,45 @@
+Setting the config -c file to /usr/local/etc/flexric/ric.conf
+[LibConf]: loading service models from SM_DIR: /usr/local/lib/flexric/
+[LibConf]: reading configuration for NearRT_RIC
+[LibConf]: NearRT_RIC IP: 127.0.0.1
+[LibConf]: E2_Port Port: 36421
+[LibConf]: E42_Port Port: 36422
+[NEAR-RIC]: nearRT-RIC IP Address = 127.0.0.1, PORT = 36421
+[NEAR-RIC]: Initializing 
+[NEAR-RIC]: Loading SM ID = 144 with def = PDCP_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 146 with def = TC_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 145 with def = SLICE_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 148 with def = GTP_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 143 with def = RLC_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 3 with def = ORAN-E2SM-RC 
+[NEAR-RIC]: Loading SM ID = 142 with def = MAC_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 2 with def = ORAN-E2SM-KPM 
+[iApp]: Initializing ... 
+[iApp]: nearRT-RIC IP Address = 127.0.0.1, PORT = 36422
+[NEAR-RIC]: Initializing Task Manager with 4 threads 
+[E2AP]: E2 SETUP-REQUEST rx from PLMN   1. 1 Node ID 411 RAN type ngran_gNB_DU ID 1
+[NEAR-RIC]: Accepting RAN function ID 2 with def = ORAN-E2SM-KPM 
+[iApp]: no xApp connected, no need to generate E42 UPDATE-E2-NODE
+[E2AP]: E2 SETUP-REQUEST rx from PLMN   1. 1 Node ID 411 RAN type ngran_gNB_DU ID 2
+[NEAR-RIC]: Accepting RAN function ID 2 with def = ORAN-E2SM-KPM 
+[iApp]: no xApp connected, no need to generate E42 UPDATE-E2-NODE
+[iApp]: E42 SETUP-REQUEST rx
+[iApp]: E42 SETUP-RESPONSE tx
+[iApp]: SUBSCRIPTION-REQUEST RAN_FUNC_ID 2 RIC_REQ_ID 1 tx 
+[iApp]: SUBSCRIPTION-REQUEST RAN_FUNC_ID 2 RIC_REQ_ID 2 tx 
+[NEAR-RIC]: SUBSCRIPTION DELETE REQUEST tx RAN FUNC ID 2 RIC_REQ_ID 1021 
+[iApp]: RIC_SUBSCRIPTION_DELETE_REQUEST tx RIC_REQ_ID 1021 
+[iApp]: RIC_SUBSCRIPTION_DELETE_RESPONSE tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
+[NEAR-RIC]: SUBSCRIPTION DELETE REQUEST tx RAN FUNC ID 2 RIC_REQ_ID 1022 
+[iApp]: RIC_SUBSCRIPTION_DELETE_REQUEST tx RIC_REQ_ID 1022 
+[iApp]: RIC_SUBSCRIPTION_DELETE_RESPONSE tx RAN_FUNC_ID 2 RIC_REQ_ID 2 
+[iApp]: E42 SETUP-REQUEST rx
+[iApp]: E42 SETUP-RESPONSE tx
+[iApp]: SUBSCRIPTION-REQUEST RAN_FUNC_ID 2 RIC_REQ_ID 1 tx 
+[iApp]: SUBSCRIPTION-REQUEST RAN_FUNC_ID 2 RIC_REQ_ID 2 tx 
+[NEAR-RIC]: SUBSCRIPTION DELETE REQUEST tx RAN FUNC ID 2 RIC_REQ_ID 1023 
+[iApp]: RIC_SUBSCRIPTION_DELETE_REQUEST tx RIC_REQ_ID 1023 
+[iApp]: RIC_SUBSCRIPTION_DELETE_RESPONSE tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
+[NEAR-RIC]: SUBSCRIPTION DELETE REQUEST tx RAN FUNC ID 2 RIC_REQ_ID 1024 
+[iApp]: RIC_SUBSCRIPTION_DELETE_REQUEST tx RIC_REQ_ID 1024 
+[iApp]: RIC_SUBSCRIPTION_DELETE_RESPONSE tx RAN_FUNC_ID 2 RIC_REQ_ID 2 

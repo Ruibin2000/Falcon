@@ -1,0 +1,1898 @@
+Setting the config -c file to /usr/local/etc/flexric/xapp_oran_sm.conf
+[LibConf]: loading service models from SM_DIR: /usr/local/lib/flexric/
+[LibConf]: reading configuration for xApp
+[LibConf]: NearRT_RIC IP: 127.0.0.1
+[LibConf]: E42_Port Port: 36422
+[LibConf]: Sub_ORAN_SM Name: RC, Time: 0
+[LibConf]: format 1, RAN type ngran_gNB, actions = 1 6 21528 
+[LibConf]: Sub_ORAN_SM Name: KPM, Time: 1000
+[LibConf]: format 4, RAN type ngran_gNB, actions = DRB.PdcpSduVolumeDL DRB.PdcpSduVolumeUL DRB.RlcSduDelayDl DRB.UEThpDl DRB.UEThpUl RRU.PrbTotDl RRU.PrbTotUl CARR.WBCQIDist.BinX 
+[LibConf]: Sub_ORAN_SM Name: KPM, Time: 1000
+[LibConf]: format 4, RAN type ngran_gNB_DU, actions = DRB.RlcSduDelayDl DRB.UEThpDl DRB.UEThpUl RRU.PrbTotDl RRU.PrbTotUl 
+[LibConf]: Sub_ORAN_SM Name: KPM, Time: 1000
+[LibConf]: format 4, RAN type ngran_gNB_CU, actions = DRB.PdcpSduVolumeDL DRB.PdcpSduVolumeUL 
+[xAap]: Initializing ... 
+[xApp]: nearRT-RIC IP Address = 127.0.0.1, PORT = 36422
+[E2-AGENT]: Opening plugin from path = /usr/local/lib/flexric/libpdcp_sm.so 
+[E2-AGENT]: Opening plugin from path = /usr/local/lib/flexric/libtc_sm.so 
+[E2-AGENT]: Opening plugin from path = /usr/local/lib/flexric/libslice_sm.so 
+[E2-AGENT]: Opening plugin from path = /usr/local/lib/flexric/libgtp_sm.so 
+[E2-AGENT]: Opening plugin from path = /usr/local/lib/flexric/librlc_sm.so 
+[E2-AGENT]: Opening plugin from path = /usr/local/lib/flexric/librc_sm.so 
+[E2-AGENT]: Opening plugin from path = /usr/local/lib/flexric/libmac_sm.so 
+[E2-AGENT]: Opening plugin from path = /usr/local/lib/flexric/libkpm_sm.so 
+[NEAR-RIC]: Loading SM ID = 144 with def = PDCP_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 146 with def = TC_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 145 with def = SLICE_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 148 with def = GTP_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 143 with def = RLC_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 3 with def = ORAN-E2SM-RC 
+[NEAR-RIC]: Loading SM ID = 142 with def = MAC_STATS_V0 
+[NEAR-RIC]: Loading SM ID = 2 with def = ORAN-E2SM-KPM 
+[xApp]: E42 SETUP-REQUEST tx
+[xApp]: E42 SETUP-RESPONSE rx 
+[xApp]: xApp ID = 7 
+[xApp]: Registered E2 Nodes = 2 
+Connected E2 nodes = 2
+FALCON_E2_NODE idx=0 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+Registered node 0 ran func id = 2 
+ [xApp]: reporting period = 1000 [ms]
+[xApp]: reporting period = 1000 [ms]
+xApp subscribes RAN Func ID 2 in E2 node idx 0, nb_id 411
+E42_RIC_SUBSCRIPTION_REQUEST 40 
+[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
+[xApp]: SUBSCRIPTION RESPONSE rx
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+[xApp]: reporting period = 1000 [ms]
+FALCON_KPM_NODE unix_us=1791944081291446 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 706 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 13.30
+DRB.UEThpDl = 320.00
+DRB.UEThpUl = 19100.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_E2_NODE idx=1 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+Registered node 1 ran func id = 2 
+ [xApp]: reporting period = 1000 [ms]
+[xApp]: reporting period = 1000 [ms]
+xApp subscribes RAN Func ID 2 in E2 node idx 1, nb_id 411
+E42_RIC_SUBSCRIPTION_REQUEST 40 
+[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 2 
+[xApp]: SUBSCRIPTION RESPONSE rx
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+[xApp]: reporting period = 1000 [ms]
+FALCON_KPM_NODE unix_us=1791944082291949 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 1148 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.40
+DRB.UEThpDl = 311.00
+DRB.UEThpUl = 19090.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944082293020 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 571 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 11.40
+DRB.UEThpDl = 238.00
+DRB.UEThpUl = 17185.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_CAPTURE subscriptions_kpm=2 subscriptions_rc=0 seconds=120
+FALCON_KPM_NODE unix_us=1791944083291437 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 647 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.30
+DRB.UEThpDl = 310.00
+DRB.UEThpUl = 19629.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944083293022 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 624 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 12.60
+DRB.UEThpDl = 189.00
+DRB.UEThpUl = 18814.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944084291364 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 492 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.00
+DRB.UEThpDl = 310.00
+DRB.UEThpUl = 19138.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944084292997 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 620 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 12.70
+DRB.UEThpDl = 238.00
+DRB.UEThpUl = 18792.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944085291531 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 655 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.10
+DRB.UEThpDl = 334.00
+DRB.UEThpUl = 19075.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944085293013 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 575 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 12.70
+DRB.UEThpDl = 198.00
+DRB.UEThpUl = 18227.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944086291298 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 511 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.20
+DRB.UEThpDl = 315.00
+DRB.UEThpUl = 18837.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944086292985 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 615 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.30
+DRB.UEThpDl = 246.00
+DRB.UEThpUl = 19957.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944087291487 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 704 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.40
+DRB.UEThpDl = 304.00
+DRB.UEThpUl = 18023.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 84
+FALCON_KPM_NODE unix_us=1791944087293088 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 731 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 12.30
+DRB.UEThpDl = 219.00
+DRB.UEThpUl = 16748.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944088291404 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 589 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 13.80
+DRB.UEThpDl = 292.00
+DRB.UEThpUl = 20150.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944088292928 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 497 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 11.40
+DRB.UEThpDl = 159.00
+DRB.UEThpUl = 13878.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944089291424 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 567 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 13.80
+DRB.UEThpDl = 272.00
+DRB.UEThpUl = 18343.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944089293161 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 704 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 12.40
+DRB.UEThpDl = 177.00
+DRB.UEThpUl = 15218.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944090291730 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 922 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.50
+DRB.UEThpDl = 310.00
+DRB.UEThpUl = 19780.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944090293455 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 1054 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 12.60
+DRB.UEThpDl = 182.00
+DRB.UEThpUl = 15903.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944091291448 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 664 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.00
+DRB.UEThpDl = 271.00
+DRB.UEThpUl = 18962.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944091293046 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 608 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.70
+DRB.UEThpDl = 163.00
+DRB.UEThpUl = 17827.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944092291435 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 662 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.10
+DRB.UEThpDl = 256.00
+DRB.UEThpUl = 16074.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944092293063 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 673 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.70
+DRB.UEThpDl = 157.00
+DRB.UEThpUl = 17132.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944093291433 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 606 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.20
+DRB.UEThpDl = 295.00
+DRB.UEThpUl = 17698.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944093293048 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 662 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.30
+DRB.UEThpDl = 221.00
+DRB.UEThpUl = 14709.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944094292013 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 1142 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.70
+DRB.UEThpDl = 267.00
+DRB.UEThpUl = 14098.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944094292828 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 430 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.30
+DRB.UEThpDl = 250.00
+DRB.UEThpUl = 12976.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944095291278 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 447 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 13.80
+DRB.UEThpDl = 308.00
+DRB.UEThpUl = 17984.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944095293135 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 653 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.20
+DRB.UEThpDl = 128.00
+DRB.UEThpUl = 11361.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944096291492 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 564 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.60
+DRB.UEThpDl = 277.00
+DRB.UEThpUl = 14589.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944096293016 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 560 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.00
+DRB.UEThpDl = 236.00
+DRB.UEThpUl = 16391.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944097291974 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 1130 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.90
+DRB.UEThpDl = 276.00
+DRB.UEThpUl = 14885.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944097293061 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 588 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.60
+DRB.UEThpDl = 278.00
+DRB.UEThpUl = 18302.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944098291549 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 695 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 15.40
+DRB.UEThpDl = 287.00
+DRB.UEThpUl = 14169.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944098293096 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 619 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.50
+DRB.UEThpDl = 301.00
+DRB.UEThpUl = 19666.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944099291530 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 716 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.90
+DRB.UEThpDl = 296.00
+DRB.UEThpUl = 15439.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944099292994 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 554 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.10
+DRB.UEThpDl = 282.00
+DRB.UEThpUl = 19414.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944100291446 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 622 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.70
+DRB.UEThpDl = 264.00
+DRB.UEThpUl = 15876.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944100293078 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 630 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.40
+DRB.UEThpDl = 312.00
+DRB.UEThpUl = 20402.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944101291926 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 961 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.50
+DRB.UEThpDl = 287.00
+DRB.UEThpUl = 15500.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944101293016 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 545 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.10
+DRB.UEThpDl = 278.00
+DRB.UEThpUl = 21329.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944102292143 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 1015 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.70
+DRB.UEThpDl = 261.00
+DRB.UEThpUl = 16720.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944102292866 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 444 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.10
+DRB.UEThpDl = 324.00
+DRB.UEThpUl = 21906.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944103291482 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 576 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.40
+DRB.UEThpDl = 348.00
+DRB.UEThpUl = 19022.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944103293010 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 559 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 12.80
+DRB.UEThpDl = 288.00
+DRB.UEThpUl = 18771.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944104291558 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 683 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 13.90
+DRB.UEThpDl = 261.00
+DRB.UEThpUl = 18138.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 84
+FALCON_KPM_NODE unix_us=1791944104293050 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 473 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.50
+DRB.UEThpDl = 222.00
+DRB.UEThpUl = 13674.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944105291474 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 593 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.10
+DRB.UEThpDl = 312.00
+DRB.UEThpUl = 19578.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944105292967 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 450 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.20
+DRB.UEThpDl = 129.00
+DRB.UEThpUl = 6175.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944106291713 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 747 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.40
+DRB.UEThpDl = 285.00
+DRB.UEThpUl = 16881.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944106293125 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 629 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 15.10
+DRB.UEThpDl = 204.00
+DRB.UEThpUl = 9908.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944107291521 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 644 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.40
+DRB.UEThpDl = 319.00
+DRB.UEThpUl = 18415.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944107293163 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 636 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.30
+DRB.UEThpDl = 325.00
+DRB.UEThpUl = 17753.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944108291616 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 730 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.30
+DRB.UEThpDl = 330.00
+DRB.UEThpUl = 18382.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944108292935 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 395 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.30
+DRB.UEThpDl = 321.00
+DRB.UEThpUl = 17150.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944109291787 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 783 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.60
+DRB.UEThpDl = 315.00
+DRB.UEThpUl = 16787.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944109293367 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 720 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.50
+DRB.UEThpDl = 336.00
+DRB.UEThpUl = 17810.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944110291901 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 811 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 13.90
+DRB.UEThpDl = 283.00
+DRB.UEThpUl = 17142.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944110293148 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 680 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.00
+DRB.UEThpDl = 351.00
+DRB.UEThpUl = 19069.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944111291575 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 622 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.90
+DRB.UEThpDl = 289.00
+DRB.UEThpUl = 17692.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944111293137 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 621 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.20
+DRB.UEThpDl = 248.00
+DRB.UEThpUl = 19194.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944112291573 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 501 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.40
+DRB.UEThpDl = 279.00
+DRB.UEThpUl = 16606.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944112293051 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 564 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.90
+DRB.UEThpDl = 292.00
+DRB.UEThpUl = 18908.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944113291616 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 634 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.80
+DRB.UEThpDl = 242.00
+DRB.UEThpUl = 13090.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944113292995 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 414 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 12.70
+DRB.UEThpDl = 264.00
+DRB.UEThpUl = 20417.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944114291504 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 565 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.20
+DRB.UEThpDl = 291.00
+DRB.UEThpUl = 16162.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944114293103 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 557 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 12.50
+DRB.UEThpDl = 282.00
+DRB.UEThpUl = 19325.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944115291316 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 414 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.00
+DRB.UEThpDl = 309.00
+DRB.UEThpUl = 16690.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944115293022 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 397 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.20
+DRB.UEThpDl = 354.00
+DRB.UEThpUl = 22324.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944116291854 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 685 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.50
+DRB.UEThpDl = 282.00
+DRB.UEThpUl = 17666.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944116293144 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 579 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.10
+DRB.UEThpDl = 164.00
+DRB.UEThpUl = 13707.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944117291501 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 568 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.40
+DRB.UEThpDl = 275.00
+DRB.UEThpUl = 17125.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944117292978 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 413 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.20
+DRB.UEThpDl = 162.00
+DRB.UEThpUl = 17008.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944118291696 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 662 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.30
+DRB.UEThpDl = 276.00
+DRB.UEThpUl = 17891.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944118293178 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 600 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 11.60
+DRB.UEThpDl = 173.00
+DRB.UEThpUl = 14530.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944119291561 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 549 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.20
+DRB.UEThpDl = 255.00
+DRB.UEThpUl = 17021.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 84
+FALCON_KPM_NODE unix_us=1791944119293126 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 572 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.10
+DRB.UEThpDl = 196.00
+DRB.UEThpUl = 15796.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944120291896 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 759 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.10
+DRB.UEThpDl = 285.00
+DRB.UEThpUl = 17763.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944120293010 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 488 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.30
+DRB.UEThpDl = 215.00
+DRB.UEThpUl = 17517.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944121291716 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 686 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.80
+DRB.UEThpDl = 302.00
+DRB.UEThpUl = 17784.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944121293097 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 553 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.10
+DRB.UEThpDl = 168.00
+DRB.UEThpUl = 16646.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 88
+FALCON_KPM_NODE unix_us=1791944122291585 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 584 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.30
+DRB.UEThpDl = 316.00
+DRB.UEThpUl = 18080.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944122293244 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 634 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.20
+DRB.UEThpDl = 216.00
+DRB.UEThpUl = 17407.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944123291514 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 532 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.20
+DRB.UEThpDl = 240.00
+DRB.UEThpUl = 17018.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944123293266 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 630 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.20
+DRB.UEThpDl = 289.00
+DRB.UEThpUl = 20188.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944124291805 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 773 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.30
+DRB.UEThpDl = 318.00
+DRB.UEThpUl = 17603.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944124293221 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 610 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.00
+DRB.UEThpDl = 317.00
+DRB.UEThpUl = 20687.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944125291481 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 519 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.20
+DRB.UEThpDl = 281.00
+DRB.UEThpUl = 16790.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944125293222 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 639 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.60
+DRB.UEThpDl = 289.00
+DRB.UEThpUl = 21990.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944126291529 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 581 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.10
+DRB.UEThpDl = 228.00
+DRB.UEThpUl = 15784.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944126293131 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 526 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.50
+DRB.UEThpDl = 238.00
+DRB.UEThpUl = 12344.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944127291544 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 521 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.60
+DRB.UEThpDl = 175.00
+DRB.UEThpUl = 10153.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944127293193 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 607 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.40
+DRB.UEThpDl = 281.00
+DRB.UEThpUl = 15539.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944128291791 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 727 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.50
+DRB.UEThpDl = 233.00
+DRB.UEThpUl = 13444.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944128293278 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 589 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.30
+DRB.UEThpDl = 387.00
+DRB.UEThpUl = 23779.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944129291586 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 443 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.30
+DRB.UEThpDl = 276.00
+DRB.UEThpUl = 14499.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944129293272 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 592 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.20
+DRB.UEThpDl = 371.00
+DRB.UEThpUl = 22507.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944130291597 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 573 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 13.80
+DRB.UEThpDl = 228.00
+DRB.UEThpUl = 13420.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944130293257 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 612 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.30
+DRB.UEThpDl = 347.00
+DRB.UEThpUl = 21732.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944131291576 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 541 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 13.80
+DRB.UEThpDl = 233.00
+DRB.UEThpUl = 13167.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944131293442 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 749 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.10
+DRB.UEThpDl = 379.00
+DRB.UEThpUl = 22070.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944132291942 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 814 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.40
+DRB.UEThpDl = 246.00
+DRB.UEThpUl = 14082.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944132293288 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 609 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.10
+DRB.UEThpDl = 342.00
+DRB.UEThpUl = 22107.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944133291784 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 743 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.20
+DRB.UEThpDl = 242.00
+DRB.UEThpUl = 14442.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944133293348 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 696 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 14.30
+DRB.UEThpDl = 281.00
+DRB.UEThpUl = 16642.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944134291783 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 713 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 15.10
+DRB.UEThpDl = 281.00
+DRB.UEThpUl = 15119.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944134293528 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 860 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.40
+DRB.UEThpDl = 321.00
+DRB.UEThpUl = 21494.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944135291849 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 643 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.50
+DRB.UEThpDl = 250.00
+DRB.UEThpUl = 15257.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944135293344 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 711 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.90
+DRB.UEThpDl = 301.00
+DRB.UEThpUl = 21909.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944136291764 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 668 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.RlcSduDelayDl = 14.60
+DRB.UEThpDl = 239.00
+DRB.UEThpUl = 7151.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944136293281 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 632 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.80
+DRB.UEThpDl = 345.00
+DRB.UEThpUl = 21347.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 86
+FALCON_KPM_NODE unix_us=1791944137291731 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 624 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 27
+FALCON_KPM_NODE unix_us=1791944137293223 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 592 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 13.10
+DRB.UEThpDl = 427.00
+DRB.UEThpUl = 18191.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 52
+FALCON_KPM_NODE unix_us=1791944138291699 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 584 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944138293303 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 666 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.RlcSduDelayDl = 19.90
+DRB.UEThpDl = 1.00
+DRB.UEThpUl = 2.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944139291762 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 691 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944139293415 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 646 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944140291686 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 649 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944140293504 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 695 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944141291670 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 627 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944141293312 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 614 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944142291676 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 529 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944142293174 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 511 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944143291764 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 629 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944143293419 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 713 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944144291844 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 608 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944144293173 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 488 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944145291664 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 554 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944145293102 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 430 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944146291704 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 586 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944146293258 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 554 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944147291692 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 454 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944147293409 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 620 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944148292014 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 809 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944148293176 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 462 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944149291692 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 610 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944149293323 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 594 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944150291843 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 690 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944150293277 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 550 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944151291864 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 749 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944151293433 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 714 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944152291591 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 447 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944152293158 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 438 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944153291657 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 457 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944153293142 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 423 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944154291886 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 657 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944154293275 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 560 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944155291904 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 738 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944155293478 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 658 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944156291753 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 593 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944156293387 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 489 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944157291733 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 594 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944157293329 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 523 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944158291808 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 668 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944158293563 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 650 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944159291830 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 525 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944159293449 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 572 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944160291817 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 687 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944160293316 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 574 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944161292019 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 691 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944161293387 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 607 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944162291960 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 711 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944162293384 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 586 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944163291702 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 456 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944163293177 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 440 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944164291726 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 526 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944164293399 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 576 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944165291751 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 546 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944165293635 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 779 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944166291831 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 592 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944166293551 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 703 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944167291623 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 421 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944167293338 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 498 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944168291770 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 536 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944168293653 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 842 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944169291728 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 467 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944169293221 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 376 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944170291976 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 620 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944170293303 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 512 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944171291786 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 532 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944171293265 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 503 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944172291806 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 562 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944172293325 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 552 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944173292016 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 635 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944173293595 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 711 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944174292461 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 1138 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944174293525 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 655 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944175291996 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 741 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944175293352 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 504 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944176291931 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 685 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944176293616 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 616 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944177291945 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 704 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944177293456 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 567 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944178292005 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 706 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944178293455 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 589 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944179292087 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 739 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944179293560 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 728 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944180291984 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 713 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944180293315 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 433 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944181291732 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 438 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944181293464 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 528 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944182291956 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 676 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944182293405 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 398 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944183291791 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 497 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944183293327 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 414 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944184292356 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 839 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944184293425 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 510 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944185291730 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 416 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944185293343 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 447 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944186292005 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 661 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944186293298 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 411 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944187291928 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 562 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944187293470 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 589 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944188291903 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 557 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944188293312 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 445 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944189292134 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 681 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944189293469 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 614 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944190292323 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 935 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944190293486 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 509 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944191292032 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 639 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944191293917 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 832 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944192292113 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 760 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944192293510 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 533 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944193292001 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 598 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944193293521 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 555 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944194291995 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 657 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944194293450 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 514 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944195291965 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 445 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944195293363 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 448 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944196292490 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 1048 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944196293630 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 646 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944197291763 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 398 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944197293358 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 452 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944198292120 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 728 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944198293532 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 462 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944199292036 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 655 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944199293585 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 570 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944200292111 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 744 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944200293455 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 453 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944201291830 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 421 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944201293428 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 456 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944202292134 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 717 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+[xApp]: E42 RIC_SUBSCRIPTION_DELETE_REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
+FALCON_KPM_NODE unix_us=1791944202293543 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 557 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+FALCON_KPM_NODE unix_us=1791944202294331 gnb_id=411 ran_type=ngran_gNB_DU du_id=2
+KPM-v3 report_age_us = 595 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 7
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+[xApp]: E42 SUBSCRIPTION DELETE RESPONSE rx
+FALCON_KPM_NODE unix_us=1791944203293742 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 721 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+[xApp]: E42 RIC_SUBSCRIPTION_DELETE_REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 2 
+FALCON_KPM_NODE unix_us=1791944203503243 gnb_id=411 ran_type=ngran_gNB_DU du_id=1
+KPM-v3 report_age_us = 665 from E2-node type 7 ID 411
+UE ID type = gNB-DU, gnb_cu_ue_f1ap = 11
+DRB.UEThpDl = 0.00
+DRB.UEThpUl = 0.00
+RRU.PrbTotDl = 0
+RRU.PrbTotUl = 0
+[xApp]: E42 SUBSCRIPTION DELETE RESPONSE rx
+[xApp]: Sucessfully stopped 
+Test xApp run SUCCESSFULLY

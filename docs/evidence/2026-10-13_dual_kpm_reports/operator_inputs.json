@@ -1,0 +1,89 @@
+{
+  "source": "Selected values from the operator's pasted laptop summary, server-output sections and clock readbacks; original complete laptop logs remain on Laptop",
+  "simultaneous_clock_readback": {
+    "spark": "2026-10-13T22:27:40.980143175-04:00",
+    "laptop": "2026-10-13T22:24:21.707322626-04:00",
+    "operator_statement": "This time the commands were input simultaneously",
+    "precision": "Manual simultaneous input; command execution skew unmeasured"
+  },
+  "laptop_summary": {
+    "status": "completed",
+    "started_at": "2026-10-13T22:14:06.259660-04:00",
+    "links": [
+      {
+        "ue": 1,
+        "imei": "863305041978437",
+        "imsi": "001010000000101",
+        "apn": "internet",
+        "modem": "/org/freedesktop/ModemManager1/Modem/13",
+        "device_identifier": "c95d71ed994a787885301fbbe909c79a982cb300",
+        "sim": "/org/freedesktop/ModemManager1/SIM/13",
+        "bearer": "/org/freedesktop/ModemManager1/Bearer/9",
+        "source": "10.45.0.6",
+        "prefix": 30,
+        "interface": "wwan0",
+        "gateway": "10.45.0.5",
+        "server": "10.45.0.1",
+        "port": 5201,
+        "table": 151,
+        "log": "/tmp/falcon-dual-ul-iakb3ttb/ue1.log",
+        "pid": 117127,
+        "exit_code": 0,
+        "ended_at": "2026-10-13T22:15:08.179756-04:00"
+      },
+      {
+        "ue": 2,
+        "imei": "863305041980706",
+        "imsi": "001010000000102",
+        "apn": "internet2",
+        "modem": "/org/freedesktop/ModemManager1/Modem/14",
+        "device_identifier": "efec649d8c66446300e82e83ae508077998a6e92",
+        "sim": "/org/freedesktop/ModemManager1/SIM/14",
+        "bearer": "/org/freedesktop/ModemManager1/Bearer/10",
+        "source": "10.46.0.5",
+        "prefix": 30,
+        "interface": "wwan1",
+        "gateway": "10.46.0.6",
+        "server": "10.46.0.1",
+        "port": 5202,
+        "table": 152,
+        "log": "/tmp/falcon-dual-ul-iakb3ttb/ue2.log",
+        "pid": 117128,
+        "exit_code": 0,
+        "ended_at": "2026-10-13T22:15:08.180526-04:00"
+      }
+    ],
+    "ended_at": "2026-10-13T22:15:08.180965-04:00"
+  },
+  "application_results": [
+    {
+      "ue": 1,
+      "source": "10.45.0.6",
+      "source_tcp_port": 57395,
+      "server": "10.45.0.1",
+      "server_tcp_port": 5201,
+      "sender": {"seconds": 60.00, "transfer_mib": 102, "mean_mbps": 14.3, "retransmissions": 0},
+      "receiver": {"seconds": 61.02, "transfer_mib": 101, "mean_mbps": 13.8},
+      "server_receiver_summary_agrees": true,
+      "iperf_done": true,
+      "exit_code": 0
+    },
+    {
+      "ue": 2,
+      "source": "10.46.0.5",
+      "source_tcp_port": 49791,
+      "server": "10.46.0.1",
+      "server_tcp_port": 5202,
+      "sender": {"seconds": 60.00, "transfer_mib": 127, "mean_mbps": 17.7, "retransmissions": 0},
+      "receiver": {"seconds": 60.25, "transfer_mib": 124, "mean_mbps": 17.3},
+      "server_receiver_summary_agrees": true,
+      "iperf_done": true,
+      "exit_code": 0
+    }
+  ],
+  "server_interval_selection": "First 60 one-second receiver intervals from operator-pasted Server output; excludes the terminal drain interval. Bitrates retain printed rounding.",
+  "server_interval_mbps": {
+    "1": [13.6,14.7,22.0,21.0,19.9,24.1,24.1,23.1,24.1,21.0,14.7,15.7,13.6,19.9,14.7,12.6,10.5,10.5,8.38,8.39,10.5,8.39,9.44,8.39,9.44,9.44,10.5,9.43,9.44,11.5,11.5,11.5,11.5,13.6,11.5,12.6,12.6,13.6,13.6,13.6,14.7,15.7,13.6,15.7,16.8,16.8,18.9,15.7,18.9,14.7,19.9,15.7,13.6,16.8,12.6,12.6,7.34,11.5,6.29,3.15],
+    "2": [15.7,14.7,16.8,17.8,17.8,16.8,17.8,16.8,17.8,18.9,18.9,16.8,17.8,17.8,17.8,17.8,18.9,16.8,16.8,17.8,16.8,16.8,17.8,17.8,16.8,17.8,16.8,16.8,16.8,17.8,16.8,16.8,16.8,16.8,16.8,16.8,17.8,16.8,15.7,17.8,17.8,17.8,17.8,15.7,16.8,17.8,16.8,16.8,16.8,16.8,17.8,16.8,17.8,16.8,17.8,17.8,17.8,18.9,18.9,17.8]
+  }
+}

@@ -20,9 +20,19 @@ DU1 subsequently joined with F1/E2 complete. Both new SIMs registered on their
 intended cells and both policy paths/private pings passed; new UE1 UL delivered
 receiver 10.5 Mbit/s / Retr 0 / pipeline exit 0 with UE2 test traffic idle. The
 DU-tagged diagnostic xApp found both E2 nodes and subscribed/deleted twice with
-exit 0, but received zero UE callback blocks. Concurrent UL and actual two-link
-KPM remain pending; see [UE1 UL](evidence/2026-10-13_du1_ul/manifest.json) and
+exit 0, but received zero UE callback blocks in that earlier probe; see
+[UE1 UL](evidence/2026-10-13_du1_ul/manifest.json) and
 [two-DU subscription evidence](evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
+The later concurrent TCP UL run delivered receiver **UE1 13.8 / UE2 17.3
+Mbit/s**, both sender Retr 0 and process exits 0. The latest Spark capture
+received **123 callbacks per DU**, including **63/61 complete UL-active
+five-metric rows**, with both subscription/delete pairs and normal exit.
+Manually simultaneous clock readbacks put Spark about **199.27 seconds ahead
+of Laptop**; the corrected run window contains approximately **62/61 complete
+UL-active rows**. See [retained dual UL/KPM analysis](evidence/2026-10-13_dual_kpm_reports/manifest.json).
+Concurrent UL functionality and real two-DU KPM are now observed; full identity
+correlation, precise timing and repeated/UDP/guard/survivor/cold-start gates
+remain pending. The earlier FlexRIC deletion-failure abort path remains unfixed.
 For daily operation, start both DUs and both server endpoints before the
 laptop's ordered UE1 and UE2 sequences. Keep both DUs active during these role
 traffic tests and concurrent UL/KPM.
@@ -43,8 +53,10 @@ startup subsequently confirmed B210 328B021 / USB 3 / 3600 MHz / PCI 2 /
 SSB 639648, F1/E2 completion and RIC gNB 411 / DU ID 2 / KPM function ID 2.
 MongoDB, ten SA services, CU and RIC were started for this run, while DU1 stayed
 stopped. UE2 subsequently passed identity/cell/SA, the new IPv4 PDU/private ping,
-and the single-link UL/KPM smoke checkpoint above. Both DUs and both private UE paths were subsequently observed; concurrent
-UL/KPM acceptance remains pending. See the [live startup evidence](evidence/2026-10-13_du2_startup/manifest.json).
+and the single-link UL/KPM smoke checkpoint above. Both DUs and both private UE
+paths were subsequently observed, followed by the concurrent UL / two-DU KPM
+checkpoint above. Full acceptance remains pending. See the
+[live startup evidence](evidence/2026-10-13_du2_startup/manifest.json).
 The [preparation evidence](evidence/2026-10-13_du2_preparation/manifest.json)
 retains configuration hashes, parse results, collision tests and the band-helper
 derivation. A successful preparation check is not live acceptance.

@@ -8,10 +8,18 @@ traffic idle passed at receiver 10.5 Mbit/s / Retr 0 / pipeline exit 0. See
 [UE2 UL evidence](evidence/2026-10-13_du2_ul/manifest.json) and
 [dual IPv4 path evidence](evidence/2026-10-13_dual_ipv4_paths/manifest.json).
 
-The latest Spark diagnostic discovered both DU IDs, subscribed twice and deleted
-both subscriptions with exit 0, but received zero UE callback blocks. Actual
-two-link KPM delivery and trustworthy concurrent UL results remain pending; see
-[subscription-only evidence](evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
+The latest measured concurrent TCP UL passed: receiver **UE1 13.8 Mbit/s /
+UE2 17.3 Mbit/s**, both sender Retr 0, both process exits 0. Spark received
+**123 UE callbacks per DU**, including 63/61 complete UL-active five-metric rows;
+approximately 62/61 fall inside the clock-corrected laptop run window. Both
+subscription/deletion pairs and normal xApp exit passed. See
+[dual UL/KPM evidence and plots](evidence/2026-10-13_dual_kpm_reports/manifest.json).
+The manually simultaneous clock readbacks put Spark about **199.27 seconds
+ahead of Laptop**; the corrected latest window is 22:17:25–22:18:27 EDT.
+Precise clock synchronization, full cross-layer identity correlation and the
+remaining repeated/UDP/guard/survivor/cold-start acceptance are pending.
+The earlier [subscription-only probe](evidence/2026-10-13_dual_kpm_subscriptions/manifest.json)
+received zero UE callbacks and remains historical evidence.
 UL is the acceptance target; underflow count/growth remediation is deferred.
 Wrong-cell attachment, lost SA/PDU, wrong IP paths, failed UL and missing UL
 telemetry still keep their acceptance gates pending. See
@@ -27,17 +35,18 @@ running; Spark startup is in the paired booklet. Keep UE1's verified PDU/path
 active while preparing UE2. After a power/reconnection event, repeat the affected
 role's identity, lock/cell, bearer, complete host IPv4 reset and new-path verification.
 
-The latest modem readback identifies UE1 as modem `9` and UE2 as modem `10`,
-both connected with `5gnr`, PLMN `00101` and registration `home`. The previous
-launcher falsely rejected UE1 by reading the parent access-technology key
-instead of its `.value[1]` array entry, then by requiring the bearer default
-gateway to equal the server endpoint. Both checks are corrected in section 3;
-overwrite the saved laptop launcher with that version before rerunning preflight.
-An earlier host readback had UE1 `10.45.0.3/29` on `wwan0` with table-151 source
-rules/route intact. Read both current bearer allocations/routes again rather
-than reusing these historical values. No historical allocation is needed for
-role reset. Current cell/bearer/path preflight, ordinary ping/Wi-Fi-off checks
-and measured dual UL/KPM are pending.
+The latest measured launcher record identifies UE1 as modem/SIM `13`, bearer
+`9`, `10.45.0.6/30` / `wwan0` / table 151 / gateway `10.45.0.5`; UE2 as
+modem/SIM `14`, bearer `10`, `10.46.0.5/30` / `wwan1` / table 152 / gateway
+`10.46.0.6`. Both intended IMEI/IMSI/APNs and host route checks passed before
+the two clients started. CU records tie DU1 / PCI1 to F1AP UE 11 and DU2 /
+PCI2 to F1AP UE 7. KPM does not itself carry IMEI/IMSI; keep the full identity
+ledger separate. Earlier modem 9/10 and bearer 7/8 preflight allocations are
+historical. Rediscover current values after any restart/reconnection; role
+reset needs no previous allocation. Section 3 supports indexed access-tech
+fields and records the bearer default gateway without requiring it to equal
+the server endpoint. Ordinary ping/Wi-Fi-off and deliberate path-loss checks
+remain separate packet-path validation.
 The earlier concurrent launcher's printed exit codes/time bounds were invalid
 because its `wait`/`printf` lost variable expansions. Preserve its logs and use
 section 3's Python launcher after both role paths pass.
@@ -65,11 +74,17 @@ legacy main-table WWAN routes and resets its WWAN to DOWN / MTU 1500. Wi-Fi and
 the other UE's normal configuration are preserved. Without a modem/address,
 stale rules and routes can still be cleared. A regular reset keeps the current
 PDU; `--disconnect` also disconnects the selected IMEI's connected PDU.
+For the end of an experiment, `--shutdown` disconnects the selected modem,
+clears its host IPv4 path, deletes all its listed bearer objects (including old
+disconnected bearers) and disables it. It rereads the selected IMEI before modem
+operations and requires zero bearers plus modem state `disabled` before reporting
+shutdown complete. If this helper is already installed on Laptop, repeat this
+installation block to replace the old copy; `--help` must list `--shutdown`.
 
 ```bash
 cat > ~/falcon-reset-ue-network.py <<'FALCON_RESET_PY'
 #!/usr/bin/env python3
-"""Reset one Falcon laptop IPv4 role from current state, without session history."""
+"""Reset or shut down one Falcon laptop UE from current state, without session history."""
 
 import argparse
 import ipaddress
@@ -120,18 +135,54 @@ def table_aliases():
     return aliases
 
 
+def mm_kv(*command):
+    return {key.strip(): value.strip() for key, value in
+            (line.split(":", 1) for line in read(*command).splitlines() if ":" in line)}
+
+
+def checked_modem(path, imei):
+    info = mm_kv("mmcli", "-m", path, "-K")
+    if info.get("modem.generic.equipment-identifier") != imei:
+        raise ValueError("Modem identity changed; stop before touching another modem")
+    return info
+
+
+def bearer_paths(info):
+    return sorted(set(re.findall(r"/org/freedesktop/ModemManager1/Bearer/\d+", "\n".join(
+        value for key, value in info.items() if key.startswith("modem.generic.bearers")))))
+
+
+def shutdown_modem(path, imei):
+    for bearer in bearer_paths(checked_modem(path, imei)):
+        if bearer not in bearer_paths(checked_modem(path, imei)):
+            continue
+        details = mm_kv("mmcli", "-b", bearer, "-K")
+        if details.get("bearer.status.connected") != "no":
+            raise ValueError("Bearer remains connected or was reconnected; stop shutdown and inspect its connection owner")
+        if bearer not in bearer_paths(checked_modem(path, imei)):
+            continue
+        change("mmcli", "-m", path, f"--delete-bearer={bearer}")
+    info = checked_modem(path, imei)
+    if bearer_paths(info):
+        raise ValueError("Bearers remain or were recreated; modem shutdown is incomplete")
+    if info.get("modem.generic.state") != "disabled":
+        change("mmcli", "-m", path, "--disable")
+    info = checked_modem(path, imei)
+    if info.get("modem.generic.state") != "disabled" or bearer_paths(info):
+        raise ValueError("Modem is not disabled with zero bearers; shutdown is incomplete")
+
+
 def modem_inventory():
     inventory = []
     for path in sorted(set(re.findall(r"/org/freedesktop/ModemManager1/Modem/\d+", read("mmcli", "-L")))):
-        kv = dict(line.split(":", 1) for line in read("mmcli", "-m", path, "-K").splitlines() if ":" in line)
-        kv = {key.strip(): value.strip() for key, value in kv.items()}
+        kv = mm_kv("mmcli", "-m", path, "-K")
         ports = set(re.findall(r"([A-Za-z0-9_.-]+)\s+\(net\)", "\n".join(
             value for key, value in kv.items() if key.startswith("modem.generic.ports"))))
         inventory.append((path, kv.get("modem.generic.equipment-identifier"), ports, kv.get("modem.generic.state")))
     return inventory
 
 
-def reset(ue, dry_run=False, disconnect=False):
+def reset(ue, dry_run=False, disconnect=False, shutdown=False):
     imei, subnet, server, table, priorities = ROLES[ue]
     pool = ipaddress.IPv4Network(subnet)
     aliases = table_aliases()
@@ -163,6 +214,11 @@ def reset(ue, dry_run=False, disconnect=False):
     selected = [modem for modem in inventory if modem[1] == imei]
     if len(selected) > 1:
         raise ValueError("Expected IMEI matches multiple modems")
+    shutdown_info = None
+    if shutdown:
+        if not selected:
+            raise ValueError(f"UE{ue} modem is absent; use --ue {ue} without --shutdown for leftover IPv4 cleanup")
+        shutdown_info = checked_modem(selected[0][0], imei)
     owned = set().union(*(modem[2] for modem in selected)) if selected else set()
     if any(not WWAN.fullmatch(device) for device in owned):
         raise ValueError("Selected modem exposes an unexpected network interface")
@@ -176,7 +232,12 @@ def reset(ue, dry_run=False, disconnect=False):
         and route.get("dst", "default") != "default"
         and ipaddress.IPv4Network(route["dst"], strict=False).subnet_of(pool)} - targets
     commands = []
-    if disconnect and selected and selected[0][3] == "connected":
+    connected = bool(selected and selected[0][3] == "connected")
+    if shutdown:
+        connected = connected or shutdown_info.get("modem.generic.state") in ("connecting", "disconnecting")
+        for bearer in bearer_paths(shutdown_info):
+            connected = connected or mm_kv("mmcli", "-b", bearer, "-K").get("bearer.status.connected") == "yes"
+    if (disconnect or shutdown) and selected and connected:
         commands.append(("mmcli", "-m", selected[0][0], "--simple-disconnect"))
     if private_routes:
         commands.append(("ip", "-4", "route", "flush", "table", str(table)))
@@ -195,8 +256,15 @@ def reset(ue, dry_run=False, disconnect=False):
         for rule in rules:
             if role_rule(rule):
                 print("would remove rule: " + json.dumps(rule, sort_keys=True))
+        if shutdown:
+            for bearer in bearer_paths(shutdown_info):
+                print("would run: " + shlex.join(("mmcli", "-m", selected[0][0], f"--delete-bearer={bearer}")))
+            if shutdown_info.get("modem.generic.state") != "disabled":
+                print("would run: " + shlex.join(("mmcli", "-m", selected[0][0], "--disable")))
         return
     for command in commands:
+        if command[0] == "mmcli":
+            checked_modem(command[2], imei)
         change(*command)
     if any(ipaddress.IPv4Address(info["local"]) in pool for device in ip_json("addr", "show")
            for info in device.get("addr_info", [])):
@@ -207,15 +275,22 @@ def reset(ue, dry_run=False, disconnect=False):
             if rule["priority"] not in priorities:
                 command.extend(["lookup", str(table)])
             change(*command)
-    remaining_routes = ip_json("route", "show", "table", "main")
-    remaining_addresses = ip_json("addr", "show")
-    if (any(ipaddress.IPv4Address(info["local"]) in pool for device in remaining_addresses for info in device.get("addr_info", []))
-            or ip_json("route", "show", "table", str(table)) or any(role_rule(rule) for rule in ip_json("rule", "show"))
-            or any(route.get("dev") in targets or (route.get("dev") in legacy_devices
-                   and route.get("dst", "default") != "default"
-                   and ipaddress.IPv4Network(route["dst"], strict=False).subnet_of(pool)) for route in remaining_routes)):
-        raise ValueError("Role IPv4 addresses/routes/rules remain or were recreated; reset is incomplete")
+    def verify_cleared():
+        remaining_routes = ip_json("route", "show", "table", "main")
+        remaining_addresses = ip_json("addr", "show")
+        if (any(ipaddress.IPv4Address(info["local"]) in pool for device in remaining_addresses for info in device.get("addr_info", []))
+                or ip_json("route", "show", "table", str(table)) or any(role_rule(rule) for rule in ip_json("rule", "show"))
+                or any(route.get("dev") in targets or (route.get("dev") in legacy_devices
+                       and route.get("dst", "default") != "default"
+                       and ipaddress.IPv4Network(route["dst"], strict=False).subnet_of(pool)) for route in remaining_routes)):
+            raise ValueError("Role IPv4 addresses/routes/rules remain or were recreated; reset is incomplete")
+    verify_cleared()
+    if shutdown:
+        shutdown_modem(selected[0][0], imei)
+        verify_cleared()
     print(f"UE{ue} reset complete: role IPv4 addresses, routes and policy rules cleared; WWAN baseline DOWN / MTU 1500")
+    if shutdown:
+        print(f"UE{ue} shutdown complete: IMEI={imei}; modem={selected[0][0]}; bearers=0; state=disabled")
 
 
 def main():
@@ -223,11 +298,12 @@ def main():
     parser.add_argument("--ue", required=True, type=int, choices=(1, 2))
     parser.add_argument("--dry-run", action="store_true", help="Show the current reset scope without changes")
     parser.add_argument("--disconnect", action="store_true", help="Also disconnect this IMEI's current connected PDU")
+    parser.add_argument("--shutdown", action="store_true", help="Disconnect, reset IPv4, delete all selected-modem bearers and disable it")
     args = parser.parse_args()
     if not args.dry_run and os.geteuid() != 0:
         parser.error("Run reset with sudo; --dry-run can run without sudo")
     try:
-        reset(args.ue, args.dry_run, args.disconnect)
+        reset(args.ue, args.dry_run, args.disconnect, args.shutdown)
     except (ValueError, OSError, subprocess.SubprocessError) as error:
         print(f"STOP: {error}", file=sys.stderr)
         return 1
@@ -272,7 +348,9 @@ Rediscover these dynamic values after modem restart/reconnection. Both cells use
 PLMN `00101`, TAC 7 and SST 1. DNN selects the UE pool; cell lock selects the DU.
 UE1's earlier host allocation was `10.45.0.3/29` on `wwan0`; UE2's earlier
 bearer 5 / `10.46.0.3/29` is also historical. Both now report connected 5GNR
-under modem paths 9/10, but current SIM/cell/bearer/host-path checks remain needed.
+in the earlier modem 9/10 preflight. The latest measured run used modem 13/14
+and bearer 9/10, as recorded above. Recheck serving-cell
+correlation separately; the launcher does not query the serving DU.
 
 Treat locks as needing restoration after modem power/reconnection: the
 operator reported a lock query of `0`, with affected role unspecified. See the
@@ -1384,37 +1462,85 @@ acceptance.
 
 <a id="cleanup"></a>
 
-## 4. Finish tests and reset each role
+## 4. Finish tests and shut down both Quectel modems
 
-Stop clients and let the finite Spark xApp delete subscriptions and finish.
-Use the same helper for a complete role reset and add `--disconnect` to end its
-current connected PDU. No saved `PATH_*`, original IP/CIDR/interface, modem index
-or old MTU/state is needed. This resets the role to the defined DOWN / MTU 1500
-baseline rather than reconstructing an earlier session.
+Finish the laptop traffic and let the finite Spark xApp receive both subscription
+delete responses and exit normally. Then complete UE1 shutdown followed by UE2
+shutdown below. Keep ModemManager running for both role operations.
 
-### 4.1. Final UE1 reset — table 151
+Use the updated section 0.1 helper. `--shutdown` implies PDU disconnection and
+performs this sequence for the selected IMEI: `mmcli --simple-disconnect` when
+connected, IPv4 address/route/rule cleanup, `mmcli --delete-bearer=...` for every
+listed bearer, then `mmcli --disable`. The final checks require no bearers and
+modem state `disabled`. This is separate from the startup/recovery reset: without
+`--shutdown`, the helper retains its existing behavior; `--disconnect` alone
+keeps bearer objects and leaves the modem enabled.
+
+No saved `MODEM`, `BEARER`, `WWAN_IF`, `PATH_*`, IP/CIDR or old-session ledger is
+needed. Each operation discovers the current modem by the role's IMEI and reads
+its bearer list again. The other UE's modem, bearers, host path and Wi-Fi are
+preserved. A failure prints `STOP`; require the shutdown success marker before
+continuing. If the modem was already unplugged, use the ordinary `--ue 1/2`
+reset for leftover host configuration; its hardware shutdown cannot be verified.
+
+`--disable` disables network operations and enters the modem's low-power state.
+Physical power disconnection is a separate step in 4.3. See the
+[ModemManager modem API](https://github.com/linux-mobile-broadband/ModemManager/blob/main/introspection/org.freedesktop.ModemManager1.Modem.xml).
+
+### 4.1. UE1 disconnect, delete bearers and disable — table 151
+
+UE1 is selected by IMEI `863305041978437`. In the UE1 terminal, first confirm
+the installed helper supports shutdown, then run:
 
 ```bash
-sudo python3 ~/falcon-reset-ue-network.py --ue 1 --disconnect
+python3 ~/falcon-reset-ue-network.py --help
+sudo python3 ~/falcon-reset-ue-network.py --ue 1 --shutdown
+mmcli -L
 ip -o -4 addr show
 ip -4 rule show
 ip -4 route show table 151
 ip -4 route show default
 ```
 
-Require `UE1 reset complete`. UE2 and Wi-Fi remain available.
+Require `UE1 reset complete` and `UE1 shutdown complete`, with `bearers=0` and
+`state=disabled`. The log prints the actual modem path and each deleted bearer.
+UE1's `internet` PDU, all its listed old/current bearers, IPv4 addresses,
+table-151 routes and reserved rules are cleared. UE2 remains available.
 
-### 4.2. Final UE2 reset — table 152
+### 4.2. UE2 disconnect, delete bearers and disable — table 152
+
+After UE1 shutdown passes, run in the UE2 terminal. UE2 is selected by IMEI
+`863305041980706`:
 
 ```bash
-sudo python3 ~/falcon-reset-ue-network.py --ue 2 --disconnect
+sudo python3 ~/falcon-reset-ue-network.py --ue 2 --shutdown
+mmcli -L
 ip -o -4 addr show
 ip -4 rule show
 ip -4 route show table 152
 ip -4 route show default
 ```
 
-Require `UE2 reset complete`. After both laptop roles are reset, use
+Require `UE2 reset complete` and `UE2 shutdown complete`, with `bearers=0` and
+`state=disabled`. UE2's `internet2` PDU, all its listed old/current bearers,
+IPv4 addresses, table-152 routes and reserved rules are cleared.
+
+The two tables may then report `FIB table does not exist`; that is expected when
+their routes have been removed. Confirm no UE1/UE2 test addresses or reserved
+policy rules remain and that the management Wi-Fi default route is intact.
+
+### 4.3. Physical power disconnection and the next experiment
+
+After both shutdown success markers, disconnect each Quectel board's USB and
+external power if it has an independent supply. A software-disabled modem may
+still appear in `mmcli -L`; it is not physically disconnected yet.
+
+For the next experiment, use fresh UE1/UE2 Bash terminals and repeat the ordered
+role sequences. Rediscover by IMEI/SIM, use `mmcli --enable` on the selected
+disabled modem as shown there, restore the cell lock after power/reconnection
+and read fresh bearer/IP/interface values before creating routes.
+
+After both laptop modems are shut down, use
 [Spark step 8](dual_ue_spark_quick_commands.md#8-shutdown-and-retained-evidence)
 for server/RAN/core shutdown. Retain identity/cell/bearer/path/UL/KPM correlation
 and restart/guard/survivor observations; full acceptance remains pending.

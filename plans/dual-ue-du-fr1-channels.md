@@ -12,9 +12,9 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 | --- | --- |
 | Plan | 3 |
 | Task | `dual-ue-du-fr1-channels` |
-| Status | In progress: DU1 historical UL and DU2 single-link UL functionality/KPM smoke passed; new UE1 DU1 SA/lock, IPv4 PDU and private ping passed; new UE1 60-second TCP UL passed; concurrent dual-link UL/KPM pending; underflow remediation deferred |
+| Status | In progress: concurrent dual-UE TCP UL functionality and simultaneous DU-tagged UE KPM observed; full cross-layer correlation, repeatability/UDP/guard/survivor/cold-start acceptance pending; underflow remediation deferred |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 21 : 58: 21 Oct 13, 2026 EDT |
+| Last updated at | 22 : 57: 24 Oct 13, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | To be assigned |
@@ -45,7 +45,8 @@ UL acceptance requirements remain pending.
 
 The [SIM preparation record](../docs/sim_provisioning_and_dual_ue.md) identifies
 two provisioned cards and two physical RM500Q modems. Both new subscribers have now registered on their intended cells. Two DU/radios
-have started; simultaneous private IP paths and full UL acceptance remain pending.
+have started; both private IP paths and concurrent TCP UL functionality have
+passed. Full repeatability and the remaining acceptance gates are pending.
 DU2's radio/F1/cell and E2/KPM configurations are now prepared and deployed for
 B210 `328B021`, discovered over USB 3 on 2026-10-13 after reconnection. Offline
 configuration checks and DU parsing pass. After reconnecting both radios, UHD
@@ -54,7 +55,8 @@ and `328B021` simultaneously over USB 3. DU1 uses host controller `NVDA8000:00`
 at `2-1.3`; DU2 uses `NVDA8000:02` at `6-1.1`. DU2 subsequently started at
 3600 MHz / PCI 2 / SSB 639648 with F1/E2 completed; the RIC registered gNB 411 /
 DU ID 2 and accepted KPM RAN function ID 2. UE2 registration and single-link UL subsequently passed as recorded below;
-concurrent dual-link UL acceptance remains pending. See the
+concurrent TCP UL and real two-DU KPM subsequently passed the checkpoint below,
+while full acceptance remains pending. See the
 [live startup evidence](../docs/evidence/2026-10-13_du2_startup/manifest.json).
 
 The inspected DU1 file uses TX gain **70** and RX gain **35**. Historical records
@@ -122,8 +124,9 @@ client/server output, actual Spark KPM log, parsed rows and current artifact has
 - [x] Read connected, non-suspended UE1 `internet` bearer 4 / `10.45.0.2/30` / `wwan1` / gateway `10.45.0.1` / MTU 1400. UE1 lookup resolved to table 151 / wwan1, private ping was 5/5 with zero loss, both role lookup/guard rules read back, and UE2 returned echo sequences 1–5 after UE1 configuration. Latest Wi-Fi default-route output was not included. See [dual IPv4 path evidence](../docs/evidence/2026-10-13_dual_ipv4_paths/manifest.json).
 - [x] Complete new UE1 60-second TCP UL / UE2 test traffic idle: receiver **10.5 Mbit/s over 60.23 s**, sender **10.9 Mbit/s / Retr 0**, pipeline exit **0**, timestamped 19:15:26–19:16:27 EDT. Wi-Fi default route read back unchanged. Both DUs had been instructed to remain running; no UE1 KPM capture was supplied. Sender one-second transfer varied, including four zero-transfer intervals, so only UL functionality passes. See [UE1 UL evidence](../docs/evidence/2026-10-13_du1_ul/manifest.json).
 - [x] Verify both DU nodes in the diagnostic xApp and two KPM subscription/delete responses with pipeline exit 0. The 19:29:23–19:30:14 EDT probe received **zero UE callback blocks**; this is subscription/lifecycle evidence, not two-link KPM data. See [subscription evidence](../docs/evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
-- [ ] Complete concurrent UL, streaming and deliberate path-survivor checks. The earlier concurrent launcher's `wait`/`printf` lost variable expansions; its printed zero statuses and end timestamp are invalid. Retain real child statuses with the Python launcher in the laptop booklet.
-- [ ] Accumulate at least 30 real UL-window rows per link, explicit two-DU/UE row attribution, captured exit codes, full lifecycle checks and the remaining repeated/UDP/cold-start gates.
+- [ ] Complete streaming and deliberate path-survivor checks. Concurrent TCP UL subsequently passed in the checkpoint below. The earlier concurrent launcher's `wait`/`printf` lost variable expansions; its printed zero statuses and end timestamp remain invalid historical records.
+- [x] Accumulate at least 30 real UL-active rows per DU with explicit DU/F1AP attribution, subscription/deletion responses and normal xApp exit. The latest completed capture has 63/61 complete five-metric UL-active rows, approximately 62/61 inside the clock-corrected laptop window; see the checkpoint below.
+- [ ] Complete the full cross-layer modem/SIM/cell/F1AP/bearer ledger and remaining repeated/UDP/guard/survivor/cold-start gates.
 - [ ] Restore and verify connections after modem power cycle: the operator reported `AT+QNWLOCK="common/5g"` readback `0` (affected role unspecified). Treat locks as requiring boot restoration, reselect by IMEI/SIM, reapply each intended lock and require actual PCI/NCI/SSB/SA before PDU; refresh bearer/path and recheck cell before UL. Prior live mappings do not certify restored connections. See [power-cycle observation](../docs/evidence/2026-10-13_modem_lock_power_cycle/manifest.json).
 
 This checkpoint is **DU2 Single-Link UL Functionality / KPM Smoke Passed**.
@@ -134,9 +137,57 @@ is contextual attribution with one DU, not proof of attribution with two DUs.
 After the modem power/reconnection event, UE2 reported successful IPv4 connection
 with bearer 5 / `10.46.0.3/29` / `wwan0` / MTU 1400. Existing rules 10161/10162
 still used `10.46.0.2`; the new-path preflight correctly refused the collision.
-Fresh serving-cell/bearer/host ownership checks and precise UE2 route rebinding
-remain pending; previous path/UL checkpoints are historical until restored. See
+That allocation and its failed rebinding are historical; subsequent dynamic
+preflight and concurrent UL/KPM are recorded below. A repeatable full cold-start
+workflow remains pending. See
 [UE2 reattachment evidence](../docs/evidence/2026-10-13_ue2_reattach/manifest.json).
+
+## 2026-10-13 Concurrent TCP UL and Two-DU KPM Checkpoint
+
+[Experiment results report](../docs/reports/dual_ue_ul_experiment_report_2026-10-13.md)
+records the setup, concurrent UL/KPM results, clock alignment, PHY observations
+and the distinction between path separation and unverified fault/access isolation.
+
+[Retained evidence](../docs/evidence/2026-10-13_dual_kpm_reports/manifest.json)
+contains both full Spark KPM logs, 492 parsed rows, RIC lifecycle, selected CU
+identity records, operator laptop metadata/receiver intervals, PHY aggregates
+and the throughput/CRC plot. Laptop values come from the operator transcript;
+the original complete laptop logs remain in `/tmp/falcon-dual-ul-iakb3ttb` there.
+
+- [x] Complete concurrent TCP UL through two bound endpoints: UE1 `10.45.0.6`
+  / modem 13 / bearer 9 / wwan0 / table 151 received **13.8 Mbit/s over 61.02 s**;
+  UE2 `10.46.0.5` / modem 14 / bearer 10 / wwan1 / table 152 received
+  **17.3 Mbit/s over 60.25 s**. Both clients exited 0, both senders reported
+  Retr 0 and their included server receiver summaries agree. The sum of the
+  reported mean receiver rates is approximately **31.1 Mbit/s**.
+- [x] Receive real KPM from both DUs during UL: latest capture has **123 callbacks
+  per DU**, stable tuples `(DU1, F1AP11)` / `(DU2, F1AP7)`, **63/61 complete
+  UL-positive five-metric rows** and **61 matched simultaneous UL-active pairs**.
+  Both subscription/delete pairs and normal xApp exit passed. An earlier
+  completed capture also had 123 callbacks per DU and 57/56 complete UL-active rows.
+- [x] Reconcile the observed host-clock discrepancy. Manually simultaneous
+  readbacks indicate Spark is approximately **199.27 s ahead of Laptop**.
+  Corrected laptop bounds are **22:17:25.532–22:18:27.454 EDT**, overlapping the
+  latest capture and containing approximately **62/61 complete UL-active rows**.
+  UE1's first 60 KPM/receiver interval profiles correlate at **r=0.963**. This
+  is an approximate retrospective alignment, not precise clock synchronization.
+- [x] Confirm CU-side node/cell attribution: CU internal UE19 maps DU1 / PCI1 /
+  RNTI 0x460c / F1AP11; internal UE13 maps DU2 / PCI2 / RNTI 0x4608 / F1AP7.
+  KPM does not carry modem/SIM identity; the complete cross-layer ledger remains pending.
+- [ ] Complete precise host-clock synchronization and the remaining repeated,
+  UDP, guard/survivor, streaming and cold-start acceptance gates.
+
+UL-active KPM sample means are **14.35 / 18.06 Mbit/s**; these are RLC-layer
+measurements and have different windows/overheads from application receivers.
+DU1's logged PUSCH failed-CRC attempts are **5572/36831 (15.13%)**, versus
+DU2 **2636/36078 (7.31%)**, in the selected 63-second PHY window. DU1's greater
+rate fluctuation is consistent with its higher decoding-failure fraction; this
+does not establish the RF cause or measure TCP loss/first-transmission BLER.
+Missing idle DL-delay values stay unreported; DL metrics are observations.
+The two normal monitor runs did not reproduce the earlier disconnected-xApp
+deletion-failure abort; that FlexRIC failure-path defect remains unfixed.
+This checkpoint establishes concurrent UL functionality and real two-DU KPM,
+while full Plan 3 acceptance and underflow remediation remain pending/deferred.
 
 ## 2026-10-12 Single-UE / DU1 Uplink Checkpoint
 
@@ -324,13 +375,14 @@ they already exist:
 | `scripts/dual_fr1/check_config.py` | Implemented offline identities, F1/E2, nominal channels, missing serial, metrics and writable log checks; operating authorization and SSB derivation remain separate |
 | `scripts/dual_fr1/configure_ue_routes.sh` | Guarded per-UE policy routes and precise rollback |
 | `scripts/dual_fr1/verify_kpm.py` | Per-link report/lifecycle/evidence checks |
-| `docs/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; actual startup/F1/E2 and UE2 solo UL verified; concurrent UL/KPM pending |
-| `docs/dual_ue_laptop_quick_commands.md` | Separate ordered UE1/UE2 sequences, source/server-destination rules and complete per-role IPv4 reset using current state only. Latest operator modem readback is UE1 path 9 / UE2 path 10, both connected / 5GNR / 00101 / home. Earlier host allocations are historical; current cell/bearer/path preflight, unbound ping/Wi-Fi-off and measured dual UL/KPM remain pending |
-| `scripts/dual_fr1/reset_ue_network.py` / `tests/dual_ue_reset_test.py` | Implemented reset of the selected role's dedicated table, all reserved/extra table-reference rules, matching WWAN IPv4 addresses and legacy main routes; discovers current IMEI/ports, supports no-modem stale-state cleanup, duplicate rules, a fixed DOWN/MTU-1500 baseline, dry run and optional PDU disconnect. Requires no previous allocation/ledger. Twenty offline stateful tests passed; no live laptop reset executed by the agent |
-| `scripts/dual_fr1/run_dual_ul.py` / `tests/dual_ue_ul_test.py` | Implemented concurrent launcher that discovers both current IMEI/SIM/APN/bearer addresses and interfaces instead of historical tuples, checks installed prefixes and source/unbound routes, and rereads identities before starting either client; supports read-only preflight and records real per-process status/time/metadata, with partial-start/interrupt cleanup. Twenty-five offline tests passed, including actual mmcli indexed access-technology output, scalar compatibility, LTE/missing-report rejection and different/unreported bearer gateways. Gateway is recorded as metadata; Wi-Fi, wrong table and wrong source routes still fail. Operator's old launcher failed on a stale UE1 address and then over-strict technology/gateway checks; current bearer/cell/path verification and a measured dual UL/KPM run remain pending |
+| `docs/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; startup/F1/E2, UE2 solo UL and subsequent concurrent TCP UL / two-DU KPM checkpoints observed; full acceptance pending |
+| `docs/dual_ue_laptop_quick_commands.md` | Separate ordered UE1/UE2 sequences, source/server-destination rules and complete per-role IPv4 reset using current state only. Latest measured launcher record is UE1 modem/SIM 13 / bearer 9 / 10.45.0.6/30 / wwan0 / table 151 and UE2 modem/SIM 14 / bearer 10 / 10.46.0.5/30 / wwan1 / table 152. Both exits 0, receiver 13.8/17.3 Mbit/s; latest KPM has 123 callbacks per DU and 63/61 complete UL-active rows. Approximate +199.27-second clock correction gives 62/61 rows inside the laptop run. Full cross-layer correlation and repeatability/UDP/guard/survivor/cold-start gates pending |
+| `scripts/dual_fr1/reset_ue_network.py` / `tests/dual_ue_reset_test.py` | Implemented per-role IPv4 reset from current IMEI/ports and kernel state, with optional PDU disconnect. Added `--shutdown`: disconnect, clear the role's host path, delete all selected-modem bearer objects and disable it; rereads identity and verifies zero bearers / disabled state. Ordinary reset and disconnect-only behavior are preserved. Thirty-two offline stateful tests passed, covering both roles, other-UE preservation, stale bearers, idempotence, dry run, failed deletion/disable, reconnection and changed identity. No live laptop shutdown executed by the agent |
+| `scripts/dual_fr1/run_dual_ul.py` / `tests/dual_ue_ul_test.py` | Implemented concurrent launcher that discovers both current IMEI/SIM/APN/bearer addresses and interfaces instead of historical tuples, checks installed prefixes and source/unbound routes, and rereads identities before starting either client; supports read-only preflight and records real per-process status/time/metadata, with partial-start/interrupt cleanup. Twenty-five offline tests passed, including indexed/scalar access technologies, LTE/missing-report rejection and different/unreported gateways. Operator's measured concurrent run completed with both exits 0 and receiver 13.8/17.3 Mbit/s, overlapping the latest dual-DU KPM after approximate clock correction. Full acceptance pending |
 | `docs/dual_ue_spark_quick_commands.md` | Spark commands for core/CU/RIC/two-DU startup, both server endpoints, DU-tagged KPM capture and shutdown |
-| `scripts/dual_fr1/xapp_oran_moni_dual.c` / `scripts/dual_fr1/build_kpm_monitor.sh` | Built isolated diagnostic using pinned FlexRIC API/library; labels each callback with DU ID, supports finite capture, fixes dense subscription cleanup; two-node subscription/deletion passed, actual two-link callbacks pending |
-| `docs/dual_ue_subnets.md` / `scripts/dual_fr1/prepare_dual_subnets.py` / `scripts/dual_fr1/apply_dual_subnets.sh` / `scripts/dual_fr1/ue2_dnn.js` | Dual-subnet migration, backups, saved apply command, targeted UE2 DNN rename and rollback; six mocked apply tests passed; operator-applied core checks, both registered IPv4/private-ping paths and both role UL functionality checkpoints passed; concurrent UL/KPM pending |
+| `scripts/dual_fr1/xapp_oran_moni_dual.c` / `scripts/dual_fr1/build_kpm_monitor.sh` | Built isolated diagnostic using pinned FlexRIC API/library; labels each callback with DU ID, supports finite capture and dense subscription cleanup; latest two completed captures each have 123 real UE callbacks per DU, both subscription/delete pairs and normal exit. Latest capture has 61 simultaneous complete UL-active row pairs. Earlier disconnected-xApp deletion-failure abort path remains unfixed |
+| `docs/evidence/2026-10-13_dual_kpm_reports/` | Retained two full Spark captures, 492 parsed rows, RIC lifecycle, selected CU identity ledger, operator laptop summary/receiver intervals, approximate clock alignment, PUSCH aggregates, reproducible analysis and throughput/CRC plot |
+| `docs/dual_ue_subnets.md` / `scripts/dual_fr1/prepare_dual_subnets.py` / `scripts/dual_fr1/apply_dual_subnets.sh` / `scripts/dual_fr1/ue2_dnn.js` | Dual-subnet migration, backups, saved apply command, targeted UE2 DNN rename and rollback; six mocked apply tests passed; core, registered IPv4/private-ping paths, solo UL and subsequent concurrent TCP UL / dual-DU KPM checkpoints observed; full acceptance pending |
 
 Keep DU1's maintained configuration in Falcon and deploy it to
 `$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml`. DU1 parse/start commands use
