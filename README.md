@@ -193,7 +193,7 @@ docs/
 | [Full Reproduction Runbook](docs/full_reproduction_runbook.md) | Startup, laptop setup, registration, IPv4 data, traffic and shutdown commands |
 | [Spark quick commands](docs/spark_quick_commands.md) | Command booklet for core, CU, FlexRIC, DU, xApp, traffic and shutdown with compact checks |
 | [UE laptop quick commands](docs/ue_laptop_quick_commands.md) | Command booklet for modem selection, SA registration, IPv4 bearer, WWAN and traffic |
-| [Dual UE laptop quick commands](docs/dual_ue_laptop_quick_commands.md) | IMEI/SIM selection, SA locks, actual IPv4 bearers, source/destination policy paths, recorded concurrent UL and complete per-role IPv4 reset without old-session parameters |
+| [Dual UE laptop quick commands](docs/dual_ue_laptop_quick_commands.md) | IMEI/SIM selection, SA locks, actual IPv4 bearers, source/destination policy paths, concurrent UL with automatic current-bearer discovery and complete per-role IPv4 reset without old-session parameters |
 | [Dual UE Spark quick commands](docs/dual_ue_spark_quick_commands.md) | Core/CU/RIC/two-DU startup, two server endpoints, DU-tagged KPM capture and shutdown |
 | [Dual UE subnet migration](docs/dual_ue_subnets.md) | Prepared two-DNN address pools, Spark service addresses, targeted subscriber change and rollback |
 | [5G SA Bring-up Debug Record, 2026-10-05](docs/troubleshooting/2026-10-05_sa_bringup.md) | Dated evidence, confirmed repairs and troubleshooting decision tree/matrix |

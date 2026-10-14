@@ -298,6 +298,9 @@ RIC must have registered `gnb=411 / DU ID 1` and `gnb=411 / DU ID 2`, accepting 
 RAN function ID 2 for both. Keep both DUs and RIC running. Complete any existing
 finite monitor before launching another. Start the 120-second capture first;
 after both subscriptions succeed, run [laptop section 3](dual_ue_laptop_quick_commands.md#dual-ul)'s concurrent clients.
+The updated laptop launcher reads both current bearers by IMEI/SIM and checks
+both routes before starting traffic; complete its `--check-only` preflight before
+starting this timed capture. Historical IP/interface tuples must not be reused.
 
 The historical DU2-only stock-monitor run remains retained evidence. Its
 callback prints the shared gNB ID without DU ID. Use the DU-tagged diagnostic

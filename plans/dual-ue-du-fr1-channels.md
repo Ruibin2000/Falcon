@@ -14,7 +14,7 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 | Task | `dual-ue-du-fr1-channels` |
 | Status | In progress: DU1 historical UL and DU2 single-link UL functionality/KPM smoke passed; new UE1 DU1 SA/lock, IPv4 PDU and private ping passed; new UE1 60-second TCP UL passed; concurrent dual-link UL/KPM pending; underflow remediation deferred |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 21 : 05: 57 Oct 13, 2026 EDT |
+| Last updated at | 21 : 40: 12 Oct 13, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | To be assigned |
@@ -327,6 +327,7 @@ they already exist:
 | `docs/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; actual startup/F1/E2 and UE2 solo UL verified; concurrent UL/KPM pending |
 | `docs/dual_ue_laptop_quick_commands.md` | Separate ordered UE1/UE2 sequences, source/server-destination rules and complete per-role IPv4 reset using current state only. Latest UE1 host path is `10.45.0.3/29` / `wwan0` / table 151; it can be reused or fully reset before rebuilding. UE2 is not connected. Live unbound ping/Wi-Fi-off and full dual-path restoration remain pending |
 | `scripts/dual_fr1/reset_ue_network.py` / `tests/dual_ue_reset_test.py` | Implemented reset of the selected role's dedicated table, all reserved/extra table-reference rules, matching WWAN IPv4 addresses and legacy main routes; discovers current IMEI/ports, supports no-modem stale-state cleanup, duplicate rules, a fixed DOWN/MTU-1500 baseline, dry run and optional PDU disconnect. Requires no previous allocation/ledger. Twenty offline stateful tests passed; no live laptop reset executed by the agent |
+| `scripts/dual_fr1/run_dual_ul.py` / `tests/dual_ue_ul_test.py` | Implemented concurrent launcher that discovers both current IMEI/SIM/APN/bearer addresses and interfaces instead of historical tuples, checks installed prefixes and source/unbound routes, and rereads identities before starting either client; supports read-only preflight and records real per-process status/time/metadata, with partial-start/interrupt cleanup. Sixteen offline tests passed. Operator's old launcher failed on UE1's stale `10.45.0.2` before starting traffic; a measured run with the dynamic launcher remains pending |
 | `docs/dual_ue_spark_quick_commands.md` | Spark commands for core/CU/RIC/two-DU startup, both server endpoints, DU-tagged KPM capture and shutdown |
 | `scripts/dual_fr1/xapp_oran_moni_dual.c` / `scripts/dual_fr1/build_kpm_monitor.sh` | Built isolated diagnostic using pinned FlexRIC API/library; labels each callback with DU ID, supports finite capture, fixes dense subscription cleanup; two-node subscription/deletion passed, actual two-link callbacks pending |
 | `docs/dual_ue_subnets.md` / `scripts/dual_fr1/prepare_dual_subnets.py` / `scripts/dual_fr1/apply_dual_subnets.sh` / `scripts/dual_fr1/ue2_dnn.js` | Dual-subnet migration, backups, saved apply command, targeted UE2 DNN rename and rollback; six mocked apply tests passed; operator-applied core checks, both registered IPv4/private-ping paths and both role UL functionality checkpoints passed; concurrent UL/KPM pending |
