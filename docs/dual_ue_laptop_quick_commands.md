@@ -55,6 +55,7 @@ sudo systemctl enable --now ModemManager
 | Spark service IP | `10.45.0.1` | `10.46.0.1` |
 | Spark iperf3 port | `5201` | `5202` |
 | Proposed policy table / lookup / guard priority | `151` / `10151` / `10152` | `152` / `10161` / `10162` |
+| Server destination lookup / guard priority | `10153` / `10154` | `10163` / `10164` |
 | WWAN / UE IP / modem / bearer / AT port | Discover each run | Discover each run |
 
 | Observed before the latest modem power cycle | UE1 | UE2 |
@@ -157,6 +158,25 @@ readiness, use its actual QMI port and the [USIM check](ue_laptop_quick_commands
 <a id="ue1-cell-lock"></a>
 
 ### 1.2. Verify the AT port and restore the DU1 lock
+
+After 1.1 succeeds, query UE1's current serving cell without opening minicom:
+
+```bash
+# UE1: $MODEM was selected using $EXPECTED_IMEI (863305041978437).
+mmcli -L
+mmcli -m "$MODEM"
+sudo mmcli -m "$MODEM" --get-cell-info
+```
+
+Use the NR record marked `serving: yes`. For DU1, require PCI / `physical-ci`
+`1` and Cell ID / `ci` `66C000` (hexadecimal; leading zeros may be omitted),
+equivalent to NCI `6733824` in decimal. Both DUs use n78; check the actual
+PCI/NCI to distinguish them. `$MODEM` belongs to this UE1 terminal and is
+discovered by IMEI, so do not replace it with a remembered modem number.
+Repeat this query after PDU establishment and before UL. If the option is
+unsupported or the serving NR PCI/NCI is missing, use the AT readback below.
+This query does not read or restore the cell lock; restore it below when needed.
+See the [ModemManager cell-info interface](https://github.com/linux-mobile-broadband/ModemManager/blob/main/introspection/org.freedesktop.ModemManager1.Modem.xml).
 
 Read the selected modem's device/ports and match them to the USB serial links.
 AT port numbers change on reconnect; confirm `AT+CIMI` before any write.
@@ -287,6 +307,9 @@ cleanup_old_ue1_path() {
     }
     printf '%s\n' "$current" | grep -Fq 'wwan1 (net)' || return 1
   fi
+  if ip -4 rule show | grep -Eq '^10153:[[:space:]]+from all to 10[.]45[.]0[.]1(/32)? lookup 151([[:space:]]|$)'; then
+    sudo ip -4 rule del pref 10153 to 10.45.0.1/32 lookup 151 || return 1
+  fi
   if ip -4 rule show | grep -Eq '^10151:[[:space:]]+from 10[.]45[.]0[.]2(/32)? to 10[.]45[.]0[.]1(/32)? lookup 151([[:space:]]|$)'; then
     sudo ip -4 rule del pref 10151 from 10.45.0.2/32 to 10.45.0.1/32 lookup 151 || return 1
   fi
@@ -301,6 +324,9 @@ cleanup_old_ue1_path() {
   fi
   if ip -4 rule show | grep -Eq '^10152:[[:space:]]+from 10[.]45[.]0[.]2(/32)? to 10[.]45[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
     sudo ip -4 rule del pref 10152 from 10.45.0.2/32 to 10.45.0.1/32 type unreachable || return 1
+  fi
+  if ip -4 rule show | grep -Eq '^10154:[[:space:]]+from all to 10[.]45[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
+    sudo ip -4 rule del pref 10154 to 10.45.0.1/32 type unreachable || return 1
   fi
   printf 'Matching old UE1 entries removed; inspect table 151 and its priorities.\n'
 }
@@ -413,6 +439,33 @@ Require this UE's actual interface and `table 151`, private ping replies,
 and the unchanged Wi-Fi default route. Save `PATH_*` values even if a later
 bearer allocation changes. Recheck cell/SA after reconnect/reattachment.
 
+The source rules above support programs that bind UE1's IP, including the
+iperf commands below. To also let ordinary `ping 10.45.0.1` and other programs
+automatically select UE1, add a destination lookup and guard. Table 151's
+existing route supplies the current UE1 preferred source address. Run this
+after the source-bound checks pass and verify priorities `10153/10154` are
+unused; inspect an occupied slot rather than adding duplicates.
+
+```bash
+ip -4 rule show
+if ip -4 rule show | grep -Eq '^(10153|10154):'; then
+  printf 'STOP: UE1 destination priorities occupied; inspect existing rules.\n'
+else
+  printf 'destination_lookup=10153 destination_guard=10154 server=10.45.0.1 table=151\n' > "$UE_RUN/server-route-state.txt" &&
+  sudo ip -4 rule add pref 10154 to 10.45.0.1/32 type unreachable &&
+  sudo ip -4 rule add pref 10153 to 10.45.0.1/32 lookup 151
+fi
+ip -4 route get 10.45.0.1
+ping -c 5 10.45.0.1
+```
+
+Require UE1's current WWAN, `table 151`, `src` equal to `$UE_IP`, and ping
+replies. The destination guard prevents unbound traffic from falling through
+to Wi-Fi if table 151 loses its server route. The Wi-Fi default stays available
+for other destinations. With Wi-Fi off, repeat both the unbound and source-bound
+checks; both must use UE1. This configuration targets only `10.45.0.1/32`.
+The previous source-only recipe did not guarantee routing for an unbound ping.
+
 ### 1.7. Run UE1's 60-second TCP UL, then keep it connected
 
 Wait for Spark's `10.45.0.1:5201` server to show `Server listening`.
@@ -514,6 +567,25 @@ readiness, use its actual QMI port and the [USIM check](ue_laptop_quick_commands
 <a id="ue2-cell-lock"></a>
 
 ### 2.2. Verify the AT port and restore the DU2 lock
+
+After 2.1 succeeds, query UE2's current serving cell without opening minicom:
+
+```bash
+# UE2: $MODEM was selected using $EXPECTED_IMEI (863305041980706).
+mmcli -L
+mmcli -m "$MODEM"
+sudo mmcli -m "$MODEM" --get-cell-info
+```
+
+Use the NR record marked `serving: yes`. For DU2, require PCI / `physical-ci`
+`2` and Cell ID / `ci` `66C001` (hexadecimal; leading zeros may be omitted),
+equivalent to NCI `6733825` in decimal. Both DUs use n78; check the actual
+PCI/NCI to distinguish them. `$MODEM` belongs to this UE2 terminal and is
+discovered by IMEI, so do not replace it with a remembered modem number.
+Repeat this query after PDU establishment and before UL. If the option is
+unsupported or the serving NR PCI/NCI is missing, use the AT readback below.
+This query does not read or restore the cell lock; restore it below when needed.
+See the [ModemManager cell-info interface](https://github.com/linux-mobile-broadband/ModemManager/blob/main/introspection/org.freedesktop.ModemManager1.Modem.xml).
 
 Read the selected modem's device/ports and match them to the USB serial links.
 AT port numbers change on reconnect; confirm `AT+CIMI` before any write.
@@ -644,6 +716,9 @@ cleanup_old_ue2_path() {
     }
     printf '%s\n' "$current" | grep -Fq 'wwan0 (net)' || return 1
   fi
+  if ip -4 rule show | grep -Eq '^10163:[[:space:]]+from all to 10[.]46[.]0[.]1(/32)? lookup 152([[:space:]]|$)'; then
+    sudo ip -4 rule del pref 10163 to 10.46.0.1/32 lookup 152 || return 1
+  fi
   if ip -4 rule show | grep -Eq '^10161:[[:space:]]+from 10[.]46[.]0[.]2(/32)? to 10[.]46[.]0[.]1(/32)? lookup 152([[:space:]]|$)'; then
     sudo ip -4 rule del pref 10161 from 10.46.0.2/32 to 10.46.0.1/32 lookup 152 || return 1
   fi
@@ -658,6 +733,9 @@ cleanup_old_ue2_path() {
   fi
   if ip -4 rule show | grep -Eq '^10162:[[:space:]]+from 10[.]46[.]0[.]2(/32)? to 10[.]46[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
     sudo ip -4 rule del pref 10162 from 10.46.0.2/32 to 10.46.0.1/32 type unreachable || return 1
+  fi
+  if ip -4 rule show | grep -Eq '^10164:[[:space:]]+from all to 10[.]46[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
+    sudo ip -4 rule del pref 10164 to 10.46.0.1/32 type unreachable || return 1
   fi
   printf 'Matching old UE2 entries removed; inspect table 152 and its priorities.\n'
 }
@@ -769,6 +847,33 @@ ip -4 route show default
 Require this UE's actual interface and `table 152`, private ping replies,
 and the unchanged Wi-Fi default route. Save `PATH_*` values even if a later
 bearer allocation changes. Recheck cell/SA after reconnect/reattachment.
+
+The source rules above support programs that bind UE2's IP, including the
+iperf commands below. To also let ordinary `ping 10.46.0.1` and other programs
+automatically select UE2, add a destination lookup and guard. Table 152's
+existing route supplies the current UE2 preferred source address. Run this
+after the source-bound checks pass and verify priorities `10163/10164` are
+unused; inspect an occupied slot rather than adding duplicates.
+
+```bash
+ip -4 rule show
+if ip -4 rule show | grep -Eq '^(10163|10164):'; then
+  printf 'STOP: UE2 destination priorities occupied; inspect existing rules.\n'
+else
+  printf 'destination_lookup=10163 destination_guard=10164 server=10.46.0.1 table=152\n' > "$UE_RUN/server-route-state.txt" &&
+  sudo ip -4 rule add pref 10164 to 10.46.0.1/32 type unreachable &&
+  sudo ip -4 rule add pref 10163 to 10.46.0.1/32 lookup 152
+fi
+ip -4 route get 10.46.0.1
+ping -c 5 10.46.0.1
+```
+
+Require UE2's current WWAN, `table 152`, `src` equal to `$UE_IP`, and ping
+replies. The destination guard prevents unbound traffic from falling through
+to Wi-Fi if table 152 loses its server route. The Wi-Fi default stays available
+for other destinations. With Wi-Fi off, repeat both the unbound and source-bound
+checks; both must use UE2. This configuration targets only `10.46.0.1/32`.
+The previous source-only recipe did not guarantee routing for an unbound ping.
 
 ### 2.7. Run UE2's 60-second TCP UL, then keep it connected
 
@@ -889,8 +994,14 @@ if ip -4 route get "$PATH_SERVER" from "$PATH_IP"; then
 else
   printf 'Source guard: OK (private destination unreachable).\n'
 fi
+if ip -4 route get "$PATH_SERVER"; then
+  printf 'FAIL: unbound destination fell through; inspect its destination rules.\n'
+else
+  printf 'Destination guard: OK (private destination unreachable).\n'
+fi
 sudo ip -4 route add table "$PATH_TABLE" "$PATH_SERVER/32" dev "$PATH_IF" src "$PATH_IP"
 ip -4 route get "$PATH_SERVER" from "$PATH_IP"
+ip -4 route get "$PATH_SERVER"
 ```
 
 Repeat for the other UE. Confirm the unaffected link survives. Verify counters/
@@ -924,6 +1035,9 @@ owned state. Disconnect its PDU and remove only its saved lookup/route/address:
 
 ```bash
 sudo mmcli -m "$MODEM" --simple-disconnect
+if ip -4 rule show | grep -Eq '^10153:[[:space:]]+from all to 10[.]45[.]0[.]1(/32)? lookup 151([[:space:]]|$)'; then
+  sudo ip -4 rule del pref 10153 to 10.45.0.1/32 lookup 151
+fi
 sudo ip -4 rule del pref 10151 from "$PATH_IP/32" to 10.45.0.1/32 lookup 151
 sudo ip -4 route del table 151 10.45.0.1/32 dev "$PATH_IF" src "$PATH_IP"
 sudo ip -4 addr del "$PATH_CIDR" dev "$PATH_IF"
@@ -935,6 +1049,9 @@ restore this run's recorded interface MTU/state:
 ```bash
 if [[ -z "$(ip -o -4 addr show | awk -v wanted="$PATH_IP" '{split($4,a,"/"); if(a[1]==wanted) print}')" ]]; then
   sudo ip -4 rule del pref 10152 from "$PATH_IP/32" to 10.45.0.1/32 type unreachable
+  if ip -4 rule show | grep -Eq '^10154:[[:space:]]+from all to 10[.]45[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
+    sudo ip -4 rule del pref 10154 to 10.45.0.1/32 type unreachable
+  fi
   if [[ -n "${PATH_OLD_MTU:-}" && -n "${PATH_WAS_UP:-}" ]]; then
     sudo ip link set dev "$PATH_IF" mtu "$PATH_OLD_MTU"
     if [[ "$PATH_WAS_UP" = no ]]; then sudo ip link set dev "$PATH_IF" down; fi
@@ -965,6 +1082,9 @@ owned state. Disconnect its PDU and remove only its saved lookup/route/address:
 
 ```bash
 sudo mmcli -m "$MODEM" --simple-disconnect
+if ip -4 rule show | grep -Eq '^10163:[[:space:]]+from all to 10[.]46[.]0[.]1(/32)? lookup 152([[:space:]]|$)'; then
+  sudo ip -4 rule del pref 10163 to 10.46.0.1/32 lookup 152
+fi
 sudo ip -4 rule del pref 10161 from "$PATH_IP/32" to 10.46.0.1/32 lookup 152
 sudo ip -4 route del table 152 10.46.0.1/32 dev "$PATH_IF" src "$PATH_IP"
 sudo ip -4 addr del "$PATH_CIDR" dev "$PATH_IF"
@@ -976,6 +1096,9 @@ restore this run's recorded interface MTU/state:
 ```bash
 if [[ -z "$(ip -o -4 addr show | awk -v wanted="$PATH_IP" '{split($4,a,"/"); if(a[1]==wanted) print}')" ]]; then
   sudo ip -4 rule del pref 10162 from "$PATH_IP/32" to 10.46.0.1/32 type unreachable
+  if ip -4 rule show | grep -Eq '^10164:[[:space:]]+from all to 10[.]46[.]0[.]1(/32)? unreachable([[:space:]]|$)'; then
+    sudo ip -4 rule del pref 10164 to 10.46.0.1/32 type unreachable
+  fi
   if [[ -n "${PATH_OLD_MTU:-}" && -n "${PATH_WAS_UP:-}" ]]; then
     sudo ip link set dev "$PATH_IF" mtu "$PATH_OLD_MTU"
     if [[ "$PATH_WAS_UP" = no ]]; then sudo ip link set dev "$PATH_IF" down; fi

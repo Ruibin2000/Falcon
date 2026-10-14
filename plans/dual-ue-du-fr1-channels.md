@@ -704,12 +704,19 @@ source-policy route setup for this dual-link test instead.
 - [ ] Use `noprefixroute` for manually assigned WWAN addresses and reserve two
   currently unused routing tables and rule priorities. Proposed table IDs
   151/152 use lookup priorities 10151/10161 and guard priorities 10152/10162;
-  all require conflict checks before use.
+  server-destination lookups use 10153/10163 and destination guards use
+  10154/10164. All require conflict checks before use.
 - [ ] For each actual UE address, add a rule scoped to that source and the
   role's private Spark destination. Its table routes UE1 `10.45.0.1/32` or UE2
   `10.46.0.1/32` directly over that
   WWAN with the same source address, matching the existing verified QMI path.
   Revalidate this recipe if the bearer/network model differs.
+- [ ] Add destination-only lookups for UE1 `10.45.0.1/32` → table 151 and UE2
+  `10.46.0.1/32` → table 152 so unbound applications also select the intended
+  WWAN and the route's current preferred UE source address. Install matching
+  destination-only `unreachable` guards after these lookups, before main-table
+  routing, to prevent Wi-Fi fallback when a server route disappears. The laptop
+  booklet includes setup/cleanup commands; live unbound verification is pending.
 - [ ] Add a narrowly scoped `unreachable` rule immediately after each source/
   destination lookup rule. If its WWAN route disappears, traffic must fail
   locally before reaching the main-table Wi-Fi or other-modem route. Install
@@ -735,13 +742,16 @@ Verification commands in each UE's own terminal after guarded route setup:
 
 ```bash
 ip -4 route get "${SERVER_IP:?Select the role endpoint}" from "${UE_IP:?Read the current bearer first}"
+ip -4 route get "$SERVER_IP"
 ip -4 rule show
 ip -4 route show default
 ping -q -I "$UE_IP" -c 20 "$SERVER_IP"
+ping -q -c 20 "$SERVER_IP"
 ```
 
-**Exit criteria:** each source address resolves over the correct WWAN, both
-paths pass private ping, and management routing remains usable.
+**Exit criteria:** both source-bound and unbound requests resolve over the
+correct WWAN/current UE source, both paths pass private ping, destination guards
+prevent fallback on path loss, and management routing remains usable.
 
 ## Step 9 Validate Dual Link Traffic and Existing KPM
 
