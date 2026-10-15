@@ -35,6 +35,7 @@ The modem, bearer, WWAN, and IP values below belong to this run and must be redi
 | DU ID / PCI | 1 / 1 | 2 / 2 |
 | B210 serial | `3271233` | `328B021` |
 | Carrier frequency / NR-ARFCN | 3660 MHz / 644000 | 3600 MHz / 640000 |
+| Configured channel bandwidth | 20 MHz | 20 MHz |
 | SSB ARFCN | 643680 | 639648 |
 | APN / DNN | `internet` | `internet2` |
 | UE address pool | `10.45.0.0/16` | `10.46.0.0/16` |
