@@ -190,26 +190,37 @@ until Step 7 so the staging runner can test the candidate.
 | `lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.cpp` | Register both vendor names at UE level; select the correct UE snapshot; return `REAL` or `noValue`. |
 | `lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.cpp` | Enforce one `NO_LABEL` entry for these RF metrics during action admission. |
 
-- [ ] Map each requested gNB-CU UE F1AP ID through the existing translator to the
+- [x] Map each requested gNB-CU UE F1AP ID through the existing translator to the
   internal DU UE index. Search the snapshot by `ue_index`; never use that index
   as a vector offset or take the first UE for all requests.
-- [ ] Return one record for every requested UE, in request order. Missing,
+- [x] Return one record for every requested UE, in request order. Missing,
   disconnected, incompatible, or non-finite entries become `noValue`.
-- [ ] Preserve negative/fractional values and finite zero. For SNR, require a
+- [x] Preserve negative/fractional values and finite zero. For SNR, require a
   positive sample count so the missing default zero cannot become a measurement.
-- [ ] Reject unsupported labels and node/cell scopes consistently at admission
+- [x] Reject unsupported labels and node/cell scopes consistently at admission
   and collection. Do not fabricate aggregate RF values.
-- [ ] Remove generic dummy RSRP/RSRQ registrations; advertise the exact two vendor
+- [x] Remove generic dummy RSRP/RSRQ registrations; advertise the exact two vendor
   names through the production RAN-function description.
-- [ ] Establish safe scheduler snapshot replacement and reads. Metrics and E2
+- [ ] **Deferred by reviewer decision 2026-10-21 (known limitation: unsynchronized
+  metrics-strand writes vs E2 reads; see [design doc](../docs/e2sm-kpm/2026-10-19_du_rf_metrics_patch_review_and_snapshot_design.md#decision)).**
+  Establish safe scheduler snapshot replacement and reads. Metrics and E2
   can run on different executor strands; the existing vector replacement does
   not by itself establish safe concurrent access. Use reviewed executor
   confinement or consistent immutable/locked snapshots across affected readers.
-- [ ] Design an opt-in RF trace with a monotonically increasing scheduler
+- [ ] **Deferred by reviewer decision 2026-10-21 (known limitation: unsynchronized
+  metrics-strand writes vs E2 reads; see [design doc](../docs/e2sm-kpm/2026-10-19_du_rf_metrics_patch_review_and_snapshot_design.md#decision)).**
+  Design an opt-in RF trace with a monotonically increasing scheduler
   snapshot generation, requested UE, internal UE index, selected float-to-double
   values, and counts. Capture generation and values in the same safe getter
   lookup. Add the report-correlation hooks as a separate diagnostic patch in
   Step 7, after staging verification, to preserve the five-file runner contract.
+
+Step 3 static candidate review completed on 2026-10-21 under the reviewer-deferred
+scope above. The five checked implementation items record source/patch review;
+offline acceptance remains pending Steps 5-6. The RF-only Style 3 admission fix,
+reviewed patch hash, commands, and limitations are recorded in the
+[contract review](../docs/e2sm-kpm/2026-10-21_du_rf_metrics_contract_review.md).
+Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step3-review-20261021-6e3yqixn/`.
 
 **Exit criteria:** the reviewed candidate implements the contract without
 changing unrelated measurement behavior. Record its hash. The historical
@@ -311,7 +322,7 @@ Required coverage:
 | UE mapping | Sparse/reordered identifiers, removed/missing UEs, wrong UE type, stable order and cardinality. |
 | Admission | Correct `NO_LABEL`; reject missing/duplicate/expanded labels and unsupported cell/node scope. |
 | Scheduler path | Count reset, absent sample, measured zero, two-sample mean, and RF samples on failed TB CRCs. |
-| Snapshot consistency | Concurrent window replacement cannot invalidate reads or mix the generation, count, and value for a returned record. |
+| Snapshot consistency | Deferred by reviewer decision 2026-10-21 (known limitation: unsynchronized metrics-strand writes vs E2 reads; see [design doc](../docs/e2sm-kpm/2026-10-19_du_rf_metrics_patch_review_and_snapshot_design.md#decision)). No concurrent-snapshot or generation-consistency pass is claimed. |
 | Adapter boundaries | Production missing-value sentinels, RSRP 0.1 dB and SINR 0.002 dB quantization, saturation, and valid zero through conversion. |
 | Codec integration | Actual Style 4 admission, Format 3 APER encoding, FlexRIC decoding, seven-metric action encoding, and OCUDU admission of that action. |
 | Monitor robustness | Incorrect RF integers, invalid REAL values, missing mappings, incomplete reports, DU identity, local RSRQ notice, and stop handling. |

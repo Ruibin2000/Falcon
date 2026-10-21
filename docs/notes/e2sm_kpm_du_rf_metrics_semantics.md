@@ -291,3 +291,17 @@ all other guards. Step 7, deployment builds, and live acceptance remain blocked.
 No live estimator behavior, physical dBm calibration, RF sample age, sustained
 cadence, source-to-binary correspondence, or multi-UE hardware behavior was
 validated by this source trace.
+
+## Known limitations
+
+The project lead's reviewer decision, communicated on 2026-10-21, deferred
+snapshot safety, snapshot generation, and source-generation trace correlation
+for this iteration. Metrics-strand writes and E2 reads remain unsynchronized;
+data races and inconsistent snapshots are accepted known limitations. No
+provider mutex, executor confinement, cleanup relocation, or `du.cpp`
+receive-executor prerequisite will be implemented. This decision supersedes
+the Step 3 design-approval gate recorded above; see the
+[design decision](../e2sm-kpm/2026-10-19_du_rf_metrics_patch_review_and_snapshot_design.md#decision).
+Sequential offline checks do not establish concurrent safety or same-window
+RSRP/SNR consistency. The measurement, mapping, label, and REAL/noValue
+contract remains required. RSRQ remains a local `n/a` notice only.

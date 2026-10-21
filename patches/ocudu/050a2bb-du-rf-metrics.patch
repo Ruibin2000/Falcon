@@ -224,6 +224,29 @@ diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.cpp b/lib/e2/e2sm/e2sm_kpm/e2sm_
  
      for (uint32_t l = 0; l < meas_info_list[i].label_info_list.size(); l++) {
        const meas_label_s& meas_label = meas_info_list[i].label_info_list[l].meas_label;
+@@ -153,5 +160,22 @@
+   for (uint32_t i = 0; i < action_definition.meas_cond_list.size(); ++i) {
+     const meas_type_c& meas_type = action_definition.meas_cond_list[i].meas_type;
++    const bool is_pusch_rf = meas_type.type() == meas_type_c::types_opts::meas_name &&
++                             (meas_type.meas_name().to_string() == "FALCON.PUSCH.RSRP.dBFS" ||
++                              meas_type.meas_name().to_string() == "FALCON.PUSCH.SNR.dB");
++    if (is_pusch_rf) {
++      // UE-selection test conditions do not count as measurement labels.
++      unsigned nof_labels = 0;
++      for (const auto& condition : action_definition.meas_cond_list[i].matching_cond) {
++        if (condition.matching_cond_choice.type() == matching_cond_item_choice_c::types_opts::meas_label) {
++          ++nof_labels;
++        }
++      }
++      if (cell_scope || nof_labels != 1) {
++        logger.debug("Metric {} requires exactly one NO_LABEL entry and no cell filter.",
++                     meas_type.meas_name().to_string());
++        return false;
++      }
++    }
+     for (uint32_t m = 0; m < action_definition.meas_cond_list[i].matching_cond.size(); ++m) {
+       const matching_cond_item_s&        matching_cond_item = action_definition.meas_cond_list[i].matching_cond[m];
+       matching_cond_item_choice_c::types test_type          = matching_cond_item.matching_cond_choice.type();
 diff --git a/lib/scheduler/logging/scheduler_metrics_handler.cpp b/lib/scheduler/logging/scheduler_metrics_handler.cpp
 --- a/lib/scheduler/logging/scheduler_metrics_handler.cpp
 +++ b/lib/scheduler/logging/scheduler_metrics_handler.cpp

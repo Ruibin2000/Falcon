@@ -245,3 +245,37 @@ This review performs no build or test execution. Scratch implementation,
 runner changes, additional patches, and final candidate hashing remain pending
 approval. Step 7 remains blocked by Plan 2 Stage A and the hardware-slot gate.
 No Step 3 checkbox is marked complete by this review.
+
+## Decision
+
+The project lead's reviewer decision, communicated by Hao Ding on 2026-10-21,
+is to retain the existing cumulative RF implementation and defer concurrency
+hardening for this iteration. Neither recommended design A nor alternative B
+is selected. Do not implement a provider mutex, snapshot generation, cleanup
+relocation, or the `apps/du/du.cpp` E2-receive prerequisite. The preceding
+analysis and proposals are retained as historical design context, not active
+implementation instructions.
+
+Snapshot safety and generation/source-trace correlation are deferred known
+limitations: metrics-strand writes and E2 reads remain unsynchronized. This
+includes possible data races, invalidated reads, and mixed snapshot/count/value
+observations. Sequential offline passes do not establish thread safety,
+same-window RF pairs, or generation-based source correlation. The snapshot
+concurrency acceptance row is deferred, not passed.
+
+Continue Steps 3-6 with the exact two vendor metrics and the remaining
+measurement contract. Correct genuine contract gaps only in scratch copies,
+regenerate Falcon patch artifacts, and keep the five OCUDU targets unchanged
+at HEAD until Step 7. Keep RSRQ as a local `n/a` notice; add no RSRQ metric.
+The Step 4 decoded monitor trace remains in scope, but cannot establish a
+source-generation correlation. See the
+[2026-10-21 contract review](2026-10-21_du_rf_metrics_contract_review.md).
+
+This decision supersedes the approval/implementation gates for designs A/B
+and the related concurrent/generation tests in this October 19 review. It does
+not waive any other offline acceptance case or weaken a runner guard. Plan
+Steps 7-11 are unchanged and outside the authorized execution scope; their
+generation-dependent requirements will need review before those steps are
+authorized. Plan 2 Stage A acceptance and an agreed hardware slot still gate
+deployment and live work. This decision does not authorize applying patches to
+the host source checkouts, deployment builds, or service actions.
