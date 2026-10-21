@@ -233,27 +233,36 @@ Use the [cumulative FlexRIC patch](../patches/flexric/73650812-du-rf-metrics.pat
 and [seven-metric configuration](../configs/flexric/xapp_du_rf_metrics.conf).
 Preserve the already applied timestamp repair; do not apply it again.
 
-- [ ] Request the existing five DU metrics plus the two exact vendor names in
+- [x] Request the existing five DU metrics plus the two exact vendor names in
   one Style 4 subscription at 1000 ms. Keep E2AP v3 and KPM v3.00.
-- [ ] Decode the resulting Format 3 UE reports and associate values with their
+- [x] Decode the resulting Format 3 UE reports and associate values with their
   measurement names. Validate name/value counts and unsupported formats.
-- [ ] Accept RF `REAL` values; render `noValue` as `n/a`. Reject integer RF
+- [x] Accept RF `REAL` values; render `noValue` as `n/a`. Reject integer RF
   encodings and non-finite values with a clear diagnostic.
-- [ ] Print units and full context: PLMN, node type, gNB ID, CU/DU ID when present,
+- [x] Print units and full context: PLMN, node type, gNB ID, CU/DU ID when present,
   UE F1AP ID, KPM header time, and row index. UE F1AP ID alone is insufficient
   across several DUs; it is also not a C-RNTI or subscriber IMSI.
-- [ ] Add an opt-in decoded RF trace, for example enabled by a new
+- [x] Add an opt-in decoded RF trace, for example enabled by a new
   `FALCON_KPM_RF_TRACE=1` switch. Emit `REAL` values with round-trip double
   precision (`%.17g`), together with complete node/DU identity,
   `header_time_us`, UE F1AP ID, row index, metric name, and record type.
   Preserve the readable two-decimal normal output. Extend the callback harness
   to verify both forms and the explicit missing-value trace.
-- [ ] Keep RSRQ as an explicitly local capability notice. Do not subscribe to an
+- [x] Keep RSRQ as an explicitly local capability notice. Do not subscribe to an
   unavailable RSRQ or separately named SINR metric.
-- [ ] On Ctrl+C/SIGTERM, set a stop flag and perform subscription deletion and SDK
+- [x] On Ctrl+C/SIGTERM, set a stop flag and perform subscription deletion and SDK
   cleanup in the main thread. Do not perform SDK cleanup inside a signal handler.
-- [ ] Retain the timestamp-repaired service-model plugin and existing decoder.
+- [x] Retain the timestamp-repaired service-model plugin and existing decoder.
   This RF task changes measurement exposure and monitor handling, not ASN.1 schemas.
+
+Step 4 implementation static review completed on 2026-10-21. The eight checked
+items record source/patch review; offline acceptance remains pending Steps 5-6.
+The scratch monitor and callback harness each passed syntax-only compilation
+with zero warnings/errors. Callback/codec execution and actual signal/SDK
+lifecycle validation are not established by those checks. The reviewed patch
+hash, commands, and limitations are recorded in the
+[monitor review](../docs/e2sm-kpm/2026-10-21_flexric_du_rf_monitor_review.md).
+Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step4-review-20261021-7738r6e1/syntax-check-0qdfmi9v/`.
 
 **Exit criteria:** subscription names/types match the DU contract, the callback
 handles missing/malformed data without crashing, and the original five metrics
