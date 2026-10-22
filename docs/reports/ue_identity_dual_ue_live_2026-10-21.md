@@ -28,39 +28,22 @@ acceptance are outside the completed functional scope below.
 
 ## Matching topology and information supplied by each component
 
-```mermaid
-flowchart TB
-    subgraph RAN["RAN: local F1 and NGAP contexts"]
-        U1["UE1<br/>10.45.0.2"] --> D1["DU1<br/>F1 UE ID 54 → 55 + KPM"]
-        U2["UE2<br/>10.46.0.2"] --> D2["DU2<br/>F1 UE ID 34 → 35 + KPM"]
-        D1 <-->|"F1-C"| CU["CU-CP getter<br/>NGAP / F1 / serving-DU contexts"]
-        D2 <-->|"F1-C"| CU
-    end
-    subgraph CORE5G["5G Core"]
-        AMF["AMF<br/>SUPI + NGAP IDs + gNB + connection state"]
-        SMF["SMF<br/>SUPI + PDU Session + DNN + UE IP"]
-    end
-    CU <-->|"N2 / NGAP"| AMF
-    D1 -->|"E2: DU identity + F1 UE ID + KPM"| RIC["FlexRIC"]
-    D2 -->|"E2: DU identity + F1 UE ID + KPM"| RIC
-    CU -->|"E2: GUAMI + AMF UE ID + F1 list + RRC state"| RIC
-    subgraph XAPP["Standalone xApp: collection and matching"]
-        RADIO["RAN cache<br/>scoped DU/F1 ↔ CU identity"]
-        CORE["Core cache<br/>AMF ↔ SMF by SUPI"]
-        RADIO --> JOIN["Per-UE IP binding<br/>identity, uniqueness, freshness"]
-        CORE --> JOIN
-    end
-    JOIN -->|"output / save"| OUTPUT["Saved xApp output: TXT / NDJSON<br/>UE IP + SUPI + DU/F1/NGAP IDs + original KPM"]
-    RIC -->|"3 KPM subscriptions"| RADIO
-    AMF -->|"read-only HTTP infoAPI"| CORE
-    SMF -->|"read-only HTTP infoAPI"| CORE
-```
+![Compact landscape topology: RAN and 5G Core supply identities to xApp; matching runs inside xApp and saved output remains outside](../figures/ue_identity_topology.png)
+
+[Full-size PNG](../figures/ue_identity_topology.png) ·
+[Scalable SVG](../figures/ue_identity_topology.svg) ·
+[Diagram source](../figures/ue_identity_topology.py)
+
+The report uses a fixed landscape image for consistent display in Markdown
+viewers on macOS and Windows. The SVG stores text as vector outlines, so
+installed system fonts do not change label widths or line breaks.
 
 F1-C and N2 populate CU contexts. The xApp receives CU/DU data through E2 and
 queries Core directly; the CU does not call the Core infoAPIs. The xApp box
 contains its RAN/Core caches, SUPI/session joins and per-UE IP binding checks.
 Saved TXT/NDJSON files are output artifacts outside the xApp box. AMF and SMF
-are grouped inside 5G Core. All group boxes use the same diagram theme styling.
+are grouped inside 5G Core. RAN, xApp and 5G Core share the same group
+fill and border style.
 
 | Component | Fields supplied | Role in the association |
 | --- | --- | --- |
