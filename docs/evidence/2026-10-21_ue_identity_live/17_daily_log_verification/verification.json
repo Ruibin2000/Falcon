@@ -1,0 +1,74 @@
+{
+  "reporting_date": "2026-10-21",
+  "developer": "Ruibin",
+  "timezone": "America/New_York",
+  "verified_at": "2026-10-21T22:43:10.692661-04:00",
+  "verification_scope": "Source/commit/hash checks, unit tests and audits of existing operator-run live captures; no live experiment rerun",
+  "commits": {
+    "Falcon": "804ad132fa44c6cafec7c4a003d4fa018258ba92",
+    "OCUDU": "bbbbeefa5e643bc66d6d497dab65ab508476d696"
+  },
+  "ocudu_saved_source_hashes_matched": 25,
+  "native_results": "Retained implementation test logs; not rerun for this log",
+  "native_tests_passed": {
+    "kpm_native.log": 7,
+    "cu_metrics_native.log": 1,
+    "ngap_native.log": 87,
+    "f1ap_native.log": 30
+  },
+  "native_total": 125,
+  "python_command": "python3 -m unittest discover -s tests/ue_identity -v",
+  "python_result": {
+    "exit": 0,
+    "tests": 49,
+    "skips": 0,
+    "result": "Passed"
+  },
+  "live_capture_file_audits": {
+    "12_dual_ue_xapp": {
+      "audit": "passed",
+      "app_instance": "7dfae7b5-c627-4be3-9daf-f856c3c9bd32",
+      "rows": 223,
+      "statuses": {
+        "unresolved": 2,
+        "matched": 221
+      }
+    },
+    "16_bidirectional_idle_live": {
+      "audit": "passed",
+      "app_instance": "4b672336-4fb7-43f3-8b0b-90209065e92d",
+      "rows": 648,
+      "statuses": {
+        "unresolved": 3,
+        "matched": 645
+      },
+      "cached": 0,
+      "idle_resume": [
+        {
+          "ue": "1",
+          "duration_s": 30.003153,
+          "peer_matched_rows": 30,
+          "peer_positive_ul_rows": 30,
+          "resume_from_later_prerequisite_us": 1001012
+        },
+        {
+          "ue": "2",
+          "duration_s": 30.002495,
+          "peer_matched_rows": 30,
+          "peer_positive_ul_rows": 30,
+          "resume_from_later_prerequisite_us": 998971
+        }
+      ]
+    }
+  },
+  "live_capture_audit_commands": [
+    "python3 docs/evidence/2026-10-21_ue_identity_live/12_dual_ue_xapp/audit.py",
+    "python3 docs/evidence/2026-10-21_ue_identity_live/16_bidirectional_idle_live/audit.py"
+  ],
+  "artifact_and_plot_hash_checks": "Passed for both retained live captures",
+  "sha256": {
+    "python_unittest.log": "c4fb5a2f758e1886ff722aae53b46d3d0bfa112b0dafbc570a9142142bb4246a"
+  },
+  "hardware_experiments_rerun": false,
+  "deployed_services_started_or_restarted": false
+}

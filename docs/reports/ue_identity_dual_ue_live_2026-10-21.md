@@ -8,6 +8,11 @@ PDU session and UE IP by combining CU/DU E2 reports with read-only AMF/SMF
 queries. Established UE links are verified independently: one UE entering
 idle does not interrupt its active peer's current IP binding.
 
+A simultaneous dual-UE online trial also passed: a 120-second xApp capture
+contains **223 records, 221 matched and two startup samples without IP**,
+while both UEs run concurrent 60-second uplink clients. Receiver throughput
+is 13.2 Mbit/s for UE1 and 11.9 Mbit/s for UE2, with both clients exiting 0.
+
 The six-minute live validation produced **648 records: 645 matched,
 3 unresolved startup/resume samples and 0 cached**. Each UE completed an
 observed Core connected → idle → connected transition. During each actual
@@ -15,7 +20,8 @@ idle interval, the active peer produced 30 consecutive correctly matched
 positive-UL records. Both UE IPs were retained while F1/NGAP contexts changed.
 All four Laptop iperf clients and the xApp exited 0.
 
-This report describes the final implemented behavior and this live validation.
+This report describes the final implemented behavior and two live scenarios:
+simultaneous dual-UE online traffic and bidirectional idle/resume.
 The validated assurance is experimental observed association; explicit
 serving-DU/context-generation transport and the remaining lifecycle/recovery
 acceptance are outside the completed functional scope below.
@@ -30,21 +36,31 @@ flowchart TB
         D1 <-->|"F1-C"| CU["CU-CP getter<br/>NGAP / F1 / serving-DU contexts"]
         D2 <-->|"F1-C"| CU
     end
-    CU <-->|"N2 / NGAP"| AMF["AMF<br/>SUPI + NGAP IDs + gNB + connection state"]
-    SMF["SMF<br/>SUPI + PDU Session + DNN + UE IP"]
+    subgraph CORE5G["5G Core"]
+        AMF["AMF<br/>SUPI + NGAP IDs + gNB + connection state"]
+        SMF["SMF<br/>SUPI + PDU Session + DNN + UE IP"]
+    end
+    CU <-->|"N2 / NGAP"| AMF
     D1 -->|"E2: DU identity + F1 UE ID + KPM"| RIC["FlexRIC"]
     D2 -->|"E2: DU identity + F1 UE ID + KPM"| RIC
     CU -->|"E2: GUAMI + AMF UE ID + F1 list + RRC state"| RIC
-    RIC -->|"3 KPM subscriptions"| RADIO["xApp RAN cache<br/>scoped DU/F1 ↔ CU identity"]
-    AMF -->|"read-only HTTP infoAPI"| CORE["xApp Core cache<br/>AMF ↔ SMF by SUPI"]
+    subgraph XAPP["Standalone xApp: collection and matching"]
+        RADIO["RAN cache<br/>scoped DU/F1 ↔ CU identity"]
+        CORE["Core cache<br/>AMF ↔ SMF by SUPI"]
+        RADIO --> JOIN["Per-UE IP binding<br/>identity, uniqueness, freshness"]
+        CORE --> JOIN
+    end
+    JOIN -->|"output / save"| OUTPUT["Saved xApp output: TXT / NDJSON<br/>UE IP + SUPI + DU/F1/NGAP IDs + original KPM"]
+    RIC -->|"3 KPM subscriptions"| RADIO
+    AMF -->|"read-only HTTP infoAPI"| CORE
     SMF -->|"read-only HTTP infoAPI"| CORE
-    RADIO --> JOIN["Per-UE current verification<br/>identity, uniqueness, freshness"]
-    CORE --> JOIN
-    JOIN --> OUTPUT["Pure xApp TXT / NDJSON<br/>UE IP + SUPI + DU/F1/NGAP IDs + original KPM"]
 ```
 
 F1-C and N2 populate CU contexts. The xApp receives CU/DU data through E2 and
-queries Core directly; the CU does not call the Core infoAPIs.
+queries Core directly; the CU does not call the Core infoAPIs. The xApp box
+contains its RAN/Core caches, SUPI/session joins and per-UE IP binding checks.
+Saved TXT/NDJSON files are output artifacts outside the xApp box. AMF and SMF
+are grouped inside 5G Core. All group boxes use the same diagram theme styling.
 
 | Component | Fields supplied | Role in the association |
 | --- | --- | --- |
@@ -89,7 +105,7 @@ When all admitted DU sources are current, a unique experimental match uses
 needs the multi-DU observations because F1 IDs are allocated in per-DU contexts
 and CU standard UEID lacks explicit serving-DU/generation transport.
 
-The live test uses `independent_links: true` and explicit
+The bidirectional idle/resume test uses `independent_links: true` and explicit
 `--observed-unique --fresh-only`. These CLI options override the local JSON's
 `strict`/`last_known` defaults. Historical IP fallback is disabled in the test;
 all matched outputs use current own CU/Core data. The normal last-known policy
@@ -102,8 +118,83 @@ FlexRIC files are unchanged. Core source, subscriber/IP allocation and session
 policy are unchanged; the xApp uses the existing read-only infoAPIs.
 Plan 2 broker/MPX integration remains separate.
 
+## Live simultaneous dual-UE online validation
+
+Both intended UEs are registered on their respective DUs with active PDU
+sessions while two Laptop clients upload concurrently for 60 seconds. The
+operator runs the xApp for 120 seconds with `--observed-unique`. The capture
+source is `/tmp/falcon-identity-dual.Sg2rupD9`, app instance
+`7dfae7b5-c627-4be3-9daf-f856c3c9bd32`. All 221 matched records use
+`observed_unique_current_context` with fresh CU/Core inputs.
+
+The following identifiers and measurements belong to this simultaneous-online
+trial. The later idle/resume trial has its own F1/NGAP/RNTI contexts.
+
+| Observation | UE1 / DU1 | UE2 / DU2 |
+| --- | --- | --- |
+| IMSI | 001010000000101 | 001010000000102 |
+| DU ID / independently checked NCI | 1 / 6733824 | 2 / 6733825 |
+| UE IPv4 / DNN | 10.45.0.2 / internet | 10.46.0.2 / internet2 |
+| PDU Session ID, scoped to its own SUPI | 1 | 1 |
+| gNB-CU UE F1AP ID | 47 | 12 |
+| AMF / RAN UE NGAP ID | 60 / 59 | 59 / 58 |
+| Matched / total DU records | 110 / 111 | 111 / 112 |
+| Positive UL KPM samples | 62 | 62 |
+| Positive UL samples with matched binding | 61 | 61 |
+| Laptop receiver transfer / duration | 95.2 MBytes / 60.41 s | 85.1 MBytes / 60.24 s |
+| Laptop receiver throughput | 13.2 Mbit/s | 11.9 Mbit/s |
+| Sender TCP retransmissions / client exit | 1 / 0 | 1 / 0 |
+
+The input contains 120 Core snapshots, 111 CU reports, 111 DU1 reports and
+112 DU2 reports. The independent audit verifies all 223 original DU payloads
+and all 221 matched CU/AMF/SMF/cell relations against the Laptop's actual
+IMSI/IP assignments. No Core errors, ingress loss or reported C drops are
+observed. Maximum preceding Core/CU ages on a match are 0.988865/0.999649
+seconds, below the three-second TTL.
+
+The two unresolved samples are record 1 on DU1 before all admitted DU sources
+are current, and record 2 on DU2 before its CU identity arrives. Records 3–223
+are matched. All KPM is preserved, including those first two samples. The SDK
+log confirms three subscriptions, three deletion responses and normal stop;
+the Python coordinator exit code was not separately retained for this trial.
+Laptop reports `STATUS: completed` and both client exits 0.
+
+### Simultaneous-online uplink and PHY figure
+
+![Simultaneous dual-UE online UL throughput and PUSCH CRC failure attempt ratios](../evidence/2026-10-21_ue_identity_live/12_dual_ue_xapp/dual_ul_kpm.png)
+
+The view contains only the observed UL-active part: 124 KPM samples, 62 per
+DU, from 20:15:30.703801 to 20:16:31.703847 EDT (about 61 seconds). Hollow
+markers retain the two initial unresolved samples. The lower panel aggregates
+the 60 complete one-second bins fully inside that active header range,
+20:15:31–20:16:31 EDT, end exclusive. Missing PHY bins remain blank.
+
+| PUSCH measure in complete active-window bins | DU1 | DU2 |
+| --- | --- | --- |
+| RNTI verified through CU context | 0x4633 | 0x460d |
+| Decode attempts / CRC failures | 34,731 / 5,625 | 35,538 / 1,878 |
+| CRC failure attempt ratio | 16.20% | 5.28% |
+| Median logged PUSCH SINR | 22.3 dB | 20.7 dB |
+
+CRC ratios count logged decoding attempts, including HARQ retransmissions;
+they are separate from TCP loss and first-transmission BLER. Laptop reports
+20:12:09.457939–20:13:10.917573 EDT in its own clock domain. Cross-host clocks
+are uncalibrated: the plotted Spark activity window is not an exact alignment
+to the Laptop process timestamps.
+
+Retained [live TXT](../evidence/2026-10-21_ue_identity_live/12_dual_ue_xapp/bindings.txt),
+[decoded inputs](../evidence/2026-10-21_ue_identity_live/12_dual_ue_xapp/inputs.ndjson),
+[output rows](../evidence/2026-10-21_ue_identity_live/12_dual_ue_xapp/rows.ndjson),
+[Laptop results](../evidence/2026-10-21_ue_identity_live/12_dual_ue_xapp/laptop_operator_result.json),
+[source audit](../evidence/2026-10-21_ue_identity_live/12_dual_ue_xapp/audit.json)
+and [plot manifest](../evidence/2026-10-21_ue_identity_live/12_dual_ue_xapp/plot_manifest.json)
+record this online trial. The figure is available as
+[PNG](../evidence/2026-10-21_ue_identity_live/12_dual_ue_xapp/dual_ul_kpm.png)
+and [SVG](../evidence/2026-10-21_ue_identity_live/12_dual_ue_xapp/dual_ul_kpm.svg).
+
 ## Actual identity chains
 
+The following table describes the six-minute bidirectional idle/resume trial.
 The common scope is PLMN 001/01, gNB 411 with 22 bits, and GUAMI region 2,
 set 1, pointer 0. PDU Session ID 1 is scoped to its own SUPI.
 
@@ -237,7 +328,7 @@ record=280 status=matched collection_time=2026-10-22T01:20:46.524749Z
     RRU.PrbTotUl = 86 [%] (integer)
 ```
 
-## Uplink throughput and PHY observations
+## Bidirectional idle/resume: uplink throughput and PHY observations
 
 The two-panel figure uses only this final live trial. Blue is UE1/DU1;
 orange is UE2/DU2. Shading marks the actual Core idle intervals.
@@ -277,7 +368,7 @@ records phase windows, context mappings, definitions and hashes. Its source
 artifacts include the positive KPM CSV, per-second PHY CSV, an identity-only
 CU excerpt and selected-context compressed PUSCH records in the same directory.
 
-## Laptop traffic results
+## Bidirectional idle/resume: Laptop traffic results
 
 The Laptop command measured 150.0 seconds of quiet for each UE. It completed
 in 337.767 seconds with `STATUS: completed`, no error and four iperf exits of 0.
@@ -305,9 +396,10 @@ quiet durations; no cross-host per-second alignment is assumed.
 ## Acceptance scope and reproduction
 
 The validated functional scope is CU identity reporting, three-node xApp
-subscription, current UE/IP/KPM association, independent matching of established
-links during either UE's idle interval, and resumed-context association with
-retained PDU/IP. One live idle/resume round per UE passed.
+subscription, simultaneous dual-UE online IP/KPM association, independent
+matching of established links during either UE's idle interval, and resumed
+context association with retained PDU/IP. One concurrent-UL trial and one live
+idle/resume round per UE passed.
 
 Initial multi-DU scope establishment, missing explicit serving-DU/generation
 fields on CU E2, unseen exact-key reuse, handover, source restart/recovery,
@@ -318,8 +410,10 @@ reproducibility. Plan 2/MPX integration is unchanged.
 Reproduce with the paired
 [Spark Quick Start](../dual_ue_spark_quick_commands.md) and
 [Laptop Quick Start](../dual_ue_laptop_quick_commands.md#binding-idle).
-Use the identity-configured RIC and CU, both DUs, the dual xApp config and
-`--observed-unique --fresh-only --duration 360`.
+Use the identity-configured RIC and CU, both DUs and the dual xApp config.
+Spark section 7a reproduces simultaneous dual-UE UL with a 120-second capture;
+section 7b runs the 360-second bidirectional idle/resume capture. Both current
+procedures explicitly use `--observed-unique --fresh-only`.
 
 Retained evidence:
 
