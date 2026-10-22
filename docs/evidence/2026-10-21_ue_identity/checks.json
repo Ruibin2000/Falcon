@@ -1,0 +1,103 @@
+[
+  {
+    "name": "kpm_native",
+    "exit": 0,
+    "command": [
+      "build/tests/unittests/e2/e2sm_kpm_meas_provider_test"
+    ],
+    "cwd": "/home/nyu/ocudu",
+    "summary": [
+      "[  PASSED  ] 7 tests."
+    ]
+  },
+  {
+    "name": "cu_metrics_native",
+    "exit": 0,
+    "command": [
+      "build/tests/unittests/cu_cp/metrics_handler/cu_cp_metrics_handler_test"
+    ],
+    "cwd": "/home/nyu/ocudu",
+    "summary": [
+      "[  PASSED  ] 1 test."
+    ]
+  },
+  {
+    "name": "ngap_native",
+    "exit": 0,
+    "command": [
+      "build/tests/unittests/ngap/ngap_test"
+    ],
+    "cwd": "/home/nyu/ocudu",
+    "summary": [
+      "[  PASSED  ] 87 tests."
+    ]
+  },
+  {
+    "name": "f1ap_native",
+    "exit": 0,
+    "command": [
+      "build/tests/unittests/f1ap/cu_cp/f1ap_cu_test"
+    ],
+    "cwd": "/home/nyu/ocudu",
+    "summary": [
+      "[  PASSED  ] 30 tests."
+    ]
+  },
+  {
+    "name": "python",
+    "exit": 0,
+    "command": [
+      "python3",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests/ue_identity",
+      "-v"
+    ],
+    "cwd": "/home/nyu/Desktop/Falcon_repo/Falcon",
+    "summary": [
+      "Ran 30 tests in 0.180s",
+      "OK"
+    ]
+  },
+  {
+    "name": "cu_dryrun",
+    "exit": 0,
+    "command": [
+      "build/apps/cu/ocu",
+      "-c",
+      "configs/cu.yml",
+      "-c",
+      "/home/nyu/Desktop/Falcon_repo/Falcon/configs/ocudu/cu_identity_e2.yml",
+      "--dryrun"
+    ],
+    "cwd": "/home/nyu/ocudu",
+    "summary": []
+  },
+  {
+    "name": "replay_strict",
+    "exit": 0,
+    "command": [
+      "python3",
+      "scripts/ue_identity/xapp_ue_identity.py",
+      "--replay",
+      "tests/ue_identity/fixtures/dual_replay.ndjson"
+    ],
+    "cwd": "/home/nyu/Desktop/Falcon_repo/Falcon",
+    "summary": []
+  },
+  {
+    "name": "replay_observed",
+    "exit": 0,
+    "command": [
+      "python3",
+      "scripts/ue_identity/xapp_ue_identity.py",
+      "--replay",
+      "tests/ue_identity/fixtures/dual_replay.ndjson",
+      "--observed-unique"
+    ],
+    "cwd": "/home/nyu/Desktop/Falcon_repo/Falcon",
+    "summary": []
+  }
+]

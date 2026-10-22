@@ -1,50 +1,43 @@
-# Dual UE Spark Quick Commands — UL Only
+# Dual UE Spark Quick Commands — UE IP Binding and UL
 
-Updated: 2026-10-13. Both intended SIMs have registered on their intended
-cells and both private paths pinged successfully. UE2 single-DU UL passed at
-receiver 15.5 Mbit/s / Retr 1 with 12 KPM smoke reports. UE1 UL with UE2 test
-traffic idle passed at receiver 10.5 Mbit/s / Retr 0 / pipeline exit 0. See
-[UE1 UL evidence](evidence/2026-10-13_du1_ul/manifest.json),
-[UE2 UL evidence](evidence/2026-10-13_du2_ul/manifest.json) and
-[dual IPv4 path evidence](evidence/2026-10-13_dual_ipv4_paths/manifest.json).
+Updated: 2026-10-21. Developer: Ruibin Chen. This is the Spark half of the
+operator-run reproduction of today's CU/DU/Core UE IP binding. The
+[live report](reports/ue_identity_dual_ue_live_2026-10-21.md) describes the final
+implementation and six-minute bidirectional idle/resume capture
+(645 matched / 648 records, zero cached). During each UE's
+actual Core idle interval, its active peer had 30 consecutive matched UL rows.
+Small startup/resume boundary gaps were retained and explained. New runs must
+verify their actual identities and inputs; these counts and numeric IDs are
+historical results, not expected allocations.
 
-The latest measured concurrent TCP UL passed: receiver **UE1 13.8 Mbit/s /
-UE2 17.3 Mbit/s**, both sender Retr 0, both process exits 0. Spark received
-**123 UE callbacks per DU**, including 63/61 complete UL-active five-metric rows;
-approximately 62/61 fall inside the clock-corrected laptop run window. Both
-subscription/deletion pairs and normal xApp exit passed. See
-[dual UL/KPM evidence and plots](evidence/2026-10-13_dual_kpm_reports/manifest.json).
-The manually simultaneous clock readbacks put Spark about **199.27 seconds
-ahead of Laptop**; the corrected latest window is 22:17:25–22:18:27 EDT.
-Precise clock synchronization, full cross-layer identity correlation and the
-remaining repeated/UDP/guard/survivor/cold-start acceptance are pending.
-The earlier [subscription-only probe](evidence/2026-10-13_dual_kpm_subscriptions/manifest.json)
-received zero UE callbacks and remains historical evidence.
-UL is the acceptance target; underflow count/growth remediation is deferred.
-Wrong-cell attachment, lost SA/PDU, wrong IP paths, failed UL and missing UL
-telemetry still keep their acceptance gates pending. See
-[Plan 3](../plans/dual-ue-du-fr1-channels.md).
+The standalone xApp combines DU KPM, CU identity-bearing E2 reports and existing
+read-only AMF/SMF infoAPIs. Its `bindings.txt` contains only xApp records:
+gNB/DU/F1 UE ID, SUPI, NGAP IDs/GUAMI, PDU session/DNN/IP, then KPM. The commands
+below use `--observed-unique`; strict serving-DU/context-generation proof and
+remaining restart/reuse/performance gates are still open in
+[Plan 4](../plans/cu-ue-ip-e2-binding.md). Core source/IP allocation and Plan 2
+broker/MPX integration are outside this change. The
+[October 13 DU-only UL/KPM results](evidence/2026-10-13_dual_kpm_reports/manifest.json)
+remain historical [Plan 3](../plans/dual-ue-du-fr1-channels.md) evidence.
 
 Run all commands in this file on Spark. Use Bash and separate foreground
 terminals for CU, RIC, each DU, each iperf server and xApp. Modem/AT/routing/client
 commands are in [Dual UE Laptop Quick Commands](dual_ue_laptop_quick_commands.md).
-Daily order: shared core/CU/RIC → both DUs → both servers → complete laptop
-UE1 sequence → complete laptop UE2 sequence → concurrent UL/KPM. Reuse running
-infrastructure during modem recovery; steps 1–5 cover a stopped testbed.
+Cold-start order: prepare candidate artifacts → Core → identity-configured RIC
+→ identity-enabled CU → both DUs → both servers → complete Laptop UE1 sequence
+→ complete Laptop UE2 sequence → section 7 binding tests. Every service/client
+is started manually in the foreground. Reuse healthy infrastructure during
+modem recovery; steps 1–5 cover a stopped testbed.
 After a modem power cycle, repeat the affected role's complete laptop sequence
 ([UE1](dual_ue_laptop_quick_commands.md#ue1-start) / [UE2](dual_ue_laptop_quick_commands.md#ue2-start)) before traffic. The operator reported
 lock query `0`; its lock must be restored and the actual serving cell verified.
-The latest measured laptop launcher record has UE1 modem/SIM 13 / bearer 9 /
-`10.45.0.6/30` / `wwan0` / table 151, and UE2 modem/SIM 14 / bearer 10 /
-`10.46.0.5/30` / `wwan1` / table 152. Identity, bearer and both source-bound /
-ordinary routes passed before traffic. CU records tie DU1 / PCI1 to F1AP UE 11
-and DU2 / PCI2 to F1AP UE 7. Full modem/SIM-to-F1AP correlation remains a
-separate ledger. Earlier modem 9/10 and bearer 7/8 preflight allocations are
-historical. The launcher supports indexed access-tech fields and records the
-bearer default gateway while actual routes determine the server path.
-UE1's earlier `10.45.0.3/29` / `wwan0` and UE2's earlier bearer 5 /
-`10.46.0.3/29` are historical. Keep the Spark `.1` endpoints and discover both
-current laptop bearer allocations and host routes with the updated launcher.
+Today's Laptop truth identified IMSI `001010000000101` / `internet` /
+`10.45.0.2` and IMSI `001010000000102` / `internet2` / `10.46.0.2`.
+Those IPs, modem/bearer indices and RAN IDs may change after restart or idle.
+Keep the Spark `.1` endpoints and rediscover current Laptop bearer allocations
+and host routes with the launcher; compare them independently with CU/Core
+inputs and the xApp output. The launcher records the bearer default gateway
+while actual routes determine the server path.
 The explicit table-151/table-152 inspection, complete per-role host IPv4 reset
 without old-session parameters, guarded rebuilding and both private-path checks are in
 [UE1 recovery](dual_ue_laptop_quick_commands.md#ue1-clean-old-path) and
@@ -79,8 +72,9 @@ and preserve the baseline subscriber; do not blindly reset SQN.
 ## 1. Check radios and deploy configuration before a cold start
 
 For a cold start, check hardware while both DUs are stopped. Keep the verified
-separate USB controller arrangement. The observed paths were DU1 `2-1.3` /
-`NVDA8000:00` and DU2 `6-1.1` / `NVDA8000:02`; rediscover after reconnection.
+separate USB controller arrangement. On October 21 the observed paths were
+DU1 `6-1.3` / `NVDA8000:02` and DU2 `2-1.3` / `NVDA8000:00`;
+rediscover after reconnection.
 
 ```bash
 if pgrep -x odu >/dev/null; then
@@ -93,7 +87,15 @@ fi
 
 Require both actual serials and USB 3 / `5000M`. After reconnecting, the boards
 may first appear as Cypress WestBridge at 480 Mb/s with a temporary serial.
-Wait for UHD firmware loading and rediscovery to complete.
+If DU2 is missing, with its DU stopped, let UHD load firmware and rediscover it:
+
+```bash
+sudo uhd_find_devices --args 'type=b200,serial=328B021'
+lsusb -t
+```
+
+Require serial `328B021` and `5000M` before starting DU2. Probe only the stopped
+radio; a broad discovery/probe must not disturb a running DU.
 
 Deploy and check the maintained configs before the cold-start launch:
 
@@ -112,6 +114,30 @@ Require `PASS`. Keep the actual recorded RF conditions from Plan 3. The current
 configs use TX 70 / RX 35 and 23.04 MS/s; these gains are not calibrated dBm.
 Host performance restoration, when needed after reboot, is in
 [step 2](#2-restore-performance-settings-after-reboot).
+
+### 1a. Prepare the CU identity binary and isolated FlexRIC plugin
+
+Run before starting CU/RIC/xApp. These are local builds; they start no services.
+Both repositories must be on `Dual-UE` with today's implementation present:
+
+```bash
+git -C /home/nyu/Desktop/Falcon_repo/Falcon branch --show-current
+git -C /home/nyu/ocudu branch --show-current
+cd /home/nyu/Desktop/Falcon_repo/Falcon
+cmake --build /home/nyu/ocudu/build --target ocu -j4 &&
+bash scripts/ue_identity/build.sh &&
+/tmp/falcon-xapp-ue-identity --check-config configs/flexric/ric_ue_identity.conf &&
+/tmp/falcon-xapp-ue-identity --check-config configs/flexric/xapp_ue_identity.conf
+```
+
+Stop on any build/config error. Require `/tmp/falcon-xapp-ue-identity` and
+`/tmp/falcon-ue-identity-sm/libkpm_sm.so`. Rebuild after `/tmp` is cleared/rebooted.
+The isolated KPM plugin includes the 40-bit AMF ID decoder fix; both RIC and
+xApp configs select it. Installed FlexRIC files and its source tree are left
+unchanged. Build only `ocu` here; retain the accepted DU executable/configs.
+See the [identity implementation guide](ue_identity_xapp.md#build-and-offline-verification)
+for dependency/build troubleshooting. A successful build is preparation, not
+live binding acceptance.
 
 ## 2. Restore performance settings after reboot
 
@@ -202,32 +228,58 @@ subscriber and address setup is in the [migration guide](dual_ue_subnets.md).
 Original single-subnet repair is in the
 [full runbook](full_reproduction_runbook.md#7-start-only-the-required-5gc-functions).
 
-## 4. Start CU and RIC in separate foreground terminals
+Check the existing read-only identity APIs from Spark before starting RAN:
+
+```bash
+curl --noproxy '*' --fail --show-error --max-time 3 -i \
+  'http://127.0.0.5:9090/ue-info?page=0&page_size=100'
+curl --noproxy '*' --fail --show-error --max-time 3 -i \
+  'http://127.0.0.4:9090/pdu-info?page=0&page_size=100'
+```
+
+Require HTTP 200 and JSON `items`/`pager`. Empty `items` before UE registration
+is normal. These addresses are the existing AMF/SMF infoAPIs on this testbed;
+if unavailable, resolve the API/service configuration before the binding test.
+The xApp requires them even though the CU reports AMF-side NGAP identifiers.
+
+## 4. Start identity RIC, then identity-enabled CU in separate terminals
+
+**RIC terminal first:**
+
+```bash
+IDENTITY_RIC_RUN=$(mktemp -d /tmp/falcon-identity-ric.XXXXXXXX)
+printf 'RIC log directory: %s\n' "$IDENTITY_RIC_RUN"
+set -o pipefail
+stdbuf -oL -eL /usr/local/bin/flexric/ric/nearRT-RIC \
+  -c /home/nyu/Desktop/Falcon_repo/Falcon/configs/flexric/ric_ue_identity.conf \
+  2>&1 | tee "$IDENTITY_RIC_RUN/ric.log"
+```
+
+Require `SM_DIR: /tmp/falcon-ue-identity-sm/`, E2 port `36421`, E42 port `36422`
+and KPM SM ID `2` loaded. Keep RIC running. Use this config throughout both
+binding tests; it is a KPM-only candidate setup.
 
 **CU terminal:**
 
 ```bash
 cd /home/nyu/ocudu
-CU_RUN=$(mktemp -d /tmp/falcon-dual-cu.XXXXXXXX)
-printf 'CU run directory: %s\n' "$CU_RUN"
-sudo build/apps/cu/ocu -c configs/cu.yml log --filename "$CU_RUN/cu.log"
-```
-
-Require N2 connection to `127.0.0.5:38412` completed, F1 listener
-`127.0.10.1:38472`, and `==== CU started ===`. Keep this terminal running.
-
-**RIC terminal:**
-
-```bash
-RIC_RUN=$(mktemp -d /tmp/falcon-dual-ric.XXXXXXXX)
-printf 'RIC run directory: %s\n' "$RIC_RUN"
+IDENTITY_CU_RUN=$(mktemp -d /tmp/falcon-identity-cu.XXXXXXXX)
+printf 'CU log directory: %s\n' "$IDENTITY_CU_RUN"
 set -o pipefail
-stdbuf -oL -eL /usr/local/bin/flexric/ric/nearRT-RIC \
-  -c /usr/local/etc/flexric/ric.conf 2>&1 | tee "$RIC_RUN/ric.log"
+sudo stdbuf -oL -eL build/apps/cu/ocu \
+  -c configs/cu.yml \
+  -c /home/nyu/Desktop/Falcon_repo/Falcon/configs/ocudu/cu_identity_e2.yml \
+  log --filename "$IDENTITY_CU_RUN/cu.log" \
+  2>&1 | tee "$IDENTITY_CU_RUN/console.log"
 ```
 
-Require E2 port `36421`, E42 port `36422` and KPM SM ID `2` loaded. Keep RIC
-running; a RIC restart requires restarting DUs before the next E2/xApp test.
+Require N2 connection to `127.0.0.5:38412`, E2 connection to RIC, F1 listener
+`127.0.10.1:38472`, and `==== CU started ===`. RIC must accept the CU/gNB 411
+node and KPM function 2. The overlay enables CU-CP E2/identity metrics; using
+only `configs/cu.yml` will omit the identity source required by this test.
+Keep this terminal running. If RIC restarts, stop the test and restart CU and
+both DUs in order before launching a new xApp; automatic E2 recovery is not
+assumed.
 
 ## 5. Start DU1 and DU2 in separate terminals and keep both running
 
@@ -306,93 +358,228 @@ in another terminal. Each sequence includes identity/cell/PDU, complete role res
 its own table/rules, private ping and individual UL with the other UE's test
 traffic idle. Keep both PDU paths active for the concurrent test in step 7.
 
-## 7. KPM subscriptions and actual two-link metric delivery
+## 7. Reproduce UE IP binding with the new CU/DU xApp
 
-RIC must have registered `gnb=411 / DU ID 1` and `gnb=411 / DU ID 2`, accepting KPM
-RAN function ID 2 for both. Keep both DUs and RIC running. Complete any existing
-finite monitor before launching another. Start the 120-second capture first;
-after both subscriptions succeed, run [laptop section 3](dual_ue_laptop_quick_commands.md#dual-ul)'s concurrent clients.
-The updated laptop launcher reads both current bearers by IMEI/SIM and checks
-both routes before starting traffic; complete its `--check-only` preflight before
-starting this timed capture. Historical IP/interface tuples must not be reused.
+Complete both Laptop UE sequences, including current IMEI/IMSI/cell/bearer/IP
+and route checks. Install or reuse `~/falcon-dual-ul.py` from
+[Laptop section 3](dual_ue_laptop_quick_commands.md#dual-ul), then run its
+`--check-only` preflight. Keep the two verified PDU paths and both foreground
+iperf servers. Finish any other finite xApp before starting this one.
 
-The historical DU2-only stock-monitor run remains retained evidence. Its
-callback prints the shared gNB ID without DU ID. Use the DU-tagged diagnostic
-below for the current two-DU workflow; require actual reports from both nodes.
-DL values remain observations; report age is not application RTT.
+RIC must have accepted **three** intended nodes: CU/gNB 411, DU1 and DU2.
+The xApp discovers nodes at startup; start it only after all three register.
+The old DU-only monitor subscribes twice and cannot perform this IP join.
+These tests use `--observed-unique --fresh-only`: current observations may
+establish experimental bindings; historical IP fallback is disabled so a
+`cached` record cannot conceal a failed current match. Normal `local.json`
+retains its last-known policy outside these explicit tests.
 
-### 7a. Build the DU-tagged diagnostic
+### 7a. First verify both IP bindings during a 60-second dual upload
 
-The maintained source derives from the pinned local FlexRIC monitor. It adds
-DU identity to every callback block, configurable finite capture duration and
-dense subscription-handle cleanup. Reuse the current pinned API/library:
+In the Spark xApp terminal:
 
 ```bash
 cd /home/nyu/Desktop/Falcon_repo/Falcon
-bash scripts/dual_fr1/build_kpm_monitor.sh /tmp/falcon-xapp-oran-moni-dual
+IDENTITY_DUAL_RUN=$(mktemp -d /tmp/falcon-identity-dual.XXXXXXXX)
+printf 'Spark capture directory: %s\n' "$IDENTITY_DUAL_RUN"
+cp configs/ue_identity/local.json "$IDENTITY_DUAL_RUN/local.json"
+sha256sum scripts/ue_identity/*.py scripts/ue_identity/e2_collector.c \
+  configs/ue_identity/local.json configs/flexric/*ue_identity.conf \
+  configs/ocudu/cu_identity_e2.yml /tmp/falcon-xapp-ue-identity \
+  /tmp/falcon-ue-identity-sm/libkpm_sm.so \
+  /home/nyu/ocudu/build/apps/cu/ocu /home/nyu/ocudu/build/apps/du_split_8/odu \
+  > "$IDENTITY_DUAL_RUN/source-sha256.txt"
+printf '%s\n' '--observed-unique --fresh-only --duration 120' \
+  > "$IDENTITY_DUAL_RUN/cli-overrides.txt"
+python3 scripts/ue_identity/xapp_ue_identity.py \
+  --config configs/ue_identity/local.json \
+  --observed-unique --fresh-only --duration 120 \
+  --text-output "$IDENTITY_DUAL_RUN/bindings.txt" \
+  --capture-events "$IDENTITY_DUAL_RUN/inputs.ndjson" \
+  > "$IDENTITY_DUAL_RUN/rows.ndjson" \
+  2> "$IDENTITY_DUAL_RUN/xapp.log"
+IDENTITY_DUAL_RC=$?
+printf 'xApp exit=%s\n' "$IDENTITY_DUAL_RC" | tee "$IDENTITY_DUAL_RUN/exit.txt"
 ```
 
-Require `Built: /tmp/falcon-xapp-oran-moni-dual`. This leaves installed FlexRIC
-binaries and the running RIC/DUs intact. It expects the current E2AP v3 / KPM v3
-build under `/home/nyu/flexric/build-ocudu`; compare build flags before using a
-different FlexRIC build.
-
-### 7b. Capture while both UEs upload
-
-Run in the Spark xApp terminal:
+While this command is running, in a separate Spark diagnostics terminal use the
+printed directory (shell variables do not cross terminals):
 
 ```bash
-XAPP_RUN=$(mktemp -d /tmp/falcon-dual-kpm.XXXXXXXX)
-printf 'KPM evidence: %s\n' "$XAPP_RUN"
-TZ=America/New_York date -Ins | tee "$XAPP_RUN/start.txt"
-set -o pipefail
-FALCON_KPM_SECONDS=120 /tmp/falcon-xapp-oran-moni-dual \
-  -c /usr/local/etc/flexric/xapp_oran_sm.conf \
-  2>&1 | tee "$XAPP_RUN/kpm.log"
-XAPP_RC=$?
-printf 'pipeline_exit=%d\n' "$XAPP_RC" | tee "$XAPP_RUN/exit.txt"
-TZ=America/New_York date -Ins | tee "$XAPP_RUN/end.txt"
+read -r -p 'Paste the current Spark capture directory: ' IDENTITY_WATCH_RUN
+tail -n 25 "$IDENTITY_WATCH_RUN/xapp.log"
 ```
 
-Before laptop clients start, require both `FALCON_E2_NODE` lines with DU IDs 1
-and 2, two successful KPM subscriptions and
-`FALCON_CAPTURE subscriptions_kpm=2`. During upload, require `FALCON_KPM_NODE`
-blocks from both DU IDs, `UE ID ... gnb_cu_ue_f1ap` lines, all five numeric metrics
-and `report_age_us`. Each node header applies to its following callback block;
-preserve complete blocks when associating UE/metrics with the DU.
+Require `Registered E2 Nodes = 3`, three successful subscription responses and
+`identity collector: 3 KPM subscriptions, duration=120`. Then run
+`python3 ~/falcon-dual-ul.py` on Laptop as instructed in its section 3.
+Let both clients and the xApp finish naturally. Use 7c to inspect this capture.
+Both roles must have matched positive-UL rows with their independently observed
+current IPs, expected SUPIs/DNNs and actual DU/F1/NGAP identities. Require at
+least 30 complete active samples per role; explain startup gaps individually.
+The actual IPs/IDs/counts need not equal today's report.
 
-Let the monitor finish naturally. Require both delete responses, normal stop,
-success marker and pipeline exit 0. Inspect:
+### 7b. Six-minute bidirectional idle/resume and independent matching
+
+After the short test passes, leave Core/RIC/CU/DUs/servers and both PDU sessions
+running. Close other clients and periodic ping/WWAN traffic. Keep CU's current
+120-second inactivity timer; each role's 150-second quiet phase must produce
+an actual Core idle observation. Do not disconnect either bearer or power-cycle
+modems during this test.
+
+1. On Laptop, prepare the inline command in
+   [section 3.1](dual_ue_laptop_quick_commands.md#binding-idle). Leave it at `READY`.
+2. On Spark, start this new foreground capture:
+
+   ```bash
+   cd /home/nyu/Desktop/Falcon_repo/Falcon
+   IDENTITY_BIDIR_RUN=$(mktemp -d /tmp/falcon-identity-bidir.XXXXXXXX)
+   printf 'Spark capture directory: %s\n' "$IDENTITY_BIDIR_RUN"
+   cp configs/ue_identity/local.json "$IDENTITY_BIDIR_RUN/local.json"
+   sha256sum scripts/ue_identity/*.py scripts/ue_identity/e2_collector.c \
+     configs/ue_identity/local.json configs/flexric/*ue_identity.conf \
+     configs/ocudu/cu_identity_e2.yml /tmp/falcon-xapp-ue-identity \
+     /tmp/falcon-ue-identity-sm/libkpm_sm.so \
+     /home/nyu/ocudu/build/apps/cu/ocu /home/nyu/ocudu/build/apps/du_split_8/odu \
+     > "$IDENTITY_BIDIR_RUN/source-sha256.txt"
+   printf '%s\n' '--observed-unique --fresh-only --duration 360' \
+     > "$IDENTITY_BIDIR_RUN/cli-overrides.txt"
+   python3 scripts/ue_identity/xapp_ue_identity.py \
+     --config configs/ue_identity/local.json \
+     --observed-unique --fresh-only --duration 360 \
+     --text-output "$IDENTITY_BIDIR_RUN/bindings.txt" \
+     --capture-events "$IDENTITY_BIDIR_RUN/inputs.ndjson" \
+     > "$IDENTITY_BIDIR_RUN/rows.ndjson" \
+     2> "$IDENTITY_BIDIR_RUN/xapp.log"
+   IDENTITY_BIDIR_RC=$?
+   printf 'xApp exit=%s\n' "$IDENTITY_BIDIR_RC" | tee "$IDENTITY_BIDIR_RUN/exit.txt"
+   ```
+
+3. Within ten seconds of starting xApp, return to Laptop, enter `START` and
+   press Enter. The command runs UE1 15 s UL → 150 s quiet → 170 s UL, and UE2
+   175 s UL → 150 s quiet → 10 s UL. Let all four clients and the full capture
+   finish. No assistant-launched background program is needed.
+4. Inspect this new directory using 7c and retain the Laptop summary/logs too.
+
+### 7c. Inspect bindings, Core transitions and two example records
+
+Run after either capture finishes. Paste that capture's printed directory:
 
 ```bash
-grep -E 'FALCON_E2_NODE|FALCON_CAPTURE|FALCON_KPM_NODE|UE ID type|DRB.UEThpUl|RRU.PrbTotUl|DELETE RESPONSE|SUCCESSFULLY' "$XAPP_RUN/kpm.log"
-cat "$XAPP_RUN/exit.txt"
+read -r -p 'Paste the completed Spark capture directory: ' IDENTITY_CHECK_RUN
+cat "$IDENTITY_CHECK_RUN/exit.txt"
+grep -E 'Registered E2 Nodes|identity collector:|DELETE RESPONSE|Sucessfully stopped' \
+  "$IDENTITY_CHECK_RUN/xapp.log"
+python3 - "$IDENTITY_CHECK_RUN" <<'PY_CHECK'
+from collections import Counter
+from datetime import datetime, timezone
+import json
+from pathlib import Path
+import sys
+from zoneinfo import ZoneInfo
+
+root = Path(sys.argv[1])
+rows = [json.loads(line) for line in (root / 'rows.ndjson').open()]
+events = [json.loads(line) for line in (root / 'inputs.ndjson').open()]
+print('Records:', len(rows), dict(Counter(r['binding_status'] for r in rows)))
+print('App instances:', sorted({r['app_instance'] for r in rows}))
+problems = [e for e in events if e['kind'] not in ('core_snapshot', 'kpm_report')
+            or int(e.get('ingress_dropped_total', 0)) != 0]
+print('Core/input errors or loss events:', len(problems))
+for event in problems[:5]:
+    print(event)
+for du in ('1', '2'):
+    selected = [r for r in rows if str(r['node'].get('du_id')) == du]
+    print('DU' + du, dict(Counter(r['binding_status'] for r in selected)))
+    signatures = sorted({
+        (r['row']['ue']['gnb_cu_ue_f1ap_id'], r['binding']['supi'],
+         r['binding']['amf_ue_ngap_id'], r['binding']['ran_ue_ngap_id'],
+         r['binding']['dnn'], r['ue_ipv4'])
+        for r in selected if r['binding_status'] == 'matched'})
+    print('F1 / SUPI / AMF / RAN / DNN / IP:', signatures)
+    print('Assurance:', dict(Counter(r.get('binding', {}).get('assurance', 'none') for r in selected)))
+    print('Unmatched reasons:', dict(Counter(r['reason'] for r in selected if r['binding_status'] != 'matched')))
+previous, idle_start, episodes = {}, {}, []
+for event in events:
+    if event['kind'] != 'core_snapshot':
+        continue
+    for ue in event['amf']:
+        state = (ue['cm_state'], ue['gnb'].get('amf_ue_ngap_id'), ue['gnb'].get('ran_ue_ngap_id'))
+        before = previous.get(ue['supi'])
+        if before and before[0] == 'connected' and state[0] == 'idle':
+            idle_start[ue['supi']] = int(event['received_at_us'])
+        if state[0] == 'connected' and ue['supi'] in idle_start:
+            episodes.append((ue['supi'], idle_start.pop(ue['supi']), int(event['received_at_us'])))
+        if previous.get(ue['supi']) != state:
+            stamp = datetime.fromtimestamp(int(event['received_at_us']) / 1e6, timezone.utc).astimezone(ZoneInfo('America/New_York'))
+            print('Core transition:', stamp.isoformat(), ue['supi'], state)
+            previous[ue['supi']] = state
+peer_du = {'imsi-001010000000101': '2', 'imsi-001010000000102': '1'}
+print('Completed connected -> idle -> connected intervals:', len(episodes))
+for supi, begin, end in episodes:
+    peer = peer_du.get(supi)
+    selected = [r for r in rows if peer and str(r['node'].get('du_id')) == peer
+                and begin <= int(r['received_at_us']) < end]
+    print('Idle:', supi, 'seconds:', round((end - begin) / 1e6, 3),
+          'peer DU:', peer, 'statuses:', dict(Counter(r['binding_status'] for r in selected)))
+    print('Peer established-scope current matches:', sum(
+        r['binding_status'] == 'matched' and
+        r['binding']['assurance'] == 'established_du_scope_current_context' for r in selected))
+    print('Peer positive-UL rows:', sum(
+        (r['row']['metrics'].get('DRB.UEThpUl', {}).get('value') or 0) > 0 for r in selected))
+if idle_start:
+    print('Incomplete idle intervals at capture end:', sorted(idle_start))
+blocks = (root / 'bindings.txt').read_text().split('\n\n')
+for du in ('1', '2'):
+    example = next((b for b in blocks if b.startswith('record=') and ' status=matched ' in b
+                    and f' DU_ID={du} ' in b), None)
+    print('\nDU' + du + ' example:\n' + (example or 'No matched record'))
+PY_CHECK
 ```
 
-Keep the full log and both laptop logs/time bounds. Subscription or exit 0 alone
-does not prove UE KPM delivery. Full acceptance requires at least 30 complete
-real UL-window rows per link and DU/F1AP UE/modem/SIM/cell/bearer correlation.
-Refresh the mapping after UE ID changes.
+This is an inspection summary, not an independent proof of every join. Compare
+Laptop `summary.json`/`truth.json` IMEI/IMSI/APN/current IP with the actual
+AMF/SMF and CU/DU events in `inputs.ndjson`, then the output rows/TXT. The
+[matching topology and provider fields](reports/ue_identity_dual_ue_live_2026-10-21.md#matching-topology-and-information-supplied-by-each-component)
+explain the chain. `bindings.txt` contains only xApp output; SDK messages are
+in `xapp.log`, and inputs are separate. NGAP and F1 numbers are typed identifiers;
+matching them does not rely on numeric equality.
 
-The completed 19:29:23–19:30:14 EDT probe discovered both DU IDs, subscribed
-twice, deleted twice and exited 0, but received zero UE callback blocks. The
-automatic follow-up did not execute; manual capture commands were supplied.
-Two subsequent 120-second captures completed normally with 123 callbacks per
-DU. The latest `0B8F17Sp` capture aligns with the operator's concurrent UL after
-the approximate +199.27-second clock correction; it contains 61 near-simultaneous
-complete UL-active row pairs. See the [retained analysis](evidence/2026-10-13_dual_kpm_reports/manifest.json).
-Normal completion did not exercise the earlier disconnected-xApp deletion-failure
-abort path. That FlexRIC failure-path defect remains unfixed; both delete
-responses and normal exit are still required for each new capture.
+For the **six-minute test**, require all of the following:
+
+- One 360-second xApp instance, three intended subscriptions, all three delete
+  responses, xApp exit 0 and no Core/input errors or ingress loss.
+- Both UEs establish at least five consecutive matched samples, then each
+  actually moves Core connected → idle → connected. Each observed idle interval
+  should last at least ten seconds; quiet traffic alone does not prove idle.
+- During each idle interval, the other UE keeps at least ten consecutive
+  current `matched` records after the silent DU is outside the three-second
+  TTL. Its own fresh CU/Core inputs and IP/DU/F1/NGAP/SUPI must agree. Silence
+  on the other DU alone must not cause `cached` or missing IP.
+- Each resumed UE gets at least five consecutive fresh matches for its actual
+  new context, with no cross-UE binding. Check convergence within three reporting
+  periods from the later matching fresh CU/Core prerequisite. Explain all
+  startup/resume unresolved rows; never fill them with another context's IP.
+- Both sessions retain their IP during ordinary idle. Investigate any change.
+  All four Laptop clients exit 0 with receiver summaries and `STATUS: completed`.
+  Keep/report any zero-throughput intervals; exit 0 does not prove stall-free UL.
+
+`--fresh-only` requires zero cached records. Normal last-known mode may label
+missing own verification inputs as `cached`; it is separate from this test.
+Compare times within Spark's Core/CU/DU capture. Laptop wall-clock alignment
+is uncalibrated; do not reuse the old approximate 199-second clock correction.
+A successful new run from stopped infrastructure establishes this stage's
+cold-start reproducibility; it does not close all strict lifecycle/reuse,
+restart/recovery or repeated performance gates.
 
 ## 8. Shutdown and retained evidence
 
-Finish laptop traffic and allow the finite xApp to receive both subscription
+Finish laptop traffic and allow the finite xApp to receive all three subscription
 delete responses and stop naturally. Then follow [separate laptop shutdown](dual_ue_laptop_quick_commands.md#cleanup):
 UE1 first, then UE2, using the updated helper's `--shutdown` to disconnect the PDU,
 clear host IPv4 configuration, delete each modem's bearers and disable it.
 After both laptop shutdown success markers, stop both iperf
-server terminals, then each DU, RIC and CU in their own terminals with Ctrl+C.
+server terminals, then each DU, CU and RIC in their own terminals with Ctrl+C.
 Stop the shared core only after both DUs have finished using it:
 
 ```bash
@@ -407,8 +594,11 @@ Optional MongoDB shutdown preserves its container/data:
 sudo docker stop open5gs-mongo
 ```
 
-Retain actual configuration hashes/startup records, subscriber public identities
-and session shapes, CU CGI/F1AP mappings, xApp/RIC lifecycle and full DU-tagged
-KPM blocks with UL-window correlation. Keep raw security-bearing core logs and
-K/OPc outside Git. Full concurrent UL/KPM and repeated/UDP/guard/survivor/cold-start
-acceptance remain pending.
+Retain each capture's `local.json`, `cli-overrides.txt`, `source-sha256.txt`, `exit.txt`,
+`inputs.ndjson`, `rows.ndjson`, `bindings.txt` and `xapp.log`, together with the
+RIC/CU/DU startup logs, actual source revisions and Laptop truth/events/client
+logs/summary. `/tmp` may be cleared on reboot: copy the printed evidence
+directories to a persistent experiment directory before shutdown. Keep raw
+security-bearing Core logs and K/OPc outside Git. Today's live functional
+results are retained in the [report](reports/ue_identity_dual_ue_live_2026-10-21.md);
+record the new cold-start outcome separately from those historical trials.

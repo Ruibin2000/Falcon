@@ -1,0 +1,35 @@
+test_independent_decoder_and_large_id_core_join (test_codec.CodecTests.test_independent_decoder_and_large_id_core_join) ... ok
+test_real_sdk_config_and_plugin_directory_load_without_network (test_codec.CodecTests.test_real_sdk_config_and_plugin_directory_load_without_network) ... ok
+test_launcher_strict_and_explicit_experimental_modes (test_codec.ReplayTests.test_launcher_strict_and_explicit_experimental_modes) ... ok
+test_core_error_immediately_withholds_identity (test_identity.AssociationTests.test_core_error_immediately_withholds_identity) ... ok
+test_cu_stale_despite_fresh_du_and_core (test_identity.AssociationTests.test_cu_stale_despite_fresh_du_and_core) ... ok
+test_delayed_cu_header_cannot_refresh_identity (test_identity.AssociationTests.test_delayed_cu_header_cannot_refresh_identity) ... ok
+test_delayed_du_header_cannot_refresh_a_match (test_identity.AssociationTests.test_delayed_du_header_cannot_refresh_a_match) ... ok
+test_different_report_rates_reuse_valid_relation (test_identity.AssociationTests.test_different_report_rates_reuse_valid_relation) ... ok
+test_du_before_cu_is_not_retroactively_relabelled (test_identity.AssociationTests.test_du_before_cu_is_not_retroactively_relabelled) ... ok
+test_encoded_queue_byte_and_item_limits (test_identity.AssociationTests.test_encoded_queue_byte_and_item_limits) ... ok
+test_expiry_uses_monotonic_clock (test_identity.AssociationTests.test_expiry_uses_monotonic_clock) ... ok
+test_explicit_cu_unavailable_state_withdraws_candidate (test_identity.AssociationTests.test_explicit_cu_unavailable_state_withdraws_candidate) ... ok
+test_first_du_waits_for_other_admitted_source (test_identity.AssociationTests.test_first_du_waits_for_other_admitted_source) ... ok
+test_idle_session_retained_but_idle_amf_not_radio_context (test_identity.AssociationTests.test_idle_session_retained_but_idle_amf_not_radio_context) ... ok
+test_ingress_loss_latches_until_verified_restart (test_identity.AssociationTests.test_ingress_loss_latches_until_verified_restart) ... ok
+test_invalid_identifiers_and_plmn (test_identity.AssociationTests.test_invalid_identifiers_and_plmn) ... ok
+test_missing_cu_row_does_not_imply_release (test_identity.AssociationTests.test_missing_cu_row_does_not_imply_release) ... ok
+test_multiple_sessions_do_not_duplicate_ue_metrics (test_identity.AssociationTests.test_multiple_sessions_do_not_duplicate_ue_metrics) ... ok
+test_no_value_and_incomplete_preserved (test_identity.AssociationTests.test_no_value_and_incomplete_preserved) ... ok
+test_reused_key_does_not_recover_after_timer (test_identity.AssociationTests.test_reused_key_does_not_recover_after_timer) ... ok
+test_same_f1_id_in_two_cu_contexts_is_ambiguous (test_identity.AssociationTests.test_same_f1_id_in_two_cu_contexts_is_ambiguous) ... ok
+test_same_f1_id_seen_on_two_dus_is_ambiguous (test_identity.AssociationTests.test_same_f1_id_seen_on_two_dus_is_ambiguous) ... ok
+test_sixty_four_current_contexts_remain_separate (test_identity.AssociationTests.test_sixty_four_current_contexts_remain_separate) ... ok
+test_strict_mode_never_claims_du_scope_from_standard_ueid (test_identity.AssociationTests.test_strict_mode_never_claims_du_scope_from_standard_ueid) ... ok
+test_two_paths_preserve_values_units_and_do_not_modify_input (test_identity.AssociationTests.test_two_paths_preserve_values_units_and_do_not_modify_input) ... ok
+test_wrong_guami_or_gnb_never_matches (test_identity.AssociationTests.test_wrong_guami_or_gnb_never_matches) ... ok
+test_complete_paginated_snapshot (test_identity.InfoAPITests.test_complete_paginated_snapshot) ... ok
+test_missing_pager_and_bad_session_rejected (test_identity.InfoAPITests.test_missing_pager_and_bad_session_rejected) ... ok
+test_partial_or_changed_page_is_not_an_empty_snapshot (test_identity.InfoAPITests.test_partial_or_changed_page_is_not_an_empty_snapshot) ... ok
+test_unknown_pdu_state_and_expired_poll_rejected (test_identity.InfoAPITests.test_unknown_pdu_state_and_expired_poll_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 30 tests in 0.180s
+
+OK

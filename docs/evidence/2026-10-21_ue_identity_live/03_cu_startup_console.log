@@ -1,0 +1,8 @@
+
+--== OCUDU CU (commit c9d695dfab) ==--
+
+N2: Connection to AMF on 127.0.0.5:38412 completed
+E2AP: Connection to Near-RT-RIC completed (configured addrs 127.0.0.1, port 36421)
+F1-C: Listening for new connections on bind addresses 127.0.10.1, port 38472...
+==== CU started ===
+Type <h> to view help

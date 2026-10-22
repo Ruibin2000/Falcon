@@ -1,0 +1,32 @@
+
+--== OCUDU DU (commit 050a2bb) ==--
+
+Lower PHY in triple executor mode.
+Available radio types: uhd.
+[INFO] [UHD] linux; GNU C++ version 13.2.0; Boost_108300; UHD_4.6.0.0+ds1-5.1ubuntu0.24.04.1
+Making USRP object with args 'type=b200,serial=3271233,num_recv_frames=64,num_send_frames=64'
+[INFO] [LOGGING] Fastpath logging disabled at runtime.
+[INFO] [B200] Loading firmware image: /usr/share/uhd/images/usrp_b200_fw.hex...
+[INFO] [B200] Detected Device: B210
+[INFO] [B200] Loading FPGA image: /usr/share/uhd/images/usrp_b210_fpga.bin...
+[INFO] [B200] Operating over USB 3.
+[INFO] [B200] Detecting internal GPSDO.... 
+[INFO] [GPS] No GPSDO found
+[INFO] [B200] Initialize CODEC control...
+[INFO] [B200] Initialize Radio control...
+[INFO] [B200] Performing register loopback test... 
+[INFO] [B200] Register loopback test passed
+[INFO] [B200] Performing register loopback test... 
+[INFO] [B200] Register loopback test passed
+[INFO] [B200] Setting master clock rate selection to 'automatic'.
+[INFO] [B200] Asking for clock rate 16.000000 MHz... 
+[INFO] [B200] Actually got clock rate 16.000000 MHz.
+[INFO] [MULTI_USRP] Setting master clock rate selection to 'manual'.
+[INFO] [B200] Asking for clock rate 23.040000 MHz... 
+[INFO] [B200] Actually got clock rate 23.040000 MHz.
+Cell pci=1, bw=20 MHz, 1T1R, dl_arfcn=644000 (n78), dl_freq=3660 MHz, dl_ssb_arfcn=643680, ul_freq=3660 MHz
+
+F1-C: Connection to CU-CP on 127.0.10.1:38472 completed
+E2AP: Connection to Near-RT-RIC completed (configured addrs 127.0.0.1, port 36421)
+==== DU started ===
+Type <h> to view help

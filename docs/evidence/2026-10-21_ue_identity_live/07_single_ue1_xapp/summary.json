@@ -1,0 +1,90 @@
+{
+  "recorded_at_utc": "2026-10-21T20:49:28.897402+00:00",
+  "source_directory": "/tmp/falcon-identity-ue1.bTQEUzlq",
+  "operator_reported_exit": 0,
+  "app_instance": "81a6fb38-1880-48ef-b9f0-de2939cb63de",
+  "input_kinds": {
+    "core_snapshot": 60,
+    "kpm_report": 115
+  },
+  "cu_reports": 57,
+  "du_reports": 58,
+  "output_rows": 58,
+  "binding_status": {
+    "unresolved": 1,
+    "matched": 57
+  },
+  "longest_consecutive_matched_rows": 57,
+  "amf_ue_ngap_ids": [
+    "14"
+  ],
+  "ran_ue_ngap_ids": [
+    13
+  ],
+  "cu_f1ap_ids": [
+    "14"
+  ],
+  "du_f1ap_ids": [
+    "14"
+  ],
+  "matched_ips": [
+    "10.45.0.2"
+  ],
+  "du_header_window_utc": [
+    "2026-10-21T20:46:52.644656+00:00",
+    "2026-10-21T20:47:49.644165+00:00"
+  ],
+  "reported_drops": [
+    "0"
+  ],
+  "core_errors_or_ingress_loss": 0,
+  "nonzero_output_metric_counts": {
+    "DRB.RlcSduDelayDl": 58
+  },
+  "independent_audit_errors": [],
+  "scope": "Real single-UE current-observation identity association; explicit serving-DU transport, dual UE, transitions, and under-load metric/performance validation remain pending",
+  "files": {
+    "inputs.ndjson": {
+      "bytes": 171705,
+      "sha256": "ec2d92488ecd402ef06c372407db0b9c61e801f4f1f793b0ed805bca1da05a7a"
+    },
+    "rows.ndjson": {
+      "bytes": 62751,
+      "sha256": "a40b408c5c2579d2d92adb583b68cf7435cc09f9c1610146e97674177bc9cacc"
+    },
+    "xapp.log": {
+      "bytes": 1834,
+      "sha256": "1134b09a8fdcf63008def97f3c28a155dc1fed08c573d70afd8a4b14979b202d"
+    },
+    "single_ue1.json": {
+      "sha256": "556344d27c78ff647917483ba7d4abef8a131fc364bdacdee7bbad6ec8afdef8"
+    },
+    "xapp_ue_identity.conf": {
+      "sha256": "f88b2ba4488f51558193d8503e7afd1dd0a5d12f96326b70636d642ac57b2c29"
+    },
+    "ric_ue_identity.conf": {
+      "sha256": "27058507501a3e946662e7e029d504b20d22f3719bac6056f22a4d8fbd321ee2"
+    },
+    "cu_identity_e2.yml": {
+      "sha256": "a9c77ddf240a2329fcae248baac1804825fb210f7f43c725c1590ad84f8a1620"
+    }
+  },
+  "current_artifact_sha256": {
+    "/home/nyu/Desktop/Falcon_repo/Falcon/scripts/ue_identity/xapp_ue_identity.py": "64999ca5a7c3ff2676b8d1e8f35426f7581401b52166fa93e812df3df15889f5",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/scripts/ue_identity/core.py": "8a91beabd7fe811aec72b8a8c1d4f1f2e72aec693416bb7902100857fda4ab4f",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/scripts/ue_identity/mapping.py": "ddfb99a7ef8db5295a1e56112631a7f4ec0f14cb3db3c1b8177e40c0e800a37d",
+    "/tmp/falcon-xapp-ue-identity": "135a4c8e4b38d2b0aa2399fad0c72299d4d5f710ec5c7e20bdf9f3d3d3ea41b7",
+    "/tmp/falcon-ue-identity-sm/libkpm_sm.so": "7717fc01663049d7e30d92df0d4894b18005d7b2fc895f6c416e770a2d0b0632",
+    "/home/nyu/ocudu/build/apps/cu/ocu": "140a545b954c20a417be7909fe4f8d8af370eb8346239127d2b1c67bfe4d9cad",
+    "/home/nyu/ocudu/build/apps/du_split_8/odu": "f5eb2a9235a8822675227e43d09272dd4d90e34a7d05e708265f52b745defe17"
+  },
+  "cu_guamis": [
+    [
+      "001",
+      "01",
+      2,
+      1,
+      0
+    ]
+  ]
+}

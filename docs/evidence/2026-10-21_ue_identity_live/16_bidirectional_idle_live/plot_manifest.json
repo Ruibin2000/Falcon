@@ -1,0 +1,78 @@
+{
+  "experiment_date": "2026-10-21",
+  "timezone": "America/New_York",
+  "app_instance": "4b672336-4fb7-43f3-8b0b-90209065e92d",
+  "captured_rows": 648,
+  "plotted_positive_rows": 376,
+  "origin_utc": "2026-10-22T01:18:22.525040+00:00",
+  "duration_s": 337.00310611724854,
+  "phases": [
+    {
+      "du_id": 1,
+      "f1ap_ue_id": "54",
+      "rnti": "0x463a",
+      "first_positive_header_utc": "2026-10-22T01:18:22.525891+00:00",
+      "last_positive_header_utc": "2026-10-22T01:18:37.525926+00:00",
+      "positive_kpm_rows": 16,
+      "full_phy_bins": 14
+    },
+    {
+      "du_id": 1,
+      "f1ap_ue_id": "55",
+      "rnti": "0x463b",
+      "first_positive_header_utc": "2026-10-22T01:21:08.525685+00:00",
+      "last_positive_header_utc": "2026-10-22T01:23:59.528146+00:00",
+      "positive_kpm_rows": 172,
+      "full_phy_bins": 170
+    },
+    {
+      "du_id": 2,
+      "f1ap_ue_id": "34",
+      "rnti": "0x4623",
+      "first_positive_header_utc": "2026-10-22T01:18:22.525040+00:00",
+      "last_positive_header_utc": "2026-10-22T01:21:18.524699+00:00",
+      "positive_kpm_rows": 177,
+      "full_phy_bins": 175
+    },
+    {
+      "du_id": 2,
+      "f1ap_ue_id": "35",
+      "rnti": "0x4624",
+      "first_positive_header_utc": "2026-10-22T01:23:49.524403+00:00",
+      "last_positive_header_utc": "2026-10-22T01:23:59.524334+00:00",
+      "positive_kpm_rows": 11,
+      "full_phy_bins": 9
+    }
+  ],
+  "phy": {
+    "1": {
+      "attempts": 109999,
+      "crc_ko": 8198,
+      "sinr_median_db": 17.6,
+      "crc_failed_attempt_percent": 7.452795025409322
+    },
+    "2": {
+      "attempts": 109627,
+      "crc_ko": 5454,
+      "sinr_median_db": 24.0,
+      "crc_failed_attempt_percent": 4.975051766444397
+    }
+  },
+  "window_definition": "Per-role contiguous positive UL KPM phases; no points/lines through quiet gaps",
+  "phy_bin_definition": "Complete one-second bins inside each positive-UL phase; NaN for missing bins",
+  "crc_definition": "KO / (OK + KO) PUSCH decoding attempts, including HARQ retransmissions",
+  "clock_boundary": "Spark timestamps; Laptop process windows are not precisely aligned",
+  "sha256": {
+    "plot.py": "f3c2e4e52ded8c3de2cf1bd04c3337c3ac492731637f815aa8a82b6a5ffa71e1",
+    "rows.ndjson": "88435f1469aede7b5434b0a33ff61855b9ed93c30b33453ee0cdbad32308bdf3",
+    "inputs.ndjson": "b1193464affc5f1dfe97e48fffdf6297a5efed28a80612b798aed54b1305c448",
+    "phy_sources.json": "980ec0846ff240cc82670d39ddfea651521e638c2d3d80ef83a3fcc96aa8d37f",
+    "cu_phy_identity_excerpt.log": "f7ac95450e4f333b1064fec67e952b87ec446c3120454163d768cd858b221c25",
+    "du1_pusch.log.gz": "18779f960e4127c4e11edbb706a83c0f94d43d51e18fb2298a2cdc2abf6d5821",
+    "du2_pusch.log.gz": "bcc66135710ee6a18d1d523df1e8849b4d3c47eb42f376b26bebea5241e7994b",
+    "plot_kpm.csv": "3bd2ed546844743869133fef62c7a924c8afe348a9e09f6d15c7e9dafbd23b60",
+    "phy_per_second.csv": "694460e45f285d4892fe5ed2ad99394cb35bce5f8eefd77740ef9d7307c56683",
+    "dual_ul_kpm.png": "27621f73bbebd0577c0c6b1a0ccc438c73fb26cbabb404380c4363a27ef3df05",
+    "dual_ul_kpm.svg": "ce43e9968777de4747499ba7a9c9c6625482637ed011564cec39f014a479ece1"
+  }
+}

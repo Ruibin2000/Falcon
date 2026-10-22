@@ -1,0 +1,427 @@
+[  0%] Built target ocudu_hal_app_helpers
+[  0%] Built target fmt
+[  2%] Built target ocudu_f1u_app_helpers
+[  2%] Built target ocudu_e2_app_helpers
+[  2%] Built target ocudu_logger_app_helpers
+[  2%] Built target ocudu_ru_metrics_json_generators_helpers
+[  2%] Built target ocudu_metrics_app_helpers
+[  2%] Building CXX object apps/helpers/metrics/json_generators/cu_cp/CMakeFiles/ocudu_cu_cp_metrics_json_generators_helpers.dir/cu_cp_json_helper.cpp.o
+[  2%] Built target ocudu_du_high_metrics_json_generators_helpers
+[  2%] Built target ocudu_cu_up_metrics_json_generators_helpers
+[  2%] Built target ocudu_network_app_helpers
+[  2%] Built target ocudu_tracing_app_helpers
+[  2%] Built target ocudu_buffer_pool_app_service
+[  2%] Built target ocudu_cmdline_app_service
+[  2%] Built target ocudu_metrics_app_service
+[  4%] Built target uSockets
+[  4%] Built target ocudu_cpu_affinities_helper
+[  4%] Built target ocudu_ue_location_manager
+[  6%] Built target ocudu_up_resource_manager
+[  6%] Built target ocudu_ue_security_manager
+[  6%] Built target ocudu_rohc
+[  6%] Built target ocudu_f1u_cu_up
+[  8%] Built target ocudu_security
+[  8%] Built target ocudu_sdap
+[ 10%] Built target ocudu_cbs_encoder
+[ 10%] Built target sched_cell
+[ 10%] Built target common_sched
+[ 12%] Built target sched_support
+[ 12%] Built target ocudu_f1u_du
+[ 12%] Built target ue_sched
+[ 14%] Built target ocudu_pcap
+[ 14%] Built target ocudu_upper_phy_support
+[ 16%] Built target ocudu_channel_precoder
+[ 16%] Built target ocudu_transform_precoding
+[ 16%] Built target ocudu_phy_metrics
+[ 16%] Built target ocudu_pucch_processor
+[ 16%] Built target ocudu_crc_calculator
+[ 16%] Built target ocudu_pucch_detector
+[ 16%] Built target ocudu_pusch_demodulator
+[ 16%] Built target ocudu_pucch_demodulator
+[ 16%] Built target ocudu_dmrs_helper
+[ 16%] Built target ocudu_prs_generator
+[ 16%] Built target ocudu_dmrs_pucch
+[ 18%] Built target ocudu_ptrs_generator
+[ 18%] Building CXX object apps/units/o_cu_cp/cu_cp/metrics/consumers/CMakeFiles/ocudu_cu_cp_unit_metrics_consumers.dir/rrc_metrics_consumers.cpp.o
+[ 18%] Built target ocudu_lower_phy_adaptors
+[ 18%] Building CXX object apps/units/o_cu_cp/e2/CMakeFiles/ocudu_o_cu_cp_e2_app_unit.dir/o_cu_cp_e2_config_translators.cpp.o
+[ 18%] Built target ocudu_cu_up_unit_metrics_helpers
+[ 18%] Built target ocudu_o_cu_up_app_unit_e2
+[ 18%] Built target ocudu_f1u_split_connector
+[ 18%] Built target ocudu_yaml_util
+-- Generating build information
+[ 18%] Built target gen_build_info
+[ 18%] Built target ocudulog
+[ 18%] Built target ocudu_remote_control_app_service
+[ 22%] Built target ocudu_support
+[ 27%] Built target ocudu_ran
+[ 29%] Built target ocudu_phy_to_fapi_p7_fastpath_translator
+[ 31%] Built target ocudu_pusch_processor
+[ 31%] Built target ocudu_nzp_csi_rs_generator
+[ 33%] Built target ocudu_dmrs_pdcch
+[ 33%] Built target ocudu_dmrs_pdsch
+[ 33%] Built target ocudu_dmrs_pusch
+[ 33%] Built target ocudu_srs_estimator
+[ 33%] Built target ocudu_ofh_ecpri
+[ 33%] Built target ocudu_ofh_message_serdes
+[ 33%] Built target ocudu_ru_dummy
+[ 33%] Built target ocudu_cu_up_app_unit
+[ 33%] Built target ocudu_f1u_cu_up_split_connector
+[ 33%] Built target ocudu_versioning
+[ 33%] Built target ocuduvec
+[ 33%] Building CXX object lib/cu_cp/cell_meas_manager/CMakeFiles/ocudu_cu_cp_cell_meas_manager.dir/cell_meas_manager_impl.cpp.o
+[ 33%] Linking CXX static library libocudu_cu_cp_unit_metrics_consumers.a
+[ 33%] Built target ocudu_cu_cp_unit_metrics_consumers
+[ 33%] Building CXX object lib/cu_cp/mobility_manager/CMakeFiles/ocudu_cu_cp_mobility_manager.dir/mobility_manager_impl.cpp.o
+[ 33%] Linking CXX static library libocudu_o_cu_cp_e2_app_unit.a
+[ 33%] Built target ocudu_o_cu_cp_e2_app_unit
+[ 33%] Built target sched_config_manager
+[ 33%] Built target sched_ue_context
+[ 33%] Built target ocudu_fapi_precoding_matrix_tools
+[ 35%] Built target ocudu_fapi_uci_part2_tools
+[ 35%] Built target ocudu_dft
+[ 35%] Built target log_likelihood_ratio
+[ 35%] Built target ocudu_pdcch_processor
+[ 35%] Built target ocudu_prach_detector
+[ 35%] Built target ocudu_ssb_generators
+[ 35%] Built target ocudu_channel_equalizer
+[ 35%] Built target ocudu_ofh_compression
+[ 35%] Built target ocudu_lower_phy_amplitude_controller
+[ 35%] Built target ocudu_support_math
+[ 35%] Built target ocudu_polar
+[ 35%] Built target ocudu_ldpc
+[ 35%] Built target ocudu_short_block
+[ 35%] Linking CXX static library libocudu_cu_cp_metrics_json_generators_helpers.a
+[ 35%] Built target ocudu_channel_modulation
+[ 35%] Built target ocudu_sequence_generators
+[ 35%] Built target ocudu_cu_cp_metrics_json_generators_helpers
+[ 35%] Built target ocudu_upper_phy_metrics
+[ 35%] Built target ocudu_lower_phy_modulation
+[ 35%] Building CXX object apps/units/o_cu_cp/cu_cp/metrics/CMakeFiles/ocudu_cu_cp_unit_metrics_helpers.dir/cu_cp_metrics_producer.cpp.o
+[ 35%] Built target ocudu_radio_uhd
+[ 35%] Building CXX object apps/units/o_cu_cp/cu_cp/metrics/CMakeFiles/ocudu_cu_cp_unit_metrics_helpers.dir/cu_cp_metrics_consumers.cpp.o
+[ 35%] Linking CXX static library libocudu_cu_cp_cell_meas_manager.a
+[ 35%] Built target ocudu_cu_cp_cell_meas_manager
+[ 37%] Built target ocudu_metrics_json_generators
+[ 37%] Built target asn1_utils
+[ 39%] Built target ocudu_instrumentation
+[ 39%] Built target ocudu_gateway
+[ 39%] Built target ocudu_nru
+[ 39%] Built target ocudu_psup
+[ 39%] Built target mac_configuration_helpers
+[ 41%] Built target ocudu_rlc
+[ 41%] Built target ocudu_phy_to_fapi_p5_sector_fastpath_adaptor
+[ 41%] Built target ocudu_phy_support
+[ 41%] Built target ocudu_channel_coding
+[ 43%] Built target ocudu_ofh_ethernet
+[ 43%] Built target ocudu_ofh_timing
+[ 43%] Built target ocudu_lower_phy_downlink_processor
+[ 45%] Built target ocudu_lower_phy_prach_processor
+[ 45%] Built target ocudu_lower_phy_pdxch_processor
+[ 45%] Built target ocudu_lower_phy_puxch_processor
+[ 45%] Built target ocudu_radio
+[ 45%] Built target ocudu_exec_metrics_app_service
+[ 45%] Built target ocudu_resource_usage_app_service
+[ 45%] Built target f1ap_asn1
+[ 45%] Built target e1ap_asn1
+[ 47%] Built target e2ap_asn1
+[ 47%] Built target ngap_asn1
+[ 50%] Built target nrppa_asn1
+[ 50%] Built target xnap_asn1
+[ 52%] Built target rrc_nr_asn1
+[ 52%] Built target ocudu_e1ap_common
+[ 54%] Built target ocudu_f1ap_common
+[ 54%] Building CXX object lib/e2/CMakeFiles/ocudu_e2.dir/common/e2_cu_cp_factory.cpp.o
+[ 54%] Built target ocudu_pdcp
+[ 54%] Building CXX object lib/e2/CMakeFiles/ocudu_e2.dir/common/e2_cu_up_factory.cpp.o
+[ 54%] Linking CXX static library libocudu_cu_cp_unit_metrics_helpers.a
+[ 54%] Built target ocudu_cu_cp_unit_metrics_helpers
+[ 56%] Built target ocudu_e1ap_cu_up
+[ 56%] Built target ocudu_gtpu
+[ 56%] Built target scheduler_logger
+[ 56%] Built target ocudu_f1ap_du_helpers
+[ 56%] Built target ocudu_fapi_phy_message_adaptors
+[ 56%] Built target ocudu_pdsch_processor
+[ 56%] Built target ocudu_channel_estimator
+[ 56%] Built target ocudu_uci_decoder
+[ 58%] Built target ocudu_ofh_receiver
+[ 58%] Built target ocudu_ofh_transmitter
+[ 58%] Built target ocudu_lower_phy_uplink_processor
+[ 58%] Building CXX object apps/units/o_cu_cp/cu_cp/CMakeFiles/ocudu_cu_cp_app_unit.dir/cu_cp_config_translators.cpp.o
+[ 58%] Linking CXX static library libocudu_cu_cp_mobility_manager.a
+[ 58%] Built target ocudu_cu_cp_mobility_manager
+[ 60%] Built target ocudu_e1_gateway
+[ 60%] Built target ocudu_f1c_gateway
+[ 60%] Built target ocudu_xnc_gateway
+[ 60%] Building CXX object lib/e2/CMakeFiles/ocudu_e2.dir/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp.o
+[ 60%] Building CXX object lib/f1ap/cu_cp/CMakeFiles/ocudu_f1ap_cu.dir/f1ap_cu_impl.cpp.o
+[ 60%] Building CXX object lib/f1ap/cu_cp/CMakeFiles/ocudu_f1ap_cu.dir/f1ap_cu_factory.cpp.o
+[ 62%] Linking CXX static library libocudu_cu_cp_app_unit.a
+[ 62%] Built target ocudu_cu_cp_app_unit
+[ 64%] Built target ocudu_rrc
+[ 66%] Built target ocudu_cu_up
+[ 68%] Built target sched_config
+[ 68%] Built target ocudu_f1ap_du_procedures
+[ 68%] Built target ocudu_fapi_to_phy_p7_fastpath_translator
+[ 68%] Built target ocudu_ssb_tx_processor
+[ 70%] Built target ocudu_ofh
+[ 72%] Built target ocudu_lower_phy
+[ 72%] Built target ocudu_ru_ofh
+[ 75%] Built target ocudu_ru_sdr
+[ 77%] Built target ocudu_sched
+[ 79%] Built target ocudu_f1ap_du
+[ 79%] Built target ocudu_phy_to_fapi_p7_sector_fastpath_adaptor
+[ 79%] Built target ocudu_downlink_processor
+[ 79%] Built target ocudu_uplink_processor
+[ 79%] Built target du_resource_manager
+[ 81%] Built target ocudu_phy_fapi_fastpath_adaptor
+[ 81%] Built target ocudu_upper_phy
+[ 81%] Built target du_manager_converters
+[ 81%] Built target ocudu_o_du_low
+[ 81%] Built target ocudu_du_config_validators
+[ 81%] Built target ocudu_du_manager_procedures
+[ 83%] Built target ocudu_mac
+[ 85%] Built target du_ue
+[ 85%] Built target ocudu_du_manager
+[ 85%] Building CXX object lib/f1ap/cu_cp/CMakeFiles/ocudu_f1ap_cu.dir/procedures/f1_removal_procedure.cpp.o
+[ 85%] Linking CXX static library libocudu_e2.a
+[ 87%] Built target ocudu_e2
+[ 89%] Built target ocudu_du_high_adapters
+[ 89%] Built target ocudu_o_cu_up
+[ 89%] Built target ocudu_du_high
+[ 89%] Built target ocudu_o_cu_up_app_unit
+[ 89%] Building CXX object lib/f1ap/cu_cp/CMakeFiles/ocudu_f1ap_cu.dir/procedures/f1ap_positioning_information_exchange_procedure.cpp.o
+[ 89%] Building CXX object lib/f1ap/cu_cp/CMakeFiles/ocudu_f1ap_cu.dir/procedures/f1ap_positioning_activation_procedure.cpp.o
+[ 89%] Building CXX object lib/f1ap/cu_cp/CMakeFiles/ocudu_f1ap_cu.dir/procedures/f1ap_stop_procedure.cpp.o
+[ 89%] Building CXX object lib/f1ap/cu_cp/CMakeFiles/ocudu_f1ap_cu.dir/procedures/ue_context_setup_procedure.cpp.o
+[ 89%] Building CXX object lib/f1ap/cu_cp/CMakeFiles/ocudu_f1ap_cu.dir/procedures/ue_context_modification_procedure.cpp.o
+[ 89%] Building CXX object lib/f1ap/cu_cp/CMakeFiles/ocudu_f1ap_cu.dir/procedures/ue_context_release_procedure.cpp.o
+[ 89%] Building CXX object lib/f1ap/cu_cp/CMakeFiles/ocudu_f1ap_cu.dir/ue_context/f1ap_cu_ue_context.cpp.o
+[ 89%] Building CXX object lib/f1ap/cu_cp/CMakeFiles/ocudu_f1ap_cu.dir/ue_context/ue_ul_bearer_manager.cpp.o
+[ 89%] Linking CXX static library libocudu_f1ap_cu.a
+[ 89%] Built target ocudu_f1ap_cu
+[ 89%] Building CXX object lib/nrppa/CMakeFiles/ocudu_nrppa.dir/nrppa_factory.cpp.o
+[ 89%] Building CXX object lib/nrppa/CMakeFiles/ocudu_nrppa.dir/nrppa_impl.cpp.o
+[ 89%] Building CXX object lib/nrppa/CMakeFiles/ocudu_nrppa.dir/procedures/e_cid_measurement_initiation_procedure.cpp.o
+[ 89%] Linking CXX static library libocudu_nrppa.a
+[ 89%] Built target ocudu_nrppa
+[ 89%] Building CXX object lib/xnap/CMakeFiles/ocudu_xnap.dir/procedures/xn_setup_procedure.cpp.o
+[ 89%] Building CXX object lib/xnap/CMakeFiles/ocudu_xnap.dir/xnap_impl.cpp.o
+[ 89%] Building CXX object lib/xnap/CMakeFiles/ocudu_xnap.dir/xnap_factory.cpp.o
+[ 89%] Linking CXX static library libocudu_xnap.a
+[ 89%] Built target ocudu_xnap
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/ngap_impl.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/ngap_connection_handler.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/ngap_asn1_packer.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/ngap_factory.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/gateways/n2_connection_client_factory.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/procedures/ng_setup_procedure.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/procedures/ng_reset_procedure.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/procedures/ngap_dl_nas_message_transfer_procedure.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/procedures/ngap_handover_preparation_procedure.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/procedures/ngap_handover_resource_allocation_procedure.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/procedures/ngap_initial_context_setup_procedure.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/procedures/ngap_path_switch_procedure.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/procedures/ngap_pdu_session_resource_modify_procedure.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/procedures/ngap_pdu_session_resource_release_procedure.cpp.o
+[ 89%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/procedures/ngap_pdu_session_resource_setup_procedure.cpp.o
+[ 91%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/procedures/ngap_ue_context_modification_procedure.cpp.o
+[ 91%] Building CXX object lib/ngap/CMakeFiles/ocudu_ngap.dir/procedures/ngap_ue_context_release_procedure.cpp.o
+[ 91%] Linking CXX static library libocudu_ngap.a
+[ 91%] Built target ocudu_ngap
+[ 91%] Built target ocudu_e1ap_cu_cp
+[ 91%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/cu_cp_factory.cpp.o
+[ 91%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/cu_configurator_impl.cpp.o
+[ 91%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/cu_cp_controller/cu_cp_controller.cpp.o
+[ 91%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/cu_cp_impl.cpp.o
+[ 91%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/cu_cp_controller/amf_connection_manager.cpp.o
+[ 91%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/cu_cp_controller/du_connection_manager.cpp.o
+[ 91%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/cu_cp_controller/xnc_connection_manager.cpp.o
+[ 91%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/cu_up_processor/cu_up_processor_impl.cpp.o
+[ 91%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/cu_up_processor/cu_up_processor_factory.cpp.o
+[ 91%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/cu_up_processor/cu_up_processor_repository.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/du_processor/du_processor_impl.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/du_processor/du_processor_factory.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/du_processor/du_processor_repository.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/metrics_handler/metrics_handler_impl.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/ngap_repository.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/paging/paging_message_handler.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/amf_connection_loss_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/amf_connection_setup_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/amf_connection_removal_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/amf_reconnection_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/cell_activation_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/cell_deactivation_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/initial_context_setup_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/pdu_session_resource_setup_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/pdu_session_resource_release_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/pdu_session_resource_modification_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/reestablishment_context_modification_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/ue_context_release_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/ue_removal_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/ue_resume_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/ue_suspend_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/ue_transaction_info_release_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/ue_amf_context_release_request_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/mobility/intra_cu_handover_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/mobility/intra_cu_handover_target_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/mobility/inter_cu_handover_source_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/mobility/inter_cu_handover_target_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/mobility/inter_cu_handover_execution_target_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/mobility/handover_reconfiguration_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/mobility/conditional_handover_cancellation_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/mobility/conditional_handover_coordinator_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/mobility/conditional_handover_reconfiguration_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/mobility/conditional_handover_source_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/mobility/conditional_handover_target_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/routines/positioning/trp_information_exchange_routine.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/ue_manager/cu_cp_ue_impl.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/ue_manager/ue_manager_impl.cpp.o
+[ 93%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_cu_cp.dir/xnap_repository.cpp.o
+[ 93%] Linking CXX static library libocudu_cu_cp.a
+[ 95%] Built target ocudu_cu_cp
+[ 97%] Built target ocudu_worker_manager_app_service
+[ 97%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_o_cu_cp.dir/o_cu_cp_impl.cpp.o
+[ 97%] Building CXX object lib/cu_cp/CMakeFiles/ocudu_o_cu_cp.dir/o_cu_cp_factory.cpp.o
+[100%] Linking CXX static library libocudu_o_cu_cp.a
+[100%] Built target ocudu_o_cu_cp
+[100%] Building CXX object apps/units/o_cu_cp/CMakeFiles/ocudu_o_cu_cp_app_unit.dir/o_cu_cp_builder.cpp.o
+[100%] Building CXX object apps/units/o_cu_cp/CMakeFiles/ocudu_o_cu_cp_app_unit.dir/o_cu_cp_unit_impl.cpp.o
+[100%] Building CXX object apps/units/o_cu_cp/CMakeFiles/ocudu_o_cu_cp_app_unit.dir/o_cu_cp_application_unit_impl.cpp.o
+[100%] Linking CXX static library libocudu_o_cu_cp_app_unit.a
+[100%] Built target ocudu_o_cu_cp_app_unit
+[100%] Building CXX object apps/cu/CMakeFiles/ocu.dir/cu.cpp.o
+[100%] Linking CXX executable ocu
+[100%] Built target ocu
+[  0%] Built target fmt
+[ 20%] Built target ocudu_pcap
+[ 20%] Built target ocudulog
+[ 20%] Built target ocuduvec
+[ 60%] Built target ocudu_support
+[ 60%] Built target ocudu_support_math
+[ 60%] Built target ocudu_gateway
+[ 60%] Built target asn1_utils
+[ 80%] Built target e2ap_asn1
+[100%] Built target ocudu_e2
+[100%] Built target e2_test_helpers
+[100%] Building CXX object tests/unittests/e2/CMakeFiles/e2sm_kpm_meas_provider_test.dir/e2sm_kpm_meas_provider_test.cpp.o
+[100%] Linking CXX executable e2sm_kpm_meas_provider_test
+[100%] Built target e2sm_kpm_meas_provider_test
+[  0%] Built target ocudu_ue_location_manager
+[  6%] Built target ocudu_up_resource_manager
+[  6%] Built target ocudu_ue_security_manager
+[  6%] Built target fmt
+[  6%] Built target ocudu_rohc
+[ 12%] Built target ocudu_security
+[ 12%] Built target ocudulog
+[ 12%] Built target ocuduvec
+[ 25%] Built target ocudu_support
+[ 37%] Built target ocudu_ran
+[ 37%] Built target ocudu_support_math
+[ 43%] Built target ocudu_instrumentation
+[ 43%] Built target ocudu_cu_cp_mobility_manager
+[ 43%] Built target ocudu_cu_cp_cell_meas_manager
+[ 43%] Built target asn1_utils
+[ 43%] Built target ocudu_pdcp
+[ 43%] Built target e1ap_asn1
+[ 43%] Built target f1ap_asn1
+[ 43%] Built target ngap_asn1
+[ 50%] Built target e2ap_asn1
+[ 56%] Built target nrppa_asn1
+[ 56%] Built target xnap_asn1
+[ 62%] Built target rrc_nr_asn1
+[ 62%] Built target ocudu_e1ap_common
+[ 68%] Built target ocudu_f1ap_common
+[ 75%] Built target ocudu_rrc
+[ 81%] Built target ocudu_e2
+[ 81%] Built target ocudu_f1ap_cu
+[ 81%] Built target ocudu_nrppa
+[ 81%] Built target ocudu_xnap
+[ 87%] Built target ocudu_ngap
+[ 87%] Built target ocudu_e1ap_cu_cp
+[100%] Built target ocudu_cu_cp
+[100%] Building CXX object tests/unittests/cu_cp/metrics_handler/CMakeFiles/cu_cp_metrics_handler_test.dir/metrics_handler_test.cpp.o
+[100%] Linking CXX executable cu_cp_metrics_handler_test
+[100%] Built target cu_cp_metrics_handler_test
+[  0%] Built target ocudu_ue_location_manager
+[  0%] Built target ocudu_ue_security_manager
+[  0%] Built target fmt
+[  6%] Built target ocudu_up_resource_manager
+[  6%] Built target ocudu_rohc
+[  6%] Built target ocudulog
+[ 12%] Built target ocudu_security
+[ 12%] Built target ocuduvec
+[ 25%] Built target ocudu_support
+[ 25%] Built target ocudu_support_math
+[ 37%] Built target ocudu_ran
+[ 37%] Built target asn1_utils
+[ 37%] Built target test_rng
+[ 43%] Built target ocudu_instrumentation
+[ 43%] Built target ocudu_cu_cp_cell_meas_manager
+[ 43%] Built target ngap_asn1
+[ 43%] Built target ocudu_cu_cp_mobility_manager
+[ 43%] Built target e1ap_asn1
+[ 43%] Built target f1ap_asn1
+[ 50%] Built target e2ap_asn1
+[ 56%] Built target nrppa_asn1
+[ 56%] Built target xnap_asn1
+[ 56%] Built target ocudu_e1ap_common
+[ 62%] Built target rrc_nr_asn1
+[ 68%] Built target ocudu_f1ap_common
+[ 68%] Built target ocudu_gtest_main
+[ 75%] Built target ocudu_e2
+[ 75%] Built target ocudu_pdcp
+[ 75%] Built target ocudu_f1ap_cu
+[ 75%] Building CXX object tests/unittests/ngap/CMakeFiles/ngap_test_helpers.dir/ngap_test_helpers.cpp.o
+[ 75%] Building CXX object tests/unittests/ngap/CMakeFiles/ngap_test_helpers.dir/ngap_test_messages.cpp.o
+[ 81%] Built target ocudu_rrc
+[ 81%] Built target ocudu_nrppa
+[ 81%] Built target ocudu_xnap
+[ 87%] Built target ocudu_ngap
+[ 87%] Built target ocudu_e1ap_cu_cp
+[100%] Built target ocudu_cu_cp
+[100%] Linking CXX static library libngap_test_helpers.a
+[100%] Built target ngap_test_helpers
+[100%] Building CXX object tests/unittests/ngap/CMakeFiles/ngap_test.dir/Unity/unity_0_cxx.cxx.o
+[100%] Building CXX object tests/unittests/ngap/CMakeFiles/ngap_test.dir/Unity/unity_1_cxx.cxx.o
+[100%] Linking CXX executable ngap_test
+[100%] Built target ngap_test
+[  9%] Built target ocudu_up_resource_manager
+[  9%] Built target fmt
+[  9%] Built target ocudu_ue_security_manager
+[  9%] Built target ocudu_f1u_du
+[  9%] Built target ocudu_rohc
+[ 18%] Built target ocudu_security
+[ 18%] Built target ocudulog
+[ 18%] Built target ocuduvec
+[ 36%] Built target ocudu_support
+[ 54%] Built target ocudu_ran
+[ 54%] Built target ocudu_support_math
+[ 54%] Built target test_rng
+[ 63%] Built target ocudu_instrumentation
+[ 63%] Built target pdcp_test_doubles
+[ 63%] Built target asn1_utils
+[ 63%] Built target ocudu_gtest_main
+[ 63%] Built target f1ap_asn1
+[ 63%] Built target ocudu_pdcp
+[ 72%] Built target rrc_nr_asn1
+[ 81%] Built target ocudu_f1ap_common
+[ 81%] Built target ocudu_f1ap_du_helpers
+[ 90%] Built target ocudu_rrc
+[ 90%] Built target ocudu_f1ap_du_procedures
+[ 90%] Built target ocudu_f1ap_cu
+[ 90%] Built target rrc_test_doubles
+[100%] Built target ocudu_f1ap_du
+[100%] Built target f1ap_test_doubles
+[100%] Building CXX object tests/unittests/f1ap/cu_cp/CMakeFiles/f1ap_cu_test_helpers.dir/f1ap_cu_test_helpers.cpp.o
+[100%] Linking CXX static library libf1ap_cu_test_helpers.a
+[100%] Built target f1ap_cu_test_helpers
+[100%] Building CXX object tests/unittests/f1ap/cu_cp/CMakeFiles/f1ap_cu_test.dir/f1ap_cu_gnb_cu_configuration_update_procedure_test.cpp.o
+[100%] Building CXX object tests/unittests/f1ap/cu_cp/CMakeFiles/f1ap_cu_test.dir/f1ap_cu_ue_context_test.cpp.o
+[100%] Building CXX object tests/unittests/f1ap/cu_cp/CMakeFiles/f1ap_cu_test.dir/f1ap_cu_ue_context_setup_procedure_test.cpp.o
+[100%] Building CXX object tests/unittests/f1ap/cu_cp/CMakeFiles/f1ap_cu_test.dir/f1ap_cu_ue_context_modification_procedure_test.cpp.o
+[100%] Building CXX object tests/unittests/f1ap/cu_cp/CMakeFiles/f1ap_cu_test.dir/f1ap_cu_ue_context_release_procedure_test.cpp.o
+[100%] Building CXX object tests/unittests/f1ap/cu_cp/CMakeFiles/f1ap_cu_test.dir/f1ap_cu_test.cpp.o
+[100%] Building CXX object tests/unittests/f1ap/cu_cp/CMakeFiles/f1ap_cu_test.dir/f1ap_cu_paging_test.cpp.o
+[100%] Linking CXX executable f1ap_cu_test
+[100%] Built target f1ap_cu_test

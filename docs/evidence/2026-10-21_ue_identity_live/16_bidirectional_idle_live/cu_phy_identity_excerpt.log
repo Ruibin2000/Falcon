@@ -1,0 +1,12 @@
+2026-10-22T01:18:20.909392 [CU-UEMNG] [I] ue=88 du_index=1 gnb_du_id=2 pci=2 rnti=0x4623 pcell_index=0: Created new CU-CP UE
+2026-10-22T01:18:20.909444 [CU-CP-F1] [I] ue=88 du_ue=34 cu_ue=34: Added UE context
+2026-10-22T01:18:20.909618 [CU-UEMNG] [I] ue=89 du_index=0 gnb_du_id=1 pci=1 rnti=0x463a pcell_index=0: Created new CU-CP UE
+2026-10-22T01:18:20.909636 [CU-CP-F1] [I] ue=89 du_ue=54 cu_ue=54: Added UE context
+2026-10-22T01:18:20.950668 [NGAP    ] [I] Rx PDU ue=88 ran_ue=87 amf_ue=88: InitialContextSetupRequest
+2026-10-22T01:18:20.956252 [NGAP    ] [I] Rx PDU ue=89 ran_ue=88 amf_ue=89: InitialContextSetupRequest
+2026-10-22T01:21:07.048879 [CU-UEMNG] [I] ue=90 du_index=0 gnb_du_id=1 pci=1 rnti=0x463b pcell_index=0: Created new CU-CP UE
+2026-10-22T01:21:07.048950 [CU-CP-F1] [I] ue=90 du_ue=55 cu_ue=55: Added UE context
+2026-10-22T01:21:07.095179 [NGAP    ] [I] Rx PDU ue=90 ran_ue=89 amf_ue=90: InitialContextSetupRequest
+2026-10-22T01:23:47.358700 [CU-UEMNG] [I] ue=91 du_index=1 gnb_du_id=2 pci=2 rnti=0x4624 pcell_index=0: Created new CU-CP UE
+2026-10-22T01:23:47.358773 [CU-CP-F1] [I] ue=91 du_ue=35 cu_ue=35: Added UE context
+2026-10-22T01:23:47.389762 [NGAP    ] [I] Rx PDU ue=91 ran_ue=90 amf_ue=91: InitialContextSetupRequest

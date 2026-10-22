@@ -1,0 +1,137 @@
+{
+  "validation": "passed",
+  "kind": "captured-input policy regression; not live acceptance",
+  "live_source": "13_ue2_idle_resume",
+  "rows_each_policy": 637,
+  "policies": {
+    "fresh_only": {
+      "unresolved": 56,
+      "matched": 581
+    },
+    "last_known": {
+      "unresolved": 27,
+      "matched": 581,
+      "cached": 29
+    }
+  },
+  "preserved_original_matched_rows": 581,
+  "preserved_du_payloads_each_policy": 637,
+  "cached_sequences": [
+    310,
+    311,
+    312,
+    313,
+    314,
+    315,
+    316,
+    317,
+    318,
+    319,
+    320,
+    321,
+    322,
+    323,
+    324,
+    325,
+    326,
+    327,
+    328,
+    329,
+    330,
+    331,
+    332,
+    333,
+    334,
+    335,
+    336,
+    337,
+    338
+  ],
+  "example_cached_record": {
+    "schema": "falcon.ue_identity.experimental.v1",
+    "app_instance": "d9e0f95a-60cd-46de-aba6-c18010235996",
+    "sequence": 310,
+    "node": {
+      "mcc": "001",
+      "mnc": "01",
+      "gnb_id": "411",
+      "gnb_padding": 10,
+      "node_type": "ngran_gNB_DU",
+      "du_id": "1",
+      "gnb_id_bits": 22
+    },
+    "row": {
+      "ue": {
+        "id_type": "gnb_du",
+        "gnb_cu_ue_f1ap_id": "50"
+      },
+      "sample_idx": 0,
+      "incomplete": null,
+      "granularity_ms": 1000,
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "type": "real",
+          "value": 12.199999809265137,
+          "unit": "0.1 ms"
+        },
+        "DRB.UEThpDl": {
+          "type": "real",
+          "value": 127,
+          "unit": "kbit/s"
+        },
+        "DRB.UEThpUl": {
+          "type": "real",
+          "value": 10376,
+          "unit": "kbit/s"
+        },
+        "RRU.PrbTotDl": {
+          "type": "integer",
+          "value": 0,
+          "unit": "%"
+        },
+        "RRU.PrbTotUl": {
+          "type": "integer",
+          "value": 88,
+          "unit": "%"
+        }
+      }
+    },
+    "header_time_us": "1792629958908105",
+    "received_at_us": "1792629958908994",
+    "callback_at_us": "1792629958908706",
+    "binding_status": "cached",
+    "reason": "using last verified binding: not all admitted DU sources are current",
+    "ue_ipv4": "10.45.0.2",
+    "binding": {
+      "method": "core_infoapi_cu_e2",
+      "assurance": "last_known_observed_context",
+      "amf_ue_ngap_id": "74",
+      "guami": [
+        "001",
+        "01",
+        "2",
+        "1",
+        "0"
+      ],
+      "supi": "imsi-001010000000101",
+      "ran_ue_ngap_id": "73",
+      "pdu_session_id": "1",
+      "dnn": "internet",
+      "last_verified_assurance": "observed_unique_current_context",
+      "last_verified_at_us": "1792629957908989",
+      "age_ms": 1000.004
+    }
+  },
+  "unknown_remaining": "26 startup rows without a verified history; 1 new-DU2-context row before CU identity",
+  "services_started": false,
+  "source_sha256": {
+    "inputs.ndjson": "1f3f92eefe8ca4f479837879a9b0e3e9060dd934f5d56c3de474564a5c37e724",
+    "rows.ndjson": "a3b62ed8480c84b65d06197bfbfb7a212eedb65ae89d2be1f316dfbf201131c1",
+    "local.json": "9e5e92acd9b68402db87cc20ff2d76599c0114463b4011ccf8fd62ad7f53cfa4"
+  },
+  "implementation_sha256": {
+    "scripts/ue_identity/mapping.py": "bc9f694d6912c66d6b4010d5bb5a2339f8a494fc1903cca6b3fb0813fc6a739c",
+    "scripts/ue_identity/text_report.py": "9cf0a721a815fb0948582bfc54c02c75ab95342c4b5197ae82afb31d83084056",
+    "scripts/ue_identity/xapp_ue_identity.py": "7975444a6294b59d59d4ec260b5c1416f4d2419be1ceb03a0ab058b98b63cbf3"
+  }
+}

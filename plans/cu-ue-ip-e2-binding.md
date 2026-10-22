@@ -8,13 +8,14 @@ UE-IP-to-radio associations. Integrate with Plan 2 only in a later task.
 | --- | --- |
 | Plan | 4 |
 | Task | `cu-ue-ip-e2-binding` |
-| Status | Planning only; implementation and live acceptance pending |
+| Status | Implemented; live single/dual-UE UL and bidirectional independent idle/resume passed; strict DU/lifecycle and remaining recovery gates pending |
 | Created at | 23 : 08: 51 Oct 20, 2026 EDT |
-| Last updated at | 00 : 07: 31 Oct 21, 2026 EDT |
+| Last updated at | Oct 21, 2026 EDT, after bidirectional live idle/resume validation |
 | Time zone | `America/New_York` |
 | Developer | Ruibin Chen |
 | Reviewer | To be assigned |
 | New application | `xapp_ue_identity`; independent build and launch target |
+| Falcon implementation baseline | `6dcde7ec1f97861cd8f3e9b4b2cc23208682d2ef` |
 | Falcon inspection baseline | `1fc8a96f1ad3fc7aef910f73ce3293d2d156190c` |
 | OCUDU inspection baseline | `c9d695dfaba8e894bae8c9d95aa1b7e6437c7fc1` |
 | FlexRIC inspection baseline | `10b8ec79d0f011902d329b2ed37f33f8b101b591` |
@@ -25,10 +26,61 @@ UE-IP-to-radio associations. Integrate with Plan 2 only in a later task.
 | Core scope | Read existing interfaces; no Core source, session policy, subscriber or IP-allocation changes |
 | RAN scope | CU-CP context export and E2 reporting; preserve DU KPM and CU-UP packet processing |
 
-The October 21 user instruction is **no code changes now**. This revision changes
-planning documentation only. Every checkbox is pending. New symbols, paths and
-fields below are proposals. Inspection revisions describe source snapshots,
-not proof of the binaries running; reconcile actual builds before execution.
+The later October 21 user instruction, **在Dual分支下开始实现**, authorizes
+implementation and supersedes the earlier planning-only restriction. Both
+repositories are on `Dual-UE`. The root README and Plan 2 remain unchanged.
+The first local milestone is implemented and tested; no services were restarted
+or candidate binaries/plugins deployed during that initial milestone.
+Subsequent operator-started single/dual-UE trials validate the experimental
+association and live TXT output. See the
+[implementation record](../docs/reports/ue_identity_implementation_2026-10-21.md)
+and [dual-UE live report](../docs/reports/ue_identity_dual_ue_live_2026-10-21.md).
+
+Checked items below record local implementation evidence only. Compound/live
+gates remain pending when any required evidence is missing. The detailed target
+design remains applicable beyond this first milestone.
+
+### October 21 implementation decision
+
+- CU now copies NGAP/GUAMI/F1/serving-DU identities on the CU-CP executor into
+  owned periodic metrics, enabled by `metrics.layers.enable_ue_identity`.
+- KPM Format 4 uses genuine vendor gauge `FALCON.UE.RRCState` and standard
+  `UEID-GNB` fields. Native tests verify subscription and repeated collection.
+- Standard UEID does **not** export explicit serving DU ID or a shared context
+  generation. Per-DU F1 allocation prevents treating the F1 number as globally
+  unique. Default strict mode therefore withholds IP publication. Explicit
+  experimental mode labels uniqueness among current observations only.
+- A scoped FlexRIC decoder patch is retained in Falcon and built into an
+  isolated candidate plugin: legal 40-bit AMF IDs may need six asn1c INTEGER
+  octets including a zero sign octet. The original SDK/installed plugin remain
+  unchanged. Independent OCUDU-to-FlexRIC codec tests pass with the candidate.
+- Core polling uses Python standard library, so no new curl/json-c dependency.
+  The first offline-era probe returned connection refused. After operator Core
+  startup, actual empty/populated schemas and both live session chains pass.
+- Early DU rows are emitted unresolved immediately; no pending/backfill buffer
+  is implemented. History is bounded and conflicts/loss latch uncertainty.
+  Expiry does not erase history and silently permit known key reuse.
+- The operator subsequently selected real-time output with labelled historical
+  bindings. `local.json` enables `last_known`; `--fresh-only` disables historical
+  IP fallback. Previously verified per-link history may bridge missing own
+  sources as `cached`, with last-verification time and age. Explicit Core/CU
+  changes and known ambiguity/loss prevent reuse. The retained live trace's
+  29 UE1 silence-gap rows retain their IP in a policy replay; a fresh live
+  rerun is pending. The original live evidence is unchanged.
+- Subsequent correction enables `independent_links` in the dual local config:
+  retain each established DU/F1 scope and independently verify its current
+  CU/Core relation. Other-DU silence alone does not require historical IP.
+  The same real input replay now gives 610 matched, 0 cached, 27 unresolved
+  under either IP-fallback policy; the 29 UE1 gap rows have fresh own sources.
+  Radio scope and historical IP are maintained separately, so current IP
+  updates can use unchanged scope. There are 49 passing Python tests. The
+  subsequent live six-minute bidirectional trial passes with 645 matched out
+  of 648 rows, zero cached, and 30 matched peer rows during each observed idle
+  interval. Initial scope independence and strict transport remain pending.
+- The first local suite has 30 Python and 125 affected native passing tests;
+  TXT support expands the Python suite to 34. Real E2 delivery and live
+  single/dual-UE observational association also pass subsequent trials.
+  Strict DU/lifecycle and recovery gates remain open; Plan 4 is not closed.
 
 ## 1. Current Decision and Scope
 
@@ -86,7 +138,7 @@ complete automatic Core/CU/DU association.
 | Standard E2 UEID | Includes AMF UE NGAP ID, GUAMI and CU UE F1AP ID list | Verify DU association, semantics and end-to-end decoder support |
 | Existing monitor | Enumerates nodes at startup; supports multiple subscriptions | Retain as regression tool; new independent app/config |
 | Core packages | AMF/SMF `2.8.0~noble5`; binaries contain infoAPI endpoint strings | Actual running API and schema validation |
-| Core probe | Configured-address HTTP probes returned connection refused | Repeat during normal Core operation; static strings are not a live pass |
+| Core probe | After Core startup, actual AMF/SMF empty responses pass the new app probe; see `docs/evidence/2026-10-21_ue_identity_live/01_core_empty_probe.json` | Validate populated UE/session fields, state, pagination and endpoint/GUAMI scope during single-UE access |
 | HTTP/JSON toolchain | `pkg-config` did not find `libcurl`/`json-c` | Freeze dependencies instead of assuming they are installed |
 
 Source anchors for future changes:
@@ -276,7 +328,7 @@ schema. This is not Plan 2 TCP or an MPX interface. Freeze these logical fields:
 - App-instance/schema identity, row/report sequences and original full DU key.
 - Original metric type/value/unit/no-value/incomplete states, unchanged.
 - Header/callback/output times with documented semantics.
-- `binding_status`: `matched`, `unresolved`, `ambiguous` or `stale`; concrete
+- `binding_status`: `matched`, `cached`, `unresolved`, `ambiguous` or `stale`; concrete
   reason, nullable `ue_ipv4`, contributing session and CU/Core provenance.
 - For matches, `method: core_infoapi_cu_e2` and assurance limited to the tested
   current-context capability.
@@ -286,14 +338,22 @@ duplicate UE measurements per session candidate. Keep SDK logs separate from
 machine-readable output. SUPI may stay in the diagnostic truth trace instead of
 becoming a mandatory downstream field.
 
+For the user-selected last-known policy, a missing source may preserve the
+same link's previously verified IP with `cached` status and explicit historical
+provenance. This is not a fresh association. Unknown new contexts and known
+retirement/conflict still withhold IP. Both policies retain every raw KPM row.
+An established UE with current own CU/Core inputs remains `matched` even if
+another DU is silent; the independent-link mode uses its retained radio scope
+and recomputes the IP/session association from current inputs.
+
 Define an internal `DU row + binding result -> output sink` boundary. A later
 Plan 2 task can reuse validated modules and adapt the sink. No broker TCP
 server, registration/filter protocol or actual MPX integration is required here.
 
 ## 8. Detailed Implementation and Validation Steps
 
-These are future steps. Do not begin code/configuration changes in the current
-planning-only revision.
+These steps track the complete standalone target. Local progress is recorded
+below; unverified live gates remain open.
 
 ### Step 1: Verify Runtime Prerequisites and Baselines
 
@@ -309,8 +369,8 @@ acceptance remains pending. Fixtures/static binary strings are insufficient.
 
 ### Step 2: Freeze Interfaces and Independent Build
 
-- [ ] Freeze standalone modules/build/dependencies after inspecting the toolchain.
-- [ ] Define admitted sources, canonical keys, output/fixture schemas and bounds.
+- [x] Freeze standalone modules/build/dependencies after inspecting the toolchain.
+- [x] Define admitted sources, canonical keys, output/fixture schemas and bounds.
 - [ ] Select the CU report style and legitimate measurement/identity semantics;
   document missing standard fields and any evaluated alternative.
 
@@ -319,7 +379,7 @@ Plan 2 nor CU-UP packet processing is a dependency.
 
 ### Step 3: CU-CP Snapshots and Lifecycle
 
-- [ ] Add an opt-in getter/view, owned records and injection into collection/E2.
+- [x] Add an opt-in getter/view, owned records and injection into collection/E2.
 - [ ] Join NGAP/F1/serving DU on owning executors; test deliberately unequal IDs.
 - [ ] Cover partial setup, AMF-ID updates, release-start/removal, resume, index
   transfer, handover, restart and duplicate F1 IDs across DUs.
@@ -329,9 +389,9 @@ unchanged and ambiguity is explicit.
 
 ### Step 4: CU E2 Reports
 
-- [ ] Supply UE identities, applicable UE enumeration/measurement collection and
+- [x] Supply UE identities, applicable UE enumeration/measurement collection and
   report advertisement/subscription; retain standard field/metric semantics.
-- [ ] Verify actual encoding/decoding, callback ownership and field fidelity on
+- [x] Verify actual encoding/decoding, callback ownership and field fidelity on
   the pinned CU/FlexRIC builds.
 - [ ] Retain real E2 Setup, function definition, subscription, nonempty actual UE
   indications and clean deletion; test completeness, loss and ordering rules.
@@ -341,7 +401,7 @@ local snapshots does not satisfy E2 delivery.
 
 ### Step 5: New Multi-Node xApp
 
-- [ ] Create an independent executable/config; retain the existing DU monitor.
+- [x] Create an independent executable/config; retain the existing DU monitor.
 - [ ] Discover/configure one CU and two DUs at startup; report missing sources.
   Explicit DU-only diagnostic mode may emit unresolved rows.
 - [ ] Subscribe using suitable per-node reports; copy into bounded queues and
@@ -353,7 +413,7 @@ local snapshots does not satisfy E2 delivery.
 
 ### Step 6: Core Poller and Correlation
 
-- [ ] Implement bounded HTTP/pagination/type validation, owned complete snapshots,
+- [x] Implement bounded HTTP/pagination/type validation, owned complete snapshots,
   timeout/error handling and scoped AMF/GUAMI association.
 - [ ] Join SMF/AMF by SUPI/session, CU by scoped AMF identity and DU by verified
   complete radio key; implement source expiry, pending rows and retired history.
@@ -389,6 +449,30 @@ unknown state never silently becomes a confident association.
 
 ### Step 9: Transitions, Loss and Recovery
 
+The next operator-run trial completed a single six-minute capture with sequential
+UE1 and UE2 150-second traffic quiet periods and the peer transmitting
+continuously. The 335-second Laptop schedule leaves capture margin and checks
+both independence directions using fresh-only output. See the
+[bidirectional idle/resume procedure](../docs/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test)
+and inline foreground Laptop command (no script-file transfer). Live evidence
+is retained in `16_bidirectional_idle_live`: one xApp instance, 648 original
+KPM outputs, 645 current matches and three own startup/resume boundary rows.
+Each UE reaches observed Core idle for about 30 seconds, while its peer has
+30 consecutive matched positive-UL rows. Fifty-nine matches over the complete
+capture exercise retained DU scope while the other DU is outside TTL. Both
+resumes use new actual F1/NGAP IDs and the unchanged session/IP, converging in
+about one second from the later fresh CU/Core prerequisite. Four Laptop clients
+exit 0. Full per-second Laptop performance and repeated recovery remain open;
+the audit separately records current Laptop identity/preflight availability.
+
+One operator-run UE2 ordinary idle/resume cycle passes in the same app instance:
+IP 10.46.0.2 remains, F1 changes 24 -> 26, and AMF/RAN IDs change 75/74 -> 77/76.
+All 581 matches out of 637 outputs agree with fresh captured sources. A brief
+intermediate AMF 76 context is not used without CU/DU evidence. DU1 has 55
+unresolved rows because DU2 is initially absent or later not current; DU2 has
+one before its new CU identity arrives. Raw KPM remains present. This is a
+partial Step 9 milestone; the compound and repeated gates below stay open.
+
 - [ ] Repeat ordinary reattachment three times per UE and record actual IP/ID changes.
 - [ ] Test same-IP/new-F1 context, exact-key reuse/delayed rows, two UEs on one DU,
   multiple PDU IPs, partial setup/release and serving-context ambiguity.
@@ -419,8 +503,8 @@ Startup: existing Core and RIC ready -> CU with CU-CP E2 -> DU1/DU2 with F1/E2 -
 new xApp subscriptions/Core poller -> establish or rediscover UE sessions.
 CU/DU E2 registration is independent; CU-first also provides the DU F1 peer.
 E2 Setup registers nodes/functions, while UE mappings require actual contexts,
-working reporting and successful subscriptions. Current CU configuration does
-not enable CU E2. The future overlay uses verified keys `enable_cu_cp_e2`,
+working reporting and successful subscriptions. The base CU configuration does
+not enable CU E2. The candidate overlay uses verified keys `enable_cu_cp_e2`,
 `enable_cu_up_e2`, `addrs`, `port`, `bind_addrs`, `e2sm_kpm_enabled`.
 
 Rollback: normally stop the new app and delete successful subscriptions, disable
@@ -441,6 +525,46 @@ CU-UP unchanged removes the old packet observer but does not prove lifecycle
 correctness or eliminate E2 integration work.
 
 ## 10. Completion Ledger and References
+
+Live single-UE milestone: the October 21 trial received 57 CU and 58 DU1
+indications plus 60 Core snapshots. Of 58 output rows, one initial row is
+unresolved and 57 consecutive rows associate UE1 IP 10.45.0.2 under the
+explicit current-observation assurance. Both subscriptions were deleted
+normally. Throughput/PRB values remained zero in that initial capture. A second
+real UL trial then records receiver 13.8 Mbit/s, 117 matched rows out of 118,
+and 60 consecutive matched rows with positive UL throughput. UL KPM peaks at
+20.97 Mbit/s and UL PRB at 86%. The strict-DU, transition, clock-alignment
+and comparative-performance gates remain open. See the
+[real single-UE report](../docs/reports/ue_identity_single_ue1_live_2026-10-21.md).
+
+The subsequent real dual-UE trial receives three node subscriptions, 111 CU
+reports and 111/112 DU1/DU2 reports plus 120 Core snapshots. Of 223 DU outputs,
+221 match the correct current Core/CU/DU/cell chain; two initial warmup samples
+remain unresolved. Both Laptop concurrent iperf clients exit 0 with receiver
+13.2/11.9 Mbit/s and Retr 1 each. Three deletion responses and SDK normal stop
+are retained. A file-only audit checks all raw DU metric payloads, output TXT,
+scoped identities and AMF-reported NCI. This passes current-observation dual
+association, not the absent strict wire/lifecycle proof. See the
+[dual-UE live report](../docs/reports/ue_identity_dual_ue_live_2026-10-21.md).
+
+The later 360-second capture passes one UE2 ordinary idle/resume round with
+unchanged IP and new F1/NGAP IDs, without restarting the xApp. It records 637
+DU outputs, 581 matches, 56 explicit unresolved rows and no reported ingress
+loss. The first resumed match is emitted about one second after the later
+new CU/Core prerequisite. The all-DU freshness requirement also withholds UE1
+IP enrichment during DU2's idle reporting gap. UE1's 300-second TCP connection
+exits 0, but four one-second zero-throughput intervals prevent a stall-free
+traffic claim. See the report's idle/resume section and
+[retained transition audit](../docs/evidence/2026-10-21_ue_identity_live/13_ue2_idle_resume/audit.json).
+PDU reconnect, repeated recovery, exact reuse and strict transport remain open.
+
+The later live bidirectional six-minute trial validates the independent-link
+correction with fresh-only output: 645 matches / 648 rows, zero cached,
+30 consecutive peer matches during each actual Core idle interval, and no
+observed cross-UE assignment. Both UE IPs survive the F1/NGAP context changes.
+The three unknown-IP rows are own startup/resume boundaries, not peer failures.
+See the [live bidirectional audit](../docs/evidence/2026-10-21_ue_identity_live/16_bidirectional_idle_live/audit.json).
+This is one round per UE, not completion of the repeated/strict recovery gates.
 
 | Gate | Required retained evidence |
 | --- | --- |
@@ -470,5 +594,6 @@ outside this plan's completion criteria.
 - [O-RAN E2SM UEID, ETSI TS 104 040](https://www.etsi.org/deliver/etsi_ts/104000_104099/104040/04.00.00_60/ts_104040v040000p.pdf).
 - [3GPP TS 38.401 UE identity scopes](https://www.etsi.org/deliver/etsi_ts/138400_138499/138401/19.02.00_60/ts_138401v190200p.pdf).
 
-The standalone xApp, correlation policy, diagnostic output and any extra
-lifecycle transport are local contracts whose implementation remains pending.
+The standalone xApp, correlation policy and diagnostic output are local
+experimental contracts. Explicit DU/lifecycle transport and live acceptance
+remain pending; standard identity decoding alone does not satisfy those gates.

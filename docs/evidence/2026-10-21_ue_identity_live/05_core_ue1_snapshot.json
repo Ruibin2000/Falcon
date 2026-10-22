@@ -1,0 +1,148 @@
+{
+  "recorded_at_utc": "2026-10-21 20:39:21 UTC",
+  "source": "Actual AMF/SMF HTTP infoAPI after UE1 PDU establishment",
+  "amf": {
+    "items": [
+      {
+        "supi": "imsi-001010000000101",
+        "suci": "suci-0-001-01-0-0-0-0000000101",
+        "pei": "imeisv-8633050419784352",
+        "cm_state": "connected",
+        "mm_state": "registered",
+        "guti": "00101-020040-CC000051A",
+        "m_tmsi": 3221226778,
+        "gnb": {
+          "ostream_id": 6,
+          "amf_ue_ngap_id": 6,
+          "ran_ue_ngap_id": 5,
+          "gnb_id": 411,
+          "cell_id": 0
+        },
+        "location": {
+          "timestamp": 1792614934603764,
+          "nr_tai": {
+            "plmn": "00101",
+            "tac_hex": "000007",
+            "tac": 7
+          },
+          "nr_cgi": {
+            "plmn": "00101",
+            "nci": 6733824,
+            "gnb_id": 411,
+            "cell_id": 0
+          },
+          "last_visited_plmn_id": "00101"
+        },
+        "msisdn": [],
+        "security": {
+          "valid": 1,
+          "enc": "nea0",
+          "int": "nia2"
+        },
+        "ambr": {
+          "downlink": 1000000000,
+          "uplink": 1000000000
+        },
+        "pdu_sessions": [
+          {
+            "psi": 1,
+            "dnn": "internet",
+            "snssai": {
+              "sst": 1,
+              "sd": "ffffff"
+            },
+            "lbo_roaming_allowed": false,
+            "resource_status": 0,
+            "n1_released": false,
+            "n2_released": false
+          },
+          {
+            "psi": 2,
+            "snssai": {
+              "sst": 0,
+              "sd": "ffffff"
+            },
+            "lbo_roaming_allowed": false,
+            "resource_status": 0,
+            "n1_released": false,
+            "n2_released": false
+          }
+        ],
+        "pdu_sessions_count": 2,
+        "requested_slices": [
+          {
+            "sst": 1,
+            "sd": "ffffff"
+          }
+        ],
+        "allowed_slices": [
+          {
+            "sst": 1,
+            "sd": "ffffff"
+          }
+        ],
+        "requested_slices_count": 1,
+        "allowed_slices_count": 1,
+        "am_policy_features": 4,
+        "am_policy_features_info": {
+          "hex": "0x0000000000000004",
+          "bits": [
+            2
+          ],
+          "labels": [
+            "QoS Policy Control"
+          ]
+        }
+      }
+    ],
+    "pager": {
+      "page": 0,
+      "page_size": 100,
+      "count": 1
+    }
+  },
+  "smf": {
+    "items": [
+      {
+        "supi": "imsi-001010000000101",
+        "pdu": [
+          {
+            "psi": 1,
+            "dnn": "internet",
+            "ipv4": "10.45.0.2",
+            "snssai": {
+              "sst": 1,
+              "sd": "ffffff"
+            },
+            "qos_flows": [
+              {
+                "qfi": 1,
+                "5qi": 9
+              }
+            ],
+            "n3": {
+              "gnb": {
+                "teid": 1,
+                "addr": "[127.0.0.1]:2152"
+              },
+              "upf": {
+                "teid": 855,
+                "addr": "[127.0.0.7]:2152",
+                "pdr_id": 2
+              }
+            },
+            "pdu_state": "active",
+            "ue_location_timestamp": 1792614934603764
+          }
+        ],
+        "ue_activity": "active"
+      }
+    ],
+    "pager": {
+      "page": 0,
+      "page_size": 100,
+      "count": 1
+    }
+  },
+  "scope": "Core session and identity snapshot; Laptop address/routing/ping and CU/DU E2 indication checks are separate"
+}

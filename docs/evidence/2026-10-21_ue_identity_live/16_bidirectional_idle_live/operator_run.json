@@ -1,0 +1,76 @@
+{
+  "source": "Operator-pasted Spark command/exit and Laptop phase/iperf output in conversation",
+  "source_directory": "/tmp/falcon-identity-bidir.AVwDB6pL",
+  "duration_seconds": 360,
+  "xapp_exit": 0,
+  "cli_overrides": [
+    "--observed-unique",
+    "--fresh-only"
+  ],
+  "laptop_evidence_directory": "/tmp/falcon-dual-idle-46tj3r0k",
+  "laptop_started_at": "2026-10-21T21:15:01.181637-04:00",
+  "laptop_status": "completed",
+  "laptop_error": null,
+  "laptop_elapsed_seconds": 337.767,
+  "quiet_intervals": [
+    {
+      "ue": 1,
+      "start": "2026-10-21T21:15:17.322904-04:00",
+      "end": "2026-10-21T21:17:47.323187-04:00",
+      "actual_seconds": 150.0
+    },
+    {
+      "ue": 2,
+      "start": "2026-10-21T21:17:57.627525-04:00",
+      "end": "2026-10-21T21:20:27.627871-04:00",
+      "actual_seconds": 150.0
+    }
+  ],
+  "jobs": [
+    {
+      "ue": 1,
+      "phase": "before",
+      "requested_seconds": 15,
+      "exit": 0,
+      "receiver_seconds": 15.29,
+      "receiver_mbytes": 27.9,
+      "receiver_mbit_s": 15.3,
+      "sender_retransmits": 0
+    },
+    {
+      "ue": 2,
+      "phase": "before",
+      "requested_seconds": 175,
+      "exit": 0,
+      "receiver_seconds": 175.16,
+      "receiver_mbytes": 353,
+      "receiver_mbit_s": 16.9,
+      "sender_retransmits": 0
+    },
+    {
+      "ue": 1,
+      "phase": "after",
+      "requested_seconds": 170,
+      "exit": 0,
+      "receiver_seconds": 170.34,
+      "receiver_mbytes": 195,
+      "receiver_mbit_s": 9.62,
+      "sender_retransmits": 1
+    },
+    {
+      "ue": 2,
+      "phase": "after",
+      "requested_seconds": 10,
+      "exit": 0,
+      "receiver_seconds": 10.2,
+      "receiver_mbytes": 17.8,
+      "receiver_mbit_s": 14.6,
+      "sender_retransmits": 1
+    }
+  ],
+  "deduplication": "Laptop transcript was pasted twice with the same evidence directory and times; this is one test, not two repetitions",
+  "laptop_truth": "Subsequent operator reply supplies both current IMSI/APN/source-IP mappings; see laptop_identity_result.json. Reply ends after UE2 prefix.",
+  "interval_logs": "Full Laptop per-second logs are not present in the pasted summary",
+  "clock_alignment": "Unverified across hosts; audit uses Spark-local timestamps",
+  "launches": "Operator launched the xApp and inline Laptop command; audit starts no services or traffic"
+}

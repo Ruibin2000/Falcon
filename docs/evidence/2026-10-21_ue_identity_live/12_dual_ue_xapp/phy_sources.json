@@ -1,0 +1,38 @@
+{
+  "cu_source_file": "/tmp/falcon-identity-cu.9cKTWHpv/cu.log",
+  "source": "actual existing logs, identity-only CU excerpt and selected-RNTI PUSCH records",
+  "window_utc": [
+    "2026-10-22T00:15:30+00:00",
+    "2026-10-22T00:16:33+00:00"
+  ],
+  "end_exclusive": true,
+  "window_definition": "first positive KPM header floored to second, through floor(last positive header)+2 seconds",
+  "mapping": {
+    "1": {
+      "du_id": 1,
+      "pci": 1,
+      "rnti": "0x4633",
+      "cu_internal_ue_index": "60",
+      "gnb_cu_ue_f1ap_id": "47",
+      "amf_ue_ngap_id": "60",
+      "ran_ue_ngap_id": "59",
+      "all_logged_pusch_rntis_in_window": {
+        "0x4633": 34851
+      },
+      "source_file": "/tmp/falcon-identity-du1.h5S2k9VS/du.log"
+    },
+    "2": {
+      "du_id": 2,
+      "pci": 2,
+      "rnti": "0x460d",
+      "cu_internal_ue_index": "59",
+      "gnb_cu_ue_f1ap_id": "12",
+      "amf_ue_ngap_id": "59",
+      "ran_ue_ngap_id": "58",
+      "all_logged_pusch_rntis_in_window": {
+        "0x460d": 36139
+      },
+      "source_file": "/tmp/falcon-identity-du2.nMXBOBbV/du.log"
+    }
+  }
+}

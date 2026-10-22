@@ -1,0 +1,35 @@
+Setting the config -c file to /home/nyu/Desktop/Falcon_repo/Falcon/configs/flexric/xapp_ue_identity.conf
+[LibConf]: loading service models from SM_DIR: /tmp/falcon-ue-identity-sm/
+[LibConf]: reading configuration for xApp
+[LibConf]: NearRT_RIC IP: 127.0.0.1
+[LibConf]: E42_Port Port: 36422
+[LibConf]: Sub_ORAN_SM Name: KPM, Time: 1000
+[LibConf]: format 4, RAN type ngran_gNB_DU, actions = DRB.RlcSduDelayDl DRB.UEThpDl DRB.UEThpUl RRU.PrbTotDl RRU.PrbTotUl 
+[LibConf]: Sub_ORAN_SM Name: KPM, Time: 1000
+[LibConf]: format 4, RAN type ngran_gNB, actions = FALCON.UE.RRCState 
+[LibConf]: Sub_ORAN_SM Name: KPM, Time: 1000
+[LibConf]: format 4, RAN type ngran_gNB_CU, actions = FALCON.UE.RRCState 
+[LibConf]: Sub_ORAN_SM Name: KPM, Time: 1000
+[LibConf]: format 4, RAN type ngran_gNB_CUCP, actions = FALCON.UE.RRCState 
+[xAap]: Initializing ... 
+[xApp]: nearRT-RIC IP Address = 127.0.0.1, PORT = 36422
+[E2-AGENT]: Opening plugin from path = /tmp/falcon-ue-identity-sm/libkpm_sm.so 
+[NEAR-RIC]: Loading SM ID = 2 with def = ORAN-E2SM-KPM 
+[xApp]: E42 SETUP-REQUEST tx
+[xApp]: E42 SETUP-RESPONSE rx 
+[xApp]: xApp ID = 11 
+[xApp]: Registered E2 Nodes = 2 
+E42_RIC_SUBSCRIPTION_REQUEST 40 
+[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
+[xApp]: SUBSCRIPTION RESPONSE rx
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+E42_RIC_SUBSCRIPTION_REQUEST 40 
+[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 2 
+[xApp]: SUBSCRIPTION RESPONSE rx
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+identity collector: 2 KPM subscriptions, duration=120
+[xApp]: E42 RIC_SUBSCRIPTION_DELETE_REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
+[xApp]: E42 SUBSCRIPTION DELETE RESPONSE rx
+[xApp]: E42 RIC_SUBSCRIPTION_DELETE_REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 2 
+[xApp]: E42 SUBSCRIPTION DELETE RESPONSE rx
+[xApp]: Sucessfully stopped 

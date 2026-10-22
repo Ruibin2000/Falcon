@@ -1,0 +1,939 @@
+diff --git a/apps/units/o_cu_cp/cu_cp/cu_cp_config_translators.cpp b/apps/units/o_cu_cp/cu_cp/cu_cp_config_translators.cpp
+index 38571c1aab..ea63017377 100644
+--- a/apps/units/o_cu_cp/cu_cp/cu_cp_config_translators.cpp
++++ b/apps/units/o_cu_cp/cu_cp/cu_cp_config_translators.cpp
+@@ -455,6 +455,7 @@ ocucp::cu_cp_configuration ocudu::generate_cu_cp_config(const cu_cp_unit_config&
+   // Metrics.
+   out_cfg.metrics.layers_cfg.enable_ngap = cu_cfg.metrics.layers_cfg.enable_ngap;
+   out_cfg.metrics.layers_cfg.enable_rrc  = cu_cfg.metrics.layers_cfg.enable_rrc;
++  out_cfg.metrics.layers_cfg.enable_ue_identity = cu_cfg.metrics.layers_cfg.enable_ue_identity;
+ 
+   // Mobility.
+   out_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements =
+diff --git a/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h b/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h
+index ba2f64ad49..bba4049df3 100644
+--- a/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h
++++ b/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h
+@@ -352,10 +352,11 @@ struct cu_cp_unit_metrics_layer_config {
+   bool enable_ngap           = false;
+   bool enable_pdcp           = false;
+   bool enable_rrc            = false;
++  bool enable_ue_identity    = false;
+   bool enable_cu_cp_executor = false;
+ 
+   /// Returns true if one or more layers are enabled, false otherwise.
+-  bool are_metrics_enabled() const { return enable_ngap || enable_pdcp || enable_rrc; }
++  bool are_metrics_enabled() const { return enable_ngap || enable_pdcp || enable_rrc || enable_ue_identity; }
+ };
+ 
+ /// Metrics configuration.
+diff --git a/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_cli11_schema.cpp b/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_cli11_schema.cpp
+index 2745fc5bd1..93e8dd2779 100644
+--- a/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_cli11_schema.cpp
++++ b/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_cli11_schema.cpp
+@@ -816,6 +816,8 @@ static void configure_cli11_metrics_layers_args(CLI::App& app, cu_cp_unit_metric
+   add_option(app, "--enable_ngap", metrics_params.enable_ngap, "Enable NGAP metrics")->capture_default_str();
+   add_option(app, "--enable_pdcp", metrics_params.enable_pdcp, "Enable PDCP metrics")->capture_default_str();
+   add_option(app, "--enable_rrc", metrics_params.enable_rrc, "Enable CU-CP RRC metrics")->capture_default_str();
++  add_option(app, "--enable_ue_identity", metrics_params.enable_ue_identity, "Enable CU-CP identity snapshots")
++      ->capture_default_str();
+ }
+ 
+ static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_config& metrics_params)
+diff --git a/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_yaml_writer.cpp b/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_yaml_writer.cpp
+index 99a7770fe1..a984c2c2ad 100644
+--- a/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_yaml_writer.cpp
++++ b/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_yaml_writer.cpp
+@@ -399,6 +399,7 @@ static void fill_cu_cp_metrics_layers_section(YAML::Node node, const cu_cp_unit_
+   node["enable_ngap"] = config.enable_ngap;
+   node["enable_pdcp"] = config.enable_pdcp;
+   node["enable_rrc"]  = config.enable_rrc;
++  node["enable_ue_identity"] = config.enable_ue_identity;
+ }
+ 
+ static void fill_cu_cp_metrics_section(YAML::Node node, const cu_cp_unit_metrics_config& config)
+diff --git a/include/ocudu/cu_cp/cu_cp_configuration.h b/include/ocudu/cu_cp/cu_cp_configuration.h
+index 9f5c7df957..aeaf2b970a 100644
+--- a/include/ocudu/cu_cp/cu_cp_configuration.h
++++ b/include/ocudu/cu_cp/cu_cp_configuration.h
+@@ -137,6 +137,8 @@ struct cu_cp_configuration {
+     bool enable_ngap = false;
+     /// Enable RRC metrics.
+     bool enable_rrc = false;
++    /// Opt-in read-only per-UE identity snapshots for CU E2.
++    bool enable_ue_identity = false;
+   };
+ 
+   struct metrics_params {
+diff --git a/include/ocudu/cu_cp/cu_cp_metrics_notifier.h b/include/ocudu/cu_cp/cu_cp_metrics_notifier.h
+index b7f811ddac..2e183d7e87 100644
+--- a/include/ocudu/cu_cp/cu_cp_metrics_notifier.h
++++ b/include/ocudu/cu_cp/cu_cp_metrics_notifier.h
+@@ -5,6 +5,7 @@
+ #pragma once
+ 
+ #include "ocudu/cu_cp/mobility_management_metrics.h"
++#include "ocudu/cu_cp/ue_identity.h"
+ #include "ocudu/ngap/ngap_metrics.h"
+ #include "ocudu/ran/gnb_du_id.h"
+ #include "ocudu/ran/pci.h"
+@@ -26,6 +27,9 @@ struct cu_cp_metrics_report {
+     pci_t pci;
+     /// RRC connection state of the UE.
+     ocucp::rrc_state rrc_connection_state;
++    ocucp::ue_index_t ue_index = ocucp::ue_index_t::invalid;
++    std::optional<ocucp::cu_ue_identity> identity;
++    std::vector<uint8_t> slice_ssts;
+   };
+   struct cell_info {
+     nr_cell_global_id_t cgi;
+diff --git a/include/ocudu/f1ap/cu_cp/f1ap_cu.h b/include/ocudu/f1ap/cu_cp/f1ap_cu.h
+index 4e49418378..2d8af96d44 100644
+--- a/include/ocudu/f1ap/cu_cp/f1ap_cu.h
++++ b/include/ocudu/f1ap/cu_cp/f1ap_cu.h
+@@ -7,6 +7,7 @@
+ #include "ocudu/adt/byte_buffer.h"
+ #include "ocudu/adt/expected.h"
+ #include "ocudu/cu_cp/cu_cp_types.h"
++#include "ocudu/cu_cp/ue_identity.h"
+ #include "ocudu/cu_cp/cu_cp_ue_messages.h"
+ #include "ocudu/f1ap/cu_cp/du_setup_notifier.h"
+ #include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
+@@ -135,6 +136,8 @@ public:
+   /// \brief Returns the number of connected UEs at the F1AP
+   /// \return The number of connected UEs.
+   virtual size_t get_nof_ues() const = 0;
++
++  virtual std::optional<f1ap_ue_identity> get_ue_identity_snapshot(ue_index_t ue_index) const { return std::nullopt; }
+ };
+ 
+ /// Handle UE context removal
+diff --git a/include/ocudu/ngap/ngap.h b/include/ocudu/ngap/ngap.h
+index 1d624381fb..ec8b931520 100644
+--- a/include/ocudu/ngap/ngap.h
++++ b/include/ocudu/ngap/ngap.h
+@@ -11,6 +11,7 @@
+ #include "ocudu/ngap/ngap_handover.h"
+ #include "ocudu/ngap/ngap_init_context_setup.h"
+ #include "ocudu/ngap/ngap_metrics.h"
++#include "ocudu/cu_cp/ue_identity.h"
+ #include "ocudu/ngap/ngap_rrc_inactive_transition.h"
+ #include "ocudu/ngap/ngap_setup.h"
+ #include "ocudu/ngap/ngap_ue_context_mod.h"
+@@ -359,6 +360,9 @@ public:
+   /// \param[in] ue_index of a given UE.
+   /// \param[out] amf_ue_id of the given UE.
+   virtual amf_ue_id_t get_amf_ue_id(const ue_index_t& ue_index) = 0;
++
++  /// Read a ready, non-releasing local context; never performs a Core query.
++  virtual std::optional<ngap_ue_identity> get_ue_identity_snapshot(ue_index_t ue_index) const { return std::nullopt; }
+ };
+ 
+ /// Interface used to capture the NGAP metrics from a single CU-CP NGAP.
+diff --git a/lib/cu_cp/cu_cp_impl.cpp b/lib/cu_cp/cu_cp_impl.cpp
+index 25c7ca345b..1fb3166bf9 100644
+--- a/lib/cu_cp/cu_cp_impl.cpp
++++ b/lib/cu_cp/cu_cp_impl.cpp
+@@ -65,6 +65,34 @@ static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
+   report_error_if_not(cfg.admission.max_nof_cu_ups <= MAX_NOF_CU_UPS, "Invalid max number of CU-UPs");
+ }
+ 
++void cu_cp_impl::collect_ue_identities(cu_cp_metrics_report& report)
++{
++  if (!cfg.metrics.layers_cfg.enable_ue_identity) {
++    return;
++  }
++  for (auto& item : report.ues) {
++    auto* ue = ue_mng.find_du_ue(item.ue_index);
++    if (ue == nullptr || ue->get_ue_context().reconfiguration_disabled) {
++      continue;
++    }
++    auto* ng = ngap_db.find_ngap(ue->get_ue_context().plmn);
++    auto* du = du_db.find_du_processor(ue->get_du_index());
++    if (ng == nullptr || du == nullptr) {
++      continue;
++    }
++    auto ng_id = ng->get_ue_identity_snapshot(item.ue_index);
++    auto f1_id = du->get_f1ap_handler().get_ue_identity_snapshot(item.ue_index);
++    if (ng_id && f1_id && item.du_id != gnb_du_id_t::invalid) {
++      item.identity = cu_ue_identity{*ng_id, *f1_id, item.du_id};
++      for (const auto& pdu : ue->get_up_resource_manager().get_pdu_sessions_map()) {
++        for (const auto& drb : pdu.second.drbs) {
++          item.slice_ssts.push_back(drb.second.s_nssai.sst.value());
++        }
++      }
++    }
++  }
++}
++
+ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
+   cfg(config_),
+   ue_mng(cfg),
+@@ -102,7 +130,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
+                                                       ue_mng,
+                                                       du_db,
+                                                       ngap_db,
+-                                                      mobility_mng)),
++                                                      mobility_mng,
++                                                      [this](cu_cp_metrics_report& report) { collect_ue_identities(report); })),
+   cu_cp_cfgtr(mobility_manager_ev_notifier, du_db, ngap_db, ue_mng)
+ {
+   assert_cu_cp_configuration_valid(cfg);
+diff --git a/lib/cu_cp/cu_cp_impl.h b/lib/cu_cp/cu_cp_impl.h
+index f67883ff26..9c800abf5d 100644
+--- a/lib/cu_cp/cu_cp_impl.h
++++ b/lib/cu_cp/cu_cp_impl.h
+@@ -194,6 +194,9 @@ public:
+   cu_configurator&                       get_cu_configurator() override { return cu_cp_cfgtr; }
+ 
+ private:
++  /// Copy complete local identities on the CU-CP executor into an owned report.
++  void collect_ue_identities(cu_cp_metrics_report& report);
++
+   // Handling of DU events.
+   void handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue) override;
+ 
+diff --git a/lib/cu_cp/metrics_handler/metrics_handler_impl.cpp b/lib/cu_cp/metrics_handler/metrics_handler_impl.cpp
+index a758da5f6b..807f7a02c1 100644
+--- a/lib/cu_cp/metrics_handler/metrics_handler_impl.cpp
++++ b/lib/cu_cp/metrics_handler/metrics_handler_impl.cpp
+@@ -16,14 +16,16 @@ metrics_handler_impl::metrics_handler_impl(task_executor&                    cu_
+                                            ue_metrics_handler&               ue_handler_,
+                                            du_repository_metrics_handler&    du_handler_,
+                                            ngap_repository_metrics_handler&  ngap_handler_,
+-                                           mobility_manager_metrics_handler& mobility_handler_) :
++                                           mobility_manager_metrics_handler& mobility_handler_,
++                                           std::function<void(cu_cp_metrics_report&)> identity_collector_) :
+   cu_cp_exec(cu_cp_exec_),
+   timers(timers_),
+   ue_handler(ue_handler_),
+   du_handler(du_handler_),
+   ngap_handler(ngap_handler_),
+   mobility_handler(mobility_handler_),
+-  logger(ocudulog::fetch_basic_logger("CU-CP"))
++  logger(ocudulog::fetch_basic_logger("CU-CP")),
++  identity_collector(std::move(identity_collector_))
+ {
+ }
+ 
+@@ -89,6 +91,10 @@ cu_cp_metrics_report metrics_handler_impl::create_report() const
+   report.ngaps    = ngap_handler.handle_ngap_metrics_report_request();
+   report.mobility = mobility_handler.handle_mobility_metrics_report_request();
+ 
++  if (identity_collector) {
++    identity_collector(report);
++  }
++
+   // TODO: Get metrics of connected CU-CP/AMF nodes.
+ 
+   return report;
+diff --git a/lib/cu_cp/metrics_handler/metrics_handler_impl.h b/lib/cu_cp/metrics_handler/metrics_handler_impl.h
+index 44c6ede2b1..3d8a2e059c 100644
+--- a/lib/cu_cp/metrics_handler/metrics_handler_impl.h
++++ b/lib/cu_cp/metrics_handler/metrics_handler_impl.h
+@@ -13,6 +13,7 @@
+ #include "ocudu/support/executors/task_executor.h"
+ #include "ocudu/support/timers.h"
+ #include <deque>
++#include <functional>
+ #include <mutex>
+ 
+ namespace ocudu {
+@@ -26,7 +27,8 @@ public:
+                        ue_metrics_handler&               ue_handler_,
+                        du_repository_metrics_handler&    du_handler_,
+                        ngap_repository_metrics_handler&  ngap_handler_,
+-                       mobility_manager_metrics_handler& mobility_handler_);
++                       mobility_manager_metrics_handler& mobility_handler_,
++                       std::function<void(cu_cp_metrics_report&)> identity_collector_ = {});
+ 
+   std::unique_ptr<metrics_report_session>
+   create_periodic_report_session(const periodic_metric_report_request& request) override;
+@@ -54,6 +56,7 @@ private:
+   ngap_repository_metrics_handler&  ngap_handler;
+   mobility_manager_metrics_handler& mobility_handler;
+   ocudulog::basic_logger&           logger;
++  std::function<void(cu_cp_metrics_report&)> identity_collector;
+ 
+   // Member variables to manage pool of sessions.
+   std::mutex                           mutex;
+diff --git a/lib/cu_cp/ue_manager/ue_manager_impl.cpp b/lib/cu_cp/ue_manager/ue_manager_impl.cpp
+index 7e00d818d3..1987a17501 100644
+--- a/lib/cu_cp/ue_manager/ue_manager_impl.cpp
++++ b/lib/cu_cp/ue_manager/ue_manager_impl.cpp
+@@ -403,7 +403,7 @@ size_t ue_manager::get_nof_du_ues(du_index_t du_index)
+ 
+ std::vector<cu_cp_metrics_report::ue_info> ue_manager::handle_ue_metrics_report_request() const
+ {
+-  if (!cu_cp_config.metrics.layers_cfg.enable_rrc) {
++  if (!cu_cp_config.metrics.layers_cfg.enable_rrc && !cu_cp_config.metrics.layers_cfg.enable_ue_identity) {
+     return {};
+   }
+ 
+@@ -414,6 +414,8 @@ std::vector<cu_cp_metrics_report::ue_info> ue_manager::handle_ue_metrics_report_
+     report.emplace_back();
+     cu_cp_metrics_report::ue_info& ue_report = report.back();
+ 
++    ue_report.ue_index = ue.first;
++
+     ue_report.rnti  = ue.second.get_c_rnti();
+     ue_report.du_id = ue.second.get_du_id();
+     ue_report.pci   = ue.second.get_pci();
+diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp
+index 12e8c23953..9c1f8412c7 100644
+--- a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp
++++ b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp
+@@ -13,6 +13,11 @@ e2sm_kpm_cu_meas_provider_impl::e2sm_kpm_cu_meas_provider_impl() : logger(ocudul
+ 
+ e2sm_kpm_cu_cp_meas_provider_impl::e2sm_kpm_cu_cp_meas_provider_impl() : e2sm_kpm_cu_meas_provider_impl()
+ {
++  // Vendor state gauge: actual CU RRC state, not an identity encoded as a metric.
++  // 0=idle, 1=connected, 2=inactive. Identities travel in the standard UEID.
++  supported_metrics.emplace("FALCON.UE.RRCState",
++                            e2sm_kpm_supported_metric_t{
++                                NO_LABEL, UE_LEVEL, false, &e2sm_kpm_cu_cp_meas_provider_impl::get_ue_rrc_state});
+   supported_metrics.emplace(
+       "RRC.ConnEstabAtt",
+       e2sm_kpm_supported_metric_t{
+@@ -51,6 +56,127 @@ e2sm_kpm_cu_cp_meas_provider_impl::e2sm_kpm_cu_cp_meas_provider_impl() : e2sm_kp
+                                 NO_LABEL, E2_NODE_LEVEL, false, &e2sm_kpm_cu_cp_meas_provider_impl::get_rrc_conn_max});
+ }
+ 
++namespace {
++
++ue_id_c make_identity(const cu_cp_metrics_report::ue_info& ue)
++{
++  ue_id_c result;
++  auto& id = result.set_gnb_ue_id();
++  const auto& identity = *ue.identity;
++  id.amf_ue_ngap_id = identity.ngap.amf_ue_ngap_id;
++  id.guami.plmn_id = identity.ngap.guami.plmn.to_bytes();
++  id.guami.amf_region_id.from_number(identity.ngap.guami.amf_region_id);
++  id.guami.amf_set_id.from_number(identity.ngap.guami.amf_set_id);
++  id.guami.amf_pointer.from_number(identity.ngap.guami.amf_pointer);
++  id.gnb_cu_ue_f1ap_id_list.resize(1);
++  id.gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id = identity.f1.cu_ue_f1ap_id;
++  return result;
++}
++
++bool matches_sst(const cu_cp_metrics_report::ue_info& ue, const test_cond_info_s& condition)
++{
++  if (condition.test_type.type() != test_cond_type_c::types::snssai || !condition.test_expr_present ||
++      condition.test_expr != test_cond_expression_e::equal || !condition.test_value_present ||
++      condition.test_value.type() != test_cond_value_c::types::value_int) {
++    return false;
++  }
++  auto sst = condition.test_value.value_int();
++  return sst >= 0 && sst <= 255 && std::find(ue.slice_ssts.begin(), ue.slice_ssts.end(), sst) != ue.slice_ssts.end();
++}
++
++} // namespace
++
++bool e2sm_kpm_cu_cp_meas_provider_impl::is_ue_supported(const ue_id_c& id)
++{
++  std::lock_guard<std::mutex> lock(cu_cp_metrics_mutex);
++  if (!identity_snapshot_is_fresh() || id.type() != ue_id_c::types::gnb_ue_id) {
++    return false;
++  }
++  return std::any_of(cu_cp_metrics->ues.begin(), cu_cp_metrics->ues.end(), [&](const auto& ue) {
++    return ue.identity && make_identity(ue) == id;
++  });
++}
++
++bool e2sm_kpm_cu_cp_meas_provider_impl::is_test_cond_supported(const test_cond_type_c& type)
++{
++  return type.type() == test_cond_type_c::types::snssai;
++}
++
++bool e2sm_kpm_cu_cp_meas_provider_impl::get_ues_matching_test_conditions(
++    const matching_ue_cond_per_sub_list_l& conditions, std::vector<ue_id_c>& ues)
++{
++  std::lock_guard<std::mutex> lock(cu_cp_metrics_mutex);
++  ues.clear();
++  if (!identity_snapshot_is_fresh()) {
++    return true;
++  }
++  for (const auto& ue : cu_cp_metrics->ues) {
++    if (!ue.identity || ue.rrc_connection_state != ocucp::rrc_state::connected) {
++      continue;
++    }
++    bool matches = std::all_of(conditions.begin(), conditions.end(), [&](const auto& condition) {
++      return !condition.lc_or_present && matches_sst(ue, condition.test_cond_info);
++    });
++    if (matches) {
++      ues.push_back(make_identity(ue));
++    }
++  }
++  return true;
++}
++
++bool e2sm_kpm_cu_cp_meas_provider_impl::get_ues_matching_test_conditions(
++    const matching_cond_list_l& conditions, std::vector<ue_id_c>& ues)
++{
++  std::lock_guard<std::mutex> lock(cu_cp_metrics_mutex);
++  ues.clear();
++  if (!identity_snapshot_is_fresh()) {
++    return true;
++  }
++  for (const auto& ue : cu_cp_metrics->ues) {
++    if (!ue.identity || ue.rrc_connection_state != ocucp::rrc_state::connected) {
++      continue;
++    }
++    bool matches = std::all_of(conditions.begin(), conditions.end(), [&](const auto& condition) {
++      if (condition.lc_or_present) {
++        return false;
++      }
++      const auto& choice = condition.matching_cond_choice;
++      if (choice.type() == matching_cond_item_choice_c::types::test_cond_info) {
++        return matches_sst(ue, choice.test_cond_info());
++      }
++      return choice.type() == matching_cond_item_choice_c::types::meas_label && choice.meas_label().no_label_present;
++    });
++    if (matches) {
++      ues.push_back(make_identity(ue));
++    }
++  }
++  return true;
++}
++
++bool e2sm_kpm_cu_meas_provider_impl::get_ue_rrc_state(const label_info_list_l labels,
++                                                   const std::vector<ue_id_c>& ues,
++                                                   const std::optional<cgi_c> cell,
++                                                   std::vector<meas_record_item_c>& items)
++{
++  if (cell || ues.empty() || labels.size() != 1 || !labels[0].meas_label.no_label_present) {
++    return false;
++  }
++  for (const auto& id : ues) {
++    meas_record_item_c item;
++    item.set_no_value();
++    if (identity_snapshot_is_fresh()) {
++      for (const auto& ue : cu_cp_metrics->ues) {
++        if (ue.identity && make_identity(ue) == id) {
++          item.set_integer() = static_cast<unsigned>(ue.rrc_connection_state);
++          break;
++        }
++      }
++    }
++    items.push_back(item);
++  }
++  return true;
++}
++
+ bool e2sm_kpm_cu_meas_provider_impl::check_e2sm_kpm_metrics_definitions(span<const e2sm_kpm_metric_t> metric_defs)
+ {
+   std::string metric_name;
+@@ -117,6 +243,12 @@ bool e2sm_kpm_cu_meas_provider_impl::is_metric_supported(const asn1::e2sm::meas_
+                                                          const e2sm_kpm_metric_level_enum level,
+                                                          const bool&                      cell_scope)
+ {
++  if (meas_type.type() != meas_type_c::types::meas_name) {
++    return false;
++  }
++  if (meas_type.meas_name().to_string() == "FALCON.UE.RRCState") {
++    return supported_metrics.count("FALCON.UE.RRCState") != 0 && level == UE_LEVEL && !cell_scope && label.no_label_present;
++  }
+   if (!label.no_label_present) {
+     logger.debug("Currently only NO_LABEL metric supported.");
+     return false;
+@@ -152,6 +284,7 @@ bool e2sm_kpm_cu_meas_provider_impl::get_meas_data(const asn1::e2sm::meas_type_c
+                                                    const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
+                                                    std::vector<asn1::e2sm::meas_record_item_c>& items)
+ {
++  std::lock_guard<std::mutex> lock(cu_cp_metrics_mutex);
+   metric_meas_getter_func_ptr metric_meas_getter_func;
+   auto                        it = supported_metrics.find(meas_type.meas_name().to_string().c_str());
+   if (it == supported_metrics.end()) {
+@@ -211,7 +344,9 @@ void e2sm_kpm_cu_meas_provider_impl::report_metrics(const ocuup::f1u_metrics_con
+ 
+ void e2sm_kpm_cu_meas_provider_impl::report_metrics(const cu_cp_metrics_report& metrics)
+ {
++  std::lock_guard<std::mutex> lock(cu_cp_metrics_mutex);
+   cu_cp_metrics = metrics;
++  cu_cp_metrics_updated = std::chrono::steady_clock::now();
+ }
+ 
+ e2sm_kpm_cu_up_meas_provider_impl::e2sm_kpm_cu_up_meas_provider_impl() : e2sm_kpm_cu_meas_provider_impl()
+diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h
+index 08024f1789..90f64726d9 100644
+--- a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h
++++ b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h
+@@ -14,6 +14,7 @@
+ #include "ocudu/e2/e2sm/e2sm_kpm.h"
+ #include "ocudu/f1u/cu_up/f1u_bearer.h"
+ #include "ocudu/pdcp/pdcp_entity.h"
++#include <chrono>
+ #include <deque>
+ #include <map>
+ #include <mutex>
+@@ -98,11 +99,19 @@ protected:
+   metric_meas_getter_func_t get_rrc_reestab_succ_with_ue_context;
+   metric_meas_getter_func_t get_rrc_conn_mean;
+   metric_meas_getter_func_t get_rrc_conn_max;
++  metric_meas_getter_func_t get_ue_rrc_state;
+ 
+   ocudulog::basic_logger& logger;
+ 
+   std::map<std::string, e2sm_kpm_supported_metric_t>           supported_metrics;
++  // Metrics dispatch and E2 collection run on different executors.
++  std::mutex                                                 cu_cp_metrics_mutex;
+   std::optional<cu_cp_metrics_report>                          cu_cp_metrics;
++  std::chrono::steady_clock::time_point cu_cp_metrics_updated{};
++  bool identity_snapshot_is_fresh() const
++  {
++    return cu_cp_metrics && std::chrono::steady_clock::now() - cu_cp_metrics_updated < std::chrono::seconds{3};
++  }
+   std::map<uint32_t, std::deque<pdcp_metrics_container>>       ue_aggr_pdcp_metrics;
+   std::map<uint32_t, std::deque<ocuup::f1u_metrics_container>> ue_aggr_f1u_metrics;
+   const uint32_t                                               max_pdcp_metrics = 10;
+@@ -113,6 +122,13 @@ class e2sm_kpm_cu_cp_meas_provider_impl : public e2sm_kpm_cu_meas_provider_impl
+ {
+ public:
+   e2sm_kpm_cu_cp_meas_provider_impl();
++
++  bool is_ue_supported(const asn1::e2sm::ue_id_c& ueid) override;
++  bool is_test_cond_supported(const asn1::e2sm::test_cond_type_c& type) override;
++  bool get_ues_matching_test_conditions(const asn1::e2sm::matching_cond_list_l& conditions,
++                                        std::vector<asn1::e2sm::ue_id_c>& ues) override;
++  bool get_ues_matching_test_conditions(const asn1::e2sm::matching_ue_cond_per_sub_list_l& conditions,
++                                        std::vector<asn1::e2sm::ue_id_c>& ues) override;
+ };
+ 
+ class e2sm_kpm_cu_up_meas_provider_impl : public e2sm_kpm_cu_meas_provider_impl
+diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_utils.cpp b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_utils.cpp
+index bf7b5d02e0..c62891ef79 100644
+--- a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_utils.cpp
++++ b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_utils.cpp
+@@ -3,6 +3,7 @@
+ // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
+ 
+ #include "e2sm_kpm_utils.h"
++#include <algorithm>
+ 
+ using namespace ocudu;
+ 
+@@ -169,6 +170,16 @@ bool ocudu::operator==(const asn1::e2sm::ue_id_c& lhs, asn1::e2sm::ue_id_c const
+ 
+   // TODO: add support for all types
+   switch (lhs.type()) {
++    case asn1::e2sm::ue_id_c::types_opts::gnb_ue_id: {
++      // Include GUAMI, F1/E1 lists and optional identity fields. Comparing only
++      // the numeric AMF UE ID would merge different AMFs or changed contexts.
++      byte_buffer left, right;
++      asn1::bit_ref lref(left), rref(right);
++      if (lhs.pack(lref) != asn1::OCUDUASN_SUCCESS || rhs.pack(rref) != asn1::OCUDUASN_SUCCESS) {
++        return false;
++      }
++      return left.length() == right.length() && std::equal(left.begin(), left.end(), right.begin());
++    }
+     case asn1::e2sm::ue_id_c::types_opts::gnb_du_ue_id:
+       if (lhs.gnb_du_ue_id() == rhs.gnb_du_ue_id()) {
+         return true;
+@@ -185,8 +196,16 @@ bool ocudu::operator!=(const asn1::e2sm::ue_id_c& lhs, asn1::e2sm::ue_id_c const
+ 
+ bool ocudu::operator<(const asn1::e2sm::ue_id_c& lhs, asn1::e2sm::ue_id_c const& rhs)
+ {
+-  ocudu_assert(lhs.type() != rhs.type(), "Cannot compare UEIDs of different types.");
++  ocudu_assert(lhs.type() == rhs.type(), "Cannot compare UEIDs of different types.");
+   switch (lhs.type()) {
++    case asn1::e2sm::ue_id_c::types_opts::gnb_ue_id: {
++      byte_buffer left, right;
++      asn1::bit_ref lref(left), rref(right);
++      if (lhs.pack(lref) != asn1::OCUDUASN_SUCCESS || rhs.pack(rref) != asn1::OCUDUASN_SUCCESS) {
++        return false;
++      }
++      return std::lexicographical_compare(left.begin(), left.end(), right.begin(), right.end());
++    }
+     case asn1::e2sm::ue_id_c::types_opts::gnb_du_ue_id:
+       if (lhs.gnb_du_ue_id() < rhs.gnb_du_ue_id()) {
+         return true;
+diff --git a/lib/f1ap/cu_cp/f1ap_cu_impl.cpp b/lib/f1ap/cu_cp/f1ap_cu_impl.cpp
+index 96045b5019..5b2b09a221 100644
+--- a/lib/f1ap/cu_cp/f1ap_cu_impl.cpp
++++ b/lib/f1ap/cu_cp/f1ap_cu_impl.cpp
+@@ -158,6 +158,16 @@ void f1ap_cu_impl::handle_message(const f1ap_message& msg)
+   }
+ }
+ 
++std::optional<f1ap_ue_identity> f1ap_cu_impl::get_ue_identity_snapshot(ue_index_t ue_index) const
++{
++  const auto* ue = ue_ctxt_list.find(ue_index);
++  if (ue == nullptr || ue->marked_for_release || !ue->ue_ids.du_ue_f1ap_id.has_value()) {
++    return std::nullopt;
++  }
++  return f1ap_ue_identity{gnb_cu_ue_f1ap_id_to_uint(ue->ue_ids.cu_ue_f1ap_id),
++                          gnb_du_ue_f1ap_id_to_uint(ue->ue_ids.du_ue_f1ap_id.value())};
++}
++
+ void f1ap_cu_impl::remove_ue_context(ue_index_t ue_index)
+ {
+   if (!ue_ctxt_list.contains(ue_index)) {
+diff --git a/lib/f1ap/cu_cp/f1ap_cu_impl.h b/lib/f1ap/cu_cp/f1ap_cu_impl.h
+index e812ea7a6f..bd314a1875 100644
+--- a/lib/f1ap/cu_cp/f1ap_cu_impl.h
++++ b/lib/f1ap/cu_cp/f1ap_cu_impl.h
+@@ -53,6 +53,7 @@ public:
+ 
+   // f1ap_statistics_handler functions.
+   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
++  std::optional<f1ap_ue_identity> get_ue_identity_snapshot(ue_index_t ue_index) const override;
+ 
+   // f1ap_ue_context_removal_handler functions.
+   void remove_ue_context(ue_index_t ue_index) override;
+diff --git a/lib/ngap/ngap_impl.cpp b/lib/ngap/ngap_impl.cpp
+index 610e3aa79d..90623137d8 100644
+--- a/lib/ngap/ngap_impl.cpp
++++ b/lib/ngap/ngap_impl.cpp
+@@ -581,6 +581,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
+ 
+   // Store serving PLMN.
+   ue_ctxt.serving_guami = init_ctxt_setup_req.guami;
++  ue_ctxt.serving_guami_valid = true;
+ 
+   // Store RRC inactive transition report request if present.
+   if (init_ctxt_setup_req.rrc_inactive_transition_report_request.has_value()) {
+@@ -665,6 +666,7 @@ void ngap_impl::handle_ue_context_modification_request(const asn1::ngap::ue_cont
+   // Store serving PLMN if it is set.
+   if (ue_context_mod_request.new_guami.has_value()) {
+     ue_ctxt.serving_guami = ue_context_mod_request.new_guami.value();
++    ue_ctxt.serving_guami_valid = true;
+   }
+ 
+   // Store UE Aggregate Maximum Bitrate if it is set.
+@@ -1630,6 +1632,18 @@ ue_index_t ngap_impl::get_ue_index(const amf_ue_id_t& amf_ue_ngap_id)
+   return ue_index_t::invalid;
+ }
+ 
++std::optional<ngap_ue_identity> ngap_impl::get_ue_identity_snapshot(ue_index_t ue_index) const
++{
++  const auto* ue = ue_ctxt_list.find(ue_index);
++  if (!conn_handler.is_connected() || ue == nullptr || !ue->serving_guami_valid || ue->release_requested || ue->release_scheduled ||
++      ue->ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
++    return std::nullopt;
++  }
++  return ngap_ue_identity{amf_ue_id_to_uint(ue->ue_ids.amf_ue_id),
++                          ran_ue_id_to_uint(ue->ue_ids.ran_ue_id),
++                          ue->serving_guami};
++}
++
+ amf_ue_id_t ngap_impl::get_amf_ue_id(const ue_index_t& ue_index)
+ {
+   if (ue_ctxt_list.contains(ue_index)) {
+diff --git a/lib/ngap/ngap_impl.h b/lib/ngap/ngap_impl.h
+index 1d874f7bd9..98b545c4c2 100644
+--- a/lib/ngap/ngap_impl.h
++++ b/lib/ngap/ngap_impl.h
+@@ -86,6 +86,7 @@ public:
+   // ngap_ue_id_translator.
+   ue_index_t  get_ue_index(const amf_ue_id_t& amf_ue_ngap_id) override;
+   amf_ue_id_t get_amf_ue_id(const ue_index_t& ue_index) override;
++  std::optional<ngap_ue_identity> get_ue_identity_snapshot(ue_index_t ue_index) const override;
+ 
+   ngap_message_handler&                        get_ngap_message_handler() override { return *this; }
+   ngap_event_handler&                          get_ngap_event_handler() override { return *this; }
+diff --git a/lib/ngap/ue_context/ngap_ue_context.h b/lib/ngap/ue_context/ngap_ue_context.h
+index e031afa59f..46b2459456 100644
+--- a/lib/ngap/ue_context/ngap_ue_context.h
++++ b/lib/ngap/ue_context/ngap_ue_context.h
+@@ -22,7 +22,8 @@ struct ngap_ue_ids {
+ struct ngap_ue_context {
+   ngap_ue_ids                                               ue_ids;
+   ngap_cu_cp_ue_notifier*                                   ue = nullptr;
+-  guami_t                                                   serving_guami;
++  guami_t                                                   serving_guami{};
++  bool                                                      serving_guami_valid = false;
+   unique_timer                                              request_pdu_session_timer;
+   bool                                                      release_requested                     = false;
+   bool                                                      release_scheduled                     = false;
+@@ -110,6 +111,12 @@ public:
+     return ues.at(amf_ue_id_to_ran_ue_id.at(amf_ue_id));
+   }
+ 
++  const ngap_ue_context* find(ue_index_t ue_index) const
++  {
++    auto it = ue_index_to_ran_ue_id.find(ue_index);
++    return it == ue_index_to_ran_ue_id.end() ? nullptr : find(it->second);
++  }
++
+   ngap_ue_context* find(ran_ue_id_t ran_ue_id)
+   {
+     auto it = ues.find(ran_ue_id);
+diff --git a/tests/unittests/e2/e2sm_kpm_meas_provider_test.cpp b/tests/unittests/e2/e2sm_kpm_meas_provider_test.cpp
+index aa4c8df637..f02934d844 100644
+--- a/tests/unittests/e2/e2sm_kpm_meas_provider_test.cpp
++++ b/tests/unittests/e2/e2sm_kpm_meas_provider_test.cpp
+@@ -10,6 +10,7 @@
+ #include "ocudu/support/executors/task_worker.h"
+ #include "ocudu/support/ocudu_test.h"
+ #include <gtest/gtest.h>
++#include <fstream>
+ 
+ using namespace ocudu;
+ 
+@@ -616,6 +617,167 @@ TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
+   }
+ }
+ 
++TEST(cu_identity, standard_ueid_contains_amf_and_f1_and_real_state)
++{
++  e2sm_kpm_cu_cp_meas_provider_impl provider;
++  cu_cp_metrics_report report;
++  for (unsigned i = 0; i < 2; ++i) {
++    cu_cp_metrics_report::ue_info ue{};
++    ue.du_id = int_to_gnb_du_id(i + 1);
++    ue.ue_index = static_cast<ocucp::ue_index_t>(42 + i);
++    ue.rrc_connection_state = ocucp::rrc_state::connected;
++    guami_t guami{};
++    guami.plmn = plmn_identity::parse("00101").value();
++    guami.amf_region_id = 2;
++    guami.amf_set_id = 1;
++    guami.amf_pointer = 0;
++    ue.identity = ocucp::cu_ue_identity{{(1ULL << 39) + i, 301 + i, guami}, {1007 + i, 8 + i}, ue.du_id};
++    ue.slice_ssts = {1};
++    report.ues.push_back(ue);
++  }
++  provider.report_metrics(report);
++  std::vector<asn1::e2sm::ue_id_c> ids;
++  asn1::e2sm::matching_ue_cond_per_sub_list_l conditions;
++  conditions.resize(1);
++  auto& condition = conditions[0].test_cond_info;
++  condition.test_type.set_snssai();
++  condition.test_expr_present = true;
++  condition.test_expr = asn1::e2sm::test_cond_expression_e::equal;
++  condition.test_value_present = true;
++  condition.test_value.set_value_int() = 1;
++  ASSERT_TRUE(provider.get_ues_matching_test_conditions(conditions, ids));
++  ASSERT_EQ(ids.size(), 2U);
++  ASSERT_EQ(ids[0].gnb_ue_id().amf_ue_ngap_id, 1ULL << 39);
++  ASSERT_EQ(ids[0].gnb_ue_id().gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id, 1007U);
++  ASSERT_TRUE(provider.is_ue_supported(ids[0]));
++
++  asn1::e2sm::label_info_list_l labels;
++  labels.resize(1);
++  labels[0].meas_label.no_label_present = true;
++  labels[0].meas_label.no_label = asn1::e2sm::meas_label_s::no_label_e_::true_value;
++  asn1::e2sm::meas_type_c metric;
++  metric.set_meas_name().from_string("FALCON.UE.RRCState");
++  std::vector<asn1::e2sm::meas_record_item_c> values;
++  ASSERT_TRUE(provider.get_meas_data(metric, labels, ids, {}, values));
++  ASSERT_EQ(values.size(), 2U);
++  ASSERT_EQ(values[0].integer(), 1U);
++
++  // Encode actual OCUDU ASN.1; optionally export to verify an independent FlexRIC decoder.
++  asn1::e2sm::e2sm_kpm_ind_msg_s message;
++  auto& rows = message.ind_msg_formats.set_ind_msg_format3().ue_meas_report_list;
++  rows.resize(2);
++  for (unsigned i = 0; i < 2; ++i) {
++    rows[i].ue_id = ids[i];
++    auto& measurement = rows[i].meas_report;
++    measurement.meas_info_list.resize(1);
++    measurement.meas_info_list[0].meas_type = metric;
++    measurement.meas_info_list[0].label_info_list = labels;
++    measurement.meas_data.resize(1);
++    measurement.meas_data[0].meas_record.push_back(values[i]);
++    measurement.granul_period_present = true;
++    measurement.granul_period = 1000;
++  }
++  byte_buffer encoded;
++  asn1::bit_ref writer(encoded);
++  ASSERT_EQ(message.pack(writer), asn1::OCUDUASN_SUCCESS);
++  asn1::e2sm::e2sm_kpm_ind_msg_s decoded;
++  asn1::cbit_ref reader(encoded);
++  ASSERT_EQ(decoded.unpack(reader), asn1::OCUDUASN_SUCCESS);
++  ASSERT_EQ(decoded.ind_msg_formats.ind_msg_format3().ue_meas_report_list[1].ue_id.gnb_ue_id().amf_ue_ngap_id,
++            (1ULL << 39) + 1);
++  if (const char* directory = std::getenv("FALCON_IDENTITY_FIXTURE_DIR")) {
++    std::ofstream msg(std::string(directory) + "/cu_message.asn", std::ios::binary);
++    for (auto b : encoded) msg.put(static_cast<char>(b));
++    ASSERT_TRUE(msg.good());
++    asn1::e2sm::e2sm_kpm_ind_hdr_s header;
++    header.ind_hdr_formats.ind_hdr_format1().collet_start_time.from_number(2208988900ULL << 32);
++    byte_buffer header_bytes;
++    asn1::bit_ref header_writer(header_bytes);
++    ASSERT_EQ(header.pack(header_writer), asn1::OCUDUASN_SUCCESS);
++    std::ofstream hdr(std::string(directory) + "/cu_header.asn", std::ios::binary);
++    for (auto b : header_bytes) hdr.put(static_cast<char>(b));
++    ASSERT_TRUE(hdr.good());
++  }
++
++  // A different requested slice cannot manufacture identities.
++  condition.test_value.set_value_int() = 2;
++  ASSERT_TRUE(provider.get_ues_matching_test_conditions(conditions, ids));
++  EXPECT_TRUE(ids.empty());
++  // Retirement invalidates the real state, even for an old subscribed UEID.
++  report.ues.clear();
++  provider.report_metrics(report);
++  values.clear();
++  std::vector<asn1::e2sm::ue_id_c> old_ids = {rows[0].ue_id};
++  ASSERT_TRUE(provider.get_meas_data(metric, labels, old_ids, {}, values));
++  EXPECT_EQ(values[0].type(), asn1::e2sm::meas_record_item_c::types::no_value);
++  EXPECT_FALSE(provider.is_ue_supported(old_ids[0]));
++}
++
++TEST(cu_identity, style4_subscription_repeated_collection_preserves_ue_identity)
++{
++  e2sm_kpm_cu_cp_meas_provider_impl provider;
++  e2sm_kpm_asn1_packer packer(provider);
++  e2sm_kpm_impl service(ocudulog::fetch_basic_logger("TEST"), packer, provider);
++  cu_cp_metrics_report report;
++  cu_cp_metrics_report::ue_info ue{};
++  ue.rrc_connection_state = ocucp::rrc_state::connected;
++  guami_t guami{};
++  guami.plmn = plmn_identity::parse("00101").value();
++  ue.identity = ocucp::cu_ue_identity{{0, 301, guami}, {1007, 9}, int_to_gnb_du_id(2)};
++  ue.slice_ssts = {1};
++  report.ues.push_back(ue);
++  provider.report_metrics(report);
++
++  asn1::e2sm::e2sm_kpm_action_definition_s action;
++  action.ric_style_type = 4;
++  auto& format = action.action_definition_formats.set_action_definition_format4();
++  format.matching_ue_cond_list.resize(1);
++  auto& condition = format.matching_ue_cond_list[0].test_cond_info;
++  condition.test_type.set_snssai();
++  condition.test_expr_present = true;
++  condition.test_expr = asn1::e2sm::test_cond_expression_e::equal;
++  condition.test_value_present = true;
++  condition.test_value.set_value_int() = 1;
++  format.sub_info.granul_period = 1000;
++  format.sub_info.meas_info_list.resize(1);
++  auto& metric = format.sub_info.meas_info_list[0];
++  metric.meas_type.set_meas_name().from_string("FALCON.UE.RRCState");
++  metric.label_info_list.resize(1);
++  metric.label_info_list[0].meas_label.no_label_present = true;
++  metric.label_info_list[0].meas_label.no_label = asn1::e2sm::meas_label_s::no_label_e_::true_value;
++  auto subscription = generate_e2sm_kpm_ric_action(action);
++  ASSERT_TRUE(service.action_supported(subscription));
++  EXPECT_FALSE(provider.is_metric_supported(metric.meas_type, metric.label_info_list[0].meas_label, E2_NODE_LEVEL, false));
++  auto collector = service.get_e2sm_report_service(subscription.ric_action_definition);
++  ASSERT_NE(collector, nullptr);
++  collector->collect_measurements();
++  collector->collect_measurements();
++  ASSERT_TRUE(collector->is_ind_msg_ready());
++  auto bytes = collector->get_indication_message();
++  asn1::cbit_ref reader(bytes);
++  asn1::e2sm::e2sm_kpm_ind_msg_s decoded;
++  ASSERT_EQ(decoded.unpack(reader), asn1::OCUDUASN_SUCCESS);
++  const auto& rows = decoded.ind_msg_formats.ind_msg_format3().ue_meas_report_list;
++  ASSERT_EQ(rows.size(), 1U);
++  EXPECT_EQ(rows[0].ue_id.gnb_ue_id().amf_ue_ngap_id, 0U);
++  EXPECT_EQ(rows[0].ue_id.gnb_ue_id().gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id, 1007U);
++  ASSERT_EQ(rows[0].meas_report.meas_data.size(), 2U);
++  EXPECT_EQ(rows[0].meas_report.meas_data[1].meas_record[0].integer(), 1U);
++}
++
++TEST(cu_identity, incomplete_context_is_never_published)
++{
++  e2sm_kpm_cu_cp_meas_provider_impl provider;
++  cu_cp_metrics_report report;
++  report.ues.emplace_back();
++  report.ues[0].rrc_connection_state = ocucp::rrc_state::connected;
++  provider.report_metrics(report);
++  std::vector<asn1::e2sm::ue_id_c> ids;
++  asn1::e2sm::matching_ue_cond_per_sub_list_l conditions;
++  ASSERT_TRUE(provider.get_ues_matching_test_conditions(conditions, ids));
++  EXPECT_TRUE(ids.empty());
++}
++
+ INSTANTIATE_TEST_SUITE_P(e2sm_kpm_du_meas_provider_test, e2_entity_test_with_pcap, testing::Values(g_pcap));
+ INSTANTIATE_TEST_SUITE_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_du_meas_provider_test, testing::Values(g_pcap));
+ 
+diff --git a/tests/unittests/f1ap/cu_cp/f1ap_cu_ue_context_release_procedure_test.cpp b/tests/unittests/f1ap/cu_cp/f1ap_cu_ue_context_release_procedure_test.cpp
+index 4f5823f639..04469677e1 100644
+--- a/tests/unittests/f1ap/cu_cp/f1ap_cu_ue_context_release_procedure_test.cpp
++++ b/tests/unittests/f1ap/cu_cp/f1ap_cu_ue_context_release_procedure_test.cpp
+@@ -13,10 +13,15 @@ using namespace ocucp;
+ /// Test the f1 UE context release procedure (gNB-CU initiated)
+ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_procedure_succeeds)
+ {
++  EXPECT_FALSE(f1ap->get_ue_identity_snapshot(ue_index_t::min).has_value());
+   // Action 1: Add UE
+   test_logger.info("Injecting Initial UL RRC message");
+   f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
+   f1ap->handle_message(init_ul_rrc_msg);
++  auto snapshot = f1ap->get_ue_identity_snapshot(ue_index_t::min);
++  ASSERT_TRUE(snapshot.has_value());
++  EXPECT_EQ(snapshot->cu_ue_f1ap_id, 0U);
++  EXPECT_EQ(snapshot->du_ue_f1ap_id, 41255U);
+ 
+   // Action 2: Start UE Context Release procedure
+   test_logger.info("Starting UE Context Release procedure");
+@@ -30,6 +35,7 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_procedure_succeeds)
+ 
+   // Status: Procedure not yet ready.
+   ASSERT_FALSE(t.ready());
++  EXPECT_FALSE(f1ap->get_ue_identity_snapshot(ue_index_t::min).has_value());
+ 
+   // Action 3: Inject UE Context Release Complete message
+   test_logger.info("Injecting UE Context Release Complete message");
+@@ -39,4 +45,6 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_procedure_succeeds)
+ 
+   ASSERT_TRUE(t.ready());
+   ASSERT_EQ(t.get(), ue_index_t::min);
++  EXPECT_FALSE(f1ap->get_ue_identity_snapshot(ue_index_t::min).has_value());
++  EXPECT_EQ(snapshot->du_ue_f1ap_id, 41255U);
+ }
+diff --git a/tests/unittests/ngap/ngap_ue_context_management_procedure_test.cpp b/tests/unittests/ngap/ngap_ue_context_management_procedure_test.cpp
+index b7bd48a540..9af6fde674 100644
+--- a/tests/unittests/ngap/ngap_ue_context_management_procedure_test.cpp
++++ b/tests/unittests/ngap/ngap_ue_context_management_procedure_test.cpp
+@@ -114,6 +114,24 @@ protected:
+ //                             Initial Context Setup
+ ///////////////////////////////////////////////////////////////////////////////
+ 
++TEST_F(ngap_ue_context_management_procedure_test, identity_snapshot_requires_complete_context_and_retires_on_release)
++{
++  ue_index_t index = start_procedure();
++  EXPECT_FALSE(ngap->get_ue_identity_snapshot(index).has_value());
++  auto& ue = test_ues.at(index);
++  const auto amf_id = uint_to_amf_ue_id((1ULL << 40) - 1);
++  ngap->handle_message(generate_valid_initial_context_setup_request_message(amf_id, ue.ran_ue_id.value()));
++  auto snapshot = ngap->get_ue_identity_snapshot(index);
++  ASSERT_TRUE(snapshot.has_value());
++  EXPECT_EQ(snapshot->amf_ue_ngap_id, (1ULL << 40) - 1);
++  EXPECT_EQ(snapshot->ran_ue_ngap_id, ran_ue_id_to_uint(ue.ran_ue_id.value()));
++  EXPECT_NE(snapshot->ran_ue_ngap_id, snapshot->amf_ue_ngap_id);
++  ngap->handle_message(generate_valid_ue_context_release_command_with_ue_ngap_id_pair(amf_id, ue.ran_ue_id.value()));
++  EXPECT_FALSE(ngap->get_ue_identity_snapshot(index).has_value());
++  // The previously returned snapshot owns its data and survives context removal.
++  EXPECT_EQ(snapshot->amf_ue_ngap_id, (1ULL << 40) - 1);
++}
++
+ /// Test Initial Context Setup Request.
+ TEST_F(ngap_ue_context_management_procedure_test, when_valid_initial_context_setup_request_received_then_response_send)
+ {
+diff --git a/include/ocudu/cu_cp/ue_identity.h b/include/ocudu/cu_cp/ue_identity.h
+new file mode 100644
+--- /dev/null
++++ b/include/ocudu/cu_cp/ue_identity.h
+@@ -0,0 +1,30 @@
++// SPDX-FileCopyrightText: Copyright (C) 2026 Ruibin Chen
++// SPDX-License-Identifier: BSD-3-Clause-Open-MPI
++#pragma once
++
++#include "ocudu/cu_cp/cu_cp_types.h"
++#include "ocudu/ran/gnb_du_id.h"
++#include "ocudu/ran/guami.h"
++#include <cstdint>
++
++namespace ocudu::ocucp {
++
++/// Owned identity views. Call getters only on the CU control executor.
++struct ngap_ue_identity {
++  uint64_t amf_ue_ngap_id;
++  uint64_t ran_ue_ngap_id;
++  guami_t  guami;
++};
++
++struct f1ap_ue_identity {
++  uint64_t cu_ue_f1ap_id;
++  uint64_t du_ue_f1ap_id;
++};
++
++struct cu_ue_identity {
++  ngap_ue_identity ngap;
++  f1ap_ue_identity f1;
++  gnb_du_id_t      du_id;
++};
++
++} // namespace ocudu::ocucp

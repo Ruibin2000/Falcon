@@ -1,0 +1,34 @@
+{
+  "source": "08_single_ue1_ul/inputs.ndjson, actual live capture",
+  "report_kind": "readable xApp output regenerated from retained live inputs; not a new radio test",
+  "rows": 118,
+  "statuses": {
+    "unresolved": 1,
+    "matched": 117
+  },
+  "original_status_identity_timing_and_kpm_preserved": true,
+  "supi": "imsi-001010000000101",
+  "ran_ue_ngap_id": "14",
+  "new_short_live_attempt": {
+    "source_directory": "/tmp/falcon-identity-txt.LMhzyxzK",
+    "duration_s": 20,
+    "process_exit": 0,
+    "core_snapshots": 21,
+    "output_rows": 0,
+    "amf_state": "idle",
+    "downlink_ping_sent": 10,
+    "downlink_ping_received": 0,
+    "result": "not accepted as live TXT row validation; awaiting Laptop uplink traffic",
+    "input_kinds": {
+      "core_snapshot": 21
+    },
+    "sdk_subscriptions": 2,
+    "sdk_deletion_responses": 2
+  },
+  "follow_up_actual_live_txt_validation": {
+    "summary": "../10_single_ue1_txt_iperf/summary.json",
+    "result": "passed for experimental single-UE TXT output and UL metric response",
+    "records": 118,
+    "matched": 117
+  }
+}

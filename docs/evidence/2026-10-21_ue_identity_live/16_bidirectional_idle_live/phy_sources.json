@@ -1,0 +1,52 @@
+{
+  "origin": "Existing logs of the final operator-run live trial",
+  "cu_source_file": "/tmp/falcon-identity-cu.9cKTWHpv/cu.log",
+  "du_source_files": {
+    "1": "/tmp/falcon-identity-du1.h5S2k9VS/du.log",
+    "2": "/tmp/falcon-identity-du2.nMXBOBbV/du.log"
+  },
+  "archive_window_utc": [
+    "2026-10-22T01:18:22+00:00",
+    "2026-10-22T01:24:01+00:00"
+  ],
+  "end_exclusive": true,
+  "mapping": {
+    "2/34": {
+      "du_id": 2,
+      "pci": 2,
+      "rnti": "0x4623",
+      "cu_internal_ue_index": "88",
+      "gnb_cu_ue_f1ap_id": "34",
+      "amf_ue_ngap_id": "88",
+      "ran_ue_ngap_id": "87"
+    },
+    "1/54": {
+      "du_id": 1,
+      "pci": 1,
+      "rnti": "0x463a",
+      "cu_internal_ue_index": "89",
+      "gnb_cu_ue_f1ap_id": "54",
+      "amf_ue_ngap_id": "89",
+      "ran_ue_ngap_id": "88"
+    },
+    "1/55": {
+      "du_id": 1,
+      "pci": 1,
+      "rnti": "0x463b",
+      "cu_internal_ue_index": "90",
+      "gnb_cu_ue_f1ap_id": "55",
+      "amf_ue_ngap_id": "90",
+      "ran_ue_ngap_id": "89"
+    },
+    "2/35": {
+      "du_id": 2,
+      "pci": 2,
+      "rnti": "0x4624",
+      "cu_internal_ue_index": "91",
+      "gnb_cu_ue_f1ap_id": "35",
+      "amf_ue_ngap_id": "91",
+      "ran_ue_ngap_id": "90"
+    }
+  },
+  "cu_excerpt": "Only UE creation, F1 context addition and NGAP ID header lines; no security payloads"
+}

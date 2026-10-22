@@ -1,0 +1,14 @@
+# DU2 E2 destination is shared with DU1; its local bind identifies this DU.
+e2:
+  enable_du_e2: true
+  addrs: [127.0.0.1]
+  bind_addrs: [127.0.10.3]
+  port: 36421
+  e2sm_kpm_enabled: true
+
+metrics:
+  layers:
+    enable_sched: true
+    enable_rlc: true
+  periodicity:
+    du_report_period: 1000

@@ -1,0 +1,59 @@
+{
+  "source": "operator-provided Laptop stdout, not a local process executed by the assistant",
+  "evidence_directory_on_laptop": "/tmp/falcon-dual-ul-7indzogv",
+  "started_at": "2026-10-21T20:12:09.457939-04:00",
+  "ended_at": "2026-10-21T20:13:10.917573-04:00",
+  "status": "completed",
+  "links": [
+    {
+      "ue": 1,
+      "imei": "863305041978437",
+      "imsi": "001010000000101",
+      "bearer": "/org/freedesktop/ModemManager1/Bearer/1",
+      "source": "10.45.0.2",
+      "prefix": 30,
+      "interface": "wwan0",
+      "table": 151,
+      "gateway": "10.45.0.1",
+      "server": "10.45.0.1",
+      "port": 5201,
+      "exit_code": 0,
+      "sender": {
+        "seconds": 60,
+        "transfer_display": "97.0 MBytes",
+        "mbit_s": 13.6,
+        "retransmissions": 1
+      },
+      "receiver": {
+        "seconds": 60.41,
+        "transfer_display": "95.2 MBytes",
+        "mbit_s": 13.2
+      }
+    },
+    {
+      "ue": 2,
+      "imei": "863305041980706",
+      "imsi": "001010000000102",
+      "bearer": "/org/freedesktop/ModemManager1/Bearer/2",
+      "source": "10.46.0.2",
+      "prefix": 30,
+      "interface": "wwan1",
+      "table": 152,
+      "gateway": "10.46.0.1",
+      "server": "10.46.0.1",
+      "port": 5202,
+      "exit_code": 0,
+      "sender": {
+        "seconds": 60,
+        "transfer_display": "86.4 MBytes",
+        "mbit_s": 12.1,
+        "retransmissions": 1
+      },
+      "receiver": {
+        "seconds": 60.24,
+        "transfer_display": "85.1 MBytes",
+        "mbit_s": 11.9
+      }
+    }
+  ]
+}

@@ -1,29 +1,18 @@
-# Dual UE Laptop Quick Commands — UL Only
+# Dual UE Laptop Quick Commands — UE IP Binding and UL
 
-Updated: 2026-10-13. Both intended SIMs have registered on their intended
-cells and both private paths pinged successfully. UE2 single-DU UL passed at
-receiver 15.5 Mbit/s / Retr 1 with 12 KPM smoke reports. UE1 UL with UE2 test
-traffic idle passed at receiver 10.5 Mbit/s / Retr 0 / pipeline exit 0. See
-[UE1 UL evidence](evidence/2026-10-13_du1_ul/manifest.json),
-[UE2 UL evidence](evidence/2026-10-13_du2_ul/manifest.json) and
-[dual IPv4 path evidence](evidence/2026-10-13_dual_ipv4_paths/manifest.json).
+Updated: 2026-10-21. Developer: Ruibin Chen. Pair this booklet with the updated
+[Spark Quick Commands](dual_ue_spark_quick_commands.md) to reproduce today's
+CU/DU/Core UE IP binding. Spark now starts RIC with the identity plugin, then
+CU with its identity E2 overlay, both DUs and the new three-subscription xApp.
+Laptop still prepares each intended modem/SIM/cell/PDU/route independently.
 
-The latest measured concurrent TCP UL passed: receiver **UE1 13.8 Mbit/s /
-UE2 17.3 Mbit/s**, both sender Retr 0, both process exits 0. Spark received
-**123 UE callbacks per DU**, including 63/61 complete UL-active five-metric rows;
-approximately 62/61 fall inside the clock-corrected laptop run window. Both
-subscription/deletion pairs and normal xApp exit passed. See
-[dual UL/KPM evidence and plots](evidence/2026-10-13_dual_kpm_reports/manifest.json).
-The manually simultaneous clock readbacks put Spark about **199.27 seconds
-ahead of Laptop**; the corrected latest window is 22:17:25–22:18:27 EDT.
-Precise clock synchronization, full cross-layer identity correlation and the
-remaining repeated/UDP/guard/survivor/cold-start acceptance are pending.
-The earlier [subscription-only probe](evidence/2026-10-13_dual_kpm_subscriptions/manifest.json)
-received zero UE callbacks and remains historical evidence.
-UL is the acceptance target; underflow count/growth remediation is deferred.
-Wrong-cell attachment, lost SA/PDU, wrong IP paths, failed UL and missing UL
-telemetry still keep their acceptance gates pending. See
-[Plan 3](../plans/dual-ue-du-fr1-channels.md).
+The [live report](reports/ue_identity_dual_ue_live_2026-10-21.md) describes the
+final implementation and six-minute bidirectional idle/resume validation
+(645 matched / 648, zero cached). The new run must verify its own
+current identities/IPs. Strict serving-DU/lifecycle proof, restart/reuse and
+remaining performance gates are separate in [Plan 4](../plans/cu-ue-ip-e2-binding.md).
+The [October 13 UL/KPM results](evidence/2026-10-13_dual_kpm_reports/manifest.json)
+remain historical [Plan 3](../plans/dual-ue-du-fr1-channels.md) evidence.
 
 Run all commands in this file on the UE laptop. Use Bash, one terminal per UE
 for modem/bearer/path variables, and stop at failed checks. Spark startup, servers
@@ -35,21 +24,21 @@ running; Spark startup is in the paired booklet. Keep UE1's verified PDU/path
 active while preparing UE2. After a power/reconnection event, repeat the affected
 role's identity, lock/cell, bearer, complete host IPv4 reset and new-path verification.
 
-The latest measured launcher record identifies UE1 as modem/SIM `13`, bearer
-`9`, `10.45.0.6/30` / `wwan0` / table 151 / gateway `10.45.0.5`; UE2 as
-modem/SIM `14`, bearer `10`, `10.46.0.5/30` / `wwan1` / table 152 / gateway
-`10.46.0.6`. Both intended IMEI/IMSI/APNs and host route checks passed before
-the two clients started. CU records tie DU1 / PCI1 to F1AP UE 11 and DU2 /
-PCI2 to F1AP UE 7. KPM does not itself carry IMEI/IMSI; keep the full identity
-ledger separate. Earlier modem 9/10 and bearer 7/8 preflight allocations are
-historical. Rediscover current values after any restart/reconnection; role
-reset needs no previous allocation. Section 3 supports indexed access-tech
-fields and records the bearer default gateway without requiring it to equal
-the server endpoint. Ordinary ping/Wi-Fi-off and deliberate path-loss checks
-remain separate packet-path validation.
-The earlier concurrent launcher's printed exit codes/time bounds were invalid
-because its `wait`/`printf` lost variable expansions. Preserve its logs and use
-section 3's Python launcher after both role paths pass.
+Today's Laptop truth identified UE1 as IMSI `001010000000101`, APN `internet`,
+IPv4 `10.45.0.2`, and UE2 as IMSI `001010000000102`, APN `internet2`, IPv4
+`10.46.0.2`. These are historical allocations: rediscover modem/SIM/bearer,
+IPv4/prefix/interface/gateway and routes on every new run. F1AP/NGAP IDs can
+change after idle/resume too. KPM does not carry IMEI/IMSI/IP directly; Spark's
+xApp associates CU/DU E2 identities with read-only AMF/SMF data. Compare its
+output with Laptop truth and actual captured source events independently.
+
+Daily sequence: complete sections 1 and 2 → install/reuse the section 3 helper
+and run `--check-only` → Spark 7a plus Laptop's 60-second concurrent upload →
+[section 3.1](#binding-idle) plus Spark 7b for the six-minute idle/resume test →
+retain evidence → shutdown. All test launches are explicit operator commands.
+The idle test is a pasted command using the existing helper; it requires no
+file transfer or additional installed script. UDP and path-loss tests in 3.2
+are separate optional Plan 3 work, not prerequisites for this binding repeat.
 
 ## 0. Role assignments
 
@@ -346,11 +335,10 @@ reports incomplete; address-removal failures retain the existing guards.
 
 Rediscover these dynamic values after modem restart/reconnection. Both cells use
 PLMN `00101`, TAC 7 and SST 1. DNN selects the UE pool; cell lock selects the DU.
-UE1's earlier host allocation was `10.45.0.3/29` on `wwan0`; UE2's earlier
-bearer 5 / `10.46.0.3/29` is also historical. Both now report connected 5GNR
-in the earlier modem 9/10 preflight. The latest measured run used modem 13/14
-and bearer 9/10, as recorded above. Recheck serving-cell
-correlation separately; the launcher does not query the serving DU.
+The table above and earlier modem 9/10 or 13/14, bearer 7/8 or 9/10 and
+`10.45.0.3/29` / `10.46.0.3/29` allocations are historical examples.
+Recheck serving-cell correlation separately; the launcher does not query the
+serving DU. The October 21 xApp supplies the separate CU/Core/DU association.
 
 Treat locks as needing restoration after modem power/reconnection: the
 operator reported a lock query of `0`, with affected role unspecified. See the
@@ -1149,7 +1137,7 @@ Recheck UE1's private ping in its own terminal, then continue to section 3.
 
 <a id="dual-ul"></a>
 
-## 3. Concurrent UL, controlled UDP and path guards
+## 3. Concurrent UL and UE IP binding preflight
 
 Both UE sequences must pass their identity/cell/PDU/host-path checks before
 concurrent traffic. The launcher discovers current modem/SIM/bearer paths by
@@ -1393,9 +1381,11 @@ If UE2 is not connected, complete its sequence first. A missing current WWAN
 address needs 1.5/2.5 rebuilding; a wrong ordinary route needs 1.6/2.6. Do not
 substitute an old address to bypass a failed preflight.
 
-Then start Spark step 7's 120-second diagnostic capture and wait for
-`FALCON_CAPTURE subscriptions_kpm=2`. Keep both Spark servers, DUs, CU and RIC
-running. Launch both UL clients from one laptop terminal:
+Then start [Spark step 7a](dual_ue_spark_quick_commands.md#7a-first-verify-both-ip-bindings-during-a-60-second-dual-upload)'s
+120-second identity capture and check its log in a separate Spark terminal.
+Require `Registered E2 Nodes = 3`, three successful subscription responses and
+`identity collector: 3 KPM subscriptions, duration=120`. Keep both Spark
+servers, DUs, CU and RIC running. Launch both UL clients from one Laptop terminal:
 
 ```bash
 python3 ~/falcon-dual-ul.py
@@ -1409,17 +1399,201 @@ client. A partial launch failure or Ctrl+C stops its started clients and records
 an aborted/interrupted run. No Bash PID variables are needed.
 
 Retain the printed directory, both logs and `summary.json`. Require both exit
-codes 0 and two completed receiver summaries. Inspect actual DU/UE-tagged KPM
-blocks in the same UL window; successful subscriptions alone do not prove data
-delivery. For full Plan 3 UL
-coexistence, repeat each solo/other-DU-idle/concurrent case three times.
+codes 0 and two completed receiver summaries. In Spark 7c, compare each
+`summary.json` role's IMSI/APN/current IP with the captured CU/Core/DU events
+and the `bindings.txt` records followed by KPM. Successful subscriptions alone
+do not prove identity or metric delivery. After this short test passes, run
+3.1 to reproduce both idle/resume cases in one xApp instance.
 
 The daily workflow keeps both DUs running. Label the individual traffic tests
 with the other DU active and its UE test traffic idle. Isolated-radio comparison
 trials remain a separate full-Plan-3 validation case, with refreshed identities
 and paths required after any radio/modem restart.
 
-Add UL UDP at a controlled rate no greater than 70% of each measured solo capacity:
+<a id="binding-idle"></a>
+
+### 3.1. Six-minute UE1 idle / UE2 idle IP binding test
+
+Use a fresh Laptop terminal after both role sequences and the short dual-upload
+binding check pass. Keep both DUs, CU/RIC/Core, PDU sessions and Spark servers
+running. Close other clients, periodic ping and other WWAN traffic so CU can
+reach its current 120-second inactivity threshold. Keep management traffic on
+the management network. Do not disconnect bearers or toggle modem power.
+
+| Nominal seconds after START | UE1 | UE2 |
+| --- | --- | --- |
+| 0–15 | UL | UL |
+| 15–165 | Quiet 150 s; verify actual Core idle | Same uninterrupted UL |
+| 165–175 | Resumed UL | Same UL |
+| 175–325 | Same uninterrupted UL | Quiet 150 s; verify actual Core idle |
+| 325–335 | Same UL | Resumed UL |
+
+UE1 runs 15 s → quiet 150 s → 170 s; UE2 runs 175 s → quiet 150 s → 10 s.
+Quiet begins after that UE's first iperf exits, so connection/transfer overhead
+may shift these nominal boundaries. The full traffic run must finish within
+345 seconds, with both resume phases inside the 360-second Spark capture.
+
+Paste this command directly; it reuses `~/falcon-dual-ul.py`, creates logs and
+runs no traffic until `START`. No additional script file or transfer is needed.
+Leave it at `READY`, start [Spark 7b](dual_ue_spark_quick_commands.md#7b-six-minute-bidirectional-idleresume-and-independent-matching)'s
+360-second xApp, then return here within ten seconds and enter `START`.
+
+```bash
+python3 - <<'PY'
+import importlib.util, json, signal, subprocess, tempfile, threading, time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+spec = importlib.util.spec_from_file_location('ue_helper', Path.home() / 'falcon-dual-ul.py')
+helper = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(helper)
+roles = helper.discover_roles()
+helper.verify_routes(roles)
+assert len(roles) == 2 and {r['ue'] for r in roles} == {1, 2}
+for r in roles:
+    print(f"UE{r['ue']}: IMSI={r['imsi']} IP={r['source']} dev={r['interface']} -> {r['server']}:{r['port']}", flush=True)
+print('READY: 启动 Spark 的360秒xApp，然后在10秒内回这里输入 START 并回车。', flush=True)
+with open('/dev/tty') as tty:
+    while True:
+        line = tty.readline()
+        if not line:
+            raise SystemExit('终端已关闭')
+        if line.strip() == 'START':
+            break
+assert helper.discover_roles() == roles, 'Bearer已变化，请重新检查'
+helper.verify_routes(roles)
+
+out = Path(tempfile.mkdtemp(prefix='falcon-dual-idle-'))
+(out / 'truth.json').write_text(json.dumps(roles, indent=2) + '\n')
+started = time.monotonic()
+lock, stop, jobs = threading.Lock(), threading.Event(), []
+stamp = lambda: datetime.now(ZoneInfo('America/New_York')).isoformat()
+events = (out / 'events.ndjson').open('w')
+print('Evidence:', out, 'START:', stamp(), flush=True)
+
+def event(kind, **fields):
+    with lock:
+        item = dict(event=kind, time_edt=stamp(), elapsed_s=round(time.monotonic()-started, 3), **fields)
+        events.write(json.dumps(item) + '\n'); events.flush()
+        print(item, flush=True)
+
+def flow(r, before, after):
+    for phase, seconds in (('before', before), ('after', after)):
+        if phase == 'after':
+            event('quiet_started', ue=r['ue'], seconds=150)
+            quiet_start = time.monotonic()
+            if stop.wait(150):
+                return
+            event('quiet_finished', ue=r['ue'], actual_seconds=round(time.monotonic()-quiet_start, 3))
+        log = out / f"ue{r['ue']}_{phase}.log"
+        with lock:
+            if stop.is_set():
+                return
+            stream = log.open('w')
+            try:
+                proc = subprocess.Popen(['iperf3', '-c', r['server'], '-p', str(r['port']),
+                    '-B', r['source'], '-t', str(seconds), '-i', '1', '--get-server-output'],
+                    stdin=subprocess.DEVNULL, stdout=stream, stderr=subprocess.STDOUT)
+            except BaseException:
+                stream.close()
+                raise
+            job = dict(ue=r['ue'], phase=phase, seconds=seconds, log=str(log), started_at=stamp())
+            jobs.append((proc, stream, job))
+        event('iperf_started', ue=r['ue'], phase=phase, seconds=seconds)
+        try:
+            rc = proc.wait(timeout=seconds+5)
+        finally:
+            stream.close()
+        job.update(exit_code=rc, ended_at=stamp())
+        event('iperf_finished', ue=r['ue'], phase=phase, exit_code=rc)
+        if rc:
+            raise RuntimeError(f"UE{r['ue']} {phase} exit={rc}; log={log}")
+
+def halt(*_):
+    raise KeyboardInterrupt
+signal.signal(signal.SIGTERM, halt)
+pool = ThreadPoolExecutor(max_workers=2)
+status, error = 'completed', None
+try:
+    futures = [pool.submit(flow, r, *( (15, 170) if r['ue'] == 1 else (175, 10) )) for r in roles]
+    for future in as_completed(futures, timeout=345):
+        future.result()
+except (Exception, KeyboardInterrupt) as exc:
+    status, error = 'failed', str(exc) or type(exc).__name__
+finally:
+    stop.set()
+    with lock:
+        owned = list(jobs)
+    for proc, _, _ in owned:
+        if proc.poll() is None:
+            proc.terminate()
+    for proc, _, job in owned:
+        try:
+            proc.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            proc.kill(); proc.wait()
+        job.update(exit_code=proc.returncode)
+    pool.shutdown(wait=True)
+    summary = dict(status=status, error=error, elapsed_seconds=round(time.monotonic()-started, 3),
+                   links=roles, jobs=[job for _, _, job in jobs], ended_at=stamp())
+    (out / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+    events.close()
+    for _, _, job in jobs:
+        print(f"UE{job['ue']} {job['phase']} exit={job['exit_code']}")
+        for line in Path(job['log']).read_text(errors='replace').splitlines():
+            if any(word in line for word in ('sender', 'receiver', 'iperf Done', 'error')):
+                print(line)
+    print('STATUS:', status, 'ERROR:', error, 'Evidence:', out, flush=True)
+raise SystemExit(0 if status == 'completed' else 1)
+PY
+```
+
+The start instruction comes from `/dev/tty` because stdin contains the pasted
+Python command. Current IMEI/SIM/bearer/IP/interface/routes are rediscovered and
+checked before traffic. On failure/interruption the parent stops its own
+clients and waits for them; keep the printed error/evidence rather than treating
+a partial run as passed. Let all four clients and the Spark capture finish.
+
+Require UE1/UE2 `before` and `after` exits all 0, all four receiver summaries,
+`STATUS: completed`, and `ERROR: None`. Retain the printed Laptop evidence path.
+Print the full current identity truth, including both roles, for comparison
+with Spark (use that printed directory):
+
+```bash
+read -r -p 'Paste the completed Laptop evidence directory: ' LAPTOP_BINDING_RUN
+python3 - "$LAPTOP_BINDING_RUN" <<'PY_SUMMARY'
+import json
+from pathlib import Path
+import sys
+s = json.loads((Path(sys.argv[1]) / 'summary.json').read_text())
+print(json.dumps({key: s[key] for key in ('status', 'error', 'elapsed_seconds', 'links', 'jobs')}, indent=2))
+PY_SUMMARY
+```
+
+In [Spark 7c](dual_ue_spark_quick_commands.md#7c-inspect-bindings-core-transitions-and-two-example-records),
+verify each UE actually enters Core idle then reconnects. During each silent-DU
+window, its active peer must continue current `matched` bindings using its own
+fresh CU/Core data; this `--fresh-only` test must have zero cached rows. On
+resume, use the actual new F1/NGAP contexts and the Laptop's current IP; IDs
+need not equal today's report or remain constant. Count/explain startup/resume
+unresolved rows, and check for cross-UE assignments. All detailed criteria are
+in Spark 7c; a completed iperf script alone does not pass binding acceptance.
+
+Keep Laptop `truth.json`, `events.ndjson`, the four client logs and
+`summary.json`, plus Spark's inputs/rows/TXT/config/logs. Copy evidence out of
+`/tmp` before reboot. Spark source times determine idle/matching boundaries;
+Laptop's clock is not calibrated against Spark. Report zero-throughput
+intervals on continuing clients rather than inferring stall-free traffic from
+exit 0. A new successful cold start is a separate reproduction result; today's
+archived counts are not a requirement for the new run.
+
+### 3.2. Optional Plan 3 UDP and path guards
+
+These are separate from the UE IP binding reproduction. For full Plan 3 UL
+coexistence, repeat each solo/other-DU-idle/concurrent case three times. Add UL
+UDP at a controlled rate no greater than 70% of each measured solo capacity:
 
 ```bash
 set -o pipefail
@@ -1464,7 +1638,7 @@ acceptance.
 
 ## 4. Finish tests and shut down both Quectel modems
 
-Finish the laptop traffic and let the finite Spark xApp receive both subscription
+Finish the laptop traffic and let the finite Spark identity xApp receive all three subscription
 delete responses and exit normally. Then complete UE1 shutdown followed by UE2
 shutdown below. Keep ModemManager running for both role operations.
 

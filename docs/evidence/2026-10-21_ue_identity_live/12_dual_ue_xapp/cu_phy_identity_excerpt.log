@@ -1,0 +1,21 @@
+2026-10-22T00:15:10.106610 [CU-UEMNG] [I] ue=58 du_index=1 gnb_du_id=2 pci=2 rnti=0x460c pcell_index=0: Created new CU-CP UE
+2026-10-22T00:15:10.106688 [CU-CP-F1] [I] ue=58 du_ue=11 cu_ue=11: Added UE context
+2026-10-22T00:15:10.136546 [NGAP    ] [I] Rx PDU ue=58 ran_ue=57 amf_ue=58: InitialContextSetupRequest
+2026-10-22T00:15:10.340892 [NGAP    ] [I] Tx PDU ue=58 ran_ue=57 amf_ue=58: InitialContextSetupResponse
+2026-10-22T00:15:10.375753 [NGAP    ] [I] Tx PDU ue=58 ran_ue=57 amf_ue=58: UplinkNASTransport
+2026-10-22T00:15:10.470199 [NGAP    ] [I] Rx PDU ue=58 ran_ue=57 amf_ue=58: DownlinkNASTransport
+2026-10-22T00:15:13.135636 [NGAP    ] [I] ue=58 ran_ue=57 amf_ue=58: UE did not request a PDU session after 3000ms. Requesting UE release
+2026-10-22T00:15:13.138509 [NGAP    ] [I] Rx PDU ue=58 ran_ue=57 amf_ue=58: UEContextReleaseCommand
+2026-10-22T00:15:26.206024 [CU-UEMNG] [I] ue=59 du_index=1 gnb_du_id=2 pci=2 rnti=0x460d pcell_index=0: Created new CU-CP UE
+2026-10-22T00:15:26.206096 [CU-CP-F1] [I] ue=59 du_ue=12 cu_ue=12: Added UE context
+2026-10-22T00:15:26.241663 [NGAP    ] [I] Rx PDU ue=59 ran_ue=58 amf_ue=59: InitialContextSetupRequest
+2026-10-22T00:15:26.445813 [NGAP    ] [I] Tx PDU ue=59 ran_ue=58 amf_ue=59: InitialContextSetupResponse
+2026-10-22T00:15:26.480484 [NGAP    ] [I] Tx PDU ue=59 ran_ue=58 amf_ue=59: UplinkNASTransport
+2026-10-22T00:15:26.572932 [NGAP    ] [I] Rx PDU ue=59 ran_ue=58 amf_ue=59: DownlinkNASTransport
+2026-10-22T00:15:29.120626 [NGAP    ] [I] Tx PDU ue=59 ran_ue=58 amf_ue=59: UplinkNASTransport
+2026-10-22T00:15:29.122236 [NGAP    ] [I] Rx PDU ue=59 ran_ue=58 amf_ue=59: PDUSessionResourceSetupRequest
+2026-10-22T00:15:29.180768 [NGAP    ] [I] Tx PDU ue=59 ran_ue=58 amf_ue=59: PDUSessionResourceSetupResponse
+2026-10-22T00:15:29.186455 [CU-UEMNG] [I] ue=60 du_index=0 gnb_du_id=1 pci=1 rnti=0x4633 pcell_index=0: Created new CU-CP UE
+2026-10-22T00:15:29.186503 [CU-CP-F1] [I] ue=60 du_ue=47 cu_ue=47: Added UE context
+2026-10-22T00:15:29.309751 [NGAP    ] [I] Rx PDU ue=60 ran_ue=59 amf_ue=60: InitialContextSetupRequest
+2026-10-22T00:15:29.596078 [NGAP    ] [I] Tx PDU ue=60 ran_ue=59 amf_ue=60: InitialContextSetupResponse

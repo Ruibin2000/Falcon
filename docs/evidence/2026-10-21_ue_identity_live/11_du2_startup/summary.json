@@ -1,0 +1,44 @@
+{
+  "developer": "Ruibin Chen",
+  "branch": "Dual-UE",
+  "scope": "actual DU2 startup; UE2 path and dual identity acceptance pending",
+  "source_directory": "/tmp/falcon-identity-du2.nMXBOBbV",
+  "radio_sysfs_readback": [
+    {
+      "serial": "328B021",
+      "usb_path": "2-1.3",
+      "sysfs_path": "/sys/devices/platform/NVDA8000:00/usb2/2-1/2-1.3",
+      "speed_mbps": "5000",
+      "product": "USRP B200"
+    },
+    {
+      "serial": "3271233",
+      "usb_path": "6-1.3",
+      "sysfs_path": "/sys/devices/platform/NVDA8000:02/usb6/6-1/6-1.3",
+      "speed_mbps": "5000",
+      "product": "USRP B200"
+    }
+  ],
+  "du2": {
+    "serial": "328B021",
+    "pci": 2,
+    "carrier_arfcn": 640000,
+    "ssb_arfcn": 639648,
+    "du_id": 2,
+    "gnb_id": 411,
+    "f1_connected": true,
+    "e2_connected": true,
+    "ric_setup_accepted": true
+  },
+  "ric_update_send_failures": {
+    "destination": "previous xApp IDs 7,8,9,10,11",
+    "du2_setup_rejection": false
+  },
+  "ue2_registration_and_ip": "not verified yet",
+  "sha256": {
+    "du2_console.log": "3bbf2c5321f213ddb20361a2aebdbca51e71b18596c4c243da72531f25e267f0",
+    "ric_operator_log.txt": "3967afa45ee757ed2c2033fc41a7d3b5d48d009968f29b0757dc1e0f278ecf9d",
+    "du2_b210_n78_20mhz.yml": "78f992119b4771b6995a6f158db1ff2adc2e002507a34d1e18c67f218fcc491a",
+    "du2_flexric.yml": "40552049db8fb4526b4f1e419fe54be40bfa2778985e8426abcc5b4c06ad3d2f"
+  }
+}

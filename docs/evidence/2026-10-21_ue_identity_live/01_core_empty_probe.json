@@ -1,0 +1,13 @@
+{
+  "recorded_at_utc": "2026-10-21 20:19:54 UTC",
+  "stage": "live_core_empty_interfaces",
+  "command": "python3 scripts/ue_identity/xapp_ue_identity.py --probe-core",
+  "result": {
+    "status": "ok",
+    "amf_ues": 0,
+    "smf_ues": 0,
+    "eligible_radio_contexts": 0
+  },
+  "source": "Actual loopback AMF/SMF HTTP queries after the operator started the Core",
+  "scope": "Empty-response schema and adapter acceptance only; populated identities and cross-layer association remain unverified"
+}

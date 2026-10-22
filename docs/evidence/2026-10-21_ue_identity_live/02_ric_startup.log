@@ -1,0 +1,12 @@
+Setting the config -c file to /home/nyu/Desktop/Falcon_repo/Falcon/configs/flexric/ric_ue_identity.conf
+[LibConf]: loading service models from SM_DIR: /tmp/falcon-ue-identity-sm/
+[LibConf]: reading configuration for NearRT_RIC
+[LibConf]: NearRT_RIC IP: 127.0.0.1
+[LibConf]: E2_Port Port: 36421
+[LibConf]: E42_Port Port: 36422
+[NEAR-RIC]: nearRT-RIC IP Address = 127.0.0.1, PORT = 36421
+[NEAR-RIC]: Initializing 
+[NEAR-RIC]: Loading SM ID = 2 with def = ORAN-E2SM-KPM 
+[iApp]: Initializing ... 
+[iApp]: nearRT-RIC IP Address = 127.0.0.1, PORT = 36422
+[NEAR-RIC]: Initializing Task Manager with 4 threads 

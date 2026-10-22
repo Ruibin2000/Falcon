@@ -1,0 +1,3351 @@
+Falcon UE identity + KPM diagnostic report
+input_mode=live
+UE ID below means gNB-CU UE F1AP ID; gNB identifies the CU/gNB scope.
+Only matched records carry a Core binding. Unknown fields are not inferred.
+KPM values and units are preserved; collection_time is the report header, not a per-sample time.
+
+record=1 status=unresolved collection_time=2026-10-22T00:15:30.704103Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628130704103
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=unknown AMF_UE_NGAP_ID=unknown RAN_UE_NGAP_ID=unknown
+  AMF(GUAMI): unknown
+  Session: PDU_SESSION_ID=unknown DNN=unknown UE_IPv4=unknown
+  Mapping: method=unknown assurance=unknown
+  Reason: not all admitted DU sources are current
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 16.299999237060547 [0.1 ms] (real)
+    DRB.UEThpDl = 27 [kbit/s] (real)
+    DRB.UEThpUl = 966 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 5 [%] (integer)
+
+record=2 status=unresolved collection_time=2026-10-22T00:15:30.703801Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628130703801
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=unknown AMF_UE_NGAP_ID=unknown RAN_UE_NGAP_ID=unknown
+  AMF(GUAMI): unknown
+  Session: PDU_SESSION_ID=unknown DNN=unknown UE_IPv4=unknown
+  Mapping: method=unknown assurance=unknown
+  Reason: CU identity missing
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.5 [0.1 ms] (real)
+    DRB.UEThpDl = 113 [kbit/s] (real)
+    DRB.UEThpUl = 3638 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=3 status=matched collection_time=2026-10-22T00:15:31.703619Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628131703619
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.5 [0.1 ms] (real)
+    DRB.UEThpDl = 246 [kbit/s] (real)
+    DRB.UEThpUl = 9821 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 76 [%] (integer)
+
+record=4 status=matched collection_time=2026-10-22T00:15:31.704084Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628131704084
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.5 [0.1 ms] (real)
+    DRB.UEThpDl = 99 [kbit/s] (real)
+    DRB.UEThpUl = 4410 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 25 [%] (integer)
+
+record=5 status=matched collection_time=2026-10-22T00:15:32.703722Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628132703722
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.5 [0.1 ms] (real)
+    DRB.UEThpDl = 183 [kbit/s] (real)
+    DRB.UEThpUl = 8486 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=6 status=matched collection_time=2026-10-22T00:15:32.704275Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628132704275
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 117 [kbit/s] (real)
+    DRB.UEThpUl = 7328 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 43 [%] (integer)
+
+record=7 status=matched collection_time=2026-10-22T00:15:33.703639Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628133703639
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.5 [0.1 ms] (real)
+    DRB.UEThpDl = 112 [kbit/s] (real)
+    DRB.UEThpUl = 5131 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=8 status=matched collection_time=2026-10-22T00:15:33.704221Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628133704221
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.199999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 114 [kbit/s] (real)
+    DRB.UEThpUl = 6695 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 39 [%] (integer)
+
+record=9 status=matched collection_time=2026-10-22T00:15:34.703701Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628134703701
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 125 [kbit/s] (real)
+    DRB.UEThpUl = 5700 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=10 status=matched collection_time=2026-10-22T00:15:34.704125Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628134704125
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14 [0.1 ms] (real)
+    DRB.UEThpDl = 185 [kbit/s] (real)
+    DRB.UEThpUl = 12113 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 60 [%] (integer)
+
+record=11 status=matched collection_time=2026-10-22T00:15:35.703680Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628135703680
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.100000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 182 [kbit/s] (real)
+    DRB.UEThpUl = 8343 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=12 status=matched collection_time=2026-10-22T00:15:35.704096Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628135704096
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.100000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 219 [kbit/s] (real)
+    DRB.UEThpUl = 15964 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 82 [%] (integer)
+
+record=13 status=matched collection_time=2026-10-22T00:15:36.703683Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628136703683
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 207 [kbit/s] (real)
+    DRB.UEThpUl = 9563 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=14 status=matched collection_time=2026-10-22T00:15:36.704131Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628136704131
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.800000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 284 [kbit/s] (real)
+    DRB.UEThpUl = 16030 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 80 [%] (integer)
+
+record=15 status=matched collection_time=2026-10-22T00:15:37.703660Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628137703660
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.300000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 203 [kbit/s] (real)
+    DRB.UEThpUl = 9377 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=16 status=matched collection_time=2026-10-22T00:15:37.704126Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628137704126
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.199999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 222 [kbit/s] (real)
+    DRB.UEThpUl = 15193 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=17 status=matched collection_time=2026-10-22T00:15:38.703669Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628138703669
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.300000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 218 [kbit/s] (real)
+    DRB.UEThpUl = 10499 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=18 status=matched collection_time=2026-10-22T00:15:38.704094Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628138704094
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.800000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 237 [kbit/s] (real)
+    DRB.UEThpUl = 15243 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 82 [%] (integer)
+
+record=19 status=matched collection_time=2026-10-22T00:15:39.703674Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628139703674
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.100000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 206 [kbit/s] (real)
+    DRB.UEThpUl = 10108 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=20 status=matched collection_time=2026-10-22T00:15:39.704097Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628139704097
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.300000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 249 [kbit/s] (real)
+    DRB.UEThpUl = 16155 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=21 status=matched collection_time=2026-10-22T00:15:40.703727Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628140703727
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15 [0.1 ms] (real)
+    DRB.UEThpDl = 232 [kbit/s] (real)
+    DRB.UEThpUl = 11059 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=22 status=matched collection_time=2026-10-22T00:15:40.704041Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628140704041
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13 [0.1 ms] (real)
+    DRB.UEThpDl = 303 [kbit/s] (real)
+    DRB.UEThpUl = 16642 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=23 status=matched collection_time=2026-10-22T00:15:41.703631Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628141703631
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.300000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 246 [kbit/s] (real)
+    DRB.UEThpUl = 12354 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=24 status=matched collection_time=2026-10-22T00:15:41.704141Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628141704141
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.199999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 265 [kbit/s] (real)
+    DRB.UEThpUl = 14773 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=25 status=matched collection_time=2026-10-22T00:15:42.703552Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628142703552
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.199999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 213 [kbit/s] (real)
+    DRB.UEThpUl = 11170 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=26 status=matched collection_time=2026-10-22T00:15:42.704086Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628142704086
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.199999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 281 [kbit/s] (real)
+    DRB.UEThpUl = 16679 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=27 status=matched collection_time=2026-10-22T00:15:43.703678Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628143703678
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.300000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 211 [kbit/s] (real)
+    DRB.UEThpUl = 10142 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=28 status=matched collection_time=2026-10-22T00:15:43.704087Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628143704087
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 259 [kbit/s] (real)
+    DRB.UEThpUl = 16711 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=29 status=matched collection_time=2026-10-22T00:15:44.703634Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628144703634
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15 [0.1 ms] (real)
+    DRB.UEThpDl = 177 [kbit/s] (real)
+    DRB.UEThpUl = 8419 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=30 status=matched collection_time=2026-10-22T00:15:44.704076Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628144704076
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 318 [kbit/s] (real)
+    DRB.UEThpUl = 16004 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=31 status=matched collection_time=2026-10-22T00:15:45.703635Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628145703635
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.399999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 188 [kbit/s] (real)
+    DRB.UEThpUl = 9086 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=32 status=matched collection_time=2026-10-22T00:15:45.704084Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628145704084
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.800000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 288 [kbit/s] (real)
+    DRB.UEThpUl = 15063 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=33 status=matched collection_time=2026-10-22T00:15:46.703723Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628146703723
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 271 [kbit/s] (real)
+    DRB.UEThpUl = 13976 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=34 status=matched collection_time=2026-10-22T00:15:46.704109Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628146704109
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.800000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 268 [kbit/s] (real)
+    DRB.UEThpUl = 14152 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=35 status=matched collection_time=2026-10-22T00:15:47.703610Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628147703610
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.5 [0.1 ms] (real)
+    DRB.UEThpDl = 237 [kbit/s] (real)
+    DRB.UEThpUl = 13496 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=36 status=matched collection_time=2026-10-22T00:15:47.703982Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628147703982
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 226 [kbit/s] (real)
+    DRB.UEThpUl = 15908 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=37 status=matched collection_time=2026-10-22T00:15:48.703578Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628148703578
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.300000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 215 [kbit/s] (real)
+    DRB.UEThpUl = 12158 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=38 status=matched collection_time=2026-10-22T00:15:48.703989Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628148703989
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.100000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 249 [kbit/s] (real)
+    DRB.UEThpUl = 15692 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=39 status=matched collection_time=2026-10-22T00:15:49.703684Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628149703684
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.399999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 265 [kbit/s] (real)
+    DRB.UEThpUl = 13502 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=40 status=matched collection_time=2026-10-22T00:15:49.704181Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628149704181
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 296 [kbit/s] (real)
+    DRB.UEThpUl = 16738 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=41 status=matched collection_time=2026-10-22T00:15:50.703652Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628150703652
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.199999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 307 [kbit/s] (real)
+    DRB.UEThpUl = 15109 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=42 status=matched collection_time=2026-10-22T00:15:50.704051Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628150704051
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14 [0.1 ms] (real)
+    DRB.UEThpDl = 345 [kbit/s] (real)
+    DRB.UEThpUl = 17652 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=43 status=matched collection_time=2026-10-22T00:15:51.703622Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628151703622
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.399999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 284 [kbit/s] (real)
+    DRB.UEThpUl = 14462 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=44 status=matched collection_time=2026-10-22T00:15:51.704089Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628151704089
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 361 [kbit/s] (real)
+    DRB.UEThpUl = 17965 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=45 status=matched collection_time=2026-10-22T00:15:52.703629Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628152703629
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 264 [kbit/s] (real)
+    DRB.UEThpUl = 14513 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=46 status=matched collection_time=2026-10-22T00:15:52.704022Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628152704022
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.5 [0.1 ms] (real)
+    DRB.UEThpDl = 273 [kbit/s] (real)
+    DRB.UEThpUl = 12678 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=47 status=matched collection_time=2026-10-22T00:15:53.703636Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628153703636
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 269 [kbit/s] (real)
+    DRB.UEThpUl = 13557 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=48 status=matched collection_time=2026-10-22T00:15:53.704139Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628153704139
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13 [0.1 ms] (real)
+    DRB.UEThpDl = 319 [kbit/s] (real)
+    DRB.UEThpUl = 14255 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=49 status=matched collection_time=2026-10-22T00:15:54.703599Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628154703599
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14 [0.1 ms] (real)
+    DRB.UEThpDl = 284 [kbit/s] (real)
+    DRB.UEThpUl = 14346 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=50 status=matched collection_time=2026-10-22T00:15:54.704000Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628154704000
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 323 [kbit/s] (real)
+    DRB.UEThpUl = 14916 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=51 status=matched collection_time=2026-10-22T00:15:55.703559Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628155703559
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 263 [kbit/s] (real)
+    DRB.UEThpUl = 13704 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=52 status=matched collection_time=2026-10-22T00:15:55.704089Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628155704089
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.300000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 403 [kbit/s] (real)
+    DRB.UEThpUl = 17547 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=53 status=matched collection_time=2026-10-22T00:15:56.703592Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628156703592
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 312 [kbit/s] (real)
+    DRB.UEThpUl = 15783 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=54 status=matched collection_time=2026-10-22T00:15:56.704033Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628156704033
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 258 [kbit/s] (real)
+    DRB.UEThpUl = 12244 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=55 status=matched collection_time=2026-10-22T00:15:57.703543Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628157703543
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 272 [kbit/s] (real)
+    DRB.UEThpUl = 15359 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=56 status=matched collection_time=2026-10-22T00:15:57.703936Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628157703936
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 11.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 146 [kbit/s] (real)
+    DRB.UEThpUl = 9078 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=57 status=matched collection_time=2026-10-22T00:15:58.703536Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628158703536
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 279 [kbit/s] (real)
+    DRB.UEThpUl = 13974 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=58 status=matched collection_time=2026-10-22T00:15:58.704028Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628158704028
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.5 [0.1 ms] (real)
+    DRB.UEThpDl = 148 [kbit/s] (real)
+    DRB.UEThpUl = 9749 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=59 status=matched collection_time=2026-10-22T00:15:59.703520Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628159703520
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.399999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 258 [kbit/s] (real)
+    DRB.UEThpUl = 14551 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=60 status=matched collection_time=2026-10-22T00:15:59.704095Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628159704095
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12 [0.1 ms] (real)
+    DRB.UEThpDl = 139 [kbit/s] (real)
+    DRB.UEThpUl = 10171 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=61 status=matched collection_time=2026-10-22T00:16:00.704015Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628160704015
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 10.100000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 124 [kbit/s] (real)
+    DRB.UEThpUl = 9120 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=62 status=matched collection_time=2026-10-22T00:16:00.703617Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628160703617
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 290 [kbit/s] (real)
+    DRB.UEThpUl = 14534 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=63 status=matched collection_time=2026-10-22T00:16:01.703574Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628161703574
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.5 [0.1 ms] (real)
+    DRB.UEThpDl = 236 [kbit/s] (real)
+    DRB.UEThpUl = 13656 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=64 status=matched collection_time=2026-10-22T00:16:01.703976Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628161703976
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.199999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 142 [kbit/s] (real)
+    DRB.UEThpUl = 10261 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=65 status=matched collection_time=2026-10-22T00:16:02.703650Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628162703650
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.399999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 230 [kbit/s] (real)
+    DRB.UEThpUl = 13585 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=66 status=matched collection_time=2026-10-22T00:16:02.703982Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628162703982
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 11.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 129 [kbit/s] (real)
+    DRB.UEThpUl = 10043 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=67 status=matched collection_time=2026-10-22T00:16:03.703565Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628163703565
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.399999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 272 [kbit/s] (real)
+    DRB.UEThpUl = 15260 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=68 status=matched collection_time=2026-10-22T00:16:03.703945Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628163703945
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 264 [kbit/s] (real)
+    DRB.UEThpUl = 14417 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=69 status=matched collection_time=2026-10-22T00:16:04.703532Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628164703532
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 305 [kbit/s] (real)
+    DRB.UEThpUl = 16442 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=70 status=matched collection_time=2026-10-22T00:16:04.703964Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628164703964
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.300000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 200 [kbit/s] (real)
+    DRB.UEThpUl = 13209 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=71 status=matched collection_time=2026-10-22T00:16:05.703636Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628165703636
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14 [0.1 ms] (real)
+    DRB.UEThpDl = 240 [kbit/s] (real)
+    DRB.UEThpUl = 12258 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=72 status=matched collection_time=2026-10-22T00:16:05.703935Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628165703935
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.399999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 160 [kbit/s] (real)
+    DRB.UEThpUl = 12921 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=73 status=matched collection_time=2026-10-22T00:16:06.703528Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628166703528
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.5 [0.1 ms] (real)
+    DRB.UEThpDl = 206 [kbit/s] (real)
+    DRB.UEThpUl = 10057 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=74 status=matched collection_time=2026-10-22T00:16:06.704014Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628166704014
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 199 [kbit/s] (real)
+    DRB.UEThpUl = 14192 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=75 status=matched collection_time=2026-10-22T00:16:07.703529Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628167703529
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.199999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 287 [kbit/s] (real)
+    DRB.UEThpUl = 17061 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=76 status=matched collection_time=2026-10-22T00:16:07.703990Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628167703990
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 372 [kbit/s] (real)
+    DRB.UEThpUl = 19045 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=77 status=matched collection_time=2026-10-22T00:16:08.703709Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628168703709
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 263 [kbit/s] (real)
+    DRB.UEThpUl = 12909 [kbit/s] (real)
+    RRU.PrbTotDl = 3 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=78 status=matched collection_time=2026-10-22T00:16:08.704102Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628168704102
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 346 [kbit/s] (real)
+    DRB.UEThpUl = 20493 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=79 status=matched collection_time=2026-10-22T00:16:09.703523Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628169703523
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.199999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 262 [kbit/s] (real)
+    DRB.UEThpUl = 12833 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=80 status=matched collection_time=2026-10-22T00:16:09.704069Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628169704069
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 343 [kbit/s] (real)
+    DRB.UEThpUl = 18725 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=81 status=matched collection_time=2026-10-22T00:16:10.703625Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628170703625
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.100000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 286 [kbit/s] (real)
+    DRB.UEThpUl = 16546 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=82 status=matched collection_time=2026-10-22T00:16:10.703996Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628170703996
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.800000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 289 [kbit/s] (real)
+    DRB.UEThpUl = 15793 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=83 status=matched collection_time=2026-10-22T00:16:11.703605Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628171703605
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 287 [kbit/s] (real)
+    DRB.UEThpUl = 15556 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=84 status=matched collection_time=2026-10-22T00:16:11.703932Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628171703932
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.5 [0.1 ms] (real)
+    DRB.UEThpDl = 319 [kbit/s] (real)
+    DRB.UEThpUl = 15174 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=85 status=matched collection_time=2026-10-22T00:16:12.703519Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628172703519
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 265 [kbit/s] (real)
+    DRB.UEThpUl = 13879 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=86 status=matched collection_time=2026-10-22T00:16:12.703977Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628172703977
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 215 [kbit/s] (real)
+    DRB.UEThpUl = 14006 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=87 status=matched collection_time=2026-10-22T00:16:13.703493Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628173703493
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.100000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 267 [kbit/s] (real)
+    DRB.UEThpUl = 14598 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=88 status=matched collection_time=2026-10-22T00:16:13.703882Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628173703882
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.300000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 273 [kbit/s] (real)
+    DRB.UEThpUl = 14667 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=89 status=matched collection_time=2026-10-22T00:16:14.703525Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628174703525
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 16.100000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 148 [kbit/s] (real)
+    DRB.UEThpUl = 7377 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=90 status=matched collection_time=2026-10-22T00:16:14.704003Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628174704003
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 260 [kbit/s] (real)
+    DRB.UEThpUl = 13107 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 84 [%] (integer)
+
+record=91 status=matched collection_time=2026-10-22T00:16:15.703482Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628175703482
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.800000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 277 [kbit/s] (real)
+    DRB.UEThpUl = 13838 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=92 status=matched collection_time=2026-10-22T00:16:15.704055Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628175704055
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.800000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 193 [kbit/s] (real)
+    DRB.UEThpUl = 14208 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=93 status=matched collection_time=2026-10-22T00:16:16.703567Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628176703567
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.5 [0.1 ms] (real)
+    DRB.UEThpDl = 244 [kbit/s] (real)
+    DRB.UEThpUl = 13889 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=94 status=matched collection_time=2026-10-22T00:16:16.704130Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628176704130
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.100000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 202 [kbit/s] (real)
+    DRB.UEThpUl = 13340 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=95 status=matched collection_time=2026-10-22T00:16:17.703571Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628177703571
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 266 [kbit/s] (real)
+    DRB.UEThpUl = 14341 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=96 status=matched collection_time=2026-10-22T00:16:17.703978Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628177703978
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 193 [kbit/s] (real)
+    DRB.UEThpUl = 13309 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=97 status=matched collection_time=2026-10-22T00:16:18.703608Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628178703608
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 253 [kbit/s] (real)
+    DRB.UEThpUl = 12632 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=98 status=matched collection_time=2026-10-22T00:16:18.703978Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628178703978
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.300000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 240 [kbit/s] (real)
+    DRB.UEThpUl = 15424 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=99 status=matched collection_time=2026-10-22T00:16:19.703602Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628179703602
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.5 [0.1 ms] (real)
+    DRB.UEThpDl = 265 [kbit/s] (real)
+    DRB.UEThpUl = 13068 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=100 status=matched collection_time=2026-10-22T00:16:19.703962Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628179703962
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.399999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 323 [kbit/s] (real)
+    DRB.UEThpUl = 15075 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=101 status=matched collection_time=2026-10-22T00:16:20.703449Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628180703449
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.100000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 228 [kbit/s] (real)
+    DRB.UEThpUl = 11998 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=102 status=matched collection_time=2026-10-22T00:16:20.703874Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628180703874
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.399999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 209 [kbit/s] (real)
+    DRB.UEThpUl = 13983 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=103 status=matched collection_time=2026-10-22T00:16:21.703465Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628181703465
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.199999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 253 [kbit/s] (real)
+    DRB.UEThpUl = 13219 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=104 status=matched collection_time=2026-10-22T00:16:21.703927Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628181703927
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 220 [kbit/s] (real)
+    DRB.UEThpUl = 15232 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=105 status=matched collection_time=2026-10-22T00:16:22.703449Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628182703449
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14 [0.1 ms] (real)
+    DRB.UEThpDl = 284 [kbit/s] (real)
+    DRB.UEThpUl = 13799 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=106 status=matched collection_time=2026-10-22T00:16:22.703868Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628182703868
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 11.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 285 [kbit/s] (real)
+    DRB.UEThpUl = 15158 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=107 status=matched collection_time=2026-10-22T00:16:23.703424Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628183703424
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 244 [kbit/s] (real)
+    DRB.UEThpUl = 13482 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=108 status=matched collection_time=2026-10-22T00:16:23.704036Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628183704036
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.899999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 302 [kbit/s] (real)
+    DRB.UEThpUl = 14852 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=109 status=matched collection_time=2026-10-22T00:16:24.703534Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628184703534
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 253 [kbit/s] (real)
+    DRB.UEThpUl = 14481 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=110 status=matched collection_time=2026-10-22T00:16:24.703911Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628184703911
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.300000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 157 [kbit/s] (real)
+    DRB.UEThpUl = 15273 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=111 status=matched collection_time=2026-10-22T00:16:25.703517Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628185703517
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 254 [kbit/s] (real)
+    DRB.UEThpUl = 13308 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=112 status=matched collection_time=2026-10-22T00:16:25.703948Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628185703948
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.199999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 261 [kbit/s] (real)
+    DRB.UEThpUl = 16512 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=113 status=matched collection_time=2026-10-22T00:16:26.703483Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628186703483
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.399999618530273 [0.1 ms] (real)
+    DRB.UEThpDl = 285 [kbit/s] (real)
+    DRB.UEThpUl = 14300 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=114 status=matched collection_time=2026-10-22T00:16:26.703913Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628186703913
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.600000381469727 [0.1 ms] (real)
+    DRB.UEThpDl = 311 [kbit/s] (real)
+    DRB.UEThpUl = 17495 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=115 status=matched collection_time=2026-10-22T00:16:27.703433Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628187703433
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.300000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 243 [kbit/s] (real)
+    DRB.UEThpUl = 12133 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=116 status=matched collection_time=2026-10-22T00:16:27.703876Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628187703876
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15 [0.1 ms] (real)
+    DRB.UEThpDl = 370 [kbit/s] (real)
+    DRB.UEThpUl = 18677 [kbit/s] (real)
+    RRU.PrbTotDl = 1 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=117 status=matched collection_time=2026-10-22T00:16:28.703469Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628188703469
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15.5 [0.1 ms] (real)
+    DRB.UEThpDl = 218 [kbit/s] (real)
+    DRB.UEThpUl = 10680 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=118 status=matched collection_time=2026-10-22T00:16:28.703936Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628188703936
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14 [0.1 ms] (real)
+    DRB.UEThpDl = 238 [kbit/s] (real)
+    DRB.UEThpUl = 13853 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=119 status=matched collection_time=2026-10-22T00:16:29.703452Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628189703452
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.5 [0.1 ms] (real)
+    DRB.UEThpDl = 167 [kbit/s] (real)
+    DRB.UEThpUl = 9320 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=120 status=matched collection_time=2026-10-22T00:16:29.703859Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628189703859
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12 [0.1 ms] (real)
+    DRB.UEThpDl = 284 [kbit/s] (real)
+    DRB.UEThpUl = 13006 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 86 [%] (integer)
+
+record=121 status=matched collection_time=2026-10-22T00:16:30.703522Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628190703522
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 15 [0.1 ms] (real)
+    DRB.UEThpDl = 351 [kbit/s] (real)
+    DRB.UEThpUl = 12984 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 88 [%] (integer)
+
+record=122 status=matched collection_time=2026-10-22T00:16:30.703883Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628190703883
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 13.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 243 [kbit/s] (real)
+    DRB.UEThpUl = 10892 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 84 [%] (integer)
+
+record=123 status=matched collection_time=2026-10-22T00:16:31.703433Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628191703433
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 14.699999809265137 [0.1 ms] (real)
+    DRB.UEThpDl = 41 [kbit/s] (real)
+    DRB.UEThpUl = 1142 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 43 [%] (integer)
+
+record=124 status=matched collection_time=2026-10-22T00:16:31.703847Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628191703847
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = 12.800000190734863 [0.1 ms] (real)
+    DRB.UEThpDl = 62 [kbit/s] (real)
+    DRB.UEThpUl = 270 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=125 status=matched collection_time=2026-10-22T00:16:32.703395Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628192703395
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=126 status=matched collection_time=2026-10-22T00:16:32.703898Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628192703898
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=127 status=matched collection_time=2026-10-22T00:16:33.703468Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628193703468
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=128 status=matched collection_time=2026-10-22T00:16:33.703929Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628193703929
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=129 status=matched collection_time=2026-10-22T00:16:34.703603Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628194703603
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=130 status=matched collection_time=2026-10-22T00:16:34.703879Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628194703879
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=131 status=matched collection_time=2026-10-22T00:16:35.703415Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628195703415
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=132 status=matched collection_time=2026-10-22T00:16:35.703839Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628195703839
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=133 status=matched collection_time=2026-10-22T00:16:36.703462Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628196703462
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=134 status=matched collection_time=2026-10-22T00:16:36.703848Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628196703848
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=135 status=matched collection_time=2026-10-22T00:16:37.703846Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628197703846
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=136 status=matched collection_time=2026-10-22T00:16:37.704545Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628197704545
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=137 status=matched collection_time=2026-10-22T00:16:38.703442Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628198703442
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=138 status=matched collection_time=2026-10-22T00:16:38.703810Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628198703810
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=139 status=matched collection_time=2026-10-22T00:16:39.703423Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628199703423
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=140 status=matched collection_time=2026-10-22T00:16:39.703799Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628199703799
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=141 status=matched collection_time=2026-10-22T00:16:40.703353Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628200703353
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=142 status=matched collection_time=2026-10-22T00:16:40.703877Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628200703877
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=143 status=matched collection_time=2026-10-22T00:16:41.703351Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628201703351
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=144 status=matched collection_time=2026-10-22T00:16:41.703965Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628201703965
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=145 status=matched collection_time=2026-10-22T00:16:42.703443Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628202703443
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=146 status=matched collection_time=2026-10-22T00:16:42.703842Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628202703842
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=147 status=matched collection_time=2026-10-22T00:16:43.703418Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628203703418
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=148 status=matched collection_time=2026-10-22T00:16:43.703842Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628203703842
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=149 status=matched collection_time=2026-10-22T00:16:44.703409Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628204703409
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=150 status=matched collection_time=2026-10-22T00:16:44.703797Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628204703797
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=151 status=matched collection_time=2026-10-22T00:16:45.703374Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628205703374
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=152 status=matched collection_time=2026-10-22T00:16:45.703779Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628205703779
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=153 status=matched collection_time=2026-10-22T00:16:46.703374Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628206703374
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=154 status=matched collection_time=2026-10-22T00:16:46.703787Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628206703787
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=155 status=matched collection_time=2026-10-22T00:16:47.703411Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628207703411
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=156 status=matched collection_time=2026-10-22T00:16:47.703766Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628207703766
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=157 status=matched collection_time=2026-10-22T00:16:48.703321Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628208703321
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=158 status=matched collection_time=2026-10-22T00:16:48.703841Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628208703841
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=159 status=matched collection_time=2026-10-22T00:16:49.703362Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628209703362
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=160 status=matched collection_time=2026-10-22T00:16:49.703811Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628209703811
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=161 status=matched collection_time=2026-10-22T00:16:50.703297Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628210703297
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=162 status=matched collection_time=2026-10-22T00:16:50.703826Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628210703826
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=163 status=matched collection_time=2026-10-22T00:16:51.703523Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628211703523
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=164 status=matched collection_time=2026-10-22T00:16:51.703821Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628211703821
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=165 status=matched collection_time=2026-10-22T00:16:52.703347Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628212703347
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=166 status=matched collection_time=2026-10-22T00:16:52.703773Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628212703773
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=167 status=matched collection_time=2026-10-22T00:16:53.703403Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628213703403
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=168 status=matched collection_time=2026-10-22T00:16:53.703860Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628213703860
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=169 status=matched collection_time=2026-10-22T00:16:54.703362Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628214703362
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=170 status=matched collection_time=2026-10-22T00:16:54.703765Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628214703765
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=171 status=matched collection_time=2026-10-22T00:16:55.703424Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628215703424
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=172 status=matched collection_time=2026-10-22T00:16:55.703722Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628215703722
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=173 status=matched collection_time=2026-10-22T00:16:56.703427Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628216703427
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=174 status=matched collection_time=2026-10-22T00:16:56.703950Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628216703950
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=175 status=matched collection_time=2026-10-22T00:16:57.703294Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628217703294
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=176 status=matched collection_time=2026-10-22T00:16:57.703803Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628217703803
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=177 status=matched collection_time=2026-10-22T00:16:58.703271Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628218703271
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=178 status=matched collection_time=2026-10-22T00:16:58.704567Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628218704567
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=179 status=matched collection_time=2026-10-22T00:16:59.703352Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628219703352
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=180 status=matched collection_time=2026-10-22T00:16:59.703748Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628219703748
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=181 status=matched collection_time=2026-10-22T00:17:00.703392Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628220703392
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=182 status=matched collection_time=2026-10-22T00:17:00.703766Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628220703766
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=183 status=matched collection_time=2026-10-22T00:17:01.703462Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628221703462
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=184 status=matched collection_time=2026-10-22T00:17:01.703896Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628221703896
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=185 status=matched collection_time=2026-10-22T00:17:02.703317Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628222703317
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=186 status=matched collection_time=2026-10-22T00:17:02.703749Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628222703749
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=187 status=matched collection_time=2026-10-22T00:17:03.703379Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628223703379
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=188 status=matched collection_time=2026-10-22T00:17:03.703712Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628223703712
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=189 status=matched collection_time=2026-10-22T00:17:04.703307Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628224703307
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=190 status=matched collection_time=2026-10-22T00:17:04.703681Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628224703681
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=191 status=matched collection_time=2026-10-22T00:17:05.703277Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628225703277
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=192 status=matched collection_time=2026-10-22T00:17:05.703680Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628225703680
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=193 status=matched collection_time=2026-10-22T00:17:06.703317Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628226703317
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=194 status=matched collection_time=2026-10-22T00:17:06.703752Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628226703752
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=195 status=matched collection_time=2026-10-22T00:17:07.703359Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628227703359
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=196 status=matched collection_time=2026-10-22T00:17:07.703793Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628227703793
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=197 status=matched collection_time=2026-10-22T00:17:08.703324Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628228703324
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=198 status=matched collection_time=2026-10-22T00:17:08.703735Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628228703735
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=199 status=matched collection_time=2026-10-22T00:17:09.703404Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628229703404
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=200 status=matched collection_time=2026-10-22T00:17:09.703724Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628229703724
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=201 status=matched collection_time=2026-10-22T00:17:10.703264Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628230703264
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=202 status=matched collection_time=2026-10-22T00:17:10.703795Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628230703795
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=203 status=matched collection_time=2026-10-22T00:17:11.703333Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628231703333
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=204 status=matched collection_time=2026-10-22T00:17:11.703737Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628231703737
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=205 status=matched collection_time=2026-10-22T00:17:12.703426Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628232703426
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=206 status=matched collection_time=2026-10-22T00:17:12.703676Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628232703676
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=207 status=matched collection_time=2026-10-22T00:17:13.703288Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628233703288
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=208 status=matched collection_time=2026-10-22T00:17:13.703627Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628233703627
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=209 status=matched collection_time=2026-10-22T00:17:14.703323Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628234703323
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=210 status=matched collection_time=2026-10-22T00:17:14.703708Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628234703708
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=211 status=matched collection_time=2026-10-22T00:17:15.703278Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628235703278
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=212 status=matched collection_time=2026-10-22T00:17:15.703744Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628235703744
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=213 status=matched collection_time=2026-10-22T00:17:16.703281Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628236703281
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=214 status=matched collection_time=2026-10-22T00:17:16.703716Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628236703716
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=215 status=matched collection_time=2026-10-22T00:17:17.703329Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628237703329
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=216 status=matched collection_time=2026-10-22T00:17:17.703717Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628237703717
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=217 status=matched collection_time=2026-10-22T00:17:18.703235Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628238703235
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=218 status=matched collection_time=2026-10-22T00:17:18.703666Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628238703666
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=219 status=matched collection_time=2026-10-22T00:17:19.703270Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628239703270
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=220 status=matched collection_time=2026-10-22T00:17:19.703662Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628239703662
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=221 status=matched collection_time=2026-10-22T00:17:20.703374Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628240703374
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=222 status=matched collection_time=2026-10-22T00:17:20.703646Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628240703646
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=1 UE(gNB-CU UE F1AP ID)=47
+  Core: SUPI=imsi-001010000000101 AMF_UE_NGAP_ID=60 RAN_UE_NGAP_ID=59
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet UE_IPv4=10.45.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+
+record=223 status=matched collection_time=2026-10-22T00:17:21.703504Z
+  app_instance=7dfae7b5-c627-4be3-9daf-f856c3c9bd32 header_time_us=1792628241703504
+  RAN: PLMN=001/01 gNB=411 (22 bits) DU_ID=2 UE(gNB-CU UE F1AP ID)=12
+  Core: SUPI=imsi-001010000000102 AMF_UE_NGAP_ID=59 RAN_UE_NGAP_ID=58
+  AMF(GUAMI): PLMN=001/01 region=2 set=1 pointer=0
+  Session: PDU_SESSION_ID=1 DNN=internet2 UE_IPv4=10.46.0.2
+  Mapping: method=core_infoapi_cu_e2 assurance=observed_unique_current_context
+  Reason: unique among current admitted observations
+  KPM: sample_idx=0 granularity_ms=1000 incomplete=absent
+    DRB.RlcSduDelayDl = no_value [0.1 ms] (no_value)
+    DRB.UEThpDl = 0 [kbit/s] (real)
+    DRB.UEThpUl = 0 [kbit/s] (real)
+    RRU.PrbTotDl = 0 [%] (integer)
+    RRU.PrbTotUl = 0 [%] (integer)
+

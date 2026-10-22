@@ -1,0 +1,20 @@
+--- a/src/lib/3gpp/dec/dec_gnb.c
++++ b/src/lib/3gpp/dec/dec_gnb.c
+@@ -69,10 +69,15 @@ gnb_e2sm_t dec_gNB_UE_asn(const UEID_GNB_t * gnb_asn)
+     // Mandatory
+     // AMF UE NGAP ID
+     assert(gnb_asn->amf_UE_NGAP_ID.buf != NULL);
+-    assert(gnb_asn->amf_UE_NGAP_ID.size < 6); // 2^40 max -> 2^(8*5) max 
++    // ASN.1 INTEGER is signed. A positive 40-bit ID whose highest bit is
++    // set needs a sixth, zero sign octet in asn1c's decoded representation.
++    assert(gnb_asn->amf_UE_NGAP_ID.size > 0 && gnb_asn->amf_UE_NGAP_ID.size <= 6);
++    assert((gnb_asn->amf_UE_NGAP_ID.buf[0] & 0x80) == 0);
+ 
+     //asn_INTEGER2ulong_e2ap_v2_03(&gnb_asn->amf_UE_NGAP_ID, &gnb.amf_ue_ngap_id );
+-    asn_INTEGER2ulong_static(&gnb_asn->amf_UE_NGAP_ID, &gnb.amf_ue_ngap_id );
++    int amf_id_rc = asn_INTEGER2ulong_static(&gnb_asn->amf_UE_NGAP_ID, &gnb.amf_ue_ngap_id);
++    assert(amf_id_rc == 0);
++    (void)amf_id_rc;
+ //    memcpy(&gnb.amf_ue_ngap_id, gnb_asn->amf_UE_NGAP_ID.buf, gnb_asn->amf_UE_NGAP_ID.size);
+     assert(gnb.amf_ue_ngap_id < (1UL << 40) );
+ 
