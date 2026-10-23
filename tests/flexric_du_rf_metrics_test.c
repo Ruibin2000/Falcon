@@ -202,7 +202,9 @@ static void check_trace_contract(sm_ag_if_rd_t* rd, global_e2_node_id_t* node)
   require(strstr(captured.output, "RSRQ = n/a source=xapp-capability-status reason=unavailable_in_du") != NULL,
           "RSRQ remains an explicit local capability notice");
   puts("CASE: exact opt-in full-precision cross-codec fixture traces");
+  puts("FALCON_RF_FIXTURE_BEGIN");
   fputs(captured.output, stdout);
+  puts("FALCON_RF_FIXTURE_END");
   free_callback_output(&captured);
 
   kpm_ind_msg_format_1_t* first = &rd->ind.kpm.ind.msg.frm_3.meas_report_per_ue[0].ind_msg_format_1;

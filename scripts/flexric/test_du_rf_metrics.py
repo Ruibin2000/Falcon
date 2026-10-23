@@ -28,6 +28,8 @@ TIMESTAMP_TARGETS = (
     Path("src/sm/kpm_sm/kpm_sm_v03.00/ie/kpm_data_ie/kpm_ric_info/kpm_timestamp.h"),
 )
 ACTION_TEST = "du_rf_metrics_kpm_test.flexric_seven_metric_subscription_is_accepted"
+RF_FIXTURE_BEGIN = "FALCON_RF_FIXTURE_BEGIN"
+RF_FIXTURE_END = "FALCON_RF_FIXTURE_END"
 CALLBACK_PASSES = (
     "PASS: real config parser and xApp builder encode seven-metric Format 4 subscription",
     "PASS: bounded multi-configuration subscription capacity without SDK calls",
@@ -205,6 +207,16 @@ def validate_callback_output(stdout, stderr):
     for marker in CALLBACK_PASSES:
         if lines.count(marker) != 1:
             raise RuntimeError(f"Expected exactly one callback acceptance marker: {marker}")
+    if lines.count(RF_FIXTURE_BEGIN) != 1 or lines.count(RF_FIXTURE_END) != 1:
+        raise RuntimeError("Expected exactly one complete decoded RF fixture frame")
+    begin, end = lines.index(RF_FIXTURE_BEGIN), lines.index(RF_FIXTURE_END)
+    if begin >= end:
+        raise RuntimeError("Decoded RF fixture frame markers are out of order")
+    # Precision and invalid-value cases emit additional traces outside this frame.
+    # Only the original cross-codec fixture supplies these six acceptance rows.
+    fixture_traces = [line for line in lines[begin + 1:end] if line.startswith("RF_TRACE ")]
+    if len(fixture_traces) != 6:
+        raise RuntimeError("Decoded RF fixture frame must contain exactly six trace rows")
     expected = {}
     for metric, unit, values in (
         ("FALCON.PUSCH.RSRP.dBFS", "dBFS", ("-13.125", "0", "n/a")),
@@ -214,9 +226,7 @@ def validate_callback_output(stdout, stderr):
             expected[(ue, metric)] = {"record_type": "noValue" if ue == "3199" else "REAL",
                                       "value": value, "unit": unit}
     actual, header_times = {}, set()
-    for line in lines:
-        if not line.startswith("RF_TRACE "):
-            continue
+    for line in fixture_traces:
         fields = {}
         for token in line.split()[1:]:
             if "=" not in token:

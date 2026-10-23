@@ -389,7 +389,7 @@ class FlexricCompilerRecordGuardTest(unittest.TestCase):
 
 class FlexricAcceptanceGuardTest(unittest.TestCase):
     def callback_output(self):
-        lines = list(FLEXRIC.CALLBACK_PASSES)
+        lines = [*FLEXRIC.CALLBACK_PASSES, FLEXRIC.RF_FIXTURE_BEGIN]
         for metric, unit, values, readable in (
             ("FALCON.PUSCH.RSRP.dBFS", "dBFS", ("-13.125", "0", "n/a"), ("-13.12", "0.00", "n/a")),
             ("FALCON.PUSCH.SNR.dB", "dB", ("21.75", "0", "n/a"), ("21.75", "0.00", "n/a")),
@@ -402,12 +402,33 @@ class FlexricAcceptanceGuardTest(unittest.TestCase):
                 lines.append(f"{context} {metric} = {normal} {unit}")
         lines.extend((
             "RSRQ = n/a source=xapp-capability-status reason=unavailable_in_du",
+            FLEXRIC.RF_FIXTURE_END,
             "FALCON.PUSCH.RSRP.dBFS = n/a dBFS (expected REAL)",
             "FALCON.PUSCH.SNR.dB = n/a dB (expected REAL)",
             "FALCON.PUSCH.SNR.dB = n/a dB (non-finite REAL)",
             "incomplete=true cu_du_id=2",
         ))
         return "\n".join(lines) + "\n", "mismatched name/value counts\nignoring unexpected KPM callback type\n"
+
+    def full_callback_output(self):
+        stdout, stderr = self.callback_output()
+        lines = []
+        # The C harness reuses UE 1007 for eight diagnostic cases per metric.
+        # These sixteen rows follow the six original fixture rows in real output.
+        for metric, unit in (("FALCON.PUSCH.RSRP.dBFS", "dBFS"), ("FALCON.PUSCH.SNR.dB", "dB")):
+            context = ("plmn=001-01 mnc_digits=2 node_type=7 node_id=411 node_id_unused=0 cu_du_id=1 "
+                       "ue_f1ap_id=1007 header_time_us=123456 sample_idx=0")
+            for index, value in enumerate((-13.123456789012345, 0.12345678901234566, -0.0)):
+                lines.append(f"CASE: verified {metric} precise REAL {index}")
+                lines.append(f"RF_TRACE {context} metric={metric} record_type=REAL value={value:.17g} unit={unit} incomplete=false")
+            for index in range(3):
+                lines.append(f"CASE: verified {metric} non-finite REAL {index}")
+                lines.append(f"RF_TRACE {context} metric={metric} record_type=REAL value=n/a unit={unit} incomplete=false reason=non_finite_REAL")
+            lines.append(f"CASE: verified {metric} rejected INTEGER")
+            lines.append(f"RF_TRACE {context} metric={metric} record_type=INTEGER value=n/a unit={unit} incomplete=false reason=expected_REAL")
+            lines.append(f"CASE: verified {metric} unsupported value type")
+            lines.append(f"RF_TRACE {context} metric={metric} record_type=unsupported value=n/a unit={unit} incomplete=false reason=unsupported_value_type")
+        return stdout + "\n".join(lines) + "\n", stderr
 
     def test_exact_per_ue_values_and_single_markers_are_accepted(self):
         stdout, stderr = self.callback_output()
@@ -428,12 +449,64 @@ class FlexricAcceptanceGuardTest(unittest.TestCase):
     def test_duplicate_or_missing_rf_trace_rows_are_rejected(self):
         stdout, stderr = self.callback_output()
         trace = next(line for line in stdout.splitlines() if line.startswith("RF_TRACE "))
-        for mutated in (stdout + trace + "\n", stdout.replace(trace + "\n", "", 1)):
+        duplicate = stdout.replace(FLEXRIC.RF_FIXTURE_END + "\n", trace + "\n" + FLEXRIC.RF_FIXTURE_END + "\n", 1)
+        for mutated in (duplicate, stdout.replace(trace + "\n", "", 1)):
             with self.subTest(duplicate=len(mutated) > len(stdout)), self.assertRaises(RuntimeError):
                 FLEXRIC.validate_callback_output(mutated, stderr)
 
+    def test_complete_harness_replay_accepts_six_fixture_and_sixteen_diagnostic_traces(self):
+        stdout, stderr = self.full_callback_output()
+        self.assertEqual(sum(line.startswith("RF_TRACE ") for line in stdout.splitlines()), 22)
+        self.assertEqual(stdout.splitlines().count(FLEXRIC.RF_FIXTURE_BEGIN), 1)
+        self.assertEqual(stdout.splitlines().count(FLEXRIC.RF_FIXTURE_END), 1)
+        FLEXRIC.validate_callback_output(stdout, stderr)
+
+    def test_missing_duplicate_reversed_nested_or_nonstandalone_fixture_markers_are_rejected(self):
+        stdout, stderr = self.full_callback_output()
+        begin, end = FLEXRIC.RF_FIXTURE_BEGIN, FLEXRIC.RF_FIXTURE_END
+        mutations = {
+            "missing_begin": stdout.replace(begin + "\n", "", 1),
+            "missing_end": stdout.replace(end + "\n", "", 1),
+            "duplicate_begin": begin + "\n" + stdout,
+            "duplicate_end": stdout + end + "\n",
+            "reversed": stdout.replace(begin, "TEMP_FIXTURE_MARKER").replace(end, begin).replace("TEMP_FIXTURE_MARKER", end),
+            "nested": stdout.replace(begin + "\n", begin + "\n" + begin + "\n", 1).replace(end + "\n", end + "\n" + end + "\n", 1),
+            "nonstandalone": stdout.replace(begin + "\n", "CASE: " + begin + "\n", 1),
+        }
+        for name, mutated in mutations.items():
+            with self.subTest(case=name), self.assertRaisesRegex(RuntimeError, "fixture frame"):
+                FLEXRIC.validate_callback_output(mutated, stderr)
+
+    def test_in_frame_ue_value_type_unit_identity_header_reason_and_field_checks_remain_strict(self):
+        stdout, stderr = self.full_callback_output()
+        trace = next(line for line in stdout.splitlines() if line.startswith("RF_TRACE "))
+        mutations = {
+            "wrong_ue": trace.replace("ue_f1ap_id=1007 ", "ue_f1ap_id=9999 "),
+            "wrong_value": trace.replace("value=-13.125 ", "value=-1 "),
+            "wrong_type": trace.replace("record_type=REAL ", "record_type=INTEGER "),
+            "wrong_unit": trace.replace("unit=dBFS ", "unit=dB "),
+            "wrong_identity": trace.replace("cu_du_id=1 ", "cu_du_id=2 "),
+            "zero_header": trace.replace("header_time_us=123456 ", "header_time_us=0 "),
+            "mixed_header": trace.replace("header_time_us=123456 ", "header_time_us=123457 "),
+            "reason": trace + " reason=non_finite_REAL",
+            "duplicate_field": trace + " value=-13.125",
+            "malformed_field": trace + " malformed",
+        }
+        for name, changed in mutations.items():
+            with self.subTest(case=name), self.assertRaises(RuntimeError):
+                FLEXRIC.validate_callback_output(stdout.replace(trace + "\n", changed + "\n", 1), stderr)
+
+    def test_correct_rows_outside_frame_cannot_replace_missing_or_wrong_fixture_rows(self):
+        stdout, stderr = self.full_callback_output()
+        trace = next(line for line in stdout.splitlines() if line.startswith("RF_TRACE "))
+        for changed in ("", trace.replace("value=-13.125 ", "value=-1 ") + "\n"):
+            with self.subTest(missing=not changed):
+                mutated = stdout.replace(trace + "\n", changed, 1) + trace + "\n"
+                with self.assertRaises(RuntimeError):
+                    FLEXRIC.validate_callback_output(mutated, stderr)
+
     def test_missing_or_duplicate_callback_pass_marker_is_rejected(self):
-        stdout, stderr = self.callback_output()
+        stdout, stderr = self.full_callback_output()
         for marker in FLEXRIC.CALLBACK_PASSES:
             for mutated in (stdout.replace(marker + "\n", "", 1), stdout + marker + "\n"):
                 with self.subTest(marker=marker, duplicate=len(mutated) > len(stdout)):
