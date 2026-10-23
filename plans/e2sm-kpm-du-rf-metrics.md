@@ -9,9 +9,9 @@ and verify them in the FlexRIC xApp during actual uplink traffic.
 | --- | --- |
 | Plan | 1 |
 | Task | `e2sm-kpm-du-rf-metrics` |
-| Status | Offline acceptance passed; deployment and live acceptance pending |
+| Status | Offline and Step 7 build acceptance passed; live acceptance pending |
 | Created at | 13 : 23: 41 Oct 11, 2026 EDT |
-| Last updated at | 14 : 38: 48 Oct 23, 2026 EDT |
+| Last updated at | 15 : 19: 49 Oct 23, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | Ruibin, project lead; decisions communicated by the developer |
@@ -484,15 +484,15 @@ write under `/usr/local`.
 - [ ] Have the operator stop test traffic, let the current xApp delete its
   subscription, and stop DU before RIC in their existing terminals. Keep the
   working CU/core configuration. The agent does not control services or RF.
-- [ ] Record `pgrep -a odu`, `pgrep -a nearRT-RIC`, and `pgrep -a xapp` before
+- [x] Record `pgrep -a odu`, `pgrep -a nearRT-RIC`, and `pgrep -a xapp` before
   patch application and before each compiler/build invocation. If any process
   is running, stop and request approval before proceeding. Treat process-check
   errors separately from exit 1 meaning no match.
-- [ ] Recheck source revisions, checkout changes, frozen acceptance-gate hashes,
+- [x] Recheck source revisions, checkout changes, frozen acceptance-gate hashes,
   and patch hashes against Step 6. The effective bases are OCUDU `4cffc0479f`
   and FlexRIC `10b8ec79`. If an input changed, resolve the difference and repeat
   affected offline checks; do not weaken the guards or refreeze requirements.
-- [ ] Apply the cumulative OCUDU RF patch and the separate reviewed native-test
+- [x] Apply the cumulative OCUDU RF patch and the separate reviewed native-test
   patch only. Retain the native fixtures and CMake/GTest setup. Record each
   successful application immediately, with its exact patch path and hash, in
   `$E2_RF_EVIDENCE/applied-components.txt`. Do not commit OCUDU without approval.
@@ -624,6 +624,21 @@ requirement for this iteration. The FlexRIC checkout/build/plugin remain
 unchanged. Do not rerun the staging runner against the now-patched OCUDU
 checkout; its refusal is intentional.
 
+Step 7 build acceptance passed on 2026-10-23: the full DU target, all 36
+frozen native cases and four XML gates, the external staged monitor, and copied
+existing FlexRIC codec/model checks passed. The three checked items above have
+retained command/hash/source evidence. Initial and subsequent process checks
+were idle; no operator stop/deletion event was recorded or inferred from that
+absence, so the operator-stop checkbox remains unexecuted for this invocation.
+OCUDU source changes remain uncommitted; FlexRIC source/build and the installed
+plugin remain unchanged. The DU/native build emitted no warnings; the monitor
+link retained the known executable-stack warning. Exact paths, binary hashes,
+commands, results, limits, and operator commands are recorded in the
+[Step 7 build and Step 8 handoff](../docs/e2sm-kpm/2026-10-23_du_rf_metrics_step7_build_and_step8_handoff.md).
+Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step7-deploy-20261023-chi6rf4p/`
+and its `build-native-20261023-rurw2gh0/` child, plus the run root's
+`monitor-live/monitor-summary.json`.
+
 ## Step 8 Validate Configuration and Fresh E2 Capabilities
 
 Use the deployed single-file DU1 configuration
@@ -644,16 +659,36 @@ record_check du-config "$OCUDU_SOURCE/build/apps/du_split_8/odu" \
   -c "$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml" --dryrun
 ```
 
-- [ ] Confirm scheduler/RLC metrics remain enabled and the source period is
+The rebuilt DU passed this parsing-only check on 2026-10-23 without sudo or
+radio/service creation. Evidence:
+`/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step7-deploy-20261023-chi6rf4p/step8-prep-20261023-n1187csn/dryrun-summary.json`.
+Operator logs were reviewed on 2026-10-23. The three operational/configuration
+items below are now verified: core/CU/DU startup, the actual 3660-MHz carrier,
+1000-ms scheduler/RLC settings, the configured plugin path, and admission of all
+seven exact names with `NO_LABEL`, followed by xApp subscription success.
+Step 8 remains **Partial** until the actual Setup definition's advertised RF
+names are captured and decoded. The xApp snapshot contains zero RF trace rows;
+the operator confirmed that the UE is not attached or lacks an established
+data session. The DU snapshot has 52 complete underflow and 18 complete late
+warnings; this is not a stability pass or a causal diagnosis. See the
+[operator log review](../docs/e2sm-kpm/2026-10-23_du_rf_metrics_step8_operator_log_review.md).
+Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step8-live-review-20261023-ltlwu4i6/`.
+No service control, packet capture, build, radio action or traffic generation
+was performed by the agent during the review.
+
+- [x] Confirm scheduler/RLC metrics remain enabled and the source period is
   1000 ms. UE discovery for this Style 4 path depends on RLC snapshots.
-- [ ] Confirm the xApp requests the seven intended names at 1000 ms and uses
+- [x] Confirm the xApp requests the seven intended names at 1000 ms and uses
   `/usr/local/lib/flexric/` with the existing timestamp-repaired KPM plugin.
-- [ ] Give the operator the exact launch commands and evidence paths. The
+- [x] Give the operator the exact launch commands and evidence paths. The
   operator starts CU/core as required by the
   [runbook](../docs/full_reproduction_runbook.md), then RIC before DU, then the
   staged monitor. A RIC restart requires a DU restart for fresh E2 Setup.
   The agent does not run `sudo`, start/stop services, touch the B210, or generate
   traffic. Retain operator logs before judging the live gates.
+- [ ] Retain and decode the actual E2 Setup function-ID-2 definition, showing
+  both vendor RF names in the advertised measurement list. The admitted-name
+  subscription log does not complete this separate exit criterion.
 
 The following are operator-only commands for separate Spark terminals, after
 CU/core preparation. Set `E2_RF_EVIDENCE` in every terminal to the retained
