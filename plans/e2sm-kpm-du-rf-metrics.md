@@ -256,11 +256,13 @@ Preserve the already applied timestamp repair; do not apply it again.
   This RF task changes measurement exposure and monitor handling, not ASN.1 schemas.
 
 Step 4 implementation static review completed on 2026-10-21. The eight checked
-items record source/patch review; offline acceptance remains pending Steps 5-6.
-The scratch monitor and callback harness each passed syntax-only compilation
-with zero warnings/errors. Callback/codec execution and actual signal/SDK
-lifecycle validation are not established by those checks. The reviewed patch
-hash, commands, and limitations are recorded in the
+items record completed implementation review. Staged callback/codec/action
+acceptance passed on 2026-10-23 in Step 6; see the
+[offline acceptance record](../docs/e2sm-kpm/2026-10-23_du_rf_metrics_offline_acceptance.md).
+The scratch monitor and callback harness also passed syntax-only compilation
+with zero warnings/errors. Actual SIGINT/SIGTERM delivery, connected
+subscription deletion, and SDK shutdown remain **Not run**. The reviewed patch
+hash, commands, and implementation limitations are recorded in the
 [monitor review](../docs/e2sm-kpm/2026-10-21_flexric_du_rf_monitor_review.md).
 Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step4-review-20261021-7738r6e1/syntax-check-0qdfmi9v/`.
 
@@ -271,27 +273,40 @@ before the SDK's E2AP ASN runtime.
 
 ## Step 5 Adapt the Validation Harness and Close Test Gaps
 
-- [ ] Compare all five RF production files between `050a2bb` and `69801c7` and
+- [x] Compare all five RF production files between `050a2bb` and `69801c7` and
   record that comparison before updating revision checks.
-- [ ] Update `scripts/ocudu/test_du_rf_metrics.py` to explicitly accept the reviewed
+- [x] Update `scripts/ocudu/test_du_rf_metrics.py` to explicitly accept the reviewed
   `69801c7e9a3a72e4f29d98f14f626f156444c3ca` baseline. An explicit allowlist may
   also retain the original base. Preserve rejection of unknown revisions,
   modified patch targets, unsafe output paths, and failed patch checks.
-- [ ] Record the patch's original base and its reviewed compatibility with the
+- [x] Record the patch's original base and its reviewed compatibility with the
   configuration-only commit. Rebase the patch if any production target differs;
   do not remove the guard simply to make the test run.
-- [ ] Keep staging-only tests separate from tests of the applied source. The
+- [x] Keep staging-only tests separate from tests of the applied source. The
   existing runner copies originals and applies the RF patch itself; it must run
   before applying that patch to its input source checkout.
-- [ ] Design native regression additions for the existing OCUDU provider,
+- [x] Design native regression additions for the existing OCUDU provider,
   scheduler, and FAPI builder test targets. Apply those test edits in Step 7.
   Keep native test changes in a separate reviewed patch from the five-file RF
   patch: the current staging runner compiles every `.cpp` named by its RF patch.
-- [ ] Create and review a mandatory test-name manifest before running acceptance.
+- [x] Create and review a mandatory test-name manifest before running acceptance.
   Retain all 13 original standalone cases, append required new cases, and list
   the required native provider/scheduler/conversion cases by exact
   `classname.name`. Include every case covering the matrix below. Freeze its
   hash before the run; do not reduce the manifest to fit passing results.
+
+Step 5 implementation and test-design work completed on 2026-10-21. The six
+checked items record baseline compatibility, guarded runner support, staging
+separation, separate native-test design, and the frozen mandatory manifest.
+The runners deliberately accept OCUDU `4cffc04` and FlexRIC `10b8ec79` under
+the reviewed baseline deviations. The 53 required names comprise 17 offline
+and 36 native cases; native application and execution remain **Not run**.
+The original 13 standalone cases were retained, with four additions. Commands,
+hashes, coverage, and limitations are recorded in the
+[harness handoff](../docs/e2sm-kpm/2026-10-21_du_rf_metrics_validation_harness.md).
+Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step5-harness-20261021-vhst0vi4/`.
+The later trace-framing correction and successful offline execution are
+recorded in Step 6; no native execution pass is implied by these checkboxes.
 
 Initialize the manifest from the retained original fixture, then populate the
 native lists and append the additional standalone cases:
@@ -346,6 +361,32 @@ its safeguards, and the test matrix covers both the existing 13 cases and the
 identified conversion/advertisement gaps.
 
 ## Step 6 Run Offline Verification Before Applying Source Changes
+
+- [x] Verify the frozen mandatory manifest and XML-gate hashes before acceptance
+  and retain all original provider test names plus the required additions.
+- [x] Complete provider-stage, flexric-stage, provider-final, and the mandatory
+  XML gate with zero command/log exit statuses and retained evidence.
+- [x] Execute all 17 required offline-provider cases, including the original 13,
+  in the final run with zero skips, failures, or errors.
+- [x] Verify the three UE fixture value/type pairs, fresh nonempty indication
+  and action artifacts, complete callback context, and readable/precise output.
+- [x] Verify unchanged source checkouts, the five OCUDU RF targets, frozen
+  requirements, and the reused build inputs after staged acceptance.
+
+Step 6 offline acceptance passed on 2026-10-23. The trace-framing correction
+and acceptance record are committed in Falcon as `269d063` and `e87d527`.
+The five checked items record executed offline acceptance, superseding the
+earlier pending-offline notices. The final provider XML passed all 17 required
+cases; the external seven-metric action test also passed. The 39 Python guard
+tests passed, and callback output retained six fixture plus 16 diagnostic
+trace rows. There were zero compiler warnings and two inherited
+executable-stack linker warnings; their baseline comparison is documented.
+Native suites, deployment builds, connected signal/SDK lifecycle checks,
+and hardware/live acceptance remain **Not run**. See the
+[offline acceptance record](../docs/e2sm-kpm/2026-10-23_du_rf_metrics_offline_acceptance.md).
+Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step6-offline-20261023-1ied7v8n/verification-summary.json`;
+the four command/log/status records and generated artifacts are retained in
+its parent run directory. Frozen manifest and XML-gate hashes were preserved.
 
 Run these commands only after Step 5 is implemented. All candidate outputs go
 to the new evidence directory; the source checkouts remain unchanged.
@@ -407,10 +448,11 @@ record_check provider-xml-gate python3 "$E2_RF_EVIDENCE/check-gtest.py" \
   "$E2_RF_EVIDENCE/ocudu/provider-final.xml" "$E2_RF_EVIDENCE" offline-provider
 ```
 
-The initial OCUDU run currently reports 12 passes and one skipped external
-subscription case. The FlexRIC run supplies that missing action fixture. The
-final complete run must execute all 13 original cases plus any added cases,
-with zero skips/failures/errors and exit code 0.
+The accepted 17-case OCUDU staging run reported 16 passes and one planned
+external-subscription skip. FlexRIC supplied the missing action fixture, and
+the final run executed all 17 cases with zero skips/failures/errors. Future
+acceptance runs must retain all 13 original cases plus the required additions,
+with zero skips/failures/errors and exit code 0 in the final complete run.
 
 Inspect the decoded fixture for UE F1AP IDs `1007`, `2091`, and `3199`: expect
 RSRP/SNR `REAL` pairs `(-13.125, 21.75)`, `(0.0, 0.0)`, and `(noValue, noValue)`.
