@@ -9,17 +9,17 @@ and verify them in the FlexRIC xApp during actual uplink traffic.
 | --- | --- |
 | Plan | 1 |
 | Task | `e2sm-kpm-du-rf-metrics` |
-| Status | Planned; implementation and acceptance pending |
+| Status | Offline acceptance passed; deployment and live acceptance pending |
 | Created at | 13 : 23: 41 Oct 11, 2026 EDT |
-| Last updated at | 14 : 41: 36 Oct 11, 2026 EDT |
+| Last updated at | 14 : 38: 48 Oct 23, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
-| Reviewer | To be assigned |
+| Reviewer | Ruibin, project lead; decisions communicated by the developer |
 | Falcon inspection baseline | `3f12f627d80cdad14bc9a5ab267f8f65452a2da9` |
 | OCUDU inspection baseline | `69801c7e9a3a72e4f29d98f14f626f156444c3ca` |
 | FlexRIC inspection baseline | `736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8`, with the existing local timestamp repair |
-| Prerequisites | Accepted Plan 2 Stage A (Steps 1–8), including live five-metric E2-to-dummy delivery; preserve FlexRIC's local timestamp repair |
-| Execution order | [Plan 2](xapp-kpm-app-subscription.md) Steps 1–8 (Stage A); then remaining Plan 1 RF work and acceptance; then Plan 2 Steps 9–11 (Stage B) |
+| Prerequisites | Plan 2 Stage A gate for Plan 1 Steps 7–11 waived by reviewer Ruibin on 2026-10-23; hardware slot confirmed by the developer; preserve the committed FlexRIC timestamp repair |
+| Execution order | Reviewer-authorized Plan 1 deployment and acceptance may proceed after offline acceptance and the explicit approval gates below; [Plan 2](xapp-kpm-app-subscription.md) Stage A is not a blocker for Plan 1, and its own acceptance is not implied; retain coordination for Plan 2 Stage B |
 | Initial deployment | Existing OCUDU DU and FlexRIC RIC/xApp test environment |
 
 Maintain this file as the single plan for this task. Mark steps complete only
@@ -466,68 +466,71 @@ offline check; it does not replace the full rebuild in Step 7.
 
 ## Step 7 Apply the Reviewed Package and Build the Actual Targets
 
-- [ ] Stop test traffic and let the current xApp delete its subscription. Stop DU
-  before RIC in their existing terminals. Keep the working CU/core configuration.
-- [ ] Recheck the reviewed source base and patch hashes. If they changed since
-  Step 6, resolve the difference and repeat affected offline checks.
-- [ ] Apply only the cumulative RF package, then port the reviewed native tests
-  into the existing test fixtures. Retain their native CMake/GTest setup.
-  Record each successful application immediately in
-  `$E2_RF_EVIDENCE/applied-components.txt`; include later test/diagnostic changes
-  and their exact patch paths. Use this ledger if deployment stops partway through.
+**Reviewer decision, 2026-10-23:** project lead Ruibin waived the Plan 2 Stage A
+prerequisite for Plan 1; the developer confirmed the hardware slot. This is a
+waiver, not evidence that Plan 2 Stage A passed. The reviewer retained the
+2026-10-21 concurrency deferral and removed DU diagnostics from this iteration:
+no provider mutex, snapshot generation, cleanup relocation, `du.cpp`
+E2-receive change, sidecar, or message/header/NTP correlation hooks. The earlier
+Step 3 diagnostic proposal is not a Step 7 prerequisite. Unsynchronized
+metrics-strand writes versus E2 reads remain a known limitation.
+
+Only OCUDU receives checkout changes. FlexRIC remains read-only at `10b8ec79`,
+including its existing `build-ocudu/` and `compile_commands.json`; its timestamp
+repair is already committed. Use a newly staged monitor outside that checkout
+with the existing installed timestamp-repaired KPM plugin. Do not install or
+write under `/usr/local`.
+
+- [ ] Have the operator stop test traffic, let the current xApp delete its
+  subscription, and stop DU before RIC in their existing terminals. Keep the
+  working CU/core configuration. The agent does not control services or RF.
+- [ ] Record `pgrep -a odu`, `pgrep -a nearRT-RIC`, and `pgrep -a xapp` before
+  patch application and before each compiler/build invocation. If any process
+  is running, stop and request approval before proceeding. Treat process-check
+  errors separately from exit 1 meaning no match.
+- [ ] Recheck source revisions, checkout changes, frozen acceptance-gate hashes,
+  and patch hashes against Step 6. The effective bases are OCUDU `4cffc0479f`
+  and FlexRIC `10b8ec79`. If an input changed, resolve the difference and repeat
+  affected offline checks; do not weaken the guards or refreeze requirements.
+- [ ] Apply the cumulative OCUDU RF patch and the separate reviewed native-test
+  patch only. Retain the native fixtures and CMake/GTest setup. Record each
+  successful application immediately, with its exact patch path and hash, in
+  `$E2_RF_EVIDENCE/applied-components.txt`. Do not commit OCUDU without approval.
 
 ```bash
+sha256sum -c "$E2_RF_EVIDENCE/acceptance-gate.sha256"
 record_check ocudu-apply-check git -C "$OCUDU_SOURCE" apply --check \
   "$FALCON_REPO/patches/ocudu/050a2bb-du-rf-metrics.patch"
-record_check flexric-apply-check git -C "$FLEXRIC_SOURCE" apply --check \
-  "$FALCON_REPO/patches/flexric/73650812-du-rf-metrics.patch"
+record_check native-apply-check git -C "$OCUDU_SOURCE" apply --check \
+  "$FALCON_REPO/patches/ocudu/69801c7-du-rf-metrics-native-tests.patch"
 
 git -C "$OCUDU_SOURCE" apply "$FALCON_REPO/patches/ocudu/050a2bb-du-rf-metrics.patch"
 printf 'ocudu-rf %s\n' "$FALCON_REPO/patches/ocudu/050a2bb-du-rf-metrics.patch" \
   >> "$E2_RF_EVIDENCE/applied-components.txt"
-git -C "$FLEXRIC_SOURCE" apply "$FALCON_REPO/patches/flexric/73650812-du-rf-metrics.patch"
-printf 'flexric-rf %s\n' "$FALCON_REPO/patches/flexric/73650812-du-rf-metrics.patch" \
+sha256sum "$FALCON_REPO/patches/ocudu/050a2bb-du-rf-metrics.patch" \
+  >> "$E2_RF_EVIDENCE/applied-components.txt"
+record_check native-after-rf-apply-check git -C "$OCUDU_SOURCE" apply --check \
+  "$FALCON_REPO/patches/ocudu/69801c7-du-rf-metrics-native-tests.patch"
+git -C "$OCUDU_SOURCE" apply \
+  "$FALCON_REPO/patches/ocudu/69801c7-du-rf-metrics-native-tests.patch"
+printf 'ocudu-native-tests %s\n' \
+  "$FALCON_REPO/patches/ocudu/69801c7-du-rf-metrics-native-tests.patch" \
+  >> "$E2_RF_EVIDENCE/applied-components.txt"
+sha256sum "$FALCON_REPO/patches/ocudu/69801c7-du-rf-metrics-native-tests.patch" \
   >> "$E2_RF_EVIDENCE/applied-components.txt"
 ```
 
-After the native test edits, retain their separate diff as
-`patches/ocudu/69801c7-du-rf-metrics-native-tests.patch`. Include every changed
-test/CMake file and verify that reversing it restores the baseline test sources.
-Record the completed native test changes and patch path in the application ledger.
-Before the full build, implement the live correlation trace as a separate
-`patches/ocudu/69801c7-du-rf-metrics-diagnostics.patch`:
-
-- Capture a generation number when the DU provider accepts a scheduler window.
-  Return each getter's generation and selected value as same-call optional
-  trace metadata, using the safe snapshot access established in Step 3.
-  Retain PCI, scheduler start slot, and window length where present in the source
-  snapshot. Log the promoted source values with 17 significant digits.
-  In `include/ocudu/e2/e2sm/e2sm_kpm.h`, add a default trace-aware interface path
-  that delegates to the existing getter for providers without trace metadata.
-  Override it in the DU provider header/source; do not use `dynamic_cast`
-  because this build disables RTTI.
-- In `e2sm_kpm_report_service_style4::collect_measurements()`, retain sidecar
-  metadata for each actual UE/row/metric: local report counter, source window
-  generation, selected value/type, and count.
-- In `e2sm_kpm_report_service_base::get_indication_message()`, preserve that
-  sidecar before collection is cleared. In `get_indication_header()`, attach
-  the header actually packed and flush the trace only for successful packing.
-  The current procedure packs the message first; its clear operation updates
-  the header. A header logged before that operation identifies a different
-  instant. Record the exact NTP word and its Unix-microsecond conversion using
-  the same conversion as the repaired FlexRIC decoder.
-- Keep instrumentation disabled by default, outside the ASN.1 payload, and
-  narrow enough to avoid logging unrelated traffic. Test generation/row
-  association, repeated windows, and message/header clear ordering. Retain its
-  separate patch, including diagnostic test edits, hash, and application-ledger
-  entry. Use and document the opt-in switch for both DU and monitor launches.
-
-Then build and run the actual implementation:
+Stop for explicit approval before the full DU build. After approval and the
+process checks, build only the needed targets with `nice -n 19` and at most
+`-j 4`. The frozen manifest also requires ten adapter cases; make the original
+additional-translator requirement explicit rather than omitting that group.
+Run all four native suites and their unchanged frozen XML gates:
 
 ```bash
-record_check ocudu-build cmake --build "$OCUDU_SOURCE/build" \
+record_check ocudu-build nice -n 19 cmake --build "$OCUDU_SOURCE/build" \
   --target odu_split_8 e2sm_kpm_meas_provider_metrics_test \
-           scheduler_metrics_handler_test crc_indication_builder_test -j 8
+           scheduler_metrics_handler_test crc_indication_builder_test \
+           fapi_to_mac_indications_fastpath_translator_test -j 4
 
 record_check native-provider env \
   FALCON_KPM_ACTION_INPUT="$E2_RF_EVIDENCE/flexric/flexric-action.bin" \
@@ -539,71 +542,171 @@ record_check native-scheduler \
 record_check native-crc \
   "$OCUDU_SOURCE/build/tests/unittests/fapi/p7/builders/crc_indication_builder_test" \
   --gtest_output="xml:$E2_RF_EVIDENCE/native/crc.xml"
+record_check native-adapter \
+  "$OCUDU_SOURCE/build/tests/unittests/fapi_adaptor/mac/p7/fapi_to_mac_indications_fastpath_translator_test" \
+  --gtest_output="xml:$E2_RF_EVIDENCE/native/adapter.xml"
 record_check native-provider-xml-gate python3 "$E2_RF_EVIDENCE/check-gtest.py" \
   "$E2_RF_EVIDENCE/native/provider.xml" "$E2_RF_EVIDENCE" native-provider
 record_check native-scheduler-xml-gate python3 "$E2_RF_EVIDENCE/check-gtest.py" \
   "$E2_RF_EVIDENCE/native/scheduler.xml" "$E2_RF_EVIDENCE" native-scheduler
 record_check native-crc-xml-gate python3 "$E2_RF_EVIDENCE/check-gtest.py" \
   "$E2_RF_EVIDENCE/native/crc.xml" "$E2_RF_EVIDENCE" native-crc
-
-record_check flexric-build cmake --build "$FLEXRIC_SOURCE/build-ocudu" \
-  --target xapp_oran_moni test_enc_dec_kpm_sm test_kpm_sm -j 8
-record_check flexric-codec \
-  "$FLEXRIC_SOURCE/build-ocudu/test/encode_decode/sm/kpm/kpm_sm_v03.00/test_enc_dec_kpm_sm"
-record_check flexric-service-model \
-  "$FLEXRIC_SOURCE/build-ocudu/test/sm/kpm_sm/kpm_sm_v03.00/test_kpm_sm"
-
+record_check native-adapter-xml-gate python3 "$E2_RF_EVIDENCE/check-gtest.py" \
+  "$E2_RF_EVIDENCE/native/adapter.xml" "$E2_RF_EVIDENCE" native-adapter
 sha256sum "$OCUDU_SOURCE/build/apps/du_split_8/odu" \
-  "$FLEXRIC_SOURCE/build-ocudu/examples/xApp/c/monitor/xapp_oran_moni" \
   > "$E2_RF_EVIDENCE/deployment-binaries.sha256"
 ```
 
-Require the new native cases to execute, not merely the pre-existing tests.
-Run additional native translator tests used for the adapter coverage
-and retain their commands/results.
+Require all 36 frozen native names to execute without skips, failures, or
+errors. If a patch, build, or test fails, retain its command/output and stop;
+request approval before any rollback. Recheck the frozen gate after execution.
 
-**Exit criteria:** complete targets and relevant native regressions pass against
-the applied source, with no skipped required cases. The new scheduler snapshot
-field is shared by producers and consumers: rebuilding only the provider object
-or replacing one library is insufficient. Do not rerun the unchanged staging
-script against the now-patched checkout; its refusal is intentional.
+Build the patched monitor in a new `$E2_RF_EVIDENCE/monitor-live/` directory,
+refusing to overwrite an existing output directory. Reconstruct its compile
+and link commands from the same FlexRIC build records and Step 6
+`flexric/build-inputs.json` / `flexric-stage.log` inputs. Preserve the staged
+`examples/xApp/c/monitor/` hierarchy and read-only `src` include link used by
+the runner. Copy the monitor source and apply the reviewed cumulative FlexRIC
+RF patch only to that scratch copy. Record the staged application separately;
+it is not an application to the FlexRIC checkout.
+
+Use the existing GCC flags selecting `ASN`, `E2AP_V3`, `KPM_V3_00`, and
+`NONE_XAPP`, with the recorded warning/hardening flags. Link the monitor with
+the existing `defer.c.o`, `time_now_us.c.o`, `libe42_xapp.a`, and system
+libraries `-pthread -lsctp -ldl -lconfig -lm`, as in Step 6. The monitor loads
+KPM dynamically; do not add the harness-only static KPM link. Check processes
+before each compile/link, use `nice -n 19`, and keep `TMPDIR`, objects, binary,
+commands, logs, and status files inside the new evidence directory. Record the
+source revision and source/patch/compiler/flags/reused-object/archive hashes,
+then the new executable SHA-256. Preserve `SM_DIR=/usr/local/lib/flexric/` in
+the runtime configuration and record the existing plugin's hash without
+changing it. Record the absolute staged executable path for Steps 8–10.
+
+Retain the existing FlexRIC codec and service-model checks without rebuilding
+or writing to `build-ocudu`. Copy the two existing test executables into a new
+evidence directory and verify each copy against its source. Run the copies
+from that directory with an evidence-local `TMPDIR`, retaining commands,
+outputs, exit statuses, and binary provenance. These in-memory tests do not
+launch RIC/xApp services. Do not use `ctest`, which could write under the shared
+build. Record these as checks of existing binaries, not a fresh FlexRIC build.
+
+```bash
+FLEXRIC_CHECKS="$E2_RF_EVIDENCE/flexric-existing-checks"
+test ! -e "$FLEXRIC_CHECKS"
+mkdir "$FLEXRIC_CHECKS"
+mkdir "$FLEXRIC_CHECKS/tmp"
+cp "$FLEXRIC_SOURCE/build-ocudu/test/encode_decode/sm/kpm/kpm_sm_v03.00/test_enc_dec_kpm_sm" \
+  "$FLEXRIC_CHECKS/test_enc_dec_kpm_sm"
+cp "$FLEXRIC_SOURCE/build-ocudu/test/sm/kpm_sm/kpm_sm_v03.00/test_kpm_sm" \
+  "$FLEXRIC_CHECKS/test_kpm_sm"
+cmp "$FLEXRIC_SOURCE/build-ocudu/test/encode_decode/sm/kpm/kpm_sm_v03.00/test_enc_dec_kpm_sm" \
+  "$FLEXRIC_CHECKS/test_enc_dec_kpm_sm"
+cmp "$FLEXRIC_SOURCE/build-ocudu/test/sm/kpm_sm/kpm_sm_v03.00/test_kpm_sm" \
+  "$FLEXRIC_CHECKS/test_kpm_sm"
+(
+  cd "$FLEXRIC_CHECKS"
+  ulimit -c 0
+  export TMPDIR="$FLEXRIC_CHECKS/tmp"
+  record_check flexric-codec "$FLEXRIC_CHECKS/test_enc_dec_kpm_sm"
+  record_check flexric-service-model "$FLEXRIC_CHECKS/test_kpm_sm"
+)
+STAGED_MONITOR="$E2_RF_EVIDENCE/monitor-live/xapp_oran_moni"
+sha256sum "$STAGED_MONITOR" /usr/local/lib/flexric/libkpm_sm.so \
+  >> "$E2_RF_EVIDENCE/deployment-binaries.sha256"
+```
+
+**Exit criteria:** the full DU target, all required native cases, staged monitor
+build, and existing FlexRIC codec/model checks pass with retained provenance.
+The new scheduler snapshot field is shared by producers and consumers:
+rebuilding only the provider object or replacing one library is insufficient.
+The staged monitor replaces the original FlexRIC in-checkout monitor-build
+requirement for this iteration. The FlexRIC checkout/build/plugin remain
+unchanged. Do not rerun the staging runner against the now-patched OCUDU
+checkout; its refusal is intentional.
 
 ## Step 8 Validate Configuration and Fresh E2 Capabilities
 
+Use the deployed single-file DU1 configuration
+`/home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml`; do not combine the older
+20-MHz file and FlexRIC overlay. The reviewed file enables DU E2 and KPM at
+`127.0.0.1:36421`, enables scheduler/RLC metrics, and sets `du_report_period`
+to 1000 ms. Its carrier is ARFCN 644000 / 3660 MHz. Record its hash and stop if
+those required settings are absent or changed; do not guess replacements.
+
+Source inspection at OCUDU `4cffc0479f`, `apps/du/du.cpp:184–186`, shows
+`--dryrun` returns after configuration parsing/autoderivation, before logging,
+semantic validation, or radio/service creation. This is a parsing check only.
+Run it without `sudo`; stop if it requests privileges or attempts RF access.
+Do not turn it into a normal DU launch to make the check pass.
+
 ```bash
 record_check du-config "$OCUDU_SOURCE/build/apps/du_split_8/odu" \
-  -c "$OCUDU_SOURCE/configs/du1_b210_n78_20mhz.yml" \
-  -c "$OCUDU_SOURCE/configs/du1_flexric.yml" --dryrun
+  -c "$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml" --dryrun
 ```
 
 - [ ] Confirm scheduler/RLC metrics remain enabled and the source period is
   1000 ms. UE discovery for this Style 4 path depends on RLC snapshots.
 - [ ] Confirm the xApp requests the seven intended names at 1000 ms and uses
   `/usr/local/lib/flexric/` with the existing timestamp-repaired KPM plugin.
-- [ ] Start CU/core as required by the [runbook](../docs/full_reproduction_runbook.md),
-  then RIC before DU. Use the rebuilt DU path and existing radio configuration.
-  A RIC restart requires a DU restart for fresh E2 Setup.
+- [ ] Give the operator the exact launch commands and evidence paths. The
+  operator starts CU/core as required by the
+  [runbook](../docs/full_reproduction_runbook.md), then RIC before DU, then the
+  staged monitor. A RIC restart requires a DU restart for fresh E2 Setup.
+  The agent does not run `sudo`, start/stop services, touch the B210, or generate
+  traffic. Retain operator logs before judging the live gates.
 
-In separate Spark terminals, use the existing operator launch sequence:
+The following are operator-only commands for separate Spark terminals, after
+CU/core preparation. Set `E2_RF_EVIDENCE` in every terminal to the retained
+absolute run directory, `/home/nyu/verification/e2sm-kpm/run-TQcKveEB`, and
+create its `live/` directory. Use the recorded staged monitor path and hash.
+Retain the exact launch commands. Each pipeline below creates a fresh log and
+immediately records both process and log exit statuses after it returns. If a
+terminal interruption prevents that capture, record the status as **Not recorded**
+instead of inferring success. Wait for operator logs before marking any live
+checkbox complete.
 
 ```bash
-/usr/local/bin/flexric/ric/nearRT-RIC -c /usr/local/etc/flexric/ric.conf
+set -o pipefail
+FALCON_RIC_LOG=$(mktemp "$E2_RF_EVIDENCE/live/ric-XXXXXXXX.log") || exit
+set +e
+/usr/local/bin/flexric/ric/nearRT-RIC -c /usr/local/etc/flexric/ric.conf \
+  2>&1 | tee "$FALCON_RIC_LOG"
+FALCON_RIC_STATUS=("${PIPESTATUS[@]}")
+printf 'command_exit=%s\nlog_exit=%s\n' "${FALCON_RIC_STATUS[0]}" "${FALCON_RIC_STATUS[1]}" \
+  > "$FALCON_RIC_LOG.status"
 ```
 
 ```bash
+set -o pipefail
+FALCON_DU_LOG=$(mktemp "$E2_RF_EVIDENCE/live/du-console-XXXXXXXX.log") || exit
+set +e
 sudo /home/nyu/ocudu/build/apps/du_split_8/odu \
-  -c /home/nyu/ocudu/configs/du1_b210_n78_20mhz.yml \
-  -c /home/nyu/ocudu/configs/du1_flexric.yml
+  -c /home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml \
+  2>&1 | tee "$FALCON_DU_LOG"
+FALCON_DU_STATUS=("${PIPESTATUS[@]}")
+printf 'command_exit=%s\nlog_exit=%s\n' "${FALCON_DU_STATUS[0]}" "${FALCON_DU_STATUS[1]}" \
+  > "$FALCON_DU_LOG.status"
 ```
 
 ```bash
-/home/nyu/flexric/build-ocudu/examples/xApp/c/monitor/xapp_oran_moni \
-  -c /home/nyu/Desktop/Falcon_repo/Falcon/configs/flexric/xapp_du_rf_metrics.conf
+set -o pipefail
+FALCON_XAPP_LOG=$(mktemp "$E2_RF_EVIDENCE/live/xapp-XXXXXXXX.log") || exit
+set +e
+FALCON_KPM_RF_TRACE=1 "$E2_RF_EVIDENCE/monitor-live/xapp_oran_moni" \
+  -c /home/nyu/Desktop/Falcon_repo/Falcon/configs/flexric/xapp_du_rf_metrics.conf \
+  2>&1 | tee "$FALCON_XAPP_LOG"
+FALCON_XAPP_STATUS=("${PIPESTATUS[@]}")
+printf 'command_exit=%s\nlog_exit=%s\n' "${FALCON_XAPP_STATUS[0]}" "${FALCON_XAPP_STATUS[1]}" \
+  > "$FALCON_XAPP_LOG.status"
 ```
 
-Verify the complete node/DU identity and advertised custom names, then a successful
-function-ID-2 seven-metric subscription. Launch the rebuilt monitor directly,
-rather than the older installed monitor. Use approved lab operating conditions
+The DU configuration also writes its existing application log to
+`/tmp/du1_3660.log`. Retain the relevant session separately under `live/`,
+with its source path, timestamps, and hash; console capture is not that file.
+Verify the complete node/DU identity and advertised custom names, then a
+successful function-ID-2 seven-metric subscription. Use the staged monitor,
+its configuration, and the existing plugin; the checkout and installed
+monitor executables remain unchanged. Use approved lab operating conditions
 and the existing runbook; do not probe the B210 while DU owns it.
 
 **Exit criteria:** configuration parsing passes, E2 Setup advertises both RF
@@ -612,55 +715,93 @@ If this fails, resolve capability/version/admission issues before judging values
 
 ## Step 9 Verify Correct Values During Live Uplink Traffic
 
-- [ ] Establish the existing single-UE private IPv4 session using the
-  [UE command booklet](../docs/ue_laptop_quick_commands.md).
-- [ ] Run a controlled 30–60 second uplink test using the current private
-  endpoints and [traffic procedure](../docs/full_reproduction_runbook.md).
-  Record actual UE identity, direction, duration, application results, and RF errors.
-- [ ] Capture narrow getter diagnostics and xApp RF output. Map the same UE between
-  console C-RNTI, internal DU index, and UE F1AP ID. Enable the new opt-in trace
-  for both processes and use one RF subscription per DU during this controlled run.
-- [ ] Join the source sidecar and decoded trace by full node/DU identity,
-  transmitted `header_time_us`, UE F1AP ID, row index, and metric name. Verify
-  header keys are unique within each DU/process session; exclude ambiguous
-  or duplicate matches. Carry the source snapshot generation into the comparison
-  evidence, including repeated generations across reports.
-- [ ] Obtain at least ten confidently correlated RF value pairs. Raw decoded
-  `REAL` values parsed from the `%.17g` trace must equal the scheduler float
-  promoted to double for each matched row. Check RSRP and SNR independently;
-  record any difference in their source generations. Count a pair as a
-  same-window pair only when both generations agree. Normal terminal output
-  must match its documented two-decimal formatting.
+**Reviewer decision, 2026-10-23:** use existing DU per-UE RF metrics output and
+the staged monitor's `FALCON_KPM_RF_TRACE=1` output. Match by UE and nearest
+report time. This is a weaker, non-generation-matched comparison; no DU
+instrumentation, sidecar, header/NTP join, or same-window proof is required.
+The developer explicitly retained the two-decimal comparison requirement:
+identify an existing higher-precision DU output first; otherwise this value
+check does not pass. Do not relax it to one decimal or enable/add an output
+without further approval.
+
+- [ ] Have the operator establish the existing single-UE private IPv4 session
+  using the [UE command booklet](../docs/ue_laptop_quick_commands.md).
+- [ ] Have the operator run a controlled 30–60 second uplink test using the
+  current private endpoints and
+  [traffic procedure](../docs/full_reproduction_runbook.md). Record actual UE
+  identity, direction, duration, application results, and RF errors.
+- [ ] Identify and retain existing DU output containing both per-UE
+  scheduler-window RSRP/SNR with at least two decimal places or sufficient raw
+  numeric precision. Record its source, units, precision, timestamps, and
+  validity/presentation rules. An available output implementation is not proof
+  that output was enabled or captured. Individual PHY/CRC samples do not
+  substitute for the scheduler-window means.
+- [ ] Capture that existing DU output and the staged xApp RF output. Map the same
+  UE between console C-RNTI, internal DU index, and UE F1AP ID; retain full
+  node/DU/session identity. Use one RF subscription per DU during the controlled
+  run. Keep xApp `FALCON_KPM_RF_TRACE=1`; there is no new DU trace switch.
+- [ ] Select the nearest DU report time for each xApp report of the same UE.
+  Document the time basis, chosen timestamps and their difference, matching
+  tolerance, and exclusions before judging agreement. Exclude ambiguous UE,
+  session, or timing matches. Retain raw source lines and decoded trace rows.
+  Header time may aid approximate ordering; it is not a source-window key.
+- [ ] Obtain at least ten usable per-UE RSRP/SNR comparison pairs. Compare each
+  metric independently at two-decimal display precision, retain the xApp
+  `%.17g` decoded trace as supplementary evidence, and account for documented
+  rounding/clamping. Do not count `ovl`, `n/a`, saturated displays, or
+  insufficient-precision DU values as successful two-decimal numeric matches.
 - [ ] Confirm the original five metrics continue to report and the custom RSRP
   and SNR values are independently sourced, rather than copied from one field.
 - [ ] Collect at least 30 consecutive populated reports during sustained traffic.
-  Record arrival intervals, gaps, incomplete rows, and repeated source windows.
-  Investigate unexplained gaps/crashes before accepting stable reception.
+  Record arrival intervals, gaps, incomplete rows, and repeated displayed
+  values. Without generation metadata, repeated values do not establish
+  repeated source windows. Investigate unexplained gaps/crashes before
+  accepting stable reception.
 
-The DU console RSRP display rounds to one decimal, clamps negative values at
-`-99.9`, and prints `ovl` for finite values at or above zero. The xApp exports the
-finite scheduler value, including zero. Account for these presentation differences;
-do not require literal console/xApp text equality. If the source window cannot
-be matched confidently, record the comparison as inconclusive and improve the
-narrow diagnostic correlation before claiming value accuracy.
-Two-decimal logs alone establish display agreement; combine them with offline
-codec evidence without claiming exact live `REAL` preservation. The exact live
-gate remains incomplete until the full-precision, unambiguous comparison passes.
+At OCUDU `4cffc0479f`, the existing console and scheduler log format both RF
+values to one decimal (`apps/units/flexible_o_du/o_du_high/du_high/metrics/consumers/scheduler_metrics_consumers.cpp:89–99,314–325`).
+SNR is clamped to `[-99.9, 99.9]` and zero renders as `n/a`; negative RSRP is
+clamped at `-99.9`, and finite RSRP at or above zero renders as `ovl`.
+The xApp exports finite scheduler values, including valid zero, with two-decimal
+normal output and full-precision optional decoded trace. These existing DU
+console/log lines alone cannot pass the two-decimal value check. Do not pad a
+one-decimal value with zero or infer precision from a filename or a consumer
+that was not active. The existing scheduler JSON generator serializes float
+window means without a fixed one-decimal format
+(`apps/helpers/metrics/json_generators/du_high/scheduler.cpp:38–60,146–148`),
+but the deployed configuration does not enable JSON metrics or the remote
+metrics subscription. Those options default to false. The JSON consumer also
+omits zero and clamps values, so its existence alone does not establish
+validity or adequate live evidence. The read-only review of eleven existing
+`/tmp/falcon-du1-3660.*/du.log` files found no scheduler-window RF fields or JSON
+RF rows; a qualifying active high-precision DU output has not been found.
+If no qualifying existing DU output is available, retain that limitation and
+leave the Step 9 value gate incomplete. Any proposal to enable an existing
+consumer requires a separate decision before implementation.
 
+Even a successful two-decimal nearest-time comparison establishes display
+agreement only. Combine it with offline codec evidence without claiming exact
+live `REAL` preservation, same-source-window pairs, or synchronized snapshots.
+Unsynchronized metrics/E2 access remains a known limitation.
 `header_time_us` is a KPM header time, not a PHY sample timestamp. `sample_idx`
 is a row index, not a global sequence. `report_age_us` does not establish RF
 sample age or pure transport latency. Record arrival cadence separately and
 retain the 1000 ms source/subscription periods throughout initial acceptance.
 
 **Exit criteria:** real UE values satisfy the source/identity/unit contract,
-the correlation evidence supports accuracy, and sustained reception preserves
-the baseline metrics without crashes or unexplained RF regression.
+at least ten two-decimal comparisons pass under the explicitly weaker
+non-generation-matched method, and sustained reception preserves the baseline
+metrics without crashes or unexplained RF regression. Missing precision or
+ambiguous correlation leaves the value gate incomplete.
 
 ## Step 10 Verify Missing Data and Session Lifecycle
 
-- [ ] Pause uplink traffic and disconnect/reconnect the UE using the established
-  procedure. Check sample-count resets, newly allocated identifiers, and absence
-  of stale measurements attributed to the new UE context.
+- [ ] Have the operator pause uplink traffic and disconnect/reconnect the UE
+  using the established procedure. Retain native/offline sample-count reset
+  coverage and check observable missing-value behavior, newly allocated
+  identifiers, and absence of stale measurements attributed to the new UE
+  context. Do not claim direct observation of live sample counters without an
+  existing output that actually contains them.
 - [ ] Where an active UE report has no valid RF sample, verify `noValue`/`n/a`.
   An inactive UE may cease to produce rows entirely; that alone is not an error
   and does not prove a missing-value record was emitted.
@@ -681,13 +822,18 @@ slice filter, so this task does not validate slice isolation.
 ## Step 11 Review Deliverables and Close the Task
 
 - [ ] Retain the reviewed RF patches, separate native test patch, validation
-  runner base update, separate diagnostic patch, xApp configuration, and exact
-  source/build identities. Keep diagnostic tracing disabled for normal operation.
+  runner base update, xApp configuration, staged-monitor build command and
+  source/patch/binary hashes, existing plugin identity, and exact source/build
+  identities. No DU diagnostics patch is a deliverable. Keep the existing
+  xApp RF trace disabled for normal operation.
 - [ ] Hash the patches, scripts, tests, configuration, binaries, and fresh fixtures.
   Keep raw run artifacts outside source repositories; commit only selected
   sanitized evidence summaries and reviewed source artifacts.
-- [ ] Update the [RF verification record](../docs/troubleshooting/2026-10-07_flexric_bringup.md#du-rf-metrics-extension-offline-package-2026-10-09)
-  with current revisions, commands, results, estimator semantics, and remaining limits.
+- [ ] Create a new dated RF verification/handoff document under `docs/e2sm-kpm/`
+  with current revisions, commands, results, estimator semantics, and remaining
+  limits. Link the historical
+  [RF verification record](../docs/troubleshooting/2026-10-07_flexric_bringup.md#du-rf-metrics-extension-offline-package-2026-10-09)
+  as context; preserve that existing document under the root repository rules.
 - [ ] Check that final commits separate the existing FlexRIC timestamp repair
   from RF work and contain no unrelated configuration changes or secrets.
 - [ ] Have the reviewer verify the checklist against retained results and record
@@ -697,9 +843,9 @@ slice filter, so this task does not validate slice isolation.
 | --- | --- |
 | Measurement semantics | Correct source, unit, selected estimator, validity/count rules, and supported scope documented. |
 | Offline integration | All required provider/cross-codec/action cases executed with zero failures/errors/skips. |
-| Applied implementation | Full DU/xApp builds and native production-provider/scheduler/conversion checks pass. |
+| Applied implementation | Full DU build, external staged-monitor build, all 36 required native provider/scheduler/conversion cases, and existing FlexRIC codec/model checks pass; shared FlexRIC remains read-only. |
 | E2 capabilities | Actual Setup and subscription contain the two custom RF names plus the baseline metrics. |
-| Live values | At least ten matched source-window comparisons and 30 consecutive populated traffic reports. |
+| Live values | At least ten same-UE nearest-report-time comparisons at two-decimal precision using qualifying existing DU output, plus the xApp RF trace and 30 consecutive populated traffic reports; explicitly weaker and non-generation-matched. If no sufficiently precise existing DU output is captured, this gate remains incomplete. |
 | Lifecycle | UE reconnect, RIC/DU restart, Ctrl+C/SIGTERM deletion, and normal process exit recorded. |
 | Handoff | Reviewed patches/commits, sanitized evidence, exact launch paths, limits, and rollback retained. |
 
@@ -708,20 +854,18 @@ multi-UE/multi-DU acceptance as a follow-up when that hardware path is unavailab
 
 ## Rollback
 
-If deployment acceptance fails, stop traffic, let the xApp delete its subscription,
-then stop DU before RIC. Consult the application ledger and reverse only changes
-that were actually applied. Reverse diagnostic changes first, separate native
-test changes next, and cumulative RF changes last. Check each reversal before
-applying it. The following sequence assumes both RF patches and the native test
-and diagnostic patches were applied; omit unapplied components, including a
-patch that was never created. Record successful reversals in the ledger:
+Stop on any deployment failure and request approval before rollback. The
+operator stops traffic, lets the xApp delete its subscription, and stops DU
+before RIC; the agent does not control services or RF. Consult the application
+ledger and reverse only OCUDU changes that were actually applied: separate
+native-test changes first, cumulative RF changes last. Check each reversal
+before applying it. There is no DU diagnostics patch to reverse, and no patch
+was applied to the read-only FlexRIC checkout. The following assumes both
+OCUDU patches were applied; omit unapplied components and record successful
+reversals in the ledger:
 
 ```bash
 git -C "$OCUDU_SOURCE" apply --reverse --check \
-  "$FALCON_REPO/patches/ocudu/69801c7-du-rf-metrics-diagnostics.patch"
-git -C "$OCUDU_SOURCE" apply --reverse \
-  "$FALCON_REPO/patches/ocudu/69801c7-du-rf-metrics-diagnostics.patch"
-git -C "$OCUDU_SOURCE" apply --reverse --check \
   "$FALCON_REPO/patches/ocudu/69801c7-du-rf-metrics-native-tests.patch"
 git -C "$OCUDU_SOURCE" apply --reverse \
   "$FALCON_REPO/patches/ocudu/69801c7-du-rf-metrics-native-tests.patch"
@@ -729,21 +873,26 @@ git -C "$OCUDU_SOURCE" apply --reverse --check \
   "$FALCON_REPO/patches/ocudu/050a2bb-du-rf-metrics.patch"
 git -C "$OCUDU_SOURCE" apply --reverse \
   "$FALCON_REPO/patches/ocudu/050a2bb-du-rf-metrics.patch"
-git -C "$FLEXRIC_SOURCE" apply --reverse --check \
-  "$FALCON_REPO/patches/flexric/73650812-du-rf-metrics.patch"
-git -C "$FLEXRIC_SOURCE" apply --reverse \
-  "$FALCON_REPO/patches/flexric/73650812-du-rf-metrics.patch"
+```
 
-cmake --build "$OCUDU_SOURCE/build" --target odu_split_8 -j 8
-cmake --build "$FLEXRIC_SOURCE/build-ocudu" --target xapp_oran_moni -j 8
+After the process checks and explicit full-build approval:
+
+```bash
+record_check ocudu-rollback-build nice -n 19 cmake --build "$OCUDU_SOURCE/build" \
+  --target odu_split_8 -j 4
 ```
 
 Use the exact final reviewed patches if their filenames changed during review.
-If a reversal check fails or later work depends on these changes, stop and resolve
-the diff rather than forcing it. Preserve the `69801c7` configuration commit,
-timestamp repair, and unrelated work. Restart RIC before DU and use the prior
-five-metric monitor configuration from the runbook. Reverting the cumulative
-package does not automatically apply the historical RSRP-only patches.
+If a reversal check fails or later work depends on these changes, stop and
+resolve the diff rather than forcing it. Preserve the effective OCUDU
+`4cffc0479f` baseline, including the 3660-MHz configuration and `AGENTS.md`,
+FlexRIC's committed timestamp repair, and unrelated work. Retain staged
+monitor artifacts as evidence; monitor rollback selects the prior unchanged
+monitor binary and five-metric configuration from the runbook. Do not reverse
+patches or rebuild/install inside FlexRIC or change the installed plugin.
+Have the operator restart RIC before DU using the recorded prior binaries and
+configuration. Reverting the cumulative package does not automatically apply
+the historical RSRP-only patches.
 
 ## Repository References
 
