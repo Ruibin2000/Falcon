@@ -1,6 +1,20 @@
-# Dual UE Subnet Migration
+# Dual UE Subnets and Migration History
 
-Updated: 2026-10-13. This prepares the operator-requested two-subnet layout for
+Updated: 2026-10-23. The current Spark layout uses one UPF and two TUNs:
+UE1 `internet / 10.45.0.0/16 / 10.45.0.1` on `ogstun_1`, and
+UE2 `internet2 / 10.46.0.0/16 / 10.46.0.1` on `ogstun_2`, both MTU 1400.
+The operator applied the split and Spark-side checks passed. Follow the
+[TUN split guide](dual_ue_tun_split.md) for current configuration, the archived
+modification scripts and rollback. Fresh post-split UE traffic and cold-boot
+validation remain pending.
+
+## Historical two-subnet migration — 2026-10-13
+
+The sections below preserve the earlier single-TUN migration and its evidence.
+Their apply/rollback commands target the old `ogstun` layout; do not run them
+against the current split layout. TUN rollback now uses the separate guide above.
+
+Recorded: 2026-10-13. This prepared the operator-requested two-subnet layout for
 the shared Spark CU/Open5GS and two laptop modems. The inspected Spark packages
 are Open5GS `2.8.0~noble5`. The operator has applied the migration and passed the
 core-side service/DNN/address checks. UE2 subsequently passed the new IPv4
@@ -13,7 +27,7 @@ core migration success alone is not dual-link acceptance.
 | UE1 / DU1 | `001010000000101` | `internet` | `10.45.0.0/16` | `10.45.0.1:5201` |
 | UE2 / DU2 | `001010000000102` | `internet2` | `10.46.0.0/16` | `10.46.0.1:5202` |
 
-Use one UPF and one `ogstun` with both `.1/16` addresses. Both services run on
+The October 13 layout used one UPF and one `ogstun` with both `.1/16` addresses. Both services run on
 Spark. DNN selects the address pool; modem cell lock selects DU1/DU2. This provides
 separate address spaces and explicit routes through the existing shared core.
 Subnet addresses alone do not provide firewall or physical-core isolation.

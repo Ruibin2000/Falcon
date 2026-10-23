@@ -1,0 +1,6 @@
+{
+  "/etc/open5gs/upf.yaml": "ef1345cc68c0f61143fc84fd53d1d9123d6f8b7749b2f699b19b26df209e460f",
+  "/etc/open5gs/smf.yaml": "21a403fe8ede46a599632720d591a3b2c28df0ec3e39a3ba5f6993cfb86af004",
+  "/etc/systemd/network/99-open5gs.network": "f685c171478aa7a1fe544dac2a93afcc91f94a1ad95bbba06d6591919f7b4d49",
+  "/etc/systemd/network/99-open5gs.netdev": "6105bdd8a479ccde1b17427681148b17505fb8c59cbc92a502d9c743c54177c9"
+}

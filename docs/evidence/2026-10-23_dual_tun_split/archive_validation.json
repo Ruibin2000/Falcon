@@ -1,0 +1,13 @@
+{
+  "archive_files_match_original_temp_bundle": 15,
+  "archive_sha256_check": "Passed",
+  "script_syntax": "Passed: apply.sh, rollback.sh, guard.py",
+  "guard_bundle_hash_check": "Passed",
+  "evidence_sha256_check": "Passed",
+  "markdown_files_checked": 12,
+  "local_links_checked": 217,
+  "bash_documentation_blocks_parsed": 177,
+  "deployment_mutations_during_archival": "None",
+  "live_rollback_and_failure_recovery": "Not run",
+  "post_split_ue_traffic_and_cold_boot": "Not run"
+}

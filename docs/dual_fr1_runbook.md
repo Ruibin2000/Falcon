@@ -1,6 +1,14 @@
 # DU2 Bring-up and Dual-FR1 UL Acceptance
 
-Updated: 2026-10-13. Follow [Plan 3](../plans/dual-ue-du-fr1-channels.md).
+Network update, 2026-10-23: Spark now uses `ogstun_1 / 10.45.0.1/16` for UE1
+and `ogstun_2 / 10.46.0.1/16` for UE2, both MTU 1400, sharing the same UPF.
+The [TUN split guide](dual_ue_tun_split.md) records the applied migration,
+archived scripts and rollback. Spark checks passed; fresh UE/PDU/ping/traffic
+and cold-boot validation after the split remain pending. The measurements
+below are historical pre-split checkpoints.
+
+Updated: 2026-10-23. The radio checkpoints below follow the October 13
+[Plan 3](../plans/dual-ue-du-fr1-channels.md) scope.
 The current operator priority is DU2 implementation and UL-only acceptance.
 Underflow remediation is deferred; record counts without using count/growth
 alone as a pass/fail gate. UL failures and lost SA/PDU sessions still fail.

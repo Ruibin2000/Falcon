@@ -1,10 +1,17 @@
 # Dual UE Laptop Quick Commands — UE IP Binding and UL
 
-Updated: 2026-10-21. Developer: Ruibin Chen. Pair this booklet with the updated
-[Spark Quick Commands](dual_ue_spark_quick_commands.md) to reproduce today's
+Updated: 2026-10-23. Developer: Ruibin Chen. Pair this booklet with the updated
+[Spark Quick Commands](dual_ue_spark_quick_commands.md) to reproduce the October 21
 CU/DU/Core UE IP binding. Spark now starts RIC with the identity plugin, then
 CU with its identity E2 overlay, both DUs and the new three-subscription xApp.
 Laptop still prepares each intended modem/SIM/cell/PDU/route independently.
+
+Spark's October 23 [TUN split](dual_ue_tun_split.md) is applied: `ogstun_1`
+serves `10.45.0.1` and `ogstun_2` serves `10.46.0.1`. Laptop APNs, service IPs
+and policy tables are retained; WWAN names and bearer parameters still require
+fresh discovery. After the SMF/UPF restart, re-enable each selected modem and
+repeat its complete sequence below. Post-split UE connectivity and traffic
+have not yet been validated.
 
 The [live report](reports/ue_identity_dual_ue_live_2026-10-21.md) describes the
 final implementation and six-minute bidirectional idle/resume validation
@@ -24,7 +31,7 @@ running; Spark startup is in the paired booklet. Keep UE1's verified PDU/path
 active while preparing UE2. After a power/reconnection event, repeat the affected
 role's identity, lock/cell, bearer, complete host IPv4 reset and new-path verification.
 
-Today's Laptop truth identified UE1 as IMSI `001010000000101`, APN `internet`,
+The October 21 Laptop truth identified UE1 as IMSI `001010000000101`, APN `internet`,
 IPv4 `10.45.0.2`, and UE2 as IMSI `001010000000102`, APN `internet2`, IPv4
 `10.46.0.2`. These are historical allocations: rediscover modem/SIM/bearer,
 IPv4/prefix/interface/gateway and routes on every new run. F1AP/NGAP IDs can
@@ -321,6 +328,7 @@ reports incomplete; address-removal failures retain the existing guards.
 | DNN / APN | `internet` | `internet2` |
 | Expected UE IPv4 pool | `10.45.0.0/16` | `10.46.0.0/16` |
 | Spark service IP | `10.45.0.1` | `10.46.0.1` |
+| Spark TUN interface | `ogstun_1` | `ogstun_2` |
 | Spark iperf3 port | `5201` | `5202` |
 | Proposed policy table / lookup / guard priority | `151` / `10151` / `10152` | `152` / `10161` / `10162` |
 | Server destination lookup / guard priority | `10153` / `10154` | `10163` / `10164` |
@@ -1577,7 +1585,7 @@ verify each UE actually enters Core idle then reconnects. During each silent-DU
 window, its active peer must continue current `matched` bindings using its own
 fresh CU/Core data; this `--fresh-only` test must have zero cached rows. On
 resume, use the actual new F1/NGAP contexts and the Laptop's current IP; IDs
-need not equal today's report or remain constant. Count/explain startup/resume
+need not equal the October 21 report or remain constant. Count/explain startup/resume
 unresolved rows, and check for cross-UE assignments. All detailed criteria are
 in Spark 7c; a completed iperf script alone does not pass binding acceptance.
 
@@ -1586,7 +1594,7 @@ Keep Laptop `truth.json`, `events.ndjson`, the four client logs and
 `/tmp` before reboot. Spark source times determine idle/matching boundaries;
 Laptop's clock is not calibrated against Spark. Report zero-throughput
 intervals on continuing clients rather than inferring stall-free traffic from
-exit 0. A new successful cold start is a separate reproduction result; today's
+exit 0. A new successful cold start is a separate reproduction result; the October 21
 archived counts are not a requirement for the new run.
 
 ### 3.2. Optional Plan 3 UDP and path guards

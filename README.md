@@ -1,5 +1,11 @@
 # Falcomm
 
+**Spark network update, 2026-10-23:** UE1 now uses `ogstun_1 / 10.45.0.1/16`
+and UE2 uses `ogstun_2 / 10.46.0.1/16`, both with MTU 1400 and the existing
+shared UPF. The migration and independent Spark-side checks passed; fresh
+post-split UE traffic and cold-boot validation remain pending. See the
+[TUN split guide and archived scripts](docs/dual_ue_tun_split.md).
+
 **Experiment report: [2026-10-13 Dual UE and Dual DU Uplink Experiment](docs/reports/dual_ue_ul_experiment_report_2026-10-13.md)** covers link configurations, concurrent TCP UL, KPM from both DUs, clock correction, throughput and CRC plots, and the scope of path-isolation acceptance.
 
 Falcomm is a 5G/AI-RAN experimental platform based on the NVIDIA DGX Spark. **On 2026-10-13, concurrent TCP uplink delivered receiver UE1 13.8 Mbit/s and UE2 17.3 Mbit/s, both with sender Retr 0 and process exit 0. The xApp received 123 real UE callbacks per DU, including 63/61 complete UL-active five-metric rows, with successful subscription/deletion and normal exit.** The [retained analysis](docs/evidence/2026-10-13_dual_kpm_reports/manifest.json) reconciles the approximately 199.27-second Spark/Laptop clock difference and retains both captures, parsed rows and the throughput/CRC plot. This establishes concurrent UL functionality and two-DU KPM reception; full cross-layer correlation, repeatability/UDP/guard/survivor/cold-start acceptance remain pending. Earlier single-link checkpoints are retained. The longer-term objective is dual independent radio paths with FlexRIC telemetry, AI channel/rate prediction, and MPTCP video steering.
@@ -19,7 +25,7 @@ For the new cards, follow [SIM Provisioning and Dual-UE Preparation](docs/sim_pr
 ```text
 Linux laptop application ↔ WWAN ↔ RMU500EK / RM500Q-GL
     ↔ NR SA n78 / 3660 MHz ↔ B210 (3271233) ↔ OCUDU DU1
-    ↔ F1 ↔ OCUDU CU ↔ N3 ↔ Open5GS UPF ↔ ogstun ↔ Spark application
+    ↔ F1 ↔ OCUDU CU ↔ N3 ↔ Open5GS UPF ↔ ogstun_1 ↔ Spark application
 ```
 
 CU-to-AMF N2 carries access signaling; SMF controls the UPF over N4/PFCP. The tested application endpoints are Spark `10.45.0.1` and the current UE allocation in `10.45.0.0/16`. Management Wi-Fi is separate. The local experiment does not require Internet NAT or changing the laptop's Wi-Fi default route.
@@ -198,6 +204,7 @@ docs/
 | [Dual UE laptop quick commands](docs/dual_ue_laptop_quick_commands.md) | IMEI/SIM selection, SA locks, actual IPv4 bearers, source/destination policy paths, concurrent UL with automatic current-bearer discovery and complete per-role IPv4 reset without old-session parameters |
 | [Dual UE Spark quick commands](docs/dual_ue_spark_quick_commands.md) | Core/CU/RIC/two-DU startup, two server endpoints, DU-tagged KPM capture and shutdown |
 | [Dual UE subnet migration](docs/dual_ue_subnets.md) | Prepared two-DNN address pools, Spark service addresses, targeted subscriber change and rollback |
+| [Dual UE Spark TUN split](docs/dual_ue_tun_split.md) | Current `ogstun_1` / `ogstun_2` layout, archived migration/configurations, Spark evidence and rollback |
 | [5G SA Bring-up Debug Record, 2026-10-05](docs/troubleshooting/2026-10-05_sa_bringup.md) | Dated evidence, confirmed repairs and troubleshooting decision tree/matrix |
 | [FlexRIC Bring-up Record, 2026-10-07](docs/troubleshooting/2026-10-07_flexric_bringup.md) | Version/codec repair, E2/KPM lifecycle and actual UE metrics |
 | [FlexRIC Timestamp Repair, 2026-10-07](docs/troubleshooting/2026-10-07_flexric_latency_fix.md) | Tested timestamp patch, deployment command and report-age semantics |
@@ -211,7 +218,7 @@ The following reproduces the existing single-link subscriber `001010000000001`. 
 
 1. Check B210/USB 3 while DU is stopped; apply and verify the recorded OCUDU performance settings.
 2. Start/check MongoDB, verify the exact subscriber is IPv4-only, and align NRF/AMF PLMN.
-3. Start the ten required SA services and verify AMF/PFCP/ogstun.
+3. Start the ten required SA services and verify AMF/PFCP and the role's Spark TUN (`ogstun_1` for UE1; `ogstun_2` for UE2).
 4. Launch CU with `sudo` and FlexRIC in separate foreground terminals, then launch DU with the base and E2 overlay configs; verify N2, F1, GTP-U and E2.
 5. Configure the laptop modem for NR SA/private SSB, establish IPv4 data, and apply the actual active bearer's host settings.
 6. Test local private traffic and record RF-error growth. Run the 10-second KPM xApp during UE traffic to validate actual reports.

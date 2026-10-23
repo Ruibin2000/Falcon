@@ -1,8 +1,15 @@
 # Full Reproduction Runbook: Single-Link 5G SA
 
-Last updated: 2026-10-12. The current **3660-MHz single-UE/DU1 uplink checkpoint passed** private ping, a 30-second TCP uplink with receiver 17.0 Mbit/s and sender Retr 0, and 12 complete five-metric KPM reports for UE F1AP ID 5. **RF stability remains pending** because of recurring underflows; downlink is outside the current acceptance scope. The earlier 2026-10-05 and 2026-10-07 results remain historical evidence. See the [daily log](../dev_logs/2026-10-12_ruibin.md), [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json), and [Spark](spark_quick_commands.md) / [UE](ue_laptop_quick_commands.md) quick commands.
+Network update, 2026-10-23: this installed Spark now uses `ogstun_1` for UE1
+`10.45.0.1/16` and `ogstun_2` for UE2 `10.46.0.1/16`, both MTU 1400. The
+Spark commands below use UE1's new interface. The
+[TUN split guide](dual_ue_tun_split.md) contains the applied configuration,
+archived scripts and rollback; post-split UE traffic and cold-boot validation
+remain pending. Earlier measurements below retain their original scope.
 
-**Startup:** physical connections → USB 3 verification → host performance → clean SA service selection → MongoDB → subscriber/IPv4/NRF checks → required 5GC → `ogstun` → CU → FlexRIC → DU with complete 3660-MHz configuration → xApp subscription check → laptop setup → NR/SA cell lock → registration → IPv4 PDU session → active bearer → WWAN configuration → ping → traffic with KPM reception check.
+Last updated: 2026-10-23. The **2026-10-12 3660-MHz single-UE/DU1 uplink checkpoint passed** private ping, a 30-second TCP uplink with receiver 17.0 Mbit/s and sender Retr 0, and 12 complete five-metric KPM reports for UE F1AP ID 5. **RF stability remains pending** because of recurring underflows; downlink is outside the current acceptance scope. The earlier 2026-10-05 and 2026-10-07 results remain historical evidence. See the [daily log](../dev_logs/2026-10-12_ruibin.md), [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json), and [Spark](spark_quick_commands.md) / [UE](ue_laptop_quick_commands.md) quick commands.
+
+**Startup:** physical connections → USB 3 verification → host performance → clean SA service selection → MongoDB → subscriber/IPv4/NRF checks → required 5GC → `ogstun_1` for UE1 → CU → FlexRIC → DU with complete 3660-MHz configuration → xApp subscription check → laptop setup → NR/SA cell lock → registration → IPv4 PDU session → active bearer → WWAN configuration → ping → traffic with KPM reception check.
 
 **Shutdown:** traffic and xApp subscription → PDU session → manual laptop addresses/routes → optional modem disable → DU → FlexRIC → CU → required 5GC → optional/legacy services for a full shutdown → optional WebUI/MongoDB stop.
 
@@ -219,14 +226,23 @@ Every listed service must be `active`; AMF listens on `127.0.0.5:38412`, UPF on 
 `[SPARK]`
 
 ```bash
-ip link show ogstun
-ip -4 addr show dev ogstun
+ip link show ogstun_1
+ip -4 addr show dev ogstun_1
 ip -4 route show
 systemctl is-active systemd-networkd
 cat /etc/systemd/network/99-open5gs.netdev /etc/systemd/network/99-open5gs.network
 ```
 
-Require the existing `ogstun` to be administratively UP with MTU 1400, gateway `10.45.0.1/16`, and a usable route to `10.45.0.0/16`. The inspected host has persistent `99-open5gs.netdev` (`Name=ogstun`, `Kind=tun`) and `99-open5gs.network` (address, route and MTU); the UPF service requests `systemd-networkd`. This provides a configured recovery mechanism after reboot, but a cold-reboot result remains untested. Missing interface/address/route requires diagnosis of these files and networkd; do not blindly create another TUN or restart the host's management networking. A TUN state display alone is insufficient to judge data readiness. Do not add Internet NAT.
+Require `ogstun_1` to be administratively UP with MTU 1400, gateway
+`10.45.0.1/16`, and a route to `10.45.0.0/16` through that interface. The
+persistent `99-open5gs.netdev` now defines `Name=ogstun_1`, `Kind=tun`, and
+`99-open5gs.network` matches it. The separate `99-open5gs-ue2.netdev` /
+`99-open5gs-ue2.network` pair configures `ogstun_2 / 10.46.0.1/16`.
+The UPF service requests `systemd-networkd`; verify its pool-specific `dev`
+settings using the [TUN split guide](dual_ue_tun_split.md). Cold-boot recovery
+remains untested. Diagnose missing interfaces, addresses or routes through
+those files and networkd; do not restart management networking or add Internet
+NAT. Interface state alone does not prove UE connectivity.
 
 ## 8. Archive old RAN logs and start the CU
 
@@ -656,7 +672,7 @@ ping -I "$WWAN_IF" -c 5 10.45.0.1
 
 ```bash
 read -r -p 'Current UE IPv4 address from active bearer: ' UE_IP
-ping -I ogstun -c 5 "$UE_IP"
+ping -I ogstun_1 -c 5 "$UE_IP"
 iperf3 -s -B 10.45.0.1
 ```
 

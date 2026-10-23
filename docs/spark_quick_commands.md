@@ -1,6 +1,11 @@
 # Spark Quick Commands
 
-Updated: 2026-10-13. Use this guide on the installed Spark testbed. For a new host, see [Software and Drivers](software_installation_and_drivers.md); for detailed configuration, see the [Full Reproduction Runbook](full_reproduction_runbook.md). UE commands are in [UE Laptop Quick Commands](ue_laptop_quick_commands.md). Use Bash, run one step at a time, and stop at any `FAIL` result.
+Network update, 2026-10-23: the installed Spark uses `ogstun_1 / 10.45.0.1`
+for UE1 and `ogstun_2 / 10.46.0.1` for UE2. The checks below use UE1's current
+interface. See the [TUN split and script archive](dual_ue_tun_split.md) and
+[dual-UE Spark commands](dual_ue_spark_quick_commands.md) for both paths.
+
+Updated: 2026-10-23. Use this guide on the installed Spark testbed. For a new host, see [Software and Drivers](software_installation_and_drivers.md); for detailed configuration, see the [Full Reproduction Runbook](full_reproduction_runbook.md). UE commands are in [UE Laptop Quick Commands](ue_laptop_quick_commands.md). Use Bash, run one step at a time, and stop at any `FAIL` result.
 
 For the 2026-10-13 two-DU/two-modem workflow and current UL-only scope, use
 [Dual UE Spark quick commands](dual_ue_spark_quick_commands.md), including the supplied DU2 config,
@@ -117,15 +122,15 @@ done
 printf '5GC active: %d/10\n' "$active"
 ```
 
-Check the existing `ogstun` for its UP flag, MTU 1400, address, and private route:
+Check UE1's existing `ogstun_1` for its UP flag, MTU 1400, address, and private route:
 
 ```bash
-if ip -o link show dev ogstun | awk '/(<|,)UP(,|>)/ && / mtu 1400 / {ok=1} END {exit !ok}' &&
-   ip -o -4 addr show dev ogstun | awk '$4 == "10.45.0.1/16" {ok=1} END {exit !ok}' &&
-   ip -4 route show 10.45.0.0/16 | awk '/^10\.45\.0\.0\/16 .*dev ogstun/ {ok=1} END {exit !ok}'; then
-  printf 'ogstun: OK (UP, MTU 1400, 10.45.0.1/16, route)\n'
+if ip -o link show dev ogstun_1 | awk '/(<|,)UP(,|>)/ && / mtu 1400 / {ok=1} END {exit !ok}' &&
+   ip -o -4 addr show dev ogstun_1 | awk '$4 == "10.45.0.1/16" {ok=1} END {exit !ok}' &&
+   ip -4 route show 10.45.0.0/16 | awk '/^10\.45\.0\.0\/16 .*dev ogstun_1( |$)/ {ok=1} END {exit !ok}'; then
+  printf 'ogstun_1: OK (UP, MTU 1400, 10.45.0.1/16, route)\n'
 else
-  printf 'ogstun: FAIL; check networkd and the 99-open5gs configuration\n'
+  printf 'ogstun_1: FAIL; check networkd and the 99-open5gs configuration\n'
 fi
 ```
 

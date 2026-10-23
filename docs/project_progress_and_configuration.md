@@ -1,6 +1,12 @@
 # Project Progress and System Configuration
 
-Last updated: **2026-10-13**. DU1 migrated from 3750 to **3660 MHz within n78**. Single-UE IPv4 ping, a 30-second TCP uplink (receiver **17.0 Mbit/s**, sender Retr **0**), and **12 complete five-metric KPM reports for UE F1AP ID 5** passed. The operator now prioritizes DU2 and UL-only dual-link acceptance. Underflow remediation is deferred; count/growth alone does not block this UL scope. DU2 is configured/deployed for B210 `328B021` (USB 3) and passes offline checks. Actual DU2 radio startup/F1/E2 passed; UE2 registration/UL, the dual-link baseline and subscriber identity correlation remain pending. See the [DU2 procedure](dual_fr1_runbook.md), historical [daily log](../dev_logs/2026-10-12_ruibin.md) and [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json).
+Network update, **2026-10-23**: the applied [Spark TUN split](dual_ue_tun_split.md)
+places UE1 `10.45.0.1/16` on `ogstun_1` and UE2 `10.46.0.1/16` on `ogstun_2`,
+both MTU 1400, using the existing UPF. Independent checks of Spark configuration,
+routes and services passed. Fresh post-split UE traffic and cold-boot validation
+remain pending. The radio and traffic checkpoints below retain their dates.
+
+Radio/UE checkpoint summary, **2026-10-13**. DU1 migrated from 3750 to **3660 MHz within n78**. Single-UE IPv4 ping, a 30-second TCP uplink (receiver **17.0 Mbit/s**, sender Retr **0**), and **12 complete five-metric KPM reports for UE F1AP ID 5** passed. The operator now prioritizes DU2 and UL-only dual-link acceptance. Underflow remediation is deferred; count/growth alone does not block this UL scope. DU2 is configured/deployed for B210 `328B021` (USB 3) and passes offline checks. Actual DU2 radio startup/F1/E2 passed; UE2 registration/UL, the dual-link baseline and subscriber identity correlation remain pending. See the [DU2 procedure](dual_fr1_runbook.md), historical [daily log](../dev_logs/2026-10-12_ruibin.md) and [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json).
 
 ## Current verified single-link architecture
 
@@ -14,7 +20,7 @@ flowchart LR
         AMF[Open5GS AMF]
         SMF[Open5GS SMF]
         UPF[Open5GS UPF]
-        TUN[ogstun: 10.45.0.1]
+        TUN[ogstun_1: 10.45.0.1]
         App[Local Spark application]
         RIC[FlexRIC Near-RT RIC]
         XAPP[C KPM xApp]
@@ -223,9 +229,9 @@ After the installed [timestamp repair](troubleshooting/2026-10-07_flexric_latenc
 |---|---|
 | `/etc/open5gs/nrf.yaml` | `nrf.serving` MCC `001`, MNC `01` |
 | `/etc/open5gs/amf.yaml` | N2 bind `127.0.0.5`; GUAMI/TAI/PLMN `001/01`, TAC 7, SST 1 |
-| `/etc/open5gs/smf.yaml` | PFCP `127.0.0.4` → UPF `127.0.0.7`; UE pool `10.45.0.0/16`; MTU 1400 |
-| `/etc/open5gs/upf.yaml` | PFCP/GTP-U bind `127.0.0.7`; IPv4 subnet `10.45.0.0/16`, gateway `10.45.0.1` |
-| Existing Spark TUN | `ogstun`, `10.45.0.1/16`, MTU 1400 |
+| `/etc/open5gs/smf.yaml` | PFCP `127.0.0.4` → UPF `127.0.0.7`; `internet / 10.45.0.0/16`, `internet2 / 10.46.0.0/16`; MTU 1400 |
+| `/etc/open5gs/upf.yaml` | PFCP/GTP-U bind `127.0.0.7`; session devices `ogstun_1` for `internet`, `ogstun_2` for `internet2` |
+| Spark TUNs, 2026-10-23 | `ogstun_1 / 10.45.0.1/16`, `ogstun_2 / 10.46.0.1/16`, both MTU 1400 |
 | Subscriber | Test IMSI `001010000000001`, SST 1, DNN `internet`, session type **1** |
 | Laptop active bearer | IPv4/static; query current address/prefix/MTU and interface |
 
@@ -240,7 +246,12 @@ SMF/UPF files retain IPv6 pool entries, but the experiment uses IPv4 only. The l
 
 MongoDB is separate from systemd Open5GS services, maps localhost `27017` and retains its Docker volume. Native MongoDB 8 failed with the recorded NVIDIA kernel; keep it disabled.
 
-The inspected persistent TUN setup is `/etc/systemd/network/99-open5gs.netdev` (`ogstun`, `Kind=tun`) and `99-open5gs.network` (IPv4/IPv6 addresses/routes, MTU 1400). The UPF unit requests `systemd-networkd`. These files describe reboot recovery; a new cold reboot was not executed during the documentation update.
+The inspected persistent TUN setup is `/etc/systemd/network/99-open5gs.netdev`
+(`Name=ogstun_1`, `Kind=tun`) and `99-open5gs.network` (UE1 IPv4, original IPv6,
+routes and MTU 1400), plus `99-open5gs-ue2.netdev` / `99-open5gs-ue2.network`
+for `ogstun_2` and UE2 IPv4. The UPF unit requests `systemd-networkd`.
+The [archived migration](dual_ue_tun_split.md) records all five deployed
+UPF/networkd files and their hashes. A cold reboot has not been tested.
 
 ### Provisioned Open Cells SIMs and dual-UE preparation
 

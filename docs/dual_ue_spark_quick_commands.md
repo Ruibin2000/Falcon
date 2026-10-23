@@ -1,7 +1,7 @@
 # Dual UE Spark Quick Commands — UE IP Binding and UL
 
-Updated: 2026-10-21. Developer: Ruibin Chen. This is the Spark half of the
-operator-run reproduction of today's CU/DU/Core UE IP binding. The
+Updated: 2026-10-23. Developer: Ruibin Chen. This is the Spark half of the
+operator-run reproduction of the October 21 CU/DU/Core UE IP binding. The
 [live report](reports/ue_identity_dual_ue_live_2026-10-21.md) describes the final
 implementation and six-minute bidirectional idle/resume capture
 (645 matched / 648 records, zero cached). During each UE's
@@ -31,7 +31,7 @@ modem recovery; steps 1–5 cover a stopped testbed.
 After a modem power cycle, repeat the affected role's complete laptop sequence
 ([UE1](dual_ue_laptop_quick_commands.md#ue1-start) / [UE2](dual_ue_laptop_quick_commands.md#ue2-start)) before traffic. The operator reported
 lock query `0`; its lock must be restored and the actual serving cell verified.
-Today's Laptop truth identified IMSI `001010000000101` / `internet` /
+The October 21 Laptop truth identified IMSI `001010000000101` / `internet` /
 `10.45.0.2` and IMSI `001010000000102` / `internet2` / `10.46.0.2`.
 Those IPs, modem/bearer indices and RAN IDs may change after restart or idle.
 Keep the Spark `.1` endpoints and rediscover current Laptop bearer allocations
@@ -44,6 +44,9 @@ without old-session parameters, guarded rebuilding and both private-path checks 
 [UE2 recovery](dual_ue_laptop_quick_commands.md#ue2-clean-old-path).
 These tables belong to the laptop. Spark keeps service addresses `10.45.0.1`
 and `10.46.0.1`, and its two iperf listeners continue to use the same bindings.
+The October 23 [TUN split](dual_ue_tun_split.md) is applied: UE1 uses `ogstun_1`
+and UE2 uses `ogstun_2`, both with MTU 1400. Spark configuration checks passed;
+post-split UE/PDU/ping/traffic and cold-boot validation remain pending.
 
 ## 0. Role assignments and core preparation
 
@@ -59,13 +62,16 @@ and `10.46.0.1`, and its two iperf listeners continue to use the same bindings.
 | DNN / APN | `internet` | `internet2` |
 | Expected UE IPv4 pool | `10.45.0.0/16` | `10.46.0.0/16` |
 | Spark service IP | `10.45.0.1` | `10.46.0.1` |
+| Spark TUN interface | `ogstun_1` | `ogstun_2` |
 | Spark iperf3 port | `5201` | `5202` |
 | Proposed policy table / lookup / guard priority | `151` / `10151` / `10152` | `152` / `10161` / `10162` |
 | WWAN / UE IP / modem / bearer / AT port | Discover each run | Discover each run |
 
 The reviewed dual-subnet migration is complete. Preserve bundle
 `/tmp/falcon-dual-subnets.Ir8TjqjO`; do not reapply the first-migration script to
-the migrated core. See [Dual UE Subnets](dual_ue_subnets.md). Both cells use
+the migrated core. The old two-address `ogstun` was subsequently split;
+use the [current layout, archived scripts and rollback](dual_ue_tun_split.md).
+See [Dual UE Subnets](dual_ue_subnets.md) for the historical DNN migration. Both cells use
 PLMN `00101`, TAC 7, SST 1 and n78 / 20 MHz / SCS 30 kHz. Keep K/OPc private
 and preserve the baseline subscriber; do not blindly reset SQN.
 
@@ -118,7 +124,7 @@ Host performance restoration, when needed after reboot, is in
 ### 1a. Prepare the CU identity binary and isolated FlexRIC plugin
 
 Run before starting CU/RIC/xApp. These are local builds; they start no services.
-Both repositories must be on `Dual-UE` with today's implementation present:
+Both repositories must be on `Dual-UE` with the October 21 identity implementation present:
 
 ```bash
 git -C /home/nyu/Desktop/Falcon_repo/Falcon branch --show-current
@@ -216,15 +222,19 @@ for unit in "${CORE_UNITS[@]}"; do
   fi
 done
 printf '5GC active: %d/10\n' "$CORE_ACTIVE_COUNT"
-ip -o link show dev ogstun
-ip -o -4 addr show dev ogstun
+for tun in ogstun_1 ogstun_2; do
+  ip -o link show dev "$tun"
+  ip -o -4 addr show dev "$tun"
+done
 ip -4 route show 10.45.0.0/16
 ip -4 route show 10.46.0.0/16
 ```
 
-Require `10/10`; `ogstun` must be UP, MTU 1400, with addresses `10.45.0.1/16`
-and `10.46.0.1/16`, and both private routes through `ogstun`. The second DNN,
-subscriber and address setup is in the [migration guide](dual_ue_subnets.md).
+Require `10/10`; `ogstun_1` must be UP, MTU 1400, with `10.45.0.1/16`, and
+`ogstun_2` must be UP, MTU 1400, with `10.46.0.1/16`. The private routes must
+use their corresponding TUNs. The old name `ogstun` is absent. Current setup,
+archived scripts and rollback are in the [TUN split guide](dual_ue_tun_split.md);
+the two-DNN subscriber history is in the [subnet migration guide](dual_ue_subnets.md).
 Original single-subnet repair is in the
 [full runbook](full_reproduction_runbook.md#7-start-only-the-required-5gc-functions).
 
@@ -417,7 +427,7 @@ Let both clients and the xApp finish naturally. Use 7c to inspect this capture.
 Both roles must have matched positive-UL rows with their independently observed
 current IPs, expected SUPIs/DNNs and actual DU/F1/NGAP identities. Require at
 least 30 complete active samples per role; explain startup gaps individually.
-The actual IPs/IDs/counts need not equal today's report.
+The actual IPs/IDs/counts need not equal the October 21 report.
 
 ### 7b. Six-minute bidirectional idle/resume and independent matching
 
@@ -599,6 +609,6 @@ Retain each capture's `local.json`, `cli-overrides.txt`, `source-sha256.txt`, `e
 RIC/CU/DU startup logs, actual source revisions and Laptop truth/events/client
 logs/summary. `/tmp` may be cleared on reboot: copy the printed evidence
 directories to a persistent experiment directory before shutdown. Keep raw
-security-bearing Core logs and K/OPc outside Git. Today's live functional
+security-bearing Core logs and K/OPc outside Git. The October 21 live functional
 results are retained in the [report](reports/ue_identity_dual_ue_live_2026-10-21.md);
 record the new cold-start outcome separately from those historical trials.

@@ -1,0 +1,10 @@
+[Match]
+Name=ogstun_2
+
+[Network]
+Address=10.46.0.1/16
+ConfigureWithoutCarrier=yes
+
+[Link]
+MTUBytes=1400
+RequiredForOnline=false

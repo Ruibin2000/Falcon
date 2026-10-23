@@ -1,0 +1,7 @@
+Preflight passed: captured files match, both pools use ogstun, services are active.
+Stopping SMF/UPF; UE data sessions will be interrupted.
+Spark configuration verified: UE1=ogstun_1, UE2=ogstun_2
+ogstun_1         UP             10.45.0.1/16
+ogstun_2         UP             10.46.0.1/16
+Split applied. Reconnect both UE PDU sessions and verify ping/traffic.
+Backup and rollback: /var/backups/falcon-dual

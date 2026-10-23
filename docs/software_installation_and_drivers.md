@@ -287,8 +287,10 @@ The recorded version is `2.8.0~noble5`; the PPA may now provide a different vers
 | `/etc/open5gs/*.yaml` | Core network-function configuration |
 | `/usr/bin/open5gs-*` | Packaged network-function executables |
 | `/usr/lib/systemd/system/open5gs-*.service` | Service definitions |
-| `/etc/systemd/network/99-open5gs.netdev` | Persistent ogstun TUN definition |
-| `/etc/systemd/network/99-open5gs.network` | ogstun addressing, routes and MTU |
+| `/etc/systemd/network/99-open5gs.netdev` | Persistent `ogstun_1` TUN definition after the October 23 migration |
+| `/etc/systemd/network/99-open5gs.network` | `ogstun_1` addressing, routes and MTU |
+| `/etc/systemd/network/99-open5gs-ue2.netdev` | Persistent `ogstun_2` TUN definition |
+| `/etc/systemd/network/99-open5gs-ue2.network` | `ogstun_2` addressing and MTU |
 
 `[SPARK]`
 
@@ -296,9 +298,15 @@ The recorded version is `2.8.0~noble5`; the PPA may now provide a different vers
 ls /etc/open5gs
 systemctl cat open5gs-amfd open5gs-smfd open5gs-upfd
 cat /etc/systemd/network/99-open5gs.netdev /etc/systemd/network/99-open5gs.network
+cat /etc/systemd/network/99-open5gs-ue2.netdev /etc/systemd/network/99-open5gs-ue2.network
 ```
 
-The inspected `.netdev` defines `Name=ogstun`, `Kind=tun`. The `.network` matches ogstun and configures IPv4/IPv6 addresses and routes, with `MTUBytes=1400`; the UPF service requests `systemd-networkd`. Verify these files on another host before runtime startup.
+After the applied October 23 [TUN split](dual_ue_tun_split.md), the original
+`.netdev` defines `Name=ogstun_1`, `Kind=tun`, and its `.network` configures UE1
+IPv4, original IPv6, routes and `MTUBytes=1400`. The additional UE2 pair defines
+`ogstun_2 / 10.46.0.1/16`, also MTU 1400. UPF session entries select the matching
+device. The UPF service requests `systemd-networkd`; cold-boot validation
+remains pending. Verify these host-specific files before another deployment.
 
 PLMN alignment across NRF/AMF, the subscriber database, and IPv4 session selection are covered in the configuration record and runbook. WebUI is an optional administration component; an existing WebUI installation is not evidence that all runtime SA functions are ready.
 

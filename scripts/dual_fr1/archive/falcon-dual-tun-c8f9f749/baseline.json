@@ -1,0 +1,30 @@
+{
+  "defaults": [
+    {
+      "dst": "default",
+      "gateway": "10.20.0.1",
+      "dev": "wlP9s9",
+      "protocol": "dhcp",
+      "prefsrc": "10.20.44.26",
+      "metric": 600,
+      "flags": []
+    }
+  ],
+  "rules": [
+    {
+      "priority": 0,
+      "src": "all",
+      "table": "local"
+    },
+    {
+      "priority": 32766,
+      "src": "all",
+      "table": "main"
+    },
+    {
+      "priority": 32767,
+      "src": "all",
+      "table": "default"
+    }
+  ]
+}
