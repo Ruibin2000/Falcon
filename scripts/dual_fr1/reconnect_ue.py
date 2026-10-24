@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Watch one laptop UE and recover its PDU/host path until stopped (Ctrl+C)."""
+"""Watch one laptop UE; recover PDU/host state and optional cell lock until Ctrl+C."""
 
 import argparse
 import contextlib
+import csv
 from datetime import datetime, timezone
 import ipaddress
 import json
@@ -21,8 +22,63 @@ import time
 import connect_ue as connect
 
 
-ERRORS = (ValueError, OSError, subprocess.SubprocessError)
+ERRORS = (ValueError, OSError, subprocess.SubprocessError, connect.termios.error, csv.Error)
 SHARED_LOCK = "/run/lock/falcon-ue-connect.lock"
+
+
+def restore_cell_lock(at_port, info, role, evidence):
+    """Restore this verified modem's NR SA settings; OK is not serving proof."""
+    def query(fd, command):
+        print("AT > " + command, flush=True)
+        evidence.setdefault("commands", []).append(command)
+        reply = connect.at_reply(fd, command)
+        print(reply.strip(), flush=True)
+        return reply
+
+    def fields(fd, command, prefix, name):
+        reply = query(fd, command)
+        records = [next(csv.reader([line.split(":", 1)[1].strip()], skipinitialspace=True, strict=True))
+                   for line in reply.replace("\r", "\n").splitlines()
+                   if line.strip().startswith(prefix + ":")]
+        records = [record for record in records if record and record[0] == name]
+        if len(records) != 1 or len(records[0]) < 2:
+            raise connect.CellError(f"Missing/ambiguous readback for {command}")
+        return [value.strip() for value in records[0][1:]]
+
+    def write(fd, command):
+        # Record even a failed/interrupted write: some settings may already have
+        # taken effect. Never report the operation as an atomic rollback.
+        evidence.setdefault("writes", []).append(command)
+        query(fd, command)
+
+    with connect.serial_modem(at_port, info, role, query=query) as fd:
+        for name, expected in (("mode_pref", "NR5G"), ("nr5g_disable_mode", "2")):
+            command = f'AT+QNWPREFCFG="{name}"'
+            if fields(fd, command, "+QNWPREFCFG", name) != [expected]:
+                write(fd, command + "," + expected)
+                if fields(fd, command, "+QNWPREFCFG", name) != [expected]:
+                    raise connect.CellError(f"Setting readback mismatch: {name}")
+        band_query = 'AT+QNWPREFCFG="nr5g_band"'
+        bands = fields(fd, band_query, "+QNWPREFCFG", "nr5g_band")
+        if len(bands) != 1 or "78" not in bands[0].split(":"):
+            write(fd, band_query + ",78")
+            bands = fields(fd, band_query, "+QNWPREFCFG", "nr5g_band")
+            if len(bands) != 1 or "78" not in bands[0].split(":"):
+                raise connect.CellError("NR SA band readback does not include n78")
+        lock_query = 'AT+QNWLOCK="common/5g"'
+        evidence["previous_lock"] = fields(fd, lock_query, "+QNWLOCK", "common/5g")
+        target = [str(role["pci"]), str(role["ssb"]), "30", "78"]
+        # A radio failure requests a fresh lock even if its saved tuple is right;
+        # the watcher cooldown prevents repeating this on every one-second poll.
+        write(fd, lock_query + "," + ",".join(target))
+        actual = fields(fd, lock_query, "+QNWLOCK", "common/5g")
+        if actual != target:
+            raise connect.CellError(f"Cell-lock readback mismatch: expected {target}, got {actual}")
+        evidence["verified_lock"] = actual
+        for command, key in (('AT+QENG="servingcell"', "qeng"), ("AT+C5GREG?", "c5greg")):
+            # SEARCH / not registered is valid diagnostic output after a lock
+            # write; full registration and cell checks run on the next attempt.
+            evidence[key] = query(fd, command).strip()
 
 
 def now():
@@ -70,6 +126,36 @@ class Recovery(connect.Connection):
         self.redial_allowed = redial_allowed
         self.failed_bearer = failed_bearer
         self.redial_started_at = None
+
+    def repair_radio(self):
+        evidence = self.result["radio_recovery"]
+        info, _ = self.active()  # Includes fresh IMEI/SIM and foreign-APN guards.
+        net_ports = connect.ports(info)
+        connect.require(len(net_ports) == 1, "Expected one owned WWAN for automatic cell lock")
+        interface = next(iter(net_ports))
+        with self.network(shared=True):
+            self.host_preflight(dict(interface=interface))
+        connect.status(f"Radio recovery: UE{self.ue} / {self.role['label']}; restore NR SA / "
+                       f"PCI={self.role['pci']} SSB={self.role['ssb']}, then request PLMN 00101 registration")
+        restore_cell_lock(self.at_port, info, self.role, evidence)
+        # The serial context is closed before talking to ModemManager again.
+        info = self.checked_modem()
+        if info.get("modem.generic.state") == "disabled":
+            connect.change("mmcli", "-m", self.modem, "--enable")
+            info = self.checked_modem()
+        technologies = {token.strip().lower() for value in connect.values(info, "modem.generic.access-technologies")
+                        for token in value.split(",")}
+        registered = (info.get("modem.generic.state") in ("registered", "connecting", "connected")
+                      and info.get("modem.3gpp.operator-code") == "00101"
+                      and "5gnr" in technologies and "lte" not in technologies)
+        if not registered:
+            evidence["registration_requested"] = True
+            connect.change("mmcli", "-m", self.modem, "--3gpp-register-in-operator=00101")
+        else:
+            evidence["registration_requested"] = False
+        self.checked_modem()
+        evidence["status"] = "applied"
+        connect.status("Radio recovery [OK]: lock read back; next attempt must verify registration, cell, PDU and ping")
 
     def active(self):
         info = self.checked_modem()
@@ -181,6 +267,7 @@ class Watcher:
         self.terminal = sys.stdout
         self.attempts = self.ping_failures = 0
         self.last_redial = None
+        self.last_cell_lock = None
         self.failed_bearer = None
         self.healthy = False
         self.started_at = now()
@@ -202,6 +289,30 @@ class Watcher:
         if self.args.verbose >= 2:
             print(message, file=self.terminal, flush=True)
 
+    def repair_radio(self, session, error):
+        remaining = (0 if self.last_cell_lock is None else
+                     max(0, self.args.cell_lock_cooldown - (time.monotonic() - self.last_cell_lock)))
+        evidence = dict(status="cooldown" if remaining else "started", reason=str(error),
+                        started_at=now(), at_port=self.args.at_port)
+        session.result["radio_recovery"] = evidence
+        if remaining:
+            evidence["remaining_seconds"] = round(remaining, 1)
+            connect.status(f"Radio recovery: cell-lock cooldown, {remaining:.1f}s remaining; continue checking registration")
+            return
+        try:
+            session.repair_radio()
+        except KeyboardInterrupt:
+            evidence["status"] = "interrupted"
+            raise
+        except ERRORS as recovery_error:
+            evidence.update(status="failed", error=str(recovery_error))
+            connect.status(f"Radio recovery [FAIL]: {recovery_error}", error=True)
+        finally:
+            # Also throttle rejected/failed writes and registration requests.
+            # Start the gap when the operation ends, not while it is in flight.
+            self.last_cell_lock = time.monotonic()
+            evidence["ended_at"] = now()
+
     def attempt(self):
         self.attempts += 1
         prefix = f"UE{self.args.ue} / {connect.ROLES[self.args.ue]['label']} attempt {self.attempts}"
@@ -210,7 +321,12 @@ class Watcher:
         with capture(self.log, self.args.verbose):
             print(f"\n{now()} {prefix}", flush=True)
             try:
-                session.run()
+                try:
+                    session.run()
+                except connect.CellError as error:
+                    if self.args.auto_cell_lock:
+                        self.repair_radio(session, error)
+                    raise
                 self.healthy = True
                 self.ping_failures = 0
                 self.failed_bearer = None
@@ -229,12 +345,13 @@ class Watcher:
                 self.ping_failures = self.ping_failures + 1 if ping_error else 0
                 self.failed_bearer = ((session.result.get("bearer"), session.result.get("source"))
                                       if ping_error else None)
-                session.result.update(status="serial_check_required" if isinstance(error, connect.CellError) else "failed",
+                session.result.update(status=("radio_retry_pending" if self.args.auto_cell_lock else "serial_check_required")
+                                      if isinstance(error, connect.CellError) else "failed",
                                       stage=session.stage, error=str(error))
                 connect.status(f"STOP at {session.stage}: {error}", error=True)
                 if isinstance(error, subprocess.CalledProcessError) and error.stderr:
                     print(error.stderr, file=sys.stderr)
-                if isinstance(error, connect.CellError):
+                if isinstance(error, connect.CellError) and not self.args.auto_cell_lock:
                     session.manual_hint()
             finally:
                 if session.redial_started_at is not None:
@@ -296,6 +413,7 @@ class Watcher:
                            started_at=self.started_at, ended_at=now(), attempts=self.attempts,
                            last_connection_verified=verified_before_stop, interval_seconds=self.args.interval,
                            verbose=self.args.verbose, signal=self.exit_signal, shutdown=shutdown,
+                           auto_cell_lock=self.args.auto_cell_lock, cell_lock_cooldown=self.args.cell_lock_cooldown,
                            note="SIGINT/SIGTERM runs selected-role shutdown; normal --once success leaves the UE connected")
             (self.directory / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
             self.say(f"Stopped; evidence saved: {self.directory}")
@@ -328,7 +446,11 @@ def arguments(argv=None):
                         help="Seconds AFTER each check/attempt before the next, default 1; no overlapping attempts")
     parser.add_argument("--verbose", type=int, choices=(1, 2, 3), default=1,
                         help="1: attempt number/result only (default); 2: steps; 3: full command/details/ping output")
-    parser.add_argument("--at-port", help="Owned USB serial port for read-only serving-cell fallback")
+    parser.add_argument("--at-port", help="Owned USB AT port for read-only cell fallback, or radio writes with --auto-cell-lock")
+    parser.add_argument("--auto-cell-lock", action="store_true",
+                        help="On registration/cell failure, restore this UE's NR SA/cell lock and request registration; requires --at-port")
+    parser.add_argument("--cell-lock-cooldown", type=positive_seconds, default=30.0,
+                        help="Minimum seconds AFTER a radio recovery before another, default 30; checks continue meanwhile")
     parser.add_argument("--registration-timeout", type=positive_int, default=5,
                         help="Registration wait per attempt, 1..300 seconds (default 5)")
     parser.add_argument("--redial-after", type=positive_int, default=3,
@@ -341,6 +463,8 @@ def arguments(argv=None):
     args = parser.parse_args(argv)
     if args.registration_timeout > 300:
         parser.error("--registration-timeout must be in 1..300")
+    if args.auto_cell_lock and not args.at_port:
+        parser.error("--auto-cell-lock requires --at-port for this UE's verified AT port")
     return args
 
 

@@ -39,7 +39,7 @@ NETWORK_LOCK = "/run/lock/falcon-ue-connect.lock"
 
 
 class CellError(ValueError):
-    """No acceptable live serving-cell evidence; manual serial checks required."""
+    """No acceptable live registration/serving-cell evidence."""
 
 
 class StopRequested(KeyboardInterrupt):
@@ -280,11 +280,14 @@ def at_reply(fd, command):
             break
     reply = result.decode("ascii", errors="replace")
     if not re.search(r"(?:^|[\r\n])OK(?:[\r\n]|$)", reply):
-        raise CellError(f"No successful reply to read-only query {command}")
+        raise CellError(f"No successful reply to AT command {command}: {reply.strip() or 'timeout/closed port'}")
     return reply
 
 
-def serial_cell(at_port, info, role):
+@contextlib.contextmanager
+def serial_modem(at_port, info, role, query=None):
+    """Open an owned, idle AT port and verify both identities before yielding."""
+    query = query or at_reply
     path = verify_at_port(at_port, ports(info))
     fd = os.open(path, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
     original = None
@@ -301,10 +304,10 @@ def serial_cell(at_port, info, role):
         attrs[6][termios.VMIN] = attrs[6][termios.VTIME] = 0
         termios.tcsetattr(fd, termios.TCSANOW, attrs)
         for command, expected in (("AT+CGSN", role["imei"]), ("AT+CIMI", role["imsi"])):
-            lines = at_reply(fd, command).replace("\r", "\n").splitlines()
+            lines = query(fd, command).replace("\r", "\n").splitlines()
             if expected not in [line.strip() for line in lines]:
                 raise CellError(f"Serial identity mismatch from {command}; no configuration sent")
-        return qeng_serving_cell(at_reply(fd, 'AT+QENG="servingcell"'))
+        yield fd
     finally:
         try:
             if original is not None:
@@ -314,6 +317,11 @@ def serial_cell(at_port, info, role):
                 with contextlib.suppress(OSError):
                     fcntl.ioctl(fd, termios.TIOCNXCL)
             os.close(fd)
+
+
+def serial_cell(at_port, info, role):
+    with serial_modem(at_port, info, role) as fd:
+        return qeng_serving_cell(at_reply(fd, 'AT+QENG="servingcell"'))
 
 
 class Connection:

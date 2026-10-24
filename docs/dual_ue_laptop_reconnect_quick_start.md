@@ -81,7 +81,9 @@ Check the NR record marked `serving: yes` against these targets:
 Both radios use n78. A matching serving cell lets you continue to section 2.
 GetCellInfo shows the current serving cell; the stored lock is read back with
 `AT+QNWLOCK="common/5g"` below. If cell evidence is missing or mismatching,
-check/restore the selected role's lock through its AT port.
+check/restore the selected role's lock through its AT port. After verifying
+the port mapping, the watcher can also [restore the lock automatically after
+radio failures](#automatic-cell-lock-and-registration-after-radio-failure).
 
 ### Restore the lock when needed
 
@@ -377,10 +379,11 @@ Recovery proceeds as follows:
 
 1. Verify the selected modem/SIM and current serving cell; rediscover by IMEI
    when its object disappears/is replaced or its WWAN mapping changes. Missing registration or
-   unproved/mismatching cells fail that attempt and continue polling. Level 2/3
-   explains the required manual checks. No cell lock, band, mode or CFUN write is
-   sent; correct the serial settings manually if needed. A wrong cell never
-   triggers PDU dial/disconnect or host rebuild.
+   unproved/mismatching cells fail that attempt and continue polling. By default,
+   level 2/3 explains the manual checks and no radio configuration is written.
+   With `--auto-cell-lock --at-port ...`, the watcher performs the guarded radio
+   recovery below, then retries full verification on the next attempt. A wrong
+   cell never bypasses verification to dial a PDU or rebuild host networking.
 2. Connect a disconnected PDU, or reuse a valid connected one. A **suspended**
    connected static bearer on the expected APN triggers a guarded disconnect and
    redial. Host ownership, policy resources, IMEI/IMSI and serving cell must pass
@@ -402,9 +405,89 @@ Recovery proceeds as follows:
    into host reset/reconnect in that attempt. Resume healthy monitoring only after
    complete verification. The scripts do not restart ModemManager or the other UE.
 
+### Automatic cell lock and registration after radio failure
+
+Enable this option on the **laptop**, after copying the updated five-file set
+above and closing minicom. Stop old watchers before updating shared helpers.
+Use one terminal per UE, with the verified by-path port from section 1:
+
+```bash
+# Terminal 1: UE1 / FR1 — USB 4-4, recorded AT port ttyUSB2
+sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 3 --verbose 2 \
+  --auto-cell-lock --cell-lock-cooldown 30 \
+  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0
+```
+
+```bash
+# Terminal 2: UE2 / FR3 — USB 4-3, recorded AT port ttyUSB6
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 3 --verbose 2 \
+  --auto-cell-lock --cell-lock-cooldown 30 \
+  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
+```
+
+The option requires `--at-port`; it does not guess a tty number. Registration
+failure or missing/mismatching serving-cell evidence triggers radio recovery.
+Identity/SIM errors, ping failures and host route errors do not directly trigger
+AT configuration. The default remains read-only radio checking when this option
+is absent; `--at-port` alone still only enables the read-only cell fallback.
+
+Each eligible recovery does the following:
+
+1. Recheck this modem's IMEI, active SIM IMSI, active-bearer APN and dedicated
+   WWAN ownership. Check host resources under a short shared read lock. Reject
+   foreign resources, a wrong USB serial device or an occupied port.
+2. Exclusively open the AT port and verify `AT+CGSN` and `AT+CIMI` before any
+   configuration. Read the NR settings; restore `mode_pref=NR5G` and
+   `nr5g_disable_mode=2` only when different, verifying each readback. Read
+   `nr5g_band`; if n78 is excluded, set it to `78` and verify the readback.
+3. Read the saved lock, reapply this role's lock, and require an exact readback:
+
+   | Role | Lock command |
+   | --- | --- |
+   | UE1 / FR1 | `AT+QNWLOCK="common/5g",1,643680,30,78` |
+   | UE2 / FR3 | `AT+QNWLOCK="common/5g",2,639648,30,78` |
+
+4. Record `AT+QENG="servingcell"` and `AT+C5GREG?`, then restore serial settings
+   and close the port. Enable the modem if needed. If ModemManager still does
+   not report registered NR SA on `00101`, request registration using
+   `mmcli -m <current-selected-modem> --3gpp-register-in-operator=00101`.
+5. Mark the current attempt `FAIL`: applying a lock is not proof of connectivity.
+   On the next attempt, require the usual registration, exact serving cell,
+   PDU, current-IP routing, both pings and final checks before `SUCCESS`.
+
+The first radio failure can trigger recovery immediately. Subsequent radio
+recoveries have a **30-second minimum gap after the previous recovery ends**,
+including failed/rejected writes or registration requests. During that gap,
+normal checks/retries continue and can reconnect as soon as the radio is ready.
+`--cell-lock-cooldown` accepts positive seconds; for example `1` permits a fresh
+lock on each eligible failed attempt once a second has elapsed. Keeping `30`
+gives network selection time to settle and avoids repeated saved-setting writes.
+`--interval` still controls the delay after a completed attempt/check; it is not
+the timeout of AT or registration work. AT commands allow five seconds each;
+the registration request uses the normal 75-second external-command limit.
+
+Serial/registration work never holds the shared host-network lock. UE1 and UE2
+retain separate ownership and cooldown state. Healthy checks never write AT
+configuration. No CFUN reset or ModemManager restart is performed. Ctrl+C still
+closes the serial context and runs the selected UE's normal shutdown cleanup.
+A rejected write/readback leaves the attempt failed; earlier successful writes
+may already have taken effect and are recorded in `attempts.jsonl`.
+
+Lowering DU TX gain can leave too little downlink signal for cell acquisition
+or registration. Restoring a lock does not restore RF coverage. If registration
+continues to fail with the expected lock, restore adequate DU gain/coverage and
+check CU/DU/core status. No live recovery after a gain change has been validated
+for this new option; validation so far uses simulated modems and pseudo-terminals.
+
+The NR preference query/write formats and `nr5g_disable_mode=2` (disable NSA)
+come from the [Quectel RG50xQ/RM5xxQ AT manual](https://www.quectel.com/content/uploads/2024/05/Quectel_RG50xQRM5xxQ_Series_AT_Commands_Manual_V1.2.pdf).
+The lock readback format also matches the retained
+[UE2 operator evidence](evidence/2026-10-13_du2_registration/operator_at_readback.txt).
+The registration option is provided by [ModemManager's 3GPP CLI](https://github.com/linux-mobile-broadband/ModemManager/blob/main/cli/mmcli-modem-3gpp.c).
+
 ### Optional parameters
 
-`--at-port` uses the same owned-port, read-only serving-cell fallback described in
+Without `--auto-cell-lock`, `--at-port` uses the same owned-port, read-only serving-cell fallback described in
 [the one-shot guide](dual_ue_automation.md#serving-cell-mismatch-or-unavailable-getcellinfo).
 Use the option on a watcher as follows, replacing the serial link with this UE's
 verified AT port:
@@ -444,14 +527,20 @@ start/completion markers and elapsed times; `attempts.jsonl` records
 each attempt's UTC times, outcome, failed stage, current IP, ping output and
 forced-redial reason when applicable. `summary.json` is written on exit and
 records the last verified state **before shutdown** (not a post-exit measurement)
-and the nested `shutdown` completion/error. `attempts.jsonl` marks a cancelled
+and the nested `shutdown` completion/error. With automatic cell locking enabled,
+`attempts.jsonl` also records `radio_recovery`: the original radio error,
+commands/writes attempted, previous/verified lock, diagnostic QENG/C5GREG output,
+registration request and `applied` / `failed` / `cooldown` / `interrupted` result.
+`applied` means the radio settings were applied; only the full connection checks
+can produce connection `SUCCESS`. `attempts.jsonl` marks a cancelled
 in-progress attempt as `interrupted`. Logs accumulate
 for the invocation; retain the evidence you need and remove old run directories
 after stopping the watcher. Signal exit codes are 130 (Ctrl+C) / 143 (SIGTERM),
 after the selected-UE shutdown attempt. Cleanup failure remains visible in output
 and the summary; successful cleanup requires zero bearers and modem disabled.
 
-These watchers repair the PDU and laptop network. A running MPX client then follows
+These watchers repair the PDU and laptop network, and can restore radio settings
+with `--auto-cell-lock`. A running MPX client then follows
 host IP changes as described [below](#which-ip-bindings-change-and-how-mpx-follows-them).
 They do not start MPX or restart applications bound explicitly to an old IP.
 Offline simulated checks pass; **physical obstruction/recovery and MPTCP traffic

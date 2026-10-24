@@ -540,6 +540,11 @@ before accepting a matching NR SA cell. Serial termios settings are restored
 when the query ends. No lock, band, mode or CFUN command is sent automatically.
 Keep ModemManager running; do not interrupt the other UE to obtain an AT port.
 
+For automatic lock restoration and a PLMN registration request after radio
+failure, use the reconnect watcher's explicit
+[`--auto-cell-lock --at-port ...` option](dual_ue_laptop_reconnect_quick_start.md#automatic-cell-lock-and-registration-after-radio-failure).
+This one-shot launcher keeps its read-only AT fallback.
+
 ### Recover a dropped or stuck UE PDU
 
 The [laptop automatic reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md) covers
