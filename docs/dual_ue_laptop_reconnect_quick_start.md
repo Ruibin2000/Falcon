@@ -85,10 +85,32 @@ check/restore the selected role's lock through its AT port.
 
 ### Restore the lock when needed
 
-Open this UE's AT port in minicom; the full manual shows port selection for
+#### Open the AT port (UE1 or UE2)
+
+Open the AT port in the **same laptop terminal** where this UE's `$MODEM` was
+selected above. If its launcher/watcher is running, stop it with Ctrl+C, wait for
+the shutdown result, then repeat modem selection before opening the serial port.
+Keep ModemManager running.
+
+Read the selected modem's physical USB device/ports, match them to the serial
+links, and enter its AT-port path below. Prefer `/dev/serial/by-path/` links;
+`ttyUSB` numbers can change after reconnecting a modem.
+
+```bash
+mmcli -m "$MODEM"
+ls -l /dev/serial/by-path/
+read -r -p 'AT port for this UE (/dev/serial/by-path/...): ' AT_PORT
+sudo minicom -D "$AT_PORT" -b 115200
+```
+
+#### Confirm the port and send the lock commands
+
+Inside minicom, send `AT+CGSN` first and confirm IMEI `863305041978437` for
+UE1 / FR1 or `863305041980706` for UE2 / FR3. Stop on a mismatch and select the
+correct port. Then send one command at a time, using **only this role's block**
+below. Further port-selection examples are in the manual for
 [UE1](dual_ue_laptop_quick_commands.md#12-verify-the-at-port-and-restore-the-du1-lock)
 and [UE2](dual_ue_laptop_quick_commands.md#22-verify-the-at-port-and-restore-the-du2-lock).
-Send one command at a time, using **only this role's block**.
 
 **UE1 / FR1:**
 
