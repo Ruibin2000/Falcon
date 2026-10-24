@@ -285,6 +285,8 @@ class Recovery(connect.Connection):
     def repair_radio(self):
         evidence = self.result["radio_recovery"]
         info, _ = self.active()  # Includes fresh IMEI/SIM and foreign-APN guards.
+        connect.require(info.get("modem.generic.state") not in ("connecting", "disconnecting"),
+                        "PDU operation is still in progress; continue checking modem/bearer state before radio recovery")
         net_ports = connect.ports(info)
         connect.require(len(net_ports) == 1, "Expected one owned WWAN for automatic cell lock")
         interface = next(iter(net_ports))
@@ -408,6 +410,8 @@ class Recovery(connect.Connection):
 
     def recover_stuck(self):
         info, active = self.active()
+        connect.require(info.get("modem.generic.state") not in ("connecting", "disconnecting"),
+                        "PDU operation is still in progress; continue checking modem/bearer state before reconnecting")
         if not active:
             return
         path, details = active[0]
@@ -754,6 +758,7 @@ class Watcher:
                            verbose=self.args.verbose, signal=self.exit_signal, shutdown=shutdown,
                            auto_cell_lock=self.args.auto_cell_lock, cell_lock_cooldown=self.args.cell_lock_cooldown,
                            registration_request_timeout=self.args.registration_request_timeout,
+                           pdu_disconnect_timeout=connect.PDU_DISCONNECT_TIMEOUT_SECONDS,
                            registration_grace=self.args.registration_grace, last_registration=self.last_registration,
                            startup_radio=self.startup_radio,
                            registration_cleanup=registration_cleanup,

@@ -9,6 +9,10 @@ IPv4 PDU connection, WWAN/policy routing and ping. After success the launcher
 **stays in the terminal, blocking until Ctrl+C**. It performs no further status
 queries or ping during that wait. For ongoing monitoring/recovery use the
 [laptop automatic reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md).
+**Use `connect_ue1.sh` / `connect_ue2.sh` for this guide.** The separate
+`reconnect_ue*.sh` entry scripts run continuous recovery and include their own
+AT port/automatic cell-lock options. Those options are not added to the one-shot
+entry scripts. Both modes use the same per-UE lock to reject simultaneous ownership.
 
 ## 1. Before every start: check the cell lock
 
@@ -543,15 +547,19 @@ when the query ends. No lock, band, mode or CFUN command is sent automatically.
 Keep ModemManager running; do not interrupt the other UE to obtain an AT port.
 
 For automatic lock restoration and a PLMN registration request after radio
-failure, use the reconnect watcher's explicit
+failure, use the separate reconnect watcher, whose role entry scripts include the
 [`--auto-cell-lock --at-port ...` option](dual_ue_laptop_reconnect_quick_start.md#automatic-cell-lock-and-registration-after-radio-failure).
 This one-shot launcher keeps its read-only AT fallback.
-With that option, the watcher immediately verifies/restores the serial cell lock
+With those built-in options, the watcher immediately verifies/restores the serial cell lock
 and checks/requests registration on startup. Later radio failures get a 10-second
 observation window before forced recovery. Any required background registration
 client uses a default 5-second timeout.
 Its `--registration-grace` and `--registration-request-timeout` options belong
 to the reconnect scripts; the one-shot launcher's passive-wait behavior is unchanged.
+The shared launcher's PDU-disconnect requests, including Ctrl+C cleanup, now
+use a built-in 2-second mmcli client timeout and a 3-second process watchdog.
+Success returns immediately. A timeout remains a failure and does not imply
+that the modem's backend disconnect has completed; incomplete shutdown is reported.
 
 ### Recover a dropped or stuck UE PDU
 

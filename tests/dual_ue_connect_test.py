@@ -1121,6 +1121,49 @@ class SerialQueryTest(unittest.TestCase):
                 CONNECT.verify_at_port("/dev/ttyUSB987", {"wwan0"})
 
 
+class PduDisconnectTimeoutTest(unittest.TestCase):
+    def test_disconnect_uses_two_second_client_limit_and_three_second_watchdog(self):
+        command = ("mmcli", "-m", "owned-modem", "--simple-disconnect")
+        output = io.StringIO()
+        completed = subprocess.CompletedProcess(command, 0, stdout="disconnected\n", stderr="")
+        with patch.object(CONNECT.subprocess, "run", return_value=completed) as run, \
+                patch.object(CONNECT.time, "monotonic", side_effect=[10, 10.4]), \
+                contextlib.redirect_stdout(output):
+            CONNECT.change(*command)
+        self.assertEqual(run.call_args.args[0], (*command, "--timeout=2"))
+        self.assertEqual(run.call_args.kwargs["timeout"], 3)
+        self.assertTrue(run.call_args.kwargs["start_new_session"])
+        self.assertIn("elapsed=0.400s", output.getvalue())
+
+    def test_dbus_timeout_preserves_the_error_and_elapsed_time(self):
+        command = ("mmcli", "-m", "owned-modem", "--simple-disconnect")
+        completed = subprocess.CompletedProcess(command, 1, stdout="", stderr="Timeout was reached\n")
+        output, error = io.StringIO(), io.StringIO()
+        with patch.object(CONNECT.subprocess, "run", return_value=completed), \
+                contextlib.redirect_stdout(output), contextlib.redirect_stderr(error), \
+                self.assertRaises(subprocess.CalledProcessError):
+            CONNECT.change(*command)
+        self.assertIn("Timeout was reached", error.getvalue())
+        self.assertIn("PDU disconnect client elapsed=", output.getvalue())
+
+    def test_process_watchdog_failure_is_not_reported_as_success(self):
+        output = io.StringIO()
+        with patch.object(CONNECT.subprocess, "run", side_effect=subprocess.TimeoutExpired("mmcli", 3)), \
+                contextlib.redirect_stdout(output), self.assertRaises(subprocess.TimeoutExpired):
+            CONNECT.change("mmcli", "-m", "owned-modem", "--simple-disconnect")
+        self.assertIn("process watchdog=3s", output.getvalue())
+
+    def test_other_commands_keep_their_existing_timeout(self):
+        for command in (("mmcli", "-m", "owned-modem", "--enable"),
+                        ("ip", "link", "set", "dev", "owned-wwan", "up")):
+            with self.subTest(command=command), \
+                    patch.object(CONNECT.subprocess, "run", return_value=subprocess.CompletedProcess(command, 0)) as run, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                CONNECT.change(*command)
+                self.assertEqual(run.call_args.args[0], command)
+                self.assertEqual(run.call_args.kwargs["timeout"], 75)
+
+
 class StopSignalTest(unittest.TestCase):
     def test_cleanup_children_survive_repeated_foreground_group_stop_signals(self):
         # The harness owns a separate session, so this test never signals the

@@ -36,6 +36,7 @@ ROLES = {
 }
 # FR1/FR3 are the demo path labels; both current radio configurations use n78.
 NETWORK_LOCK = "/run/lock/falcon-ue-connect.lock"
+PDU_DISCONNECT_TIMEOUT_SECONDS = 2
 
 
 class CellError(ValueError):
@@ -143,9 +144,22 @@ def read(*command):
 
 
 def change(*command):
+    process_timeout = 75
+    disconnect = command[:1] == ("mmcli",) and "--simple-disconnect" in command
+    if disconnect:
+        # Apply the same short client limit to recovery and Ctrl+C cleanup.
+        # A D-Bus client timeout does not cancel the modem's backend operation.
+        command = (*command, f"--timeout={PDU_DISCONNECT_TIMEOUT_SECONDS}")
+        process_timeout = PDU_DISCONNECT_TIMEOUT_SECONDS + 1
     print("+ " + shlex.join(command), flush=True)
-    completed = subprocess.run(command, text=True, capture_output=True, timeout=75,
-                               start_new_session=True, env=dict(os.environ, LC_ALL="C"))
+    started = time.monotonic()
+    try:
+        completed = subprocess.run(command, text=True, capture_output=True, timeout=process_timeout,
+                                   start_new_session=True, env=dict(os.environ, LC_ALL="C"))
+    finally:
+        if disconnect:
+            print(f"PDU disconnect client elapsed={time.monotonic() - started:.3f}s "
+                  f"(client limit={PDU_DISCONNECT_TIMEOUT_SECONDS}s; process watchdog={process_timeout}s)", flush=True)
     if completed.stdout:
         print(completed.stdout, end="" if completed.stdout.endswith("\n") else "\n")
     if completed.stderr:

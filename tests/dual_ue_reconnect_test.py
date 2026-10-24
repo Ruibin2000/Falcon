@@ -266,6 +266,58 @@ class ReconnectTest(unittest.TestCase):
         self.assertEqual(self.network.addresses[0]["addr_info"], before)
         self.assertIsNotNone(watcher.last_redial)
 
+    def test_timed_out_disconnect_checks_state_then_recovers_without_duplicate_disconnect(self):
+        self.connect(1)
+        self.connect(2)
+        peer = self.network.survivor(1)
+        before = list(self.network.addresses[0]["addr_info"])
+        path = next(iter(self.network.modems))
+        self.network.settings[1]["suspended"] = "yes"
+        self.network.changes.clear()
+        watcher = self.watcher()
+        original = self.network.change
+        def change(*command):
+            if command[-1] == "--simple-disconnect":
+                self.network.changes.append(command)
+                self.network.modems[path] = (*self.network.modems[path][:2], "disconnecting")
+                raise subprocess.CalledProcessError(1, command, stderr="Timeout was reached")
+            return original(*command)
+        with patch.object(CONNECT, "change", change):
+            watcher.attempt()
+            self.assertFalse(watcher.healthy)
+            self.assertEqual(self.network.addresses[0]["addr_info"], before)
+            watcher.attempt()
+            self.assertFalse(watcher.healthy)
+            self.assertEqual(len(self.disconnects()), 1)
+            self.assertEqual(len(self.network.changes), 1)
+            self.network.modems[path] = (*self.network.modems[path][:2], "registered")
+            self.network.bearers[path] = {bearer: "no" for bearer in self.network.bearers[path]}
+            self.network.settings[1].update(suspended="no", source="10.45.0.63")
+            watcher.attempt()
+        self.assertTrue(watcher.healthy)
+        self.assertEqual(len(self.disconnects()), 1)
+        self.assertTrue(any("10.45.0.63" in command for command in self.network.pings))
+        self.assertEqual(self.network.survivor(1), peer)
+
+    def test_transitioning_pdu_is_not_reconnected_or_radio_reconfigured(self):
+        watcher = self.watcher()
+        session = watcher.session(recovery=True)
+        session.discover()
+        path = session.modem
+        self.network.changes.clear()
+        self.network.bearers[path] = {bearer: "no" for bearer in self.network.bearers[path]}
+        for state in ("connecting", "disconnecting"):
+            with self.subTest(state=state):
+                self.network.modems[path] = (*self.network.modems[path][:2], state)
+                with self.assertRaisesRegex(ValueError, "still in progress"):
+                    session.bearer(connect=True)
+                session.result["radio_recovery"] = {}
+                with patch.object(WATCH, "restore_cell_lock") as lock, \
+                        self.assertRaisesRegex(ValueError, "still in progress"):
+                    session.repair_radio()
+                lock.assert_not_called()
+        self.assertFalse(self.network.changes)
+
     def test_changing_bearer_counters_do_not_prevent_suspended_recovery(self):
         self.connect()
         self.network.settings[1]["suspended"] = "yes"

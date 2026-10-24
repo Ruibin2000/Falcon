@@ -6,6 +6,10 @@ Run these watchers on the **UE laptop** during an experiment. Each one prepares
 its selected UE, verifies connectivity, then keeps monitoring and recovering that
 UE until Ctrl+C shuts it down. For one startup/self-check followed by a passive,
 low-resource wait until Ctrl+C (no ongoing probes), use [laptop one-shot startup and self-check](dual_ue_automation.md).
+This guide uses **`reconnect_ue1.sh` / `reconnect_ue2.sh`**. The separate
+**`connect_ue1.sh` / `connect_ue2.sh`** entry points perform one-shot startup
+and a passive wait. Both modes share a per-UE lock, so only one can own a given
+UE at a time.
 
 <a id="before-starting"></a>
 
@@ -16,8 +20,8 @@ Start Spark's core, CU and both DUs using
 on the laptop and close minicom before starting a watcher.
 
 **No manual modem selection, serving-cell query or AT lock sequence is required
-before each start.** The startup commands below enable `--auto-cell-lock` and
-supply each UE's AT port. The script selects the modem by IMEI, verifies its SIM,
+before each start.** Each `reconnect_ue*.sh` entry script enables
+`--auto-cell-lock` and supplies its UE's AT port internally. The script selects the modem by IMEI, verifies its SIM,
 immediately verifies/restores its serial cell lock, enables it and requests
 registration if needed, then continues through PDU, network and ping verification.
 Later radio failures follow the observation and recovery procedure below.
@@ -27,13 +31,14 @@ Later radio failures follow the observation and recovery procedure below.
 The laptop's **2026-10-24 operator-provided serial listing** gives these ports
 for the recorded UE1 USB `4-4` / UE2 USB `4-3` wiring:
 
-| Role | `--at-port` (preferred by-path) | Recorded tty device |
+| Role | Built-in AT port (by-path) | Recorded tty device |
 | --- | --- | --- |
 | UE1 / FR1 | `/dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0` | `/dev/ttyUSB2` |
 | UE2 / FR3 | `/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0` | `/dev/ttyUSB6` |
 
 The by-path values follow the physical USB sockets. If the wiring changes,
-update the selected role's `--at-port` using its current physical USB mapping.
+update `UE_AT_PORT` in the selected `reconnect_ue*.sh` script using its current
+physical USB mapping, or override it with `--at-port` on that invocation.
 `ttyUSB` numbers can change even when the sockets stay the same. The script
 verifies USB ownership and serial IMEI/IMSI before writing any configuration.
 
@@ -122,23 +127,26 @@ section 1. No manual AT commands are needed before launching them:
 
 ```bash
 # Terminal 1: UE1 / FR1
-sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 1 \
-  --registration-grace 10 --registration-request-timeout 5 \
-  --auto-cell-lock --cell-lock-cooldown 30 \
-  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0
+sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 2
 ```
 
 ```bash
 # Terminal 2: UE2 / FR3
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 1 \
-  --registration-grace 10 --registration-request-timeout 5 \
-  --auto-cell-lock --cell-lock-cooldown 30 \
-  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 2
 ```
+
+The command line shows only the retry interval and output level. The role entry
+scripts supply the AT port and automatic cell locking; neither needs repeating
+in the command. The Python defaults remain: retry interval 1 second, verbosity 1,
+registration-client timeout 5 seconds, PDU-disconnect client timeout 2 seconds,
+radio grace 10 seconds and recovery cooldown 30 seconds. Add `--verbose 2` for
+step output (as above), or use `--verbose 1` for minimal output and `--verbose 3`
+for full details. No timeout option is needed for
+the short PDU-disconnect limit.
 
 ### Initial serial cell lock and registration
 
-With `--auto-cell-lock --at-port ...`, **each new watcher invocation immediately
+With the entry scripts' built-in `--auto-cell-lock --at-port ...`, **each new watcher invocation immediately
 prepares its selected UE's radio during step 2**, after modem/SIM discovery and
 before normal registration/PDU checks. It does not wait for the 10-second grace
 window on this initial preparation.
@@ -162,8 +170,10 @@ produces connection `SUCCESS`.
 
 At `--verbose 2`, `Startup radio ...` and `Startup radio [OK] ...` describe this
 preparation; the latter is not a connection-success result. Level 1 still shows
-only attempt numbers/results. Without `--auto-cell-lock`, radio checks retain
-their read-only behavior. The one-shot `connect_ue*.sh` scripts are unchanged.
+only attempt numbers/results. Direct calls to `reconnect_ue.py` without
+`--auto-cell-lock` retain read-only radio checks; the `reconnect_ue*.sh` entry
+scripts always enable automatic cell locking. The separate one-shot
+`connect_ue*.sh` entry scripts retain their existing behavior.
 
 ### Independent UE operation and host network locking
 
@@ -209,8 +219,12 @@ built-in sleep (`--registration-timeout 0`). An explicit nonzero value adds that
 many seconds of state polling inside each attempt and will slow the loop.
 Other modem queries, initial enable, AT operations, PDU setup and ping still
 have their own execution time; the one-second interval is not a hard deadline
-for the complete round. Ordinary external commands retain a 75-second process
-limit. A background registration child instead uses a **5-second mmcli D-Bus
+for the complete round. Most external commands retain a 75-second process
+limit. **PDU disconnects in the launchers/watchers use `--timeout=2` and a
+3-second process watchdog**, including recovery and Ctrl+C shutdown. The
+disconnect request still runs synchronously, but no longer uses the previous
+long client wait. The detailed log records `PDU disconnect client elapsed=...`
+on success or failure. A background registration child instead uses a **5-second mmcli D-Bus
 wait** by default and a **10-second process watchdog** (client wait plus 5).
 `--registration-request-timeout N` accepts 1..70 seconds and changes both limits.
 An explicit value overrides the default: replace `--registration-request-timeout 20`
@@ -250,6 +264,7 @@ client prevents another lock/registration recovery for that UE.
 | `--registration-grace` | `10` seconds | Observe later radio failures before forced recovery; startup prepares the radio immediately; `0` skips this window. |
 | `--registration-timeout` | `0` seconds | Extra state polling inside each attempt; default is one snapshot. |
 | `--registration-request-timeout` | `5` seconds | Background mmcli D-Bus wait; process watchdog adds 5 seconds. |
+| PDU disconnect, built in | `2` seconds | mmcli client timeout; 3-second process watchdog. No extra launch argument. |
 | `--cell-lock-cooldown` | `30` seconds | Minimum gap before another radio recovery after the previous preparation/request finishes. |
 
 A client timeout does not prove that ModemManager stopped its backend task.
@@ -258,6 +273,13 @@ After a timeout/busy response the watcher conservatively observes until at least
 cooldown also applies. These gates only suppress repeated recovery requests.
 Connection checks continue, and a verified connection can succeed during either
 window. No CFUN reset or global ModemManager restart is introduced.
+
+A timed-out PDU-disconnect client likewise does not prove that the modem
+finished disconnecting. The watcher continues checking modem/bearer state;
+`connecting` or `disconnecting` prevents another PDU connect/disconnect or radio
+reconfiguration. It does not clear the host path or start a replacement PDU
+after a failed disconnect in that attempt. Recovery resumes once the current
+state is suitable, with the usual ownership checks and cooldowns.
 
 ### Output levels
 
@@ -290,12 +312,8 @@ UE2 / FR3 attempt 3 ... SUCCESS
 For steps or full output, or a different retry delay:
 
 ```bash
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 2 --verbose 2 \
-  --auto-cell-lock --cell-lock-cooldown 30 \
-  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 0.5 --verbose 3 \
-  --auto-cell-lock --cell-lock-cooldown 30 \
-  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 2 --verbose 2
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 0.5 --verbose 3
 ```
 
 ### Stop or switch to manual operations
@@ -334,9 +352,8 @@ Recovery proceeds as follows:
 
 1. Verify the selected modem/SIM and current serving cell; rediscover by IMEI
    when its object disappears/is replaced or its WWAN mapping changes. Missing registration or
-   unproved/mismatching cells fail that attempt and continue polling. By default,
-   level 2/3 explains the manual checks and no radio configuration is written.
-   With `--auto-cell-lock --at-port ...`, the watcher performs the guarded radio
+   unproved/mismatching cells fail that attempt and continue polling.
+   The entry scripts supply `--auto-cell-lock --at-port ...`, so the watcher performs the guarded radio
    recovery below, then retries full verification on the next attempt. A wrong
    cell never bypasses verification to dial a PDU or rebuild host networking.
 2. Connect a disconnected PDU, or reuse a valid connected one. A **suspended**
@@ -363,8 +380,9 @@ Recovery proceeds as follows:
 
 ### Automatic cell lock and registration after radio failure
 
-The [startup commands above](#start-the-watchers) enable `--auto-cell-lock`
-for each UE using its by-path AT port. Copy the complete updated five-file set
+The entry scripts used by the [startup commands above](#start-the-watchers)
+enable `--auto-cell-lock` for each UE using its built-in by-path AT port.
+Copy the complete updated five-file set
 before starting; stop old watchers before updating shared helpers. The first
 attempt immediately performs the guarded serial lock/registration preparation
 described [above](#initial-serial-cell-lock-and-registration). Later persistent
@@ -374,8 +392,9 @@ lock step is unnecessary.
 The option requires `--at-port`; it does not guess a tty number. Registration
 failure or missing/mismatching serving-cell evidence triggers radio recovery.
 Identity/SIM errors, ping failures and host route errors do not directly trigger
-AT configuration. The default remains read-only radio checking when this option
-is absent; `--at-port` alone still only enables the read-only cell fallback.
+AT configuration. A direct `reconnect_ue.py` call without `--auto-cell-lock`
+remains read-only for radio settings; `--at-port` alone only enables the
+read-only cell fallback. The role-specific shell entry scripts supply both options.
 
 The initial preparation runs immediately. For later radio failures, after the
 grace window and with no pending registration client, backend observation or
@@ -553,13 +572,14 @@ it is not acceptance evidence for the deferred/background registration flow.
 
 ### Optional parameters
 
-Without `--auto-cell-lock`, `--at-port` uses the same owned-port, read-only serving-cell fallback described in
+For read-only radio diagnosis, invoke the Python helper directly, without
+`--auto-cell-lock`. Its `--at-port` uses the same owned-port, read-only serving-cell fallback described in
 [the one-shot guide](dual_ue_automation.md#serving-cell-mismatch-or-unavailable-getcellinfo).
 Use the option on a watcher as follows, replacing the serial link with this UE's
 verified AT port:
 
 ```bash
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --verbose 2 \
+sudo python3 -B ~/falcon-ue-connect/reconnect_ue.py --ue 2 --verbose 2 \
   --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
 ```
 
@@ -572,13 +592,9 @@ Install `minicom` separately if needed for that diagnosis. Optional bounded oper
 
 ```bash
 # Retry until the first successful verification, then exit.
-sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --once --verbose 2 \
-  --auto-cell-lock --cell-lock-cooldown 30 \
-  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0
+sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --once --interval 1 --verbose 2
 # At most five actual connection attempts; exit 1 if the last attempt failed.
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --once --max-attempts 5 --verbose 3 \
-  --auto-cell-lock --cell-lock-cooldown 30 \
-  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --once --max-attempts 5 --interval 1 --verbose 3
 ```
 
 The attempt counter increases throughout a watcher invocation, including recovery
@@ -606,6 +622,7 @@ elapsed time, raw result/error and private stdout/stderr file paths. An attempt'
 A failed client request can coexist with successful connection checks if the
 modem recovers independently. `summary.json` is written on exit and records the
 last registration event, initial `startup_radio` preparation outcome, and the
+PDU-disconnect client timeout, along with the
 last verified state **before shutdown** (not a post-exit measurement)
 and the nested `shutdown` completion/error. With automatic cell locking enabled,
 `attempts.jsonl` also records `radio_recovery`: the `startup` / `radio_failure`
