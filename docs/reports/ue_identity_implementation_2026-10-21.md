@@ -131,7 +131,7 @@ reattachment, source loss/restart and performance checks. Plan 4's live gates
 remain unchecked. Plan 2 and actual MPX/MPTCP integration remain deferred.
 
 Build, replay, live launch, output schema and rollback commands are in the
-[standalone runbook](../ue_identity_xapp.md).
+[standalone runbook](../development/ue_identity_xapp.md).
 
 ## Live continuation after Core startup
 

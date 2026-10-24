@@ -1,0 +1,231 @@
+{
+  "audit_saved_at": "2026-10-24T00:53:30.697686-04:00",
+  "scope": "Read-only configuration/source/runtime inspection; offline recovery tests; archived experiment replay",
+  "source_revisions": {
+    "/home/nyu/Desktop/MPX/mpx-transport": "b75b9f7655e82a3b9728eb314d06829f046c1fec",
+    "/home/nyu/Desktop/MPX/falcon-app-template": "765648255415b734aa0bf77b186bc3e715272766"
+  },
+  "ue_configuration": {
+    "source": "/home/nyu/Desktop/MPX/mpx-transport/configs/testbed/ue.yaml",
+    "uid": "falcon-ue-01",
+    "links": [
+      {
+        "name": "link-1",
+        "match": {
+          "subnet": "10.45.0.0/16"
+        },
+        "label": "FR1",
+        "du": "1",
+        "data_role": "backup"
+      },
+      {
+        "name": "link-2",
+        "match": {
+          "subnet": "10.46.0.0/16"
+        },
+        "label": "FR3",
+        "du": "2",
+        "data_role": "primary"
+      }
+    ],
+    "servers": [
+      {
+        "uid": "falcon-server-01",
+        "data_port": 9001,
+        "control_port": 9002,
+        "paths": [
+          {
+            "link": "link-1",
+            "addr": "10.45.0.1"
+          },
+          {
+            "link": "link-2",
+            "addr": "10.46.0.1"
+          }
+        ]
+      }
+    ],
+    "mptcp": {
+      "pm": "userspace",
+      "max_subflows": 8
+    },
+    "session": {
+      "reconnect_backoff_ms": [
+        100,
+        2000
+      ]
+    },
+    "stuck_rto_retrans": 2
+  },
+  "server_configuration": {
+    "source": "/home/nyu/Desktop/MPX/falcon-app-template/out/demo/mpxd.yaml",
+    "uid": "falcon-server-01",
+    "listen": {
+      "addrs": [
+        "10.45.0.1",
+        "10.46.0.1"
+      ],
+      "data_port": 9001,
+      "control_port": 9002
+    },
+    "mptcp": {
+      "pm": "kernel"
+    }
+  },
+  "dynamic_address_code": {
+    "monitor": "Client route/link/IPv4 netlink notifications; 100 ms debounce, 5 s fallback rescan",
+    "selection": "Re-resolve pool matches against current host addresses",
+    "control": "Rebind affected client control socket; server learns remote address",
+    "data": "Client userspace PM reconciles current address pairs; creates/removes subflows",
+    "subflow_create_retry_seconds": 3
+  },
+  "historical_address_change": {
+    "source": "docs/evidence/2026-10-23_mptcp_report/session-metrics.jsonl.gz",
+    "record_selection": "Raw retained metrics, including post-deregistration records; first recovery evidence occurs before deregistration",
+    "server_log_source": "/home/nyu/Desktop/MPX/falcon-app-template/out/demo/mpxd.log",
+    "server_log_line": "19:30:26.906 [INFO ] path 1 (link-2): peer moved 10.46.0.3:54299 -> 10.46.0.4:40243",
+    "sessions": [
+      "3d293a88328ef4b45294ee09cd7d3d28"
+    ],
+    "addresses": {
+      "10.46.0.3": {
+        "first_seen": "2026-10-23T19:21:17.249147-04:00",
+        "last_seen": "2026-10-23T19:30:26.813714-04:00",
+        "metrics": 5487,
+        "first_established": "2026-10-23T19:21:22.355669-04:00",
+        "first_positive_receive": "2026-10-23T19:21:23.557407-04:00",
+        "max_received_bytes": 183741581,
+        "established_metrics": 1894
+      },
+      "10.46.0.4": {
+        "first_seen": "2026-10-23T19:30:26.913851-04:00",
+        "last_seen": "2026-10-23T19:37:20.847882-04:00",
+        "metrics": 4133,
+        "first_established": "2026-10-23T19:30:32.221660-04:00",
+        "first_positive_receive": "2026-10-23T19:30:32.622597-04:00",
+        "max_received_bytes": 184706997,
+        "established_metrics": 4072
+      }
+    }
+  },
+  "spark_runtime": {
+    "source": "Local host read-only ps/ss/ip/sysctl inspection",
+    "mpxd_running": false,
+    "tcp_9001_listening": false,
+    "mptcp_enabled": 1,
+    "path_manager": "kernel",
+    "pm_type": 0,
+    "endpoints_observed": [
+      "10.20.44.26 id 1 subflow dev wlP9s9",
+      "10.45.0.1 id 2 rawflags 10",
+      "10.46.0.1 id 3 rawflags 10"
+    ]
+  },
+  "laptop_runtime": {
+    "source": "Operator-provided ps/sysctl/ip output in this conversation",
+    "mpxd_running": false,
+    "mptcp_enabled": 1,
+    "path_manager": "kernel",
+    "pm_type": 0,
+    "endpoints_observed": [
+      "10.20.73.246 id 1 subflow dev wlp0s20f3"
+    ],
+    "active_mpx_address_tracking": false,
+    "expected_client_pm_when_testbed_mpxd_runs": "userspace (legacy pm_type 1)"
+  },
+  "recovery_procedure": {
+    "trigger": "Explicit operator action after radio/server checks",
+    "disconnect": "reset_ue_network.py --ue ROLE --disconnect",
+    "reconnect": "connect_ueROLE.sh --verbose --registration-timeout 90",
+    "preserves": [
+      "other UE",
+      "management Wi-Fi",
+      "independent destination guard"
+    ],
+    "modem_mutation_performed_during_audit": false
+  },
+  "validation": {
+    "falcon_dual_ue_tests": {
+      "result": "Passed",
+      "tests": 107
+    },
+    "mpx_config_tests": {
+      "result": "Passed",
+      "cases": 27,
+      "assertions": 159
+    },
+    "mpx_path_manager_tests": {
+      "result": "Passed",
+      "cases": 8,
+      "assertions": 24
+    },
+    "new_physical_modem_recovery": "Not run",
+    "current_live_mpx_recovery": "Not run; both daemons were stopped at inspection"
+  },
+  "source_files": [
+    {
+      "path": "/home/nyu/Desktop/MPX/mpx-transport/configs/testbed/ue.yaml",
+      "sha256": "37014b7156f12f3e4e8074b79e84b874119079b899ba1b062c41be89ffeecf92"
+    },
+    {
+      "path": "/home/nyu/Desktop/MPX/mpx-transport/configs/testbed/server.yaml",
+      "sha256": "bff7aadfed74d82dd482de3b4f8175459827bfd0971e9875081e0b1b2ac51d3c"
+    },
+    {
+      "path": "/home/nyu/Desktop/MPX/mpx-transport/src/core/link_monitor.cpp",
+      "sha256": "8bd1e56d6e56f773f4d9bb373d9e15056deb101c6d11c194524c7b8c649c9b57"
+    },
+    {
+      "path": "/home/nyu/Desktop/MPX/mpx-transport/src/core/session.cpp",
+      "sha256": "2eae85ccde4e9715aec9b0d01d3e2ab5a7a583b138a1b62d077ba86a28c2244c"
+    },
+    {
+      "path": "/home/nyu/Desktop/MPX/mpx-transport/src/core/config.cpp",
+      "sha256": "da91ce3b3d3391286292aef4f862d1ee7ec3eef1997173d2259492a0280d1647"
+    },
+    {
+      "path": "/home/nyu/Desktop/MPX/mpx-transport/src/pathmgr/path_manager.cpp",
+      "sha256": "e92f9ea30e8a624c85257bf2422f9bfa63938bcec3e612d7d4a75e4a443b6596"
+    },
+    {
+      "path": "/home/nyu/Desktop/MPX/mpx-transport/src/transport/mptcp/mptcp_transport.cpp",
+      "sha256": "d2da93de6271870094d10824b29153de237eb1236b1024a708d8360e41472732"
+    },
+    {
+      "path": "/home/nyu/Desktop/MPX/falcon-app-template/demo/ue.sh",
+      "sha256": "0da9a7a47ae700d11b905d2bf4dda0d163bcbf199ff62ff577cf58460d1bcc1d"
+    },
+    {
+      "path": "/home/nyu/Desktop/MPX/falcon-app-template/demo/server.sh",
+      "sha256": "bd54b066315fb0d3c0819d6aae453a949a23aa94e503fb9a4b01551e37855f97"
+    },
+    {
+      "path": "/home/nyu/Desktop/MPX/falcon-app-template/configs/forward_ue.yaml",
+      "sha256": "bf5e56192ab665688679520dfcc1478dc9716bc0bbbeeac1b5fa27ef19d376d6"
+    },
+    {
+      "path": "/home/nyu/Desktop/MPX/falcon-app-template/out/demo/mpxd.yaml",
+      "sha256": "c07c8e9d733817b8affb2f0664153d0f3328c7bfc45d7134d61bc9099b5b7da2"
+    },
+    {
+      "path": "/home/nyu/Desktop/MPX/falcon-app-template/out/demo/forward_server.yaml",
+      "sha256": "297a860b9714bf78c4ca1b46e0dcae9d6a3fdf1282708373bd7d588b5acf8500"
+    },
+    {
+      "path": "/home/nyu/Desktop/MPX/falcon-app-template/out/demo/mpxd.log",
+      "sha256": "dfef119c2c455dedf61eddb3aeb66397ac4d1f53b688d091fa3a1e2bc4db4f9a"
+    },
+    {
+      "path": "/home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/connect_ue.py",
+      "sha256": "6ea997ba7b3b5fc081ee51c02b838b2a34b9f0c0fd80fd72353a61115ca08e1b"
+    },
+    {
+      "path": "/home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/reset_ue_network.py",
+      "sha256": "1fe3737761ffcdebf4f4288acc0e29fc1414a9414e41ae0926a30d04c8559b4d"
+    },
+    {
+      "path": "/home/nyu/Desktop/Falcon_repo/Falcon/docs/evidence/2026-10-23_mptcp_report/session-metrics.jsonl.gz",
+      "sha256": "b483f990984c336e718e38339b44f5cd923f70f46cd7af2168d18fc0262849af"
+    }
+  ]
+}

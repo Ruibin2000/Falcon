@@ -2,7 +2,7 @@
 
 Developer: Ruibin Chen. Implementation started on October 21, 2026 on both
 repositories' `Dual-UE` branches. This is the first implementation milestone of
-[Plan 4](../plans/cu-ue-ip-e2-binding.md). Real single/dual-UE observational
+[Plan 4](../../plans/cu-ue-ip-e2-binding.md). Real single/dual-UE observational
 association and uplink passed; strict DU/lifecycle and recovery gates remain open.
 
 The new application combines CU-CP identity-bearing KPM, existing DU base5 KPM,
@@ -91,7 +91,7 @@ math). Defaults are `/home/nyu/flexric` and its `build-ocudu` tree. Override wit
 
 The pinned KPM plugin rejects valid AMF UE IDs at or above `2^39`: asn1c stores
 these positive 40-bit integers with an extra zero sign octet. The retained
-[minimal decoder patch](../patches/flexric/ue_identity_amf_40bit.patch) fixes the
+[minimal decoder patch](../../patches/flexric/ue_identity_amf_40bit.patch) fixes the
 size check and verifies conversion. `build_plugin.py` compiles that one source
 and relinks an isolated plugin using the original CMake objects. It preserves
 the existing timestamp conversion objects and never writes the FlexRIC tree or
@@ -252,7 +252,7 @@ outside E2 callbacks. Missing KPM values remain `no_value`, measured zero
 remains `0`, and incomplete-flag absence is distinct from false. Collection
 time is the KPM report header, not a reconstructed per-sample timestamp.
 
-The [actual live TXT trial](evidence/2026-10-21_ue_identity_live/10_single_ue1_txt_iperf/bindings.txt)
+The [actual live TXT trial](../evidence/2026-10-21_ue_identity_live/10_single_ue1_txt_iperf/bindings.txt)
 contains 118 records, with 117 consecutive observed matches during a UE1
 iperf test. Its first record remains unresolved while waiting for CU identity.
 To inspect a completed run using standard Ubuntu tools:
@@ -367,7 +367,7 @@ without any verified history can still have unknown IP: real-time output cannot
 recover identity information that has not arrived. Using `--fresh-only`
 disables history, including when the local JSON enables it.
 
-The [independent-link regression](evidence/2026-10-21_ue_identity_live/15_independent_links_replay/comparison.json)
+The [independent-link regression](../evidence/2026-10-21_ue_identity_live/15_independent_links_replay/comparison.json)
 checks the previous real 637-row trace: 581 original bindings remain unchanged,
 29 UE1 rows now match using fresh own CU/Core inputs and their established
 DU/F1 scope, and 27 rows lack an initial established scope or CU identity.
@@ -375,7 +375,7 @@ Both fresh-only and last-known give 610 matched, 0 cached, 27 unresolved for
 this trace. Raw-source checks on the additional 29 matches confirm CU age at
 most 999,105 us and Core age at most 966,709 us. This is a file-only check,
 not a new live acceptance. The
-[earlier history-only regression](evidence/2026-10-21_ue_identity_live/14_last_known_policy_replay/comparison.json)
+[earlier history-only regression](../evidence/2026-10-21_ue_identity_live/14_last_known_policy_replay/comparison.json)
 retains its archived configuration without independent-link matching; its 29
 cached rows describe the superseded intermediate policy.
 
@@ -402,7 +402,7 @@ is 120 seconds (`cu_cp_unit_config.h`); the CU base/identity overlay do not
 override it. Each role therefore gets 150 seconds without generated traffic.
 Core must actually report idle; stopping iperf alone does not prove idle.
 
-The first [real bidirectional run](reports/ue_identity_dual_ue_live_2026-10-21.md#live-six-minute-bidirectional-idleresume-validation)
+The first [real bidirectional run](../reports/ue_identity_dual_ue_live_2026-10-21.md#live-six-minute-bidirectional-idleresume-validation)
 passes independent current matching: 645 matched / 648 total, three own
 startup/resume boundary records, and zero cached. Each UE's observed Core idle
 interval lasts about 30 seconds while its peer has 30 consecutive matched
@@ -670,13 +670,13 @@ still unverified and must not be assumed from matching printed times.
 
 ## Evidence and remaining validation
 
-See the [implementation record](reports/ue_identity_implementation_2026-10-21.md)
+See the [implementation record](../reports/ue_identity_implementation_2026-10-21.md)
 for commands and baselines, and the
-[single-UE live report](reports/ue_identity_single_ue1_live_2026-10-21.md)
+[single-UE live report](../reports/ue_identity_single_ue1_live_2026-10-21.md)
 for real Core schema, CU/DU E2, Laptop path and sustained-UL evidence. The
 single-UE experimental association passed with 57/58 then 117/118 matched
 rows; each initial row remained unresolved during subscription warmup.
-The subsequent [dual-UE live report](reports/ue_identity_dual_ue_live_2026-10-21.md)
+The subsequent [dual-UE live report](../reports/ue_identity_dual_ue_live_2026-10-21.md)
 records three subscriptions, 223 DU samples, 221 correct observed matches and
 two initial unresolved samples. Both concurrent iperf clients exit 0, receiver
 13.2/11.9 Mbit/s. An independent raw-input audit checks all matched Core/CU/DU

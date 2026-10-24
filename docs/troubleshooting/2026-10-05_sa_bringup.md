@@ -1,6 +1,6 @@
 # 5G SA Bring-up Debug Record: 2026-10-05
 
-This record preserves the operator's reported sequence from failed acquisition/registration to a working single-link 5G SA IPv4 user plane. Values below are sanitized observations, not a fresh automated reproduction. Configuration paths and the OCUDU IPv4v6 validator were inspected during the documentation update. Use the [full runbook](../full_reproduction_runbook.md) for startup and shutdown, and [project progress](../project_progress_and_configuration.md) for current settings.
+This record preserves the operator's reported sequence from failed acquisition/registration to a working single-link 5G SA IPv4 user plane. Values below are sanitized observations, not a fresh automated reproduction. Configuration paths and the OCUDU IPv4v6 validator were inspected during the documentation update. Use the [full runbook](../runbooks/full_reproduction_runbook.md) for startup and shutdown, and [project progress](../project_progress_and_configuration.md) for current settings.
 
 ## Diagnose the first failing layer
 

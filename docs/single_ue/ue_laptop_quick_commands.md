@@ -1,12 +1,12 @@
 # UE Laptop Quick Commands
 
-Updated: 2026-10-13. Run these steps in order in **one Bash terminal per UE on the laptop** and keep that UE's variables in its terminal. Continue only after each step succeeds. For full instructions, see [Runbook stages 10–14](full_reproduction_runbook.md#10-prepare-a-new-ubuntulinux-laptop); start Spark using [Spark Quick Commands](spark_quick_commands.md).
+Updated: 2026-10-13. Run these steps in order in **one Bash terminal per UE on the laptop** and keep that UE's variables in its terminal. Continue only after each step succeeds. For full instructions, see [Runbook stages 10–14](../runbooks/full_reproduction_runbook.md#10-prepare-a-new-ubuntulinux-laptop); start Spark using [Spark Quick Commands](spark_quick_commands.md).
 
 For simultaneous UE1/UE2 and the current UL-only scope, use
-[Dual UE laptop quick commands](dual_ue_laptop_quick_commands.md), which supplies both locks and
+[Dual UE laptop quick commands](../dual_ue_laptop_quick_commands.md), which supplies both locks and
 separate source-policy routes. This booklet retains the single-UE route recipe.
 
-For the DU1 migration to **3660 MHz**, use the recorded **PCI 1 / SSB 643680 / SCS 30 kHz / n78** lock in step 2 after comparing it with the current DU startup cell line. This tuple comes from the operator-provided 2026-10-12 startup summary. The 2026-10-12 new-carrier check passed **uplink functionality**: UE `10.45.0.2 / wwan0` reached Spark `10.45.0.1`, TCP receiver goodput was 17.0 Mbit/s for 30.24 seconds with sender Retr 0, and ping loss was 0%. The KPM xApp received 12 complete reports for UE F1AP ID 5. RF stability remains pending because of recurring underflows; downlink is outside the current scope. See the [daily log](../dev_logs/2026-10-12_ruibin.md). The matching subscriber must be prepared for the SIM actually installed; using the new SIM1 requires its own core record.
+For the DU1 migration to **3660 MHz**, use the recorded **PCI 1 / SSB 643680 / SCS 30 kHz / n78** lock in step 2 after comparing it with the current DU startup cell line. This tuple comes from the operator-provided 2026-10-12 startup summary. The 2026-10-12 new-carrier check passed **uplink functionality**: UE `10.45.0.2 / wwan0` reached Spark `10.45.0.1`, TCP receiver goodput was 17.0 Mbit/s for 30.24 seconds with sender Retr 0, and ping loss was 0%. The KPM xApp received 12 complete reports for UE F1AP ID 5. RF stability remains pending because of recurring underflows; downlink is outside the current scope. See the [daily log](../../dev_logs/2026-10-12_ruibin.md). The matching subscriber must be prepared for the SIM actually installed; using the new SIM1 requires its own core record.
 
 The 2026-10-05 session verified single-UE registration, IPv4 connectivity, and an initial 10-second TCP uplink. The 2026-10-07 session verified five DU KPM measurements from a real UE. After the timestamp repair, the historical UE ID `7` run received 12 reports with `report_age_us` of **591–796 µs**. The 2026-10-12 UE ID `5` run received 12 reports with **508–820 µs**, successful subscription, deletion, and the monitor success marker. These ages describe report processing and forwarding, not application RTT.
 
@@ -19,7 +19,7 @@ Open Cells SIM provisioning, Milenage authentication, and Quectel USIM-readiness
 | UE1 / DU1 | OC011830 | `001010000000101` | `863305041978437` |
 | UE2 / DU2 | OC011831 | `001010000000102` | `863305041980706` |
 
-Before connecting either new UE, prepare its matching Open5GS subscriber using the protected `~/sim_du1_credentials.txt` or `~/sim_du2_credentials.txt`, SST 1 and IPv4 session type 1. In the migrated dual deployment use UE1 DNN `internet` and UE2 DNN `internet2`; follow the dual-UE booklet for UE2 and simultaneous paths. K/OPc must remain private. The utility recommended SQN reference `96` after its authentication test; verify the installed core's representation and current SQN before using it. See [SIM assignments](sim_provisioning_and_dual_ue.md#sim-assignments), [subscriber preparation](sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers), and [dual-path validation](sim_provisioning_and_dual_ue.md#validate-two-ue-paths).
+Before connecting either new UE, prepare its matching Open5GS subscriber using the protected `~/sim_du1_credentials.txt` or `~/sim_du2_credentials.txt`, SST 1 and IPv4 session type 1. In the migrated dual deployment use UE1 DNN `internet` and UE2 DNN `internet2`; follow the dual-UE booklet for UE2 and simultaneous paths. K/OPc must remain private. The utility recommended SQN reference `96` after its authentication test; verify the installed core's representation and current SQN before using it. See [SIM assignments](../setup/sim_provisioning_and_dual_ue.md#sim-assignments), [subscriber preparation](../setup/sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers), and [dual-path validation](../setup/sim_provisioning_and_dual_ue.md#validate-two-ue-paths).
 
 Do not select a second modem in a terminal retaining the first UE's bearer/WWAN variables. Separate terminals protect variables, but share the laptop's routing tables. The single-link route recipe below does **not** implement two simultaneous IP paths or MPTCP.
 
@@ -33,7 +33,7 @@ sudo apt install -y modemmanager libqmi-utils minicom iproute2 iperf3 usbutils
 sudo systemctl enable --now ModemManager
 ```
 
-Connect the RM500Q-GL, test USIM, antennas, data USB, and auxiliary power to the RMU500EK. Verified firmware: `RM500QGLABR13A03M4G`. If ports are missing, see [Driver checks](software_installation_and_drivers.md#72-kernel-driver-responsibilities).
+Connect the RM500Q-GL, test USIM, antennas, data USB, and auxiliary power to the RMU500EK. Verified firmware: `RM500QGLABR13A03M4G`. If ports are missing, see [Driver checks](../setup/software_installation_and_drivers.md#72-kernel-driver-responsibilities).
 
 Define these functions once in each UE terminal. The following identity-selection wrapper is a reproduction procedure; the reported session tested the underlying `mmcli` commands. Select by the intended IMEI or device identifier, not the first modem path:
 
@@ -122,13 +122,13 @@ else
 fi
 ```
 
-Match IMSI/ICCID to the intended card before continuing. Require card present, application `usim`, application/personalization ready, and PIN1 disabled. PIN2 `enabled-not-verified` did not prevent the reported checks and does not currently require modification. SIM readiness is not network registration: `searching / detached`, even with signal quality around 88%, is not evidence of private PLMN `00101` attachment. See [Quectel verification](sim_provisioning_and_dual_ue.md#verify-the-cards-through-quectel).
+Match IMSI/ICCID to the intended card before continuing. Require card present, application `usim`, application/personalization ready, and PIN1 disabled. PIN2 `enabled-not-verified` did not prevent the reported checks and does not currently require modification. SIM readiness is not network registration: `searching / detached`, even with signal quality around 88%, is not evidence of private PLMN `00101` attachment. See [Quectel verification](../setup/sim_provisioning_and_dual_ue.md#verify-the-cards-through-quectel).
 
 For a SIM swap: finish traffic and bearer cleanup, disable the selected modem with `sudo mmcli -m "$MODEM" --disable`, physically power off/disconnect the RMU, swap the card, and reconnect power. Open a fresh UE terminal and rediscover identity, modem/SIM IDs, and ports. Do not hot-swap or reuse a cached modem number.
 
 ## 2 Configure NR SA and lock the private cell
 
-The lock in this stage is **DU1 only**. DU2's actual startup confirmed PCI 2 / SSB 639648 / 3600 MHz; its modem procedure is in [Dual UE laptop quick commands](dual_ue_laptop_quick_commands.md). An IMSI does not select a DU automatically. Check that the current startup cell line in [Spark step 5](spark_quick_commands.md#5-start-du-with-e2-enabled) matches carrier `644000` / 3660 MHz, PCI `1`, and SSB `643680`. After a carrier migration, replace the old lock even if the modem still displays registration. Skip configuration only when the readback and serving cell already match the current DU.
+The lock in this stage is **DU1 only**. DU2's actual startup confirmed PCI 2 / SSB 639648 / 3600 MHz; its modem procedure is in [Dual UE laptop quick commands](../dual_ue_laptop_quick_commands.md). An IMSI does not select a DU automatically. Check that the current startup cell line in [Spark step 5](spark_quick_commands.md#5-start-du-with-e2-enabled) matches carrier `644000` / 3660 MHz, PCI `1`, and SSB `643680`. After a carrier migration, replace the old lock even if the modem still displays registration. Skip configuration only when the readback and serving cell already match the current DU.
 
 SSB `643680` is deterministic for the current cell configuration and derivation logic; restarting DU or reconnecting UE does not select a random SSB. Recheck it after changing the carrier, band, bandwidth, SCS, SSB/CORESET parameters, or OCUDU version. If startup differs from the recorded tuple, update the lock from the actual output before using it.
 
@@ -180,7 +180,7 @@ Require `5gnr / 00101 / home / attached`, with state registered or connected. Th
 sudo mmcli -m "$MODEM" --simple-connect="apn=internet,ip-type=ipv4"
 ```
 
-If this fails, stop and see the [PDU/IPv4v6 troubleshooting record](troubleshooting/2026-10-05_sa_bringup.md#10-pdu-root-cause-ipv4v6-rejected-by-ocudu). The subscriber on Spark must use session type `1`. The EPS initial bearer may still display IPv4v6; that display does not need changing.
+If this fails, stop and see the [PDU/IPv4v6 troubleshooting record](../troubleshooting/2026-10-05_sa_bringup.md#10-pdu-root-cause-ipv4v6-rejected-by-ocudu). The subscriber on Spark must use session type `1`. The EPS initial bearer may still display IPv4v6; that display does not need changing.
 
 ## 4 Find the active bearer and configure dedicated WWAN
 
@@ -286,7 +286,7 @@ The repaired KPM library and monitor are installed and verified to match the new
 
 The earlier 2026-10-07 run received measurements for UE ID `14`. After the repair, UE ID `2` and the later UE ID `7` each produced **12 reports**, with `report_age_us` ranges of **499–717 µs** and **591–796 µs**, respectively. Subscription, deletion, and xApp exit all succeeded. An intermediate collection window subscribed successfully but received no UE reports. If the result is `NO_UE`, first confirm registration and that UE traffic covers the collection window. `report_age_us` is report age, not application RTT. The 2026-10-12 ping and 30-second TCP uplink passed, with UE ID 5 producing 12 complete five-metric reports. Precise traffic/KPM window correlation, reporting-period accuracy, and sustained stability remain unverified. Downlink is outside the current scope. Record direction, summary rates, retransmissions, and growth in Spark RF errors on both sides.
 
-For SIM or registration problems, use the actual `(qmi)` port with `qmicli -p`; see [Runbook stage 10](full_reproduction_runbook.md#10-prepare-a-new-ubuntulinux-laptop). Use proxy mode alongside ModemManager rather than competing for a direct QMI session.
+For SIM or registration problems, use the actual `(qmi)` port with `qmicli -p`; see [Runbook stage 10](../runbooks/full_reproduction_runbook.md#10-prepare-a-new-ubuntulinux-laptop). Use proxy mode alongside ModemManager rather than competing for a direct QMI session.
 
 ## 6 Shut down the UE
 

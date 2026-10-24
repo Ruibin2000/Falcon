@@ -70,7 +70,7 @@ and down threshold of 16 misses: nominal 400/800-ms heartbeat thresholds.
 These settings do not measure actual failure-detection delay. The server's
 RIC/KPM broker connection was unavailable during the demonstration.
 
-The [TUN split](../dual_ue_tun_split.md) retained a shared CU, UPF and Spark host.
+The [TUN split](../networking/dual_ue_tun_split.md) retained a shared CU, UPF and Spark host.
 Source configuration associated each pool with a DU; a separate fresh
 SIM/serving-cell identity ledger was not captured for this MPX run. DU2's
 console acknowledged RX gains of 5, 20 and 15 dB, but those commands lacked

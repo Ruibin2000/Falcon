@@ -518,7 +518,7 @@ record_check du-config "$OCUDU_SOURCE/build/apps/du_split_8/odu" \
   1000 ms. UE discovery for this Style 4 path depends on RLC snapshots.
 - [ ] Confirm the xApp requests the seven intended names at 1000 ms and uses
   `/usr/local/lib/flexric/` with the existing timestamp-repaired KPM plugin.
-- [ ] Start CU/core as required by the [runbook](../docs/full_reproduction_runbook.md),
+- [ ] Start CU/core as required by the [runbook](../docs/runbooks/full_reproduction_runbook.md),
   then RIC before DU. Use the rebuilt DU path and existing radio configuration.
   A RIC restart requires a DU restart for fresh E2 Setup.
 
@@ -551,9 +551,9 @@ If this fails, resolve capability/version/admission issues before judging values
 ## Step 9 Verify Correct Values During Live Uplink Traffic
 
 - [ ] Establish the existing single-UE private IPv4 session using the
-  [UE command booklet](../docs/ue_laptop_quick_commands.md).
+  [UE command booklet](../docs/single_ue/ue_laptop_quick_commands.md).
 - [ ] Run a controlled 30–60 second uplink test using the current private
-  endpoints and [traffic procedure](../docs/full_reproduction_runbook.md).
+  endpoints and [traffic procedure](../docs/runbooks/full_reproduction_runbook.md).
   Record actual UE identity, direction, duration, application results, and RF errors.
 - [ ] Capture narrow getter diagnostics and xApp RF output. Map the same UE between
   console C-RNTI, internal DU index, and UE F1AP ID. Enable the new opt-in trace
@@ -694,5 +694,5 @@ package does not automatically apply the historical RSRP-only patches.
 - [Seven-metric configuration](../configs/flexric/xapp_du_rf_metrics.conf).
 - [Existing RF package record](../docs/troubleshooting/2026-10-07_flexric_bringup.md#du-rf-metrics-extension-offline-package-2026-10-09).
 - [Timestamp repair](../docs/troubleshooting/2026-10-07_flexric_latency_fix.md),
-  [full runbook](../docs/full_reproduction_runbook.md), and
-  [Spark command booklet](../docs/spark_quick_commands.md).
+  [full runbook](../docs/runbooks/full_reproduction_runbook.md), and
+  [Spark command booklet](../docs/single_ue/spark_quick_commands.md).

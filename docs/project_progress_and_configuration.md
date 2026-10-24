@@ -1,12 +1,12 @@
 # Project Progress and System Configuration
 
-Network update, **2026-10-23**: the applied [Spark TUN split](dual_ue_tun_split.md)
+Network update, **2026-10-23**: the applied [Spark TUN split](networking/dual_ue_tun_split.md)
 places UE1 `10.45.0.1/16` on `ogstun_1` and UE2 `10.46.0.1/16` on `ogstun_2`,
 both MTU 1400, using the existing UPF. Independent checks of Spark configuration,
 routes and services passed. Fresh post-split UE traffic and cold-boot validation
 remain pending. The radio and traffic checkpoints below retain their dates.
 
-Radio/UE checkpoint summary, **2026-10-13**. DU1 migrated from 3750 to **3660 MHz within n78**. Single-UE IPv4 ping, a 30-second TCP uplink (receiver **17.0 Mbit/s**, sender Retr **0**), and **12 complete five-metric KPM reports for UE F1AP ID 5** passed. The operator now prioritizes DU2 and UL-only dual-link acceptance. Underflow remediation is deferred; count/growth alone does not block this UL scope. DU2 is configured/deployed for B210 `328B021` (USB 3) and passes offline checks. Actual DU2 radio startup/F1/E2 passed; UE2 registration/UL, the dual-link baseline and subscriber identity correlation remain pending. See the [DU2 procedure](dual_fr1_runbook.md), historical [daily log](../dev_logs/2026-10-12_ruibin.md) and [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json).
+Radio/UE checkpoint summary, **2026-10-13**. DU1 migrated from 3750 to **3660 MHz within n78**. Single-UE IPv4 ping, a 30-second TCP uplink (receiver **17.0 Mbit/s**, sender Retr **0**), and **12 complete five-metric KPM reports for UE F1AP ID 5** passed. The operator now prioritizes DU2 and UL-only dual-link acceptance. Underflow remediation is deferred; count/growth alone does not block this UL scope. DU2 is configured/deployed for B210 `328B021` (USB 3) and passes offline checks. Actual DU2 radio startup/F1/E2 passed; UE2 registration/UL, the dual-link baseline and subscriber identity correlation remain pending. See the [DU2 procedure](runbooks/dual_fr1_runbook.md), historical [daily log](../dev_logs/2026-10-12_ruibin.md) and [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json).
 
 ## Current verified single-link architecture
 
@@ -52,7 +52,7 @@ The tested application path is **laptop ↔ Spark over private 5G**. Management 
 | 7–8 | FlexRIC / KPM xApp | At 3660 MHz: DU1 E2 Setup and 12 complete UE ID 5 reports passed; subscription/deletion and success marker retained |
 | 9–11 | MPTCP / RIC-assisted control / AI steering | Future work |
 
-Follow the [DU2 procedure](dual_fr1_runbook.md) to start the shared infrastructure and validate DU2 with its bound B210 `328B021`. Both B210s now pass simultaneous discovery over USB 3 on separate host controllers; recheck after reconnection. Prepare the two matching Open5GS subscribers using the [SIM and Dual-UE Guide](sim_provisioning_and_dual_ue.md). Preserve DU1's working configuration. Test UE1 UL, UE2 UL and both UL concurrently with retained identities/KPM timing; underflow remediation is deferred. KPM/application correlation, cold-start/new-laptop reproduction and active steering retain their own gates.
+Follow the [DU2 procedure](runbooks/dual_fr1_runbook.md) to start the shared infrastructure and validate DU2 with its bound B210 `328B021`. Both B210s now pass simultaneous discovery over USB 3 on separate host controllers; recheck after reconnection. Prepare the two matching Open5GS subscribers using the [SIM and Dual-UE Guide](setup/sim_provisioning_and_dual_ue.md). Preserve DU1's working configuration. Test UE1 UL, UE2 UL and both UL concurrently with retained identities/KPM timing; underflow remediation is deferred. KPM/application correlation, cold-start/new-laptop reproduction and active steering retain their own gates.
 
 ## Platform and prior build evidence
 
@@ -221,7 +221,7 @@ The existing OCUDU binary already contains E2 support; `ENABLE_EXPORT` controls 
 
 The default xApp config also lists monolithic gNB/CU and RC subscriptions; the RAN-type checks select only the DU KPM block for this node. The `73650812` example runs for about 10 seconds, deletes its subscription and exits normally. An initial actual gNB-DU UE F1AP ID `14` run received all five metrics: selected UL/DL throughput samples were 14163–14675 / 242–253 kbps, DL RLC delay 15.80–17.30 in 0.1 ms units, and UL/DL PRB usage 86%/0%.
 
-After the installed [timestamp repair](troubleshooting/2026-10-07_flexric_latency_fix.md), UE F1AP ID `2` produced 12 `report_age_us` values of **499–717 microseconds**, followed by normal deletion and exit. Its selected UL/DL throughput samples were 11916–11927 / 147–164 kbps, DL RLC delay **1.380–1.440 ms** after conversion, and UL/DL PRB usage **88%/0%**. UE IDs can change. Live timestamp display is now verified; precise age accuracy and synchronized application throughput are not established by these excerpts. See [runtime steps](full_reproduction_runbook.md#9a-prepare-the-du-e2-overlay) and the [dated record](troubleshooting/2026-10-07_flexric_bringup.md) for metric interpretation.
+After the installed [timestamp repair](troubleshooting/2026-10-07_flexric_latency_fix.md), UE F1AP ID `2` produced 12 `report_age_us` values of **499–717 microseconds**, followed by normal deletion and exit. Its selected UL/DL throughput samples were 11916–11927 / 147–164 kbps, DL RLC delay **1.380–1.440 ms** after conversion, and UL/DL PRB usage **88%/0%**. UE IDs can change. Live timestamp display is now verified; precise age accuracy and synchronized application throughput are not established by these excerpts. See [runtime steps](runbooks/full_reproduction_runbook.md#9a-prepare-the-du-e2-overlay) and the [dated record](troubleshooting/2026-10-07_flexric_bringup.md) for metric interpretation.
 
 ### Open5GS identity, sessions and interfaces
 
@@ -250,7 +250,7 @@ The inspected persistent TUN setup is `/etc/systemd/network/99-open5gs.netdev`
 (`Name=ogstun_1`, `Kind=tun`) and `99-open5gs.network` (UE1 IPv4, original IPv6,
 routes and MTU 1400), plus `99-open5gs-ue2.netdev` / `99-open5gs-ue2.network`
 for `ogstun_2` and UE2 IPv4. The UPF unit requests `systemd-networkd`.
-The [archived migration](dual_ue_tun_split.md) records all five deployed
+The [archived migration](networking/dual_ue_tun_split.md) records all five deployed
 UPF/networkd files and their hashes. A cold reboot has not been tested.
 
 ### Provisioned Open Cells SIMs and dual-UE preparation
@@ -264,7 +264,7 @@ The existing single-link test subscriber `001010000000001` remains the verified 
 
 Both use MCC `001`, MNC `01` and PLMN `00101`, with independent 128-bit K/OPc pairs stored in permission-600 files outside Git. The secrets were written to the corresponding physical card; they are not derived from IMSI or ICCID and cannot normally be read back from the USIM. The corresponding Open5GS record must use that same card's pair.
 
-ACS ACR39U `072f:b100`, PC/SC/libccid and the rebuilt `program_uicc_pcsc` utility successfully read and programmed both cards. Both Milenage tests succeeded at programmer SQN **64** and reported an HSS reference SQN of **96**. Verify the installed Open5GS SQN representation before configuring this value, and avoid unnecessary repeat authentication because it advances the SIM SQN. Setup, exact commands and troubleshooting are in [SIM Provisioning and Dual-UE Preparation](sim_provisioning_and_dual_ue.md).
+ACS ACR39U `072f:b100`, PC/SC/libccid and the rebuilt `program_uicc_pcsc` utility successfully read and programmed both cards. Both Milenage tests succeeded at programmer SQN **64** and reported an HSS reference SQN of **96**. Verify the installed Open5GS SQN representation before configuring this value, and avoid unnecessary repeat authentication because it advances the SIM SQN. Setup, exact commands and troubleshooting are in [SIM Provisioning and Dual-UE Preparation](setup/sim_provisioning_and_dual_ue.md).
 
 | Physical modem | Evidence |
 |---|---|
@@ -314,4 +314,4 @@ Next dual-link sequence: add/verify both matching Open5GS records (SST 1, `inter
 
 The single-link checkpoint is uplink only: the 30-second TCP transfer and five-metric delivery passed. The current Plan 3 target is dual-link UL functionality/coexistence, with underflow remediation deferred. Retain subscriber/bearer identity, exact UL/KPM timing and repeatability. Application DL and mixed-direction tests are outside the current target; controlled UL UDP remains in the dual-link coexistence gate. SIM preparation alone does not validate the dual RAN.
 
-Follow the [Full Reproduction Runbook](full_reproduction_runbook.md), or its [Spark](spark_quick_commands.md) and [UE laptop](ue_laptop_quick_commands.md) command summaries. Shutdown order is traffic/xApp → PDU → laptop WWAN → DU → FlexRIC → CU → 5GC → optional MongoDB. Check runtime state before operation; keep SIM secrets and raw INFO logs out of Git.
+Follow the [Full Reproduction Runbook](runbooks/full_reproduction_runbook.md), or its [Spark](single_ue/spark_quick_commands.md) and [UE laptop](single_ue/ue_laptop_quick_commands.md) command summaries. Shutdown order is traffic/xApp → PDU → laptop WWAN → DU → FlexRIC → CU → 5GC → optional MongoDB. Check runtime state before operation; keep SIM secrets and raw INFO logs out of Git.

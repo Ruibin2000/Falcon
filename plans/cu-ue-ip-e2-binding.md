@@ -185,7 +185,7 @@ its own identity, subscription and freshness. CU-UP E2 is unnecessary here.
 | Falcon `configs/ocudu/cu_identity_e2.yml` | Candidate opt-in CU-CP E2 overlay |
 | OCUDU CU-CP collection/E2 interfaces | Proposed `get_ue_identity_snapshot()` or equivalent, owned records, lifecycle validity and reporting |
 | Falcon `tests/ue_identity/` | Independent Core/E2 fixtures, correlation and lifecycle tests |
-| Falcon `docs/ue_identity_xapp.md` | Frozen standalone schema, build/start commands and limitations |
+| Falcon `docs/development/ue_identity_xapp.md` | Frozen standalone schema, build/start commands and limitations |
 | Falcon `patches/ocudu/`, optionally `patches/flexric/` | Separate reviewed patches and exact baseline manifests |
 
 Freeze file boundaries and HTTP/JSON dependencies in Step 2. Reuse existing
@@ -453,7 +453,7 @@ The next operator-run trial completed a single six-minute capture with sequentia
 UE1 and UE2 150-second traffic quiet periods and the peer transmitting
 continuously. The 335-second Laptop schedule leaves capture margin and checks
 both independence directions using fresh-only output. See the
-[bidirectional idle/resume procedure](../docs/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test)
+[bidirectional idle/resume procedure](../docs/development/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test)
 and inline foreground Laptop command (no script-file transfer). Live evidence
 is retained in `16_bidirectional_idle_live`: one xApp instance, 648 original
 KPM outputs, 645 current matches and three own startup/resume boundary rows.

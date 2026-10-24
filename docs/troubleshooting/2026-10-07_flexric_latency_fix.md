@@ -104,7 +104,7 @@ cmp -s /home/nyu/flexric/build-ocudu/examples/xApp/c/monitor/xapp_oran_moni \
 
 Keep the existing CU, DU and RIC running, and let any previous xApp finish. Reuse the Spark iperf server or start `iperf3 -s -B 10.45.0.1`. In the UE laptop's WWAN-configured Bash terminal, start the 30-second uplink; immediately run the installed Spark xApp with a fresh `KPM_LOG`. Its approximately 10-second collection window must overlap the traffic.
 
-Follow the complete [Spark step 7a](../spark_quick_commands.md#7a-verify-reports-after-the-timestamp-repair) or [runbook stage 14a](../full_reproduction_runbook.md#14a-validate-ue-kpm-reports-during-traffic). The compact output must include actual UE IDs, `KPM-v3 report_age_us` values and `Test xApp run SUCCESSFULLY`. Successful exit alone means the subscription lifecycle passed; it does not verify UE report age. The command prints the new log path for reviewing the five measurement values or failures.
+Follow the complete [Spark step 7a](../single_ue/spark_quick_commands.md#7a-verify-reports-after-the-timestamp-repair) or [runbook stage 14a](../runbooks/full_reproduction_runbook.md#14a-validate-ue-kpm-reports-during-traffic). The compact output must include actual UE IDs, `KPM-v3 report_age_us` values and `Test xApp run SUCCESSFULLY`. Successful exit alone means the subscription lifecycle passed; it does not verify UE report age. The command prints the new log path for reviewing the five measurement values or failures.
 
 ## Live UE report-age result
 

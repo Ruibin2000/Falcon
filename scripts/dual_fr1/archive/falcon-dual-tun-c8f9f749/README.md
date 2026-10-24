@@ -5,7 +5,7 @@ This directory preserves 15 files byte-for-byte from the prepared bundle
 `spark-7c40`, creating `ogstun_1 / 10.45.0.1/16` and
 `ogstun_2 / 10.46.0.1/16`, both with MTU 1400.
 
-See the [migration and rollback guide](../../../../docs/dual_ue_tun_split.md)
+See the [migration and rollback guide](../../../../docs/networking/dual_ue_tun_split.md)
 and [retained evidence](../../../../docs/evidence/2026-10-23_dual_tun_split/manifest.json).
 
 | Artifact | Purpose |

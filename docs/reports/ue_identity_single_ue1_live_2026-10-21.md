@@ -248,7 +248,7 @@ transitions and recovery remain open; the assurance remains
 - [Associated DU rows](../evidence/2026-10-21_ue_identity_live/07_single_ue1_xapp/rows.ndjson)
 - [SDK subscription/deletion log](../evidence/2026-10-21_ue_identity_live/07_single_ue1_xapp/xapp.log)
 - [Counts, hashes and independent audit summary](../evidence/2026-10-21_ue_identity_live/07_single_ue1_xapp/summary.json)
-- [Plan 4](../../plans/cu-ue-ip-e2-binding.md) and [standalone runbook](../ue_identity_xapp.md)
+- [Plan 4](../../plans/cu-ue-ip-e2-binding.md) and [standalone runbook](../development/ue_identity_xapp.md)
 
 These single-UE trials supply real association and UL metric-response evidence.
 They do not close the strict DU/lifecycle wire gap or replace dual-UE, recovery and

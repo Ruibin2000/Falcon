@@ -17,7 +17,7 @@ Date: **2026-10-07**. OCUDU DU1 connected to FlexRIC over E2, and the C KPM xApp
 | Radio | B210 `3271233`, USB 3, 23.04 MS/s, n78, 20 MHz, PCI 1, carrier 650000 / SSB 649632 |
 | Current gain | Inspected TX 70 / RX 40; earlier 2026-10-05 UE traffic used TX 80 / RX 40 |
 
-Use the [installation guide](../software_installation_and_drivers.md#8-flexric-installation-on-spark), [canonical runtime steps](../full_reproduction_runbook.md#9-confirm-rf-and-start-the-du), and [Spark](../spark_quick_commands.md) / [UE laptop](../ue_laptop_quick_commands.md) quick commands to reproduce.
+Use the [installation guide](../setup/software_installation_and_drivers.md#8-flexric-installation-on-spark), [canonical runtime steps](../runbooks/full_reproduction_runbook.md#9-confirm-rf-and-start-the-du), and [Spark](../single_ue/spark_quick_commands.md) / [UE laptop](../single_ue/ue_laptop_quick_commands.md) quick commands to reproduce.
 
 ## Initial installation and E2 Setup
 
@@ -202,7 +202,7 @@ The DU E2 overlay already enables scheduler/RLC metrics and a 1000 ms source per
   -c /home/nyu/ocudu/configs/du1_flexric.yml --dryrun
 ```
 
-Restart RIC before DU using [runbook stage 9](../full_reproduction_runbook.md#9-confirm-rf-and-start-the-du), allowing fresh E2 Setup to advertise both custom measurements. Reconnect the UE and overlap monitoring with uplink traffic. Run the rebuilt xApp directly:
+Restart RIC before DU using [runbook stage 9](../runbooks/full_reproduction_runbook.md#9-confirm-rf-and-start-the-du), allowing fresh E2 Setup to advertise both custom measurements. Reconnect the UE and overlap monitoring with uplink traffic. Run the rebuilt xApp directly:
 
 ```bash
 /home/nyu/flexric/build-ocudu/examples/xApp/c/monitor/xapp_oran_moni \

@@ -2,42 +2,42 @@
 
 Network update, 2026-10-23: Spark now uses `ogstun_1 / 10.45.0.1/16` for UE1
 and `ogstun_2 / 10.46.0.1/16` for UE2, both MTU 1400, sharing the same UPF.
-The [TUN split guide](dual_ue_tun_split.md) records the applied migration,
+The [TUN split guide](../networking/dual_ue_tun_split.md) records the applied migration,
 archived scripts and rollback. Spark checks passed; fresh UE/PDU/ping/traffic
 and cold-boot validation after the split remain pending. The measurements
 below are historical pre-split checkpoints.
 
 Updated: 2026-10-23. The radio checkpoints below follow the October 13
-[Plan 3](../plans/dual-ue-du-fr1-channels.md) scope.
+[Plan 3](../../plans/dual-ue-du-fr1-channels.md) scope.
 The current operator priority is DU2 implementation and UL-only acceptance.
 Underflow remediation is deferred; record counts without using count/growth
 alone as a pass/fail gate. UL failures and lost SA/PDU sessions still fail.
 
 For the compact end-to-end operator flow, use the
-[Dual UE laptop commands](dual_ue_laptop_quick_commands.md) and
-[Dual UE Spark commands](dual_ue_spark_quick_commands.md). The operator completed the requested
-[two-subnet migration](dual_ue_subnets.md): core service/DNN/address checks passed
+[Dual UE laptop commands](../dual_ue_laptop_quick_commands.md) and
+[Dual UE Spark commands](../dual_ue_spark_quick_commands.md). The operator completed the requested
+[two-subnet migration](../networking/dual_ue_subnets.md): core service/DNN/address checks passed
 for UE2 `internet2` / Spark `10.46.0.1`. UE2 subsequently established IPv4 bearer 3 /
 `10.46.0.2/30` / `wwan0`, passed ping 5/5 over table 152 with the Wi-Fi default
 preserved, and completed 60-second TCP UL at receiver 15.5 Mbit/s / sender Retr 1.
 The KPM smoke run delivered 12 complete reports for UE F1AP 67 with numeric UL
 metrics and successful subscription/deletion/completion. See the
-[UL checkpoint](evidence/2026-10-13_du2_ul/manifest.json); full dual-link acceptance
+[UL checkpoint](../evidence/2026-10-13_du2_ul/manifest.json); full dual-link acceptance
 remains pending.
 DU1 subsequently joined with F1/E2 complete. Both new SIMs registered on their
 intended cells and both policy paths/private pings passed; new UE1 UL delivered
 receiver 10.5 Mbit/s / Retr 0 / pipeline exit 0 with UE2 test traffic idle. The
 DU-tagged diagnostic xApp found both E2 nodes and subscribed/deleted twice with
 exit 0, but received zero UE callback blocks in that earlier probe; see
-[UE1 UL](evidence/2026-10-13_du1_ul/manifest.json) and
-[two-DU subscription evidence](evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
+[UE1 UL](../evidence/2026-10-13_du1_ul/manifest.json) and
+[two-DU subscription evidence](../evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
 The later concurrent TCP UL run delivered receiver **UE1 13.8 / UE2 17.3
 Mbit/s**, both sender Retr 0 and process exits 0. The latest Spark capture
 received **123 callbacks per DU**, including **63/61 complete UL-active
 five-metric rows**, with both subscription/delete pairs and normal exit.
 Manually simultaneous clock readbacks put Spark about **199.27 seconds ahead
 of Laptop**; the corrected run window contains approximately **62/61 complete
-UL-active rows**. See [retained dual UL/KPM analysis](evidence/2026-10-13_dual_kpm_reports/manifest.json).
+UL-active rows**. See [retained dual UL/KPM analysis](../evidence/2026-10-13_dual_kpm_reports/manifest.json).
 Concurrent UL functionality and real two-DU KPM are now observed; full identity
 correlation, precise timing and repeated/UDP/guard/survivor/cold-start gates
 remain pending. The earlier FlexRIC deletion-failure abort path remains unfixed.
@@ -64,8 +64,8 @@ stopped. UE2 subsequently passed identity/cell/SA, the new IPv4 PDU/private ping
 and the single-link UL/KPM smoke checkpoint above. Both DUs and both private UE
 paths were subsequently observed, followed by the concurrent UL / two-DU KPM
 checkpoint above. Full acceptance remains pending. See the
-[live startup evidence](evidence/2026-10-13_du2_startup/manifest.json).
-The [preparation evidence](evidence/2026-10-13_du2_preparation/manifest.json)
+[live startup evidence](../evidence/2026-10-13_du2_startup/manifest.json).
+The [preparation evidence](../evidence/2026-10-13_du2_preparation/manifest.json)
 retains configuration hashes, parse results, collision tests and the band-helper
 derivation. A successful preparation check is not live acceptance.
 
@@ -103,10 +103,10 @@ uhd_find_devices --args type=b200
 ```
 
 Retain both physical serials. The maintained
-[DU2 radio configuration](../configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml)
+[DU2 radio configuration](../../configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml)
 already binds `328B021`, different from DU1 `3271233`. If changing the radio,
 replace this serial with the independently discovered replacement identity.
-Keep the [E2/KPM overlay](../configs/ocudu/dual_fr1/du2_flexric.yml) as the second
+Keep the [E2/KPM overlay](../../configs/ocudu/dual_fr1/du2_flexric.yml) as the second
 configuration file. Never start a configuration that still has the placeholder.
 
 After reconnecting, these boards initially appeared as Cypress WestBridge with
@@ -150,7 +150,7 @@ prerequisites separately, covering both full channels.
 
 ## Verify DU2 first
 
-1. Follow the [Spark procedure](spark_quick_commands.md) to prepare core services,
+1. Follow the [Spark procedure](../single_ue/spark_quick_commands.md) to prepare core services,
    host settings, CU and the existing FlexRIC RIC. For the initial UE2 test,
    keep DU1 stopped to remove ambiguity in cell selection.
 2. Start DU2 in its own **Spark** terminal. Export the same evidence directory
@@ -168,7 +168,7 @@ prerequisites separately, covering both full channels.
 
    After startup, enter `;h;` in this terminal and require help output. The
    launcher records the console while preserving interactive input. See
-   [console and runtime RX gain](dual_ue_spark_quick_commands.md#5d-console-input-and-temporary-rx-gain).
+   [console and runtime RX gain](../dual_ue_spark_quick_commands.md#5d-console-input-and-temporary-rx-gain).
 
 3. Retain actual startup: second serial, USB 3, PCI 2, carrier 640000 / 3600 MHz,
    observed `dl_ssb_arfcn`, and successful F1/E2. Confirm CU sees DU ID 2 / NCI
@@ -176,11 +176,11 @@ prerequisites separately, covering both full channels.
    does not establish two simultaneous DUs.
 4. On the **UE laptop**, select the second RM500Q by current IMEI
    `863305041980706` and verify SIM IMSI `001010000000102`. Prepare its matching
-   subscriber using the [SIM guide](sim_provisioning_and_dual_ue.md), with its own
+   subscriber using the [SIM guide](../setup/sim_provisioning_and_dual_ue.md), with its own
    protected credentials, SST 1, UE1 DNN `internet` / UE2 DNN `internet2` after
    subnet migration, IPv4 type 1 and verified SQN
    representation. Do not replace the established subscriber or reuse SIM1 keys.
-5. Use the [UE procedure](ue_laptop_quick_commands.md) on that modem's actual AT
+5. Use the [UE procedure](../single_ue/ue_laptop_quick_commands.md) on that modem's actual AT
    port. Lock PCI 2 using **DU2's observed SSB**, common SCS 30 and n78. Retain
    serving-cell readback, SA registration, IPv4 bearer/IP/WWAN and CU/DU UE IDs.
    DU1 SSB 643680 and carrier ARFCN 640000 are not DU2 SSB-lock substitutes.

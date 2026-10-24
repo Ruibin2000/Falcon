@@ -70,20 +70,20 @@ Require the address/interface pairs above, UP flags, MTU 1400,
 `10.45.0.0/16` through `ogstun_1`, `10.46.0.0/16` through `ogstun_2`, and active
 services. A return-route lookup alone does not establish UE connectivity.
 
-Repeat each role's complete [laptop sequence](dual_ue_laptop_quick_commands.md)
+Repeat each role's complete [laptop sequence](../dual_ue_laptop_quick_commands.md)
 to rebuild its actual bearer/WWAN/policy path, then verify source-bound ping
 and individual/concurrent traffic against the paired
-[Spark servers](dual_ue_spark_quick_commands.md). Use newly read UE addresses;
+[Spark servers](../dual_ue_spark_quick_commands.md). Use newly read UE addresses;
 the `.2` destinations in the retained route probes are routing checks only.
 
 ## Archived migration and reproduction
 
-The [archive](../scripts/dual_fr1/archive/falcon-dual-tun-c8f9f749/README.md)
+The [archive](../../scripts/dual_fr1/archive/falcon-dual-tun-c8f9f749/README.md)
 preserves the exact bundle prepared in `/tmp/falcon-dual-tun-c8f9f749`:
 
-- [apply.sh](../scripts/dual_fr1/archive/falcon-dual-tun-c8f9f749/apply.sh): preflight checks, durable backup, migration and verification; attempts rollback on a migration-step failure.
-- [guard.py](../scripts/dual_fr1/archive/falcon-dual-tun-c8f9f749/guard.py): hashes, interface/address ownership, return routes, services, deployed files and management-route checks.
-- [rollback.sh](../scripts/dual_fr1/archive/falcon-dual-tun-c8f9f749/rollback.sh): restores the captured shared-`ogstun` state.
+- [apply.sh](../../scripts/dual_fr1/archive/falcon-dual-tun-c8f9f749/apply.sh): preflight checks, durable backup, migration and verification; attempts rollback on a migration-step failure.
+- [guard.py](../../scripts/dual_fr1/archive/falcon-dual-tun-c8f9f749/guard.py): hashes, interface/address ownership, return routes, services, deployed files and management-route checks.
+- [rollback.sh](../../scripts/dual_fr1/archive/falcon-dual-tun-c8f9f749/rollback.sh): restores the captured shared-`ogstun` state.
 - `original/`, `prepared/`, `manifest.json`, `source.json`, `baseline.json` and `archive.sha256`: original/prepared configurations, intended layout and checksums.
 
 Check archive integrity and shell syntax without changing deployment state:
@@ -102,7 +102,7 @@ conflicting TUNs and active services. It refuses an existing backup destination.
 For reproduction from the captured pre-migration state, stop MPX/iperf traffic
 on both hosts. In each selected laptop UE terminal, verify the actual modem,
 disconnect its PDU and disable it using the
-[laptop procedure](dual_ue_laptop_quick_commands.md). USB removal and Spark
+[laptop procedure](../dual_ue_laptop_quick_commands.md). USB removal and Spark
 shutdown are unnecessary; CU/DU/RIC can remain running. The historical apply
 command, using the archived copy, is:
 
@@ -132,11 +132,11 @@ failure-recovery branch have not been exercised.
 
 ## Evidence and remaining validation
 
-The [manifest](evidence/2026-10-23_dual_tun_split/manifest.json) separates
-[operator output](evidence/2026-10-23_dual_tun_split/operator_stdout.txt), the
-independent [runtime snapshot](evidence/2026-10-23_dual_tun_split/runtime_snapshot.json)
-and [archived guard verification](evidence/2026-10-23_dual_tun_split/archive_verify_stdout.txt).
-The [archive validation record](evidence/2026-10-23_dual_tun_split/archive_validation.json)
+The [manifest](../evidence/2026-10-23_dual_tun_split/manifest.json) separates
+[operator output](../evidence/2026-10-23_dual_tun_split/operator_stdout.txt), the
+independent [runtime snapshot](../evidence/2026-10-23_dual_tun_split/runtime_snapshot.json)
+and [archived guard verification](../evidence/2026-10-23_dual_tun_split/archive_verify_stdout.txt).
+The [archive validation record](../evidence/2026-10-23_dual_tun_split/archive_validation.json)
 records checksum, script syntax, documentation shell syntax and link checks.
 All five deployed files match the archived prepared hashes; SMF configuration,
 management default routing and IPv4 policy rules match the captured baseline.

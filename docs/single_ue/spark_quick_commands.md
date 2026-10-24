@@ -2,18 +2,18 @@
 
 Network update, 2026-10-23: the installed Spark uses `ogstun_1 / 10.45.0.1`
 for UE1 and `ogstun_2 / 10.46.0.1` for UE2. The checks below use UE1's current
-interface. See the [TUN split and script archive](dual_ue_tun_split.md) and
-[dual-UE Spark commands](dual_ue_spark_quick_commands.md) for both paths.
+interface. See the [TUN split and script archive](../networking/dual_ue_tun_split.md) and
+[dual-UE Spark commands](../dual_ue_spark_quick_commands.md) for both paths.
 
-Updated: 2026-10-23. Use this guide on the installed Spark testbed. For a new host, see [Software and Drivers](software_installation_and_drivers.md); for detailed configuration, see the [Full Reproduction Runbook](full_reproduction_runbook.md). UE commands are in [UE Laptop Quick Commands](ue_laptop_quick_commands.md). Use Bash, run one step at a time, and stop at any `FAIL` result.
+Updated: 2026-10-23. Use this guide on the installed Spark testbed. For a new host, see [Software and Drivers](../setup/software_installation_and_drivers.md); for detailed configuration, see the [Full Reproduction Runbook](../runbooks/full_reproduction_runbook.md). UE commands are in [UE Laptop Quick Commands](ue_laptop_quick_commands.md). Use Bash, run one step at a time, and stop at any `FAIL` result.
 
 For the 2026-10-13 two-DU/two-modem workflow and current UL-only scope, use
-[Dual UE Spark quick commands](dual_ue_spark_quick_commands.md), including the supplied DU2 config,
+[Dual UE Spark quick commands](../dual_ue_spark_quick_commands.md), including the supplied DU2 config,
 its verified SSB, and separate laptop source-policy routes.
 
 Verified on 2026-10-07: **DU E2 Setup, all five actual UE KPM measurements, the repaired report-time display, normal subscription deletion, and successful xApp exit**. Earlier UE ID `2` had `report_age_us` values of **499–717 µs**; the latest repeat with UE ID `7` had **591–796 µs**. These are historical 3750-MHz results. The 2026-10-05 UE application traffic / TCP result used TX **80** / RX **40**. Read current gains from the actual configuration file in step 1; the 2026-10-12 inspection found TX **70** / RX **35**. Neither snapshot establishes current runtime status.
 
-This procedure uses the complete [DU1 3660-MHz configuration](../configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml), including radio, cell, F1, E2/KPM, and metrics settings, to migrate **one UE / one DU to 3660 MHz**, following [Plan 3](../plans/dual-ue-du-fr1-channels.md). The 2026-10-12 session verified new-carrier operation, IPv4 application traffic, and five-metric KPM reception. The current scope is **uplink only**: TCP receiver 17.0 Mbit/s over 30.24 seconds, sender Retr 0, ping 5/5 with 0% loss, and 12 KPM reports for UE F1AP ID 5. **RF stability remains pending**: 117 underflows were observed by 11:39:44 EDT. See the [daily log](../dev_logs/2026-10-12_ruibin.md) and [evidence manifest](evidence/2026-10-12_du1_3660mhz/manifest.json). Before RF startup, use the operating conditions and authorization covering the full 3650–3670 MHz channel recorded for that plan. The new file copies the actual base gains; select and record the actual gain/attenuation for this setup before transmission. The historical SSB lock `649632` must be replaced by the value from the new DU startup output.
+This procedure uses the complete [DU1 3660-MHz configuration](../../configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml), including radio, cell, F1, E2/KPM, and metrics settings, to migrate **one UE / one DU to 3660 MHz**, following [Plan 3](../../plans/dual-ue-du-fr1-channels.md). The 2026-10-12 session verified new-carrier operation, IPv4 application traffic, and five-metric KPM reception. The current scope is **uplink only**: TCP receiver 17.0 Mbit/s over 30.24 seconds, sender Retr 0, ping 5/5 with 0% loss, and 12 KPM reports for UE F1AP ID 5. **RF stability remains pending**: 117 underflows were observed by 11:39:44 EDT. See the [daily log](../../dev_logs/2026-10-12_ruibin.md) and [evidence manifest](../evidence/2026-10-12_du1_3660mhz/manifest.json). Before RF startup, use the operating conditions and authorization covering the full 3650–3670 MHz channel recorded for that plan. The new file copies the actual base gains; select and record the actual gain/attenuation for this setup before transmission. The historical SSB lock `649632` must be replaced by the value from the new DU startup output.
 
 Historical verified versions: OCUDU `050a2bb`; FlexRIC `73650812`, build directory `build-ocudu`, GCC 13.3 / Debug / `E2AP_V3` / `KPM_V3_00` / `NONE_XAPP` / `XAPP_MULTILANGUAGE=OFF`.
 
@@ -23,9 +23,9 @@ Run checks in a diagnostics terminal. CU, FlexRIC, DU, and iperf each need their
 
 The new Open Cells cards OC011830 / IMSI `001010000000101` and OC011831 / IMSI `001010000000102` are provisioned, Milenage-authenticated, and verified as ready in Quectel modems. The 2026-10-12 excerpts did not retain the active IMSI. Both new IMSIs subsequently registered on their intended DUs on 2026-10-13, with separate IPv4/private-ping and role UL functionality checkpoints; see the current dual-UE booklets. The earlier baseline IMSI `001010000000001` and its single-DU/KPM results remain separate.
 
-Before using either new card, prepare its own matching core subscriber from protected `~/sim_du1_credentials.txt` or `~/sim_du2_credentials.txt`, SST 1 and IPv4 type 1. The migrated deployment uses UE1 `internet` and UE2 `internet2`; use the paired dual-UE booklets for that topology. Keep K/OPc private. The programming tool's recommended SQN reference `96` requires verification of the installed core's representation/current state; do not blindly insert or reset decimal 96. See [SIM assignments](sim_provisioning_and_dual_ue.md#sim-assignments) and [Open5GS preparation](sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers).
+Before using either new card, prepare its own matching core subscriber from protected `~/sim_du1_credentials.txt` or `~/sim_du2_credentials.txt`, SST 1 and IPv4 type 1. The migrated deployment uses UE1 `internet` and UE2 `internet2`; use the paired dual-UE booklets for that topology. Keep K/OPc private. The programming tool's recommended SQN reference `96` requires verification of the installed core's representation/current state; do not blindly insert or reset decimal 96. See [SIM assignments](../setup/sim_provisioning_and_dual_ue.md#sim-assignments) and [Open5GS preparation](../setup/sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers).
 
-These launch commands cover **DU1 only**. The supplied DU2 config, actual B210 `328B021`, PCI 2 / SSB 639648, and distinct DU/network identities are covered by [Dual UE Spark quick commands](dual_ue_spark_quick_commands.md). IMSI does not automatically bind a UE to a DU; verify serving-cell readback. Both registered WWAN/IP paths have now passed private ping; concurrent UL/KPM acceptance and MPTCP remain pending; see [dual-UE validation](sim_provisioning_and_dual_ue.md#validate-two-ue-paths).
+These launch commands cover **DU1 only**. The supplied DU2 config, actual B210 `328B021`, PCI 2 / SSB 639648, and distinct DU/network identities are covered by [Dual UE Spark quick commands](../dual_ue_spark_quick_commands.md). IMSI does not automatically bind a UE to a DU; verify serving-cell readback. Both registered WWAN/IP paths have now passed private ping; concurrent UL/KPM acceptance and MPTCP remain pending; see [dual-UE validation](../setup/sim_provisioning_and_dual_ue.md#validate-two-ue-paths).
 
 ## 1 Check before startup
 
@@ -83,7 +83,7 @@ sysctl -n net.core.rmem_max net.core.wmem_max net.core.rmem_default net.core.wme
 
 ## 3 Start MongoDB and the core
 
-Preserve the existing `open5gs-mongo` container and data volume. The baseline subscriber `001010000000001` should have SST 1, session `internet`, and type 1; see the [subscriber check](full_reproduction_runbook.md#5-start-mongodb-and-verify-the-subscriber). When using the new cards, run the separate nonsecret [two-subscriber preflight](full_reproduction_runbook.md#5a-prepare-the-two-provisioned-open-cells-subscribers) after MongoDB is ready. That check is a reproduction procedure and cannot prove K/OPc or SQN correctness.
+Preserve the existing `open5gs-mongo` container and data volume. The baseline subscriber `001010000000001` should have SST 1, session `internet`, and type 1; see the [subscriber check](../runbooks/full_reproduction_runbook.md#5-start-mongodb-and-verify-the-subscriber). When using the new cards, run the separate nonsecret [two-subscriber preflight](../runbooks/full_reproduction_runbook.md#5a-prepare-the-two-provisioned-open-cells-subscribers) after MongoDB is ready. That check is a reproduction procedure and cannot prove K/OPc or SQN correctness.
 
 ```bash
 sudo docker start open5gs-mongo >/dev/null &&
@@ -169,7 +169,7 @@ bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
 The launcher records output with `script` while keeping a full interactive
 terminal for sudo and the DU. Run it directly in the terminal. After startup,
 enter `;h;` and require help output; send each console command separately with
-surrounding semicolons. See [runtime RX gain commands](dual_ue_spark_quick_commands.md#5d-console-input-and-temporary-rx-gain).
+surrounding semicolons. See [runtime RX gain commands](../dual_ue_spark_quick_commands.md#5d-console-input-and-temporary-rx-gain).
 
 Confirm the startup cell line shows `dl_arfcn=644000 (n78)` and `dl_freq=3660 MHz`. The operator-provided 2026-10-12 startup summary recorded **PCI 1 / SSB 643680 / SCS 30 kHz**. The matching lock is now written directly in [UE step 2](ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell):
 
@@ -321,7 +321,7 @@ fi
 
 A positive `UE reports` count confirms UE reports arrived in this run. `NO_UE` means subscription, deletion, and exit succeeded but no UE report arrived; check UE registration and traffic overlap. It does not establish a timestamp-repair failure. The printed path contains the full log; use step 7 in the same terminal to inspect the five measurements.
 
-`report_age_us` is in microseconds and includes report processing, queuing, and forwarding time. It is not pure network delay or application RTT. A 30-second TCP uplink passed on 2026-10-12. Precise traffic/KPM timing correlation, report-period accuracy, and sustained stability remain to be verified. Downlink is outside the current acceptance scope. For the cause and accuracy limits, see the [Timestamp Repair Record](troubleshooting/2026-10-07_flexric_latency_fix.md).
+`report_age_us` is in microseconds and includes report processing, queuing, and forwarding time. It is not pure network delay or application RTT. A 30-second TCP uplink passed on 2026-10-12. Precise traffic/KPM timing correlation, report-period accuracy, and sustained stability remain to be verified. Downlink is outside the current acceptance scope. For the cause and accuracy limits, see the [Timestamp Repair Record](../troubleshooting/2026-10-07_flexric_latency_fix.md).
 
 If the repair needs reinstalling later, run the following in a Spark terminal and enter the sudo password. The script backs up and atomically replaces the KPM library and two C monitors:
 
@@ -364,4 +364,4 @@ sudo grep -Ei 'E2|subscription|decode|error|failure' "${DU1_RUN:?Use this run di
 tail -n 30 /tmp/flexric-ric.log
 ```
 
-For RF errors and USB issues, follow the [full runbook](full_reproduction_runbook.md#9-confirm-rf-and-start-the-du); do not probe B210 while DU is running. The old FlexRIC `1a3903a7` failed the Format 4 subscription in this test. Use the verified `73650812` build and matching libraries.
+For RF errors and USB issues, follow the [full runbook](../runbooks/full_reproduction_runbook.md#9-confirm-rf-and-start-the-du); do not probe B210 while DU is running. The old FlexRIC `1a3903a7` failed the Format 4 subscription in this test. Use the verified `73650812` build and matching libraries.

@@ -2,7 +2,7 @@
 
 Updated: 2026-10-12. This document records software dependencies, device drivers and builds for DGX Spark and the UE laptop. The OCUDU/Open5GS baseline comes from the 2026-10-05 deployment; section 8 records the FlexRIC build and installation completed on 2026-10-07. Section 7.4 adds the completed Open Cells PC/SC provisioning environment and Quectel card checks for the two new UE SIMs.
 
-For experiment startup, modem registration, PDU sessions, traffic, and shutdown, use the [Full Reproduction Runbook](full_reproduction_runbook.md). Executable CU/DU and core configuration values are recorded in [Project Progress](project_progress_and_configuration.md#configuration-records); registration and data-session failures are in the [2026-10-05 debug record](troubleshooting/2026-10-05_sa_bringup.md).
+For experiment startup, modem registration, PDU sessions, traffic, and shutdown, use the [Full Reproduction Runbook](../runbooks/full_reproduction_runbook.md). Executable CU/DU and core configuration values are recorded in [Project Progress](../project_progress_and_configuration.md#configuration-records); registration and data-session failures are in the [2026-10-05 debug record](../troubleshooting/2026-10-05_sa_bringup.md).
 
 ## 1. Software baseline and host constraints
 
@@ -192,7 +192,7 @@ ldd build/apps/du_split_8/odu | grep -E 'uhd|usb|sctp|yaml|not found'
 
 Acceptance requires both executable files and no unresolved runtime libraries. The earlier monolithic `gnb_split_8` build and `band_helper_test` were successful historical checks. They are not installation requirements for operating the split CU/DU deployment.
 
-Runtime configuration remains at `/home/nyu/ocudu/configs/cu.yml` and `configs/du1_b210_n78_20mhz.yml`. Use [the configuration record](project_progress_and_configuration.md#configuration-records) when preparing those files. INFO log levels, RF gain, PLMN, and session type are deployment settings rather than compiler or device-driver fixes.
+Runtime configuration remains at `/home/nyu/ocudu/configs/cu.yml` and `configs/du1_b210_n78_20mhz.yml`. Use [the configuration record](../project_progress_and_configuration.md#configuration-records) when preparing those files. INFO log levels, RF gain, PLMN, and session type are deployment settings rather than compiler or device-driver fixes.
 
 ## 5. Docker and the MongoDB compatibility workaround
 
@@ -301,7 +301,7 @@ cat /etc/systemd/network/99-open5gs.netdev /etc/systemd/network/99-open5gs.netwo
 cat /etc/systemd/network/99-open5gs-ue2.netdev /etc/systemd/network/99-open5gs-ue2.network
 ```
 
-After the applied October 23 [TUN split](dual_ue_tun_split.md), the original
+After the applied October 23 [TUN split](../networking/dual_ue_tun_split.md), the original
 `.netdev` defines `Name=ogstun_1`, `Kind=tun`, and its `.network` configures UE1
 IPv4, original IPv6, routes and `MTUBytes=1400`. The additional UE2 pair defines
 `ogstun_2 / 10.46.0.1/16`, also MTU 1400. UPF session entries select the matching
@@ -357,7 +357,7 @@ sudo journalctl -k --since '5 minutes ago' --no-pager | grep -Ei 'usb|quectel|tt
 
 Expected device ID is `2c7c:0800` for the recorded USB composition. Historical AT ports were ttyUSB2/ttyUSB3, QMI was cdc-wdm2, and the network port was wwan0. Discover actual ports on each laptop. ModemManager reports known roles but may omit working AT ports; an existing ttyUSB can still respond to AT. With two modems, match each candidate's sysfs USB parent against the identity-selected modem's physical device, never the first ttyUSB number. ModemManager's [Device property](https://github.com/linux-mobile-broadband/ModemManager/blob/main/introspection/org.freedesktop.ModemManager1.Modem.xml) identifies the modem's physical device, and [mmcli's output fields](https://github.com/linux-mobile-broadband/ModemManager/blob/main/cli/mmcli-output.c) expose it as `modem.generic.device`. A diagnostic/GNSS/ignored ttyUSB is not automatically an AT-capable port.
 
-[UE step 2](ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell) uses `sudo minicom -D /dev/ttyUSB2 -b 115200` for the current setup. Type `AT` and require a real `OK` before configuring the modem. Keep ModemManager running. Missing `(at)` output alone requires no reboot or firmware/USB-composition change. After USB reconnection, repeat identity selection and check actual port numbering.
+[UE step 2](../single_ue/ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell) uses `sudo minicom -D /dev/ttyUSB2 -b 115200` for the current setup. Type `AT` and require a real `OK` before configuring the modem. Keep ModemManager running. Missing `(at)` output alone requires no reboot or firmware/USB-composition change. After USB reconnection, repeat identity selection and check actual port numbering.
 
 If a module is available but not loaded, load it and reconnect the modem:
 
@@ -424,7 +424,7 @@ The newer modem's `searching`/`detached` state and approximately 88% signal qual
 
 ## 8 FlexRIC installation on Spark
 
-FlexRIC is a separate Near-RT RIC project connected to OCUDU over E2. The tested revision is **`736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8`** on `br-flexric`. Its standard KPM ASN.1 codec supports the tested Format 4 subscription and OCUDU Format 3 report encoding. The earlier pinned `1a3903a7` failed live subscription with OCUDU `050a2bb`; do not use that revision for this procedure. The [dated record](troubleshooting/2026-10-07_flexric_bringup.md) distinguishes offline codec tests, successful live subscription and actual UE report reception.
+FlexRIC is a separate Near-RT RIC project connected to OCUDU over E2. The tested revision is **`736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8`** on `br-flexric`. Its standard KPM ASN.1 codec supports the tested Format 4 subscription and OCUDU Format 3 report encoding. The earlier pinned `1a3903a7` failed live subscription with OCUDU `050a2bb`; do not use that revision for this procedure. The [dated record](../troubleshooting/2026-10-07_flexric_bringup.md) distinguishes offline codec tests, successful live subscription and actual UE report reception.
 
 ### 8a Dependencies
 
@@ -489,7 +489,7 @@ sha256sum \
   /usr/local/lib/flexric/libkpm_sm.so
 ```
 
-Require identical hashes for the pair, not a fixed hash across builds. The runtime DU overlay and startup sequence are in [runbook stage 9](full_reproduction_runbook.md#9-confirm-rf-and-start-the-du).
+Require identical hashes for the pair, not a fixed hash across builds. The runtime DU overlay and startup sequence are in [runbook stage 9](../runbooks/full_reproduction_runbook.md#9-confirm-rf-and-start-the-du).
 
 ## 9 Installation and environment issue log
 
@@ -506,7 +506,7 @@ Require identical hashes for the pair, not a fixed hash across builds. The runti
 | RAN scheduling warnings / recurring RF errors | Runtime privilege/performance issue after successful installation | Recorded performance script and privileged launch; sustained stability remains open |
 | KPM Format 4 decode failure and RIC assertion | Old `1a3903a7` compiled a modified KPM ASN.1 codec | Install `73650812` from `build-ocudu` with `KPM_V3_00`; live subscription/deletion then passed |
 | xApp exits after about 10 seconds | Expected behavior of the `73650812` C monitor example | Look for successful subscription, deletion response and `Test xApp run SUCCESSFULLY` |
-| Huge negative KPM indication latency | Timestamp word-order and NTP/Unix conversion problems | [Repair built/tested/installed](troubleshooting/2026-10-07_flexric_latency_fix.md); actual UE `2` produced 12 report ages of 499–717 microseconds with normal exit |
+| Huge negative KPM indication latency | Timestamp word-order and NTP/Unix conversion problems | [Repair built/tested/installed](../troubleshooting/2026-10-07_flexric_latency_fix.md); actual UE `2` produced 12 report ages of 499–717 microseconds with normal exit |
 | Ubuntu archive HTTP requests timed out | HTTPS archive request returned HTTP 200 | Changed the relevant archive/security source URIs to HTTPS; APT update completed |
 | Original Open Cells download had an expired TLS certificate | Source acquired from the GitHub repository | Rebuilt the local `uicc_v3.3` PC/SC CLI; preserve certificate verification |
 | `program_uicc_pcsc` cannot load `libccid.so` | Library existed under the PC/SC driver bundle | Pass its directory through `sudo env LD_LIBRARY_PATH=...` for this command |
@@ -528,4 +528,4 @@ A successful build or driver probe does not establish SA registration or a usabl
 
 The completed SIM setup adds the ACR39U/PC/SC environment, local PC/SC utility build, two independently provisioned and authenticated cards, and Quectel USIM verification. For reproduction, also verify credential-file mode 600 and the card-to-IMSI assignment using the [SIM guide](sim_provisioning_and_dual_ue.md#sim-assignments). The new `...101`/`...102` Open5GS subscriber records, local SQN handling, two UE registrations, DU2 operation, two PDU/WWAN paths and MPTCP remain next steps.
 
-Continue with the [Full Reproduction Runbook](full_reproduction_runbook.md) or the [Spark](spark_quick_commands.md) and [UE laptop](ue_laptop_quick_commands.md) quick commands. Actual UE KPM reception passed on 2026-10-07. The timestamp display repair is applied, built, installed and verified with actual UE reports. Precise timestamp/delay accuracy, synchronized application/KPM characterization, AI/CUDA development and MPTCP application tooling remain future work.
+Continue with the [Full Reproduction Runbook](../runbooks/full_reproduction_runbook.md) or the [Spark](../single_ue/spark_quick_commands.md) and [UE laptop](../single_ue/ue_laptop_quick_commands.md) quick commands. Actual UE KPM reception passed on 2026-10-07. The timestamp display repair is applied, built, installed and verified with actual UE reports. Precise timestamp/delay accuracy, synchronized application/KPM characterization, AI/CUDA development and MPTCP application tooling remain future work.

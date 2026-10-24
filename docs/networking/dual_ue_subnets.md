@@ -36,14 +36,14 @@ as historical evidence. UE2 subsequently passed fresh modem/SIM/cell/SA
 readback and a successful lock write/readback, then established `internet2`
 bearer 3 / `10.46.0.2/30` / `wwan0` and passed ping 5/5 through table 152 without
 changing the Wi-Fi default route. Single-link TCP UL then delivered receiver 15.5 Mbit/s over 60.34 s / sender Retr 1, with 12 complete KPM smoke reports for UE F1AP 67. Full dual-link acceptance remains pending. See the
-[registration checkpoint](evidence/2026-10-13_du2_registration/manifest.json)
-and [IPv4 path checkpoint](evidence/2026-10-13_du2_ipv4_path/manifest.json).
+[registration checkpoint](../evidence/2026-10-13_du2_registration/manifest.json)
+and [IPv4 path checkpoint](../evidence/2026-10-13_du2_ipv4_path/manifest.json).
 UE1 subsequently established `internet` bearer 4 / `10.45.0.2/30` / `wwan1`,
 pinged its `.1` endpoint with 5/5 replies through table 151, and both role policy
 rules were read back while UE2 still returned all five requested echo replies.
-See the [dual IPv4 path checkpoint](evidence/2026-10-13_dual_ipv4_paths/manifest.json).
+See the [dual IPv4 path checkpoint](../evidence/2026-10-13_dual_ipv4_paths/manifest.json).
 UE1 subsequently passed 60-second TCP UL at receiver 10.5 Mbit/s / sender Retr 0
-with pipeline exit 0; see [UE1 UL evidence](evidence/2026-10-13_du1_ul/manifest.json).
+with pipeline exit 0; see [UE1 UL evidence](../evidence/2026-10-13_du1_ul/manifest.json).
 Concurrent UL/KPM remains pending.
 
 Offline verification passed: ten configuration preservation/refusal cases,
@@ -63,7 +63,7 @@ script: both services were active, UE2 read back `internet2 / IPv4`, and both
 service addresses/routes were present on `ogstun`, ending with
 `Core migration completed`. Read-only inspection independently confirmed the
 deployed SMF/UPF/network files match the prepared bundle. The
-[retained evidence](evidence/2026-10-13_dual_subnet_migration/manifest.json)
+[retained evidence](../evidence/2026-10-13_dual_subnet_migration/manifest.json)
 distinguishes operator-reported runtime checks from file inspection. Fresh UE2
 Full dual-link UL/KPM, simultaneous UE paths and cold-start persistence remain pending. The saved apply script
 passed six tests using mocked privileged/network commands, including failure
@@ -136,7 +136,7 @@ UE1 must use `internet`; UE2 must currently use `internet` for the first migrati
 The helper refuses ambiguous records or a preassigned static UE2 address. Resolve
 a static address explicitly before changing its pool. If a subscriber is absent,
 provision it with its existing protected credentials using the
-[subscriber procedure](sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers),
+[subscriber procedure](../setup/sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers),
 then repeat this check. Do not recreate credentials or reset SQN.
 
 For a first migration, `10.46.0.0/16` must not overlap an existing management,
@@ -158,7 +158,7 @@ sudo mmcli -m "$MODEM" --disable
 
 If no PDU was connected, no disconnect is needed. Use recorded identity, not a
 remembered modem index. Clean any old run's addresses/rules/routes using its
-ledger and [separate laptop cleanup](dual_ue_laptop_quick_commands.md#cleanup).
+ledger and [separate laptop cleanup](../dual_ue_laptop_quick_commands.md#cleanup).
 The old shared-endpoint layout used `10.45.0.1` for **both** roles. Its old ledger
 does not contain `PATH_SERVER`: reconstruct that value as `10.45.0.1` only after
 confirming the recorded route destination. Never substitute the new UE2 target
@@ -204,7 +204,7 @@ inspect private service logs; do not share authentication-bearing logs verbatim.
 
 Enable each selected modem, then repeat identity selection, preferences, cell
 lock and serving-cell checks in the revised
-[laptop commands](dual_ue_laptop_quick_commands.md#ue2-selection). Modem indexes/ports may change.
+[laptop commands](../dual_ue_laptop_quick_commands.md#ue2-selection). Modem indexes/ports may change.
 For each role use a fresh terminal after cleaning its previous state:
 
 ```bash

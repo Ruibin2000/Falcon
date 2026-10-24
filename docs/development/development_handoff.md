@@ -1,7 +1,7 @@
 # Development Handoff
 
 Laptop routing update, 2026-10-23: use the handbook's
-[guarded reset blocks](dual_ue_laptop_quick_commands.md#block-wifi-fallback).
+[guarded reset blocks](../dual_ue_laptop_quick_commands.md#block-wifi-fallback).
 They install independent destination blocks `20151/20152` before reset so
 ordinary ping and TCP/UDP to `10.45.0.1` / `10.46.0.1` cannot fall back to Wi-Fi
 after the normal role rules are cleared. Rebuilding now installs all four role
@@ -10,8 +10,8 @@ The independent blocks survive reset/shutdown, while management Wi-Fi stays
 available. They must be reinstalled after a laptop reboot. The underlying reset
 helper is unchanged; these are handbook commands, pending live laptop validation.
 
-DU console update, 2026-10-23: [DU1/DU2 startup commands](dual_ue_spark_quick_commands.md#5-start-du1-and-du2-in-separate-terminals-and-keep-both-running)
-now use the repository's [PTY console launcher](../scripts/dual_fr1/run_du_console.sh)
+DU console update, 2026-10-23: [DU1/DU2 startup commands](../dual_ue_spark_quick_commands.md#5-start-du1-and-du2-in-separate-terminals-and-keep-both-running)
+now use the repository's [PTY console launcher](../../scripts/dual_fr1/run_du_console.sh)
 with output-only `script` logging. This replaces the `sudo ... | tee` launch
 path that blocked console input behind sudo's foreground process group.
 Real-PTY tests with a fake DU passed for input, live logs, argument quoting,
@@ -19,21 +19,21 @@ exit status and `Ctrl+C`; live radio startup with the new launcher remains
 to be verified. Use `;h;` for help and send gain commands separately as
 `;rx_gain 0 30;` / `;rx_gain 0 35;` in the selected DU terminal.
 
-Network handoff, 2026-10-23: the [Spark TUN split](dual_ue_tun_split.md) is
+Network handoff, 2026-10-23: the [Spark TUN split](../networking/dual_ue_tun_split.md) is
 applied and independently checked. UE1 uses `ogstun_1 / 10.45.0.1/16`; UE2
 uses `ogstun_2 / 10.46.0.1/16`, both MTU 1400, with the existing UPF. The guide
 links the archived apply/guard/rollback scripts and original/prepared files.
 Fresh post-split UE/PDU/ping/traffic, cold-boot recovery and live rollback
 remain untested. Earlier checkpoint descriptions below retain their dates.
 
-Earlier handoff, 2026-10-13. Continue from **DU1 3660-MHz UL functionality/KPM verified; actual DU2 USB 3 / 3600-MHz startup and F1/E2 verified; UE2 identity/cell/SA, internet2 IPv4 PDU and private ping passed; DU2 single-link UL/KPM smoke passed; new UE1 DU1 registration/lock, internet IPv4 PDU and private ping passed; new UE1 60-second TCP UL passed (receiver 10.5 Mbit/s, Retr 0, exit 0); two-DU KPM subscription/deletion verified, actual callbacks and concurrent UL/KPM pending**. The operator requested DU2 first, UL-only acceptance, and deferral of underflow remediation. Read the [Dual UE laptop commands](dual_ue_laptop_quick_commands.md) and [Dual UE Spark commands](dual_ue_spark_quick_commands.md), the [DU2 procedure](dual_fr1_runbook.md), [Progress and Configuration](project_progress_and_configuration.md), the [Full Reproduction Runbook](full_reproduction_runbook.md), the [FlexRIC record](troubleshooting/2026-10-07_flexric_bringup.md), and [SIM Provisioning and Dual-UE Preparation](sim_provisioning_and_dual_ue.md). Daily commands are summarized separately for [Spark](spark_quick_commands.md) and the [UE laptop](ue_laptop_quick_commands.md).
+Earlier handoff, 2026-10-13. Continue from **DU1 3660-MHz UL functionality/KPM verified; actual DU2 USB 3 / 3600-MHz startup and F1/E2 verified; UE2 identity/cell/SA, internet2 IPv4 PDU and private ping passed; DU2 single-link UL/KPM smoke passed; new UE1 DU1 registration/lock, internet IPv4 PDU and private ping passed; new UE1 60-second TCP UL passed (receiver 10.5 Mbit/s, Retr 0, exit 0); two-DU KPM subscription/deletion verified, actual callbacks and concurrent UL/KPM pending**. The operator requested DU2 first, UL-only acceptance, and deferral of underflow remediation. Read the [Dual UE laptop commands](../dual_ue_laptop_quick_commands.md) and [Dual UE Spark commands](../dual_ue_spark_quick_commands.md), the [DU2 procedure](../runbooks/dual_fr1_runbook.md), [Progress and Configuration](../project_progress_and_configuration.md), the [Full Reproduction Runbook](../runbooks/full_reproduction_runbook.md), the [FlexRIC record](../troubleshooting/2026-10-07_flexric_bringup.md), and [SIM Provisioning and Dual-UE Preparation](../setup/sim_provisioning_and_dual_ue.md). Daily commands are summarized separately for [Spark](../single_ue/spark_quick_commands.md) and the [UE laptop](../single_ue/ue_laptop_quick_commands.md).
 
 The current operator documentation is split by host. Daily startup uses shared
 core/CU/RIC, both DU foreground terminals and both iperf servers before the
 laptop's complete UE1 sequence and then its complete UE2 sequence. The operator subsequently
 reported a modem power-cycle lock query of `0`; its affected role is unspecified.
-Follow the affected role's complete laptop sequence ([UE1](dual_ue_laptop_quick_commands.md#ue1-start) /
-[UE2](dual_ue_laptop_quick_commands.md#ue2-start)): identify the modem/SIM/AT port, restore and verify
+Follow the affected role's complete laptop sequence ([UE1](../dual_ue_laptop_quick_commands.md#ue1-start) /
+[UE2](../dual_ue_laptop_quick_commands.md#ue2-start)): identify the modem/SIM/AT port, restore and verify
 its lock/actual cell/SA, refresh bearer/path ownership, and recheck cell before UL.
 Previous live mappings are historical until revalidated. The latest UE2 bearer
 is 5 / `10.46.0.3/29` / `wwan0`, while rules 10161/10162 still select the old
@@ -42,18 +42,18 @@ owned UE2 entries before testing. Each laptop role sequence now includes its own
 old-path cleanup, fresh-bearer rebuild and private route/ping checks. Cleanup
 passed seven offline fixtures covering both roles, vanished addresses/routes,
 wrong modem/interface/prefix refusal and guard retention after failed address
-deletion; actual laptop restoration remains pending. See [reattachment evidence](evidence/2026-10-13_ue2_reattach/manifest.json).
+deletion; actual laptop restoration remains pending. See [reattachment evidence](../evidence/2026-10-13_ue2_reattach/manifest.json).
 Then start Spark step 7's
 DU-tagged 120-second capture, then laptop section 3's Python concurrent launcher.
 The previous laptop `wait`/`printf` transcript lost variable expansions, so its
 printed exit codes and immediate end timestamp are invalid; preserve its logs
 and retain actual child statuses on the next run. The completed 45-second xApp
 probe discovered both DU IDs, subscribed/deleted twice and exited 0, but received
-zero UE callback blocks; see [subscription-only evidence](evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
+zero UE callback blocks; see [subscription-only evidence](../evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
 
 ## Achieved and pending
 
-The **2026-10-12 Plan 3 checkpoint** migrated DU1 from 3750 to 3660 MHz within n78, preserving PCI 1 and radio serial `3271233`. Actual startup gave carrier `644000`, SSB `643680`, 20 MHz, 30 kHz SCS, and USB 3. The complete new configuration uses TX 70 / RX 35 and includes E2/KPM; its maintained and deployed copies have the same SHA-256. UE `10.45.0.2 / wwan0` passed ping with 5/5 replies and 0% loss, and a 30-second TCP uplink with receiver **17.0 Mbit/s** and sender Retr **0**. The xApp received **12 complete five-metric rows for UE F1AP ID 5**, report age 508–820 µs, and completed subscription/deletion with its success marker. [Daily log](../dev_logs/2026-10-12_ruibin.md) and [evidence](evidence/2026-10-12_du1_3660mhz/manifest.json) retain the details.
+The **2026-10-12 Plan 3 checkpoint** migrated DU1 from 3750 to 3660 MHz within n78, preserving PCI 1 and radio serial `3271233`. Actual startup gave carrier `644000`, SSB `643680`, 20 MHz, 30 kHz SCS, and USB 3. The complete new configuration uses TX 70 / RX 35 and includes E2/KPM; its maintained and deployed copies have the same SHA-256. UE `10.45.0.2 / wwan0` passed ping with 5/5 replies and 0% loss, and a 30-second TCP uplink with receiver **17.0 Mbit/s** and sender Retr **0**. The xApp received **12 complete five-metric rows for UE F1AP ID 5**, report age 508–820 µs, and completed subscription/deletion with its success marker. [Daily log](../../dev_logs/2026-10-12_ruibin.md) and [evidence](../evidence/2026-10-12_du1_3660mhz/manifest.json) retain the details.
 
 This checkpoint is **uplink only**. RF stability remains pending: 117 underflows were observed by 11:39:44 EDT. The actual IMSI, SIM card, and bearer ID were not retained in these acceptance excerpts; do not infer registration of either new subscriber from UE F1AP ID 5. Dual-DU operation and full Plan 3 acceptance remain pending.
 
@@ -116,14 +116,14 @@ Private QSCAN and PUSCH CRC OK at 20–33 dB SINR established usable downlink ac
 
 ## Next session
 
-First identify UE2 by its actual modem/SIM, verify the matching Open5GS subscriber, lock PCI 2 / observed SSB 639648, and validate registration/PDU/UL using the [DU2 procedure](dual_fr1_runbook.md). Hardware reconnection on 2026-10-13 identified both B210s simultaneously in two successive discovery runs: DU1 `3271233` at `2-1.3` / `NVDA8000:00`, DU2 `328B021` at `6-1.1` / `NVDA8000:02`, both USB 3 / 5000 Mb/s. The deployed DU2 config binds `328B021` and passes offline checks. Concurrent streaming remains unverified. The operator then started MongoDB, all ten SA services, CU and RIC; actual DU2 F1/E2 completed and RIC accepted gNB 411 / DU ID 2 / KPM ID 2. Live startup evidence is retained in [the manifest](evidence/2026-10-13_du2_startup/manifest.json). Preserve DU1's working 3660-MHz carrier and SSB lock.
+First identify UE2 by its actual modem/SIM, verify the matching Open5GS subscriber, lock PCI 2 / observed SSB 639648, and validate registration/PDU/UL using the [DU2 procedure](../runbooks/dual_fr1_runbook.md). Hardware reconnection on 2026-10-13 identified both B210s simultaneously in two successive discovery runs: DU1 `3271233` at `2-1.3` / `NVDA8000:00`, DU2 `328B021` at `6-1.1` / `NVDA8000:02`, both USB 3 / 5000 Mb/s. The deployed DU2 config binds `328B021` and passes offline checks. Concurrent streaming remains unverified. The operator then started MongoDB, all ten SA services, CU and RIC; actual DU2 F1/E2 completed and RIC accepted gNB 411 / DU ID 2 / KPM ID 2. Live startup evidence is retained in [the manifest](../evidence/2026-10-13_du2_startup/manifest.json). Preserve DU1's working 3660-MHz carrier and SSB lock.
 
-Prepare the two new subscribers using [SIM Provisioning and Dual-UE Preparation](sim_provisioning_and_dual_ue.md). Add/verify `001010000000101` with the pair from `~/sim_du1_credentials.txt` and `001010000000102` with the pair from `~/sim_du2_credentials.txt`; use SST 1 and IPv4 session type 1. The operator requested a [dual-subnet migration](dual_ue_subnets.md): UE1 retains `internet / 10.45.0.0/16`, UE2 uses `internet2 / 10.46.0.0/16`; the October 13 layout provided both `.1` endpoints on `ogstun`; the October 23 split now places them on `ogstun_1` and `ogstun_2`, respectively. The operator applied the migration: both SMF/UPF were active, UE2 read back internet2, and both gateway addresses/routes were present. Read-only inspection confirmed deployed files match the prepared bundle; see the retained evidence in docs/evidence/2026-10-13_dual_subnet_migration/manifest.json. UE2 modem 5 / IMEI 863305041980706 was disabled/detached before application. UE2 was reenabled, confirmed on PCI 2 / NCI 6733825, and established internet2 bearer 3 / 10.46.0.2/30 / wwan0. Private ping passed 5/5 over table 152 with Wi-Fi still the default; see the IPv4 path evidence. DU2 single-link TCP UL then passed at receiver 15.5 Mbit/s over 60.34 s / sender 15.8 Mbit/s / Retr 1. Actual KPM capture contained 12 complete reports for UE F1AP 67 with numeric UL metrics and successful subscription/deletion/completion; see the UL evidence. New UE1, concurrent paths, full attributed KPM and cold-start persistence remain pending. Check the installed Open5GS SQN representation before applying the programmer's reference **96**, and preserve the verified single-link subscriber `001010000000001`.
+Prepare the two new subscribers using [SIM Provisioning and Dual-UE Preparation](../setup/sim_provisioning_and_dual_ue.md). Add/verify `001010000000101` with the pair from `~/sim_du1_credentials.txt` and `001010000000102` with the pair from `~/sim_du2_credentials.txt`; use SST 1 and IPv4 session type 1. The operator requested a [dual-subnet migration](../networking/dual_ue_subnets.md): UE1 retains `internet / 10.45.0.0/16`, UE2 uses `internet2 / 10.46.0.0/16`; the October 13 layout provided both `.1` endpoints on `ogstun`; the October 23 split now places them on `ogstun_1` and `ogstun_2`, respectively. The operator applied the migration: both SMF/UPF were active, UE2 read back internet2, and both gateway addresses/routes were present. Read-only inspection confirmed deployed files match the prepared bundle; see the retained evidence in docs/evidence/2026-10-13_dual_subnet_migration/manifest.json. UE2 modem 5 / IMEI 863305041980706 was disabled/detached before application. UE2 was reenabled, confirmed on PCI 2 / NCI 6733825, and established internet2 bearer 3 / 10.46.0.2/30 / wwan0. Private ping passed 5/5 over table 152 with Wi-Fi still the default; see the IPv4 path evidence. DU2 single-link TCP UL then passed at receiver 15.5 Mbit/s over 60.34 s / sender 15.8 Mbit/s / Retr 1. Actual KPM capture contained 12 complete reports for UE F1AP 67 with numeric UL metrics and successful subscription/deletion/completion; see the UL evidence. New UE1, concurrent paths, full attributed KPM and cold-start persistence remain pending. Check the installed Open5GS SQN representation before applying the programmer's reference **96**, and preserve the verified single-link subscriber `001010000000001`.
 
 Then confirm each modem registers through its intended cell, establish two independent PDU sessions and guarded laptop WWAN/IP paths, and test each UL alone followed by concurrent UL. Extend the verified DU1 FlexRIC/KPM collection to both DU/UE identities; MPTCP, AI prediction, active steering and blockage/QoE comparison follow later.
 
 The 30-second TCP UL and five-metric reception are already verified at 3660 MHz. Current Plan 3 acceptance requires per-link/concurrent UL, correct identities/IP paths, numeric UL throughput/UL PRB reports and repeatability. Application DL and mixed-direction tests are outside this target. Underflow count/growth alone is nonblocking; remediation remains deferred without claiming accepted RF stability. Retain timing, identity/bearer/serving-cell and error-count evidence.
 
-The original example's huge negative `KPM ... ind_msg latency` is invalid. The [timestamp repair](troubleshooting/2026-10-07_flexric_latency_fix.md) is applied to local FlexRIC source, rebuilt, tested and installed; do not discard these local source changes when switching commits. It normalizes v3 ASN timestamps to Unix microseconds and prints signed `report_age_us`. Installed KPM library and `xapp_oran_moni` match the repaired build. Following the initial preview without UE indications, an actual UE ID `2` run produced 12 report-age values of **499–717 microseconds** and completed subscription deletion/exit normally. Live time display is verified; precise delay accuracy and synchronized application performance remain open. Follow [Spark step 7a](spark_quick_commands.md#7a-verify-reports-after-the-timestamp-repair) for repeat runs. Selected UE `2` DL RLC delay samples 13.80–14.40 in 0.1 ms units mean **1.380–1.440 ms**; UE IDs are not fixed.
+The original example's huge negative `KPM ... ind_msg latency` is invalid. The [timestamp repair](../troubleshooting/2026-10-07_flexric_latency_fix.md) is applied to local FlexRIC source, rebuilt, tested and installed; do not discard these local source changes when switching commits. It normalizes v3 ASN timestamps to Unix microseconds and prints signed `report_age_us`. Installed KPM library and `xapp_oran_moni` match the repaired build. Following the initial preview without UE indications, an actual UE ID `2` run produced 12 report-age values of **499–717 microseconds** and completed subscription deletion/exit normally. Live time display is verified; precise delay accuracy and synchronized application performance remain open. Follow [Spark step 7a](../single_ue/spark_quick_commands.md#7a-verify-reports-after-the-timestamp-repair) for repeat runs. Selected UE `2` DL RLC delay samples 13.80–14.40 in 0.1 ms units mean **1.380–1.440 ms**; UE IDs are not fixed.
 
-Use the [Full Reproduction Runbook](full_reproduction_runbook.md) for operating commands and [Software Installation, Drivers, and OCUDU Environment](software_installation_and_drivers.md) for dependencies, driver inspection, compiler/build settings, and installation issues.
+Use the [Full Reproduction Runbook](../runbooks/full_reproduction_runbook.md) for operating commands and [Software Installation, Drivers, and OCUDU Environment](../setup/software_installation_and_drivers.md) for dependencies, driver inspection, compiler/build settings, and installation issues.

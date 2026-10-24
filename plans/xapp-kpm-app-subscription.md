@@ -665,7 +665,7 @@ expectations. Stop the broker normally and confirm the port/registry is released
 
 ### Mandatory Live Five Metric Gate
 
-Start the existing RIC/DU/UE path using the [runbook](../docs/full_reproduction_runbook.md).
+Start the existing RIC/DU/UE path using the [runbook](../docs/runbooks/full_reproduction_runbook.md).
 Keep its radio configuration and scheduler/RLC metrics enabled. Stop the fixture
 broker and launch the same target with the five-metric subscription:
 
@@ -811,7 +811,7 @@ live data is unavailable, retain Stage A acceptance and leave Stage B pending.
 
 - [ ] Retain separate Stage A and Stage B interface patches, both subscription
   configs, protocol, dummy client, fixtures/tests, revisions, and binary hashes.
-- [ ] Keep timestamp and RF patches separate. Update [repository documentation](../docs/development_handoff.md)
+- [ ] Keep timestamp and RF patches separate. Update [repository documentation](../docs/development/development_handoff.md)
   with the new target/launch paths and the local interface scope.
 - [ ] Record Stage A fixture/live and Stage B fixture/live acceptance separately.
   Preserve the PRB source caveat and separate physical multi-link coverage.
@@ -870,4 +870,4 @@ source changes to roll back an application-delivery feature.
   and [its runner](../scripts/flexric/test_du_rf_metrics.py).
 - [Timestamp repair](../docs/troubleshooting/2026-10-07_flexric_latency_fix.md).
 - [Current implementation record](../docs/troubleshooting/2026-10-07_flexric_bringup.md#du-rf-metrics-extension-offline-package-2026-10-09)
-  and [full reproduction runbook](../docs/full_reproduction_runbook.md).
+  and [full reproduction runbook](../docs/runbooks/full_reproduction_runbook.md).

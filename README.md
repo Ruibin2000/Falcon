@@ -10,7 +10,7 @@ and UE2 uses `ogstun_2 / 10.46.0.1/16`, both with MTU 1400 and the existing
 shared UPF. The migration and independent Spark-side checks passed; fresh
 post-split application traffic was subsequently verified in the MPTCP run below.
 Cold-boot validation remains pending. See the
-[TUN split guide and archived scripts](docs/dual_ue_tun_split.md).
+[TUN split guide and archived scripts](docs/networking/dual_ue_tun_split.md).
 
 **MPTCP experiment report: [2026-10-23 FR1/FR3 Video and Switching](docs/reports/mptcp_video_experiment_report_2026-10-23.md)**
 reconstructs the screenshot's complete session from 9,624 transport records and
@@ -24,15 +24,15 @@ was the second path's logical demo label.
 
 Falcomm is a 5G/AI-RAN experimental platform based on the NVIDIA DGX Spark. **On 2026-10-13, concurrent TCP uplink delivered receiver UE1 13.8 Mbit/s and UE2 17.3 Mbit/s, both with sender Retr 0 and process exit 0. The xApp received 123 real UE callbacks per DU, including 63/61 complete UL-active five-metric rows, with successful subscription/deletion and normal exit.** The [retained analysis](docs/evidence/2026-10-13_dual_kpm_reports/manifest.json) reconciles the approximately 199.27-second Spark/Laptop clock difference and retains both captures, parsed rows and the throughput/CRC plot. This establishes concurrent UL functionality and two-DU KPM reception; full cross-layer correlation, repeatability/UDP/guard/survivor/cold-start acceptance remain pending. Earlier single-link checkpoints are retained. The longer-term objective is dual independent radio paths with FlexRIC telemetry, AI channel/rate prediction, and MPTCP video steering.
 
-**Start here: [Full Reproduction Runbook](docs/full_reproduction_runbook.md)** — restart the installed Spark infrastructure, configure the RMU500EK/RM500Q on a new Ubuntu laptop, register, establish IPv4 data, configure WWAN, test local traffic and shut down. [Troubleshooting and the 2026-10-05 debug record](docs/troubleshooting/2026-10-05_sa_bringup.md) explain the repaired failures.
+**Start here: [Full Reproduction Runbook](docs/runbooks/full_reproduction_runbook.md)** — restart the installed Spark infrastructure, configure the RMU500EK/RM500Q on a new Ubuntu laptop, register, establish IPv4 data, configure WWAN, test local traffic and shut down. [Troubleshooting and the 2026-10-05 debug record](docs/troubleshooting/2026-10-05_sa_bringup.md) explain the repaired failures.
 
-For daily operation, use the command booklets: **[Spark quick commands](docs/spark_quick_commands.md)** and **[UE laptop quick commands](docs/ue_laptop_quick_commands.md)**. They show compact confirmations; the full runbook retains detailed diagnostics. The [2026-10-07 FlexRIC record](docs/troubleshooting/2026-10-07_flexric_bringup.md) records the codec/version repair, successful subscription and actual UE measurements.
+For daily operation, use the command booklets: **[Spark quick commands](docs/single_ue/spark_quick_commands.md)** and **[UE laptop quick commands](docs/single_ue/ue_laptop_quick_commands.md)**. They show compact confirmations; the full runbook retains detailed diagnostics. The [2026-10-07 FlexRIC record](docs/troubleshooting/2026-10-07_flexric_bringup.md) records the codec/version repair, successful subscription and actual UE measurements.
 
-For the two-modem setup, use **[Dual UE laptop quick commands](docs/dual_ue_laptop_quick_commands.md)** and **[Dual UE Spark quick commands](docs/dual_ue_spark_quick_commands.md)**. Start the shared core/CU/RIC, both DUs and both iperf servers on Spark first; then follow the laptop's complete UE1 sequence and complete UE2 sequence in separate terminals before concurrent UL. Each role has its own modem/SIM selection, cell lock, complete host IPv4 reset, policy table and connectivity checks. [The reset helper](scripts/dual_fr1/reset_ue_network.py) discovers current state and needs only the UE role, without any old IP/CIDR/interface or session ledger. Use the handbook's [guarded reset blocks](docs/dual_ue_laptop_quick_commands.md#block-wifi-fallback) to prevent ordinary ping and traffic to `10.45.0.1` / `10.46.0.1` from falling back to Wi-Fi after reset; rebuilding installs both source and destination lookups. Management Wi-Fi remains available. The operator completed the [two-subnet core migration](docs/dual_ue_subnets.md) for UE2 `internet2 / 10.46.0.1`; both role IPv4/private-ping, individual UL and subsequent concurrent UL/KPM functionality checkpoints passed. Repeatable modem-power recovery and the remaining full acceptance gates are pending.
+For the two-modem setup, use **[Dual UE laptop quick commands](docs/dual_ue_laptop_quick_commands.md)** and **[Dual UE Spark quick commands](docs/dual_ue_spark_quick_commands.md)**. Start the shared core/CU/RIC, both DUs and both iperf servers on Spark first; then prepare UE1 and UE2 in sequence before concurrent UL. The new **[laptop one-shot startup and self-check](docs/dual_ue_automation.md)** automate modem/SIM selection, enable/registration, live serving-cell checks, PDU connection, host IPv4 configuration and both source-bound and ordinary ping. A matching cell skips serial configuration; a mismatch stops with manual instructions. The [laptop automatic reconnect Quick Start](docs/dual_ue_laptop_reconnect_quick_start.md) monitor each role and recover dropped/stuck PDUs, with `--interval 1` and `--verbose 1|2|3`. Offline tests are available; fresh physical-modem validation is pending. Each role has its own modem/SIM selection, cell lock, complete host IPv4 reset, policy table and connectivity checks. [The reset helper](scripts/dual_fr1/reset_ue_network.py) discovers current state and needs only the UE role, without any old IP/CIDR/interface or session ledger. The connection scripts and the handbook's [guarded reset blocks](docs/dual_ue_laptop_quick_commands.md#block-wifi-fallback) prevent ordinary ping and traffic to `10.45.0.1` / `10.46.0.1` from falling back to Wi-Fi after reset; rebuilding installs both source and destination lookups. Management Wi-Fi remains available. The operator completed the [two-subnet core migration](docs/networking/dual_ue_subnets.md) for UE2 `internet2 / 10.46.0.1`; both role IPv4/private-ping, individual UL and subsequent concurrent UL/KPM functionality checkpoints passed. Repeatable modem-power recovery and the remaining full acceptance gates are pending.
 
-As of **2026-10-13**, [Plan 3](plans/dual-ue-du-fr1-channels.md) uses **UL-only dual-link acceptance**. Underflow remediation is deferred and count/growth alone is nonblocking for this scope. Both B210 DUs are deployed with distinct radio/cell/F1/E2 identities, and both intended SIMs have registration/PDU/private-ping and individual UL checkpoints. The latest concurrent run now passes application UL functionality and real DU-tagged KPM reception. Full repeatability and the remaining acceptance gates are recorded in Plan 3. The earlier disconnected-xApp deletion-failure RIC abort path remains unfixed; normal monitor completion is still required. Follow the [DU2 bring-up procedure](docs/dual_fr1_runbook.md). The [2026-10-12 daily log](dev_logs/2026-10-12_ruibin.md) and [retained evidence](docs/evidence/2026-10-12_du1_3660mhz/manifest.json) remain the historical single-DU UL result.
+As of **2026-10-13**, [Plan 3](plans/dual-ue-du-fr1-channels.md) uses **UL-only dual-link acceptance**. Underflow remediation is deferred and count/growth alone is nonblocking for this scope. Both B210 DUs are deployed with distinct radio/cell/F1/E2 identities, and both intended SIMs have registration/PDU/private-ping and individual UL checkpoints. The latest concurrent run now passes application UL functionality and real DU-tagged KPM reception. Full repeatability and the remaining acceptance gates are recorded in Plan 3. The earlier disconnected-xApp deletion-failure RIC abort path remains unfixed; normal monitor completion is still required. Follow the [DU2 bring-up procedure](docs/runbooks/dual_fr1_runbook.md). The [2026-10-12 daily log](dev_logs/2026-10-12_ruibin.md) and [retained evidence](docs/evidence/2026-10-12_du1_3660mhz/manifest.json) remain the historical single-DU UL result.
 
-For the new cards, follow [SIM Provisioning and Dual-UE Preparation](docs/sim_provisioning_and_dual_ue.md): reader setup, personalization, authentication checks, modem verification, and the remaining Open5GS/dual-link work.
+For the new cards, follow [SIM Provisioning and Dual-UE Preparation](docs/setup/sim_provisioning_and_dual_ue.md): reader setup, personalization, authentication checks, modem verification, and the remaining Open5GS/dual-link work.
 
 ## Verified Single-Link Architecture
 
@@ -192,15 +192,29 @@ Versions and runtime results above are drawn from the deployment records. FlexRI
 ```text
 README.md
 docs/
-├── project_progress_and_configuration.md
-├── software_installation_and_drivers.md
-├── sim_provisioning_and_dual_ue.md
-├── full_reproduction_runbook.md
-├── spark_quick_commands.md
-├── ue_laptop_quick_commands.md
 ├── dual_ue_laptop_quick_commands.md
 ├── dual_ue_spark_quick_commands.md
-├── development_handoff.md
+├── dual_ue_automation.md
+├── dual_ue_laptop_reconnect_quick_start.md
+├── project_progress_and_configuration.md
+├── setup/
+│   ├── software_installation_and_drivers.md
+│   └── sim_provisioning_and_dual_ue.md
+├── runbooks/
+│   ├── full_reproduction_runbook.md
+│   └── dual_fr1_runbook.md
+├── networking/
+│   ├── dual_ue_subnets.md
+│   └── dual_ue_tun_split.md
+├── development/
+│   ├── development_handoff.md
+│   └── ue_identity_xapp.md
+├── single_ue/
+│   ├── spark_quick_commands.md
+│   └── ue_laptop_quick_commands.md
+├── reports/
+├── evidence/
+├── figures/
 └── troubleshooting/
     ├── 2026-10-05_sa_bringup.md
     ├── 2026-10-07_flexric_bringup.md
@@ -209,26 +223,36 @@ docs/
 
 | Document | Purpose |
 |---|---|
-| [Project Progress and System Configuration](docs/project_progress_and_configuration.md) | Verified architecture, phase status, configuration values and remaining work |
-| [Software Installation, Drivers, and OCUDU Environment](docs/software_installation_and_drivers.md) | Software dependencies, drivers, compiler/build environment and installation issues |
-| [SIM Provisioning and Dual-UE Preparation](docs/sim_provisioning_and_dual_ue.md) | Open Cells card programming, protected credentials, Quectel checks, and remaining dual-subscriber/dual-DU validation |
-| [Full Reproduction Runbook](docs/full_reproduction_runbook.md) | Startup, laptop setup, registration, IPv4 data, traffic and shutdown commands |
-| [Spark quick commands](docs/spark_quick_commands.md) | Command booklet for core, CU, FlexRIC, DU, xApp, traffic and shutdown with compact checks |
-| [UE laptop quick commands](docs/ue_laptop_quick_commands.md) | Command booklet for modem selection, SA registration, IPv4 bearer, WWAN and traffic |
 | [Dual UE laptop quick commands](docs/dual_ue_laptop_quick_commands.md) | IMEI/SIM selection, SA locks, actual IPv4 bearers, source/destination policy paths, concurrent UL with automatic current-bearer discovery and complete per-role IPv4 reset without old-session parameters |
 | [Dual UE Spark quick commands](docs/dual_ue_spark_quick_commands.md) | Core/CU/RIC/two-DU startup, two server endpoints, DU-tagged KPM capture and shutdown |
-| [Dual UE subnet migration](docs/dual_ue_subnets.md) | Prepared two-DNN address pools, Spark service addresses, targeted subscriber change and rollback |
-| [Dual UE Spark TUN split](docs/dual_ue_tun_split.md) | Current `ogstun_1` / `ogstun_2` layout, archived migration/configurations, Spark evidence and rollback |
+| [Laptop one-shot startup and self-check](docs/dual_ue_automation.md) | Run once through modem/cell/PDU, host networking and ping, then exit; read-only checks and manual recovery |
+| [Laptop automatic reconnect Quick Start](docs/dual_ue_laptop_reconnect_quick_start.md) | Continuous per-UE monitoring/recovery; retry interval, three verbosity levels, stop/update commands and MPX IP adaptation |
+| [Project Progress and System Configuration](docs/project_progress_and_configuration.md) | Verified architecture, phase status, configuration values and remaining work |
+| [Software Installation, Drivers, and OCUDU Environment](docs/setup/software_installation_and_drivers.md) | Software dependencies, drivers, compiler/build environment and installation issues |
+| [SIM Provisioning and Dual-UE Preparation](docs/setup/sim_provisioning_and_dual_ue.md) | Open Cells card programming, protected credentials, Quectel checks, and remaining dual-subscriber/dual-DU validation |
+| [Full Reproduction Runbook](docs/runbooks/full_reproduction_runbook.md) | Startup, laptop setup, registration, IPv4 data, traffic and shutdown commands |
+| [Spark quick commands](docs/single_ue/spark_quick_commands.md) | Command booklet for core, CU, FlexRIC, DU, xApp, traffic and shutdown with compact checks |
+| [UE laptop quick commands](docs/single_ue/ue_laptop_quick_commands.md) | Command booklet for modem selection, SA registration, IPv4 bearer, WWAN and traffic |
+| [Dual UE subnet migration](docs/networking/dual_ue_subnets.md) | Prepared two-DNN address pools, Spark service addresses, targeted subscriber change and rollback |
+| [Dual UE Spark TUN split](docs/networking/dual_ue_tun_split.md) | Current `ogstun_1` / `ogstun_2` layout, archived migration/configurations, Spark evidence and rollback |
 | [5G SA Bring-up Debug Record, 2026-10-05](docs/troubleshooting/2026-10-05_sa_bringup.md) | Dated evidence, confirmed repairs and troubleshooting decision tree/matrix |
 | [FlexRIC Bring-up Record, 2026-10-07](docs/troubleshooting/2026-10-07_flexric_bringup.md) | Version/codec repair, E2/KPM lifecycle and actual UE metrics |
 | [FlexRIC Timestamp Repair, 2026-10-07](docs/troubleshooting/2026-10-07_flexric_latency_fix.md) | Tested timestamp patch, deployment command and report-age semantics |
-| [Development Handoff](docs/development_handoff.md) | Working constraints and next steps for continued development |
+| [Development Handoff](docs/development/development_handoff.md) | Working constraints and next steps for continued development |
+| [UE identity xApp](docs/development/ue_identity_xapp.md) | Standalone xApp implementation, CU/DU/Core association, build/start commands and validation scope |
+
+The five files at the top of `docs/` cover the Laptop/Spark command booklets,
+Laptop one-shot automation, Laptop automatic reconnect and project status. Supporting documents are grouped under `setup/` (installation
+and SIM preparation), `runbooks/` (full procedures), `networking/` (subnets and
+TUN interfaces), `development/` (implementation and handoff), and `single_ue/`
+(the earlier single-UE command booklets). Experiment reports, retained evidence,
+figures and troubleshooting records keep their own directories.
 
 New members should read the project overview and configuration first, prepare missing software using the installation guide, then follow the runbook. Consult the dated debug record when a stage fails and the handoff document before extending the system. The quick command booklets summarize the canonical runbook for each host; future experiment records use `docs/troubleshooting/YYYY-MM-DD_topic.md`.
 
 ## Quick Start
 
-The following reproduces the existing single-link subscriber `001010000000001`. For the new `...101` / `...102` cards, complete the matching subscriber records and dual-UE preparation in the [SIM guide](docs/sim_provisioning_and_dual_ue.md) first. Follow the [Full Reproduction Runbook](docs/full_reproduction_runbook.md) one stage at a time:
+The following reproduces the existing single-link subscriber `001010000000001`. For the new `...101` / `...102` cards, complete the matching subscriber records and dual-UE preparation in the [SIM guide](docs/setup/sim_provisioning_and_dual_ue.md) first. Follow the [Full Reproduction Runbook](docs/runbooks/full_reproduction_runbook.md) one stage at a time:
 
 1. Check B210/USB 3 while DU is stopped; apply and verify the recorded OCUDU performance settings.
 2. Start/check MongoDB, verify the exact subscriber is IPv4-only, and align NRF/AMF PLMN.
@@ -238,7 +262,7 @@ The following reproduces the existing single-link subscriber `001010000000001`. 
 6. Test local private traffic and record RF-error growth. Run the 10-second KPM xApp during UE traffic to validate actual reports.
 7. Stop traffic/xApp and the laptop PDU first, then DU, FlexRIC, CU and core.
 
-Before operation, verify that local configuration files and device state match the [Full Reproduction Runbook](docs/full_reproduction_runbook.md). The current DU configuration transmits at approximately **3.75 GHz**. Operate only at an authorized frequency, location, and power level. Do not run UHD probes or benchmarks that access the B210 while the DU is using it.
+Before operation, verify that local configuration files and device state match the [Full Reproduction Runbook](docs/runbooks/full_reproduction_runbook.md). The current DU configuration transmits at approximately **3.75 GHz**. Operate only at an authorized frequency, location, and power level. Do not run UHD probes or benchmarks that access the B210 while the DU is using it.
 
 The current Falcomm over-the-air chain uses **UHD and a USRP B210**. ZeroMQ settings in upstream RIC tutorials describe a software-radio example and are not part of this deployment. FlexRIC validation should enable E2 on the existing UHD/DU configuration.
 

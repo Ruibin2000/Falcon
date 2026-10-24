@@ -1,12 +1,12 @@
 # Dual UE Laptop Quick Commands — UE IP Binding and UL
 
-Updated: 2026-10-23. Developer: Ruibin Chen. Pair this booklet with the updated
+Updated: 2026-10-24. Developer: Ruibin Chen. Pair this booklet with the updated
 [Spark Quick Commands](dual_ue_spark_quick_commands.md) to reproduce the October 21
 CU/DU/Core UE IP binding. Spark now starts RIC with the identity plugin, then
 CU with its identity E2 overlay, both DUs and the new three-subscription xApp.
 Laptop still prepares each intended modem/SIM/cell/PDU/route independently.
 
-Spark's October 23 [TUN split](dual_ue_tun_split.md) is applied: `ogstun_1`
+Spark's October 23 [TUN split](networking/dual_ue_tun_split.md) is applied: `ogstun_1`
 serves `10.45.0.1` and `ogstun_2` serves `10.46.0.1`. Laptop APNs, service IPs
 and policy tables are retained; WWAN names and bearer parameters still require
 fresh discovery. After the SMF/UPF restart, re-enable each selected modem and
@@ -30,6 +30,53 @@ in another fresh Bash terminal. Both DUs and both Spark servers must already be
 running; Spark startup is in the paired booklet. Keep UE1's verified PDU/path
 active while preparing UE2. After a power/reconnection event, repeat the affected
 role's identity, lock/cell, bearer, complete host IPv4 reset and new-path verification.
+
+For automated preparation through ping, use the new
+[one-shot startup and self-check](dual_ue_automation.md) on the laptop:
+
+```bash
+# Run from a current Falcon checkout on the laptop, UE1 first.
+sudo bash scripts/dual_fr1/connect_ue1.sh
+sudo bash scripts/dual_fr1/connect_ue2.sh
+```
+
+The default terminal output shows self-check steps and completion markers.
+Add `--verbose` to either command to display full commands, connection details
+and ping output. Full logs are saved in both modes; failures and required
+manual serial instructions remain visible. Use `--check-only` for checks
+without connection/network changes or ping; it can also take `--verbose`.
+
+These cover sections 1.1–1.6 and 2.1–2.6: modem/SIM identification,
+enable/registration, actual serving-cell checks, PDU connection, current bearer
+discovery, guarded host reset/rebuild and both source-bound and ordinary ping.
+They skip serial configuration when the serving cell matches; otherwise they
+stop with manual serial instructions. A read-only `--at-port` fallback is
+available if ModemManager cannot expose complete cell identifiers. Wi-Fi
+fallback blocks survive the existing reset/shutdown commands. Keep the four
+one-shot files together when transferring them; see the linked guide for setup,
+logs, rechecks and limitations. The scripts are not yet validated end to end
+on the physical laptop modems. Manual sequences remain below for diagnosis;
+do not run their reset/rebuild blocks concurrently with the scripts.
+
+For continuous recovery during an experiment, use the new
+[laptop automatic reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md) in separate
+laptop terminals, after copying the five files listed in that guide:
+
+```bash
+# Terminal 1
+sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 1
+# Terminal 2
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 1
+```
+
+`--verbose 1` shows only attempt number and result; `2` shows steps; `3` shows
+full details. The default interval is a one-second wait after each completed
+check/attempt; attempts do not overlap. Both watchers may run together. They
+recover suspended PDUs and use a threshold/cooldown for connected-but-unreachable
+PDUs, refresh changed bearer IPs and preserve Wi-Fi fallback guards. Stop the
+affected watcher with Ctrl+C before manual reset/shutdown/configuration. Stopping
+the watcher leaves the current connection in place. New hardware validation is
+pending; see the reconnect Quick Start for redial controls, logs and bounded retries.
 
 The October 21 Laptop truth identified UE1 as IMSI `001010000000101`, APN `internet`,
 IPv4 `10.45.0.2`, and UE2 as IMSI `001010000000102`, APN `internet2`, IPv4
@@ -462,7 +509,7 @@ select_ue || printf 'FAIL: modem/SIM selection; stop here.\n'
 
 Stop at a failed identity/SIM check. If the selected modem is disabled,
 run `sudo mmcli -m "$MODEM" --enable` and repeat identity validation. For USIM
-readiness, use its actual QMI port and the [USIM check](ue_laptop_quick_commands.md#1a-read-the-inserted-sim-and-usim-state).
+readiness, use its actual QMI port and the [USIM check](single_ue/ue_laptop_quick_commands.md#1a-read-the-inserted-sim-and-usim-state).
 
 <a id="ue1-cell-lock"></a>
 
@@ -881,7 +928,7 @@ select_ue || printf 'FAIL: modem/SIM selection; stop here.\n'
 
 Stop at a failed identity/SIM check. If the selected modem is disabled,
 run `sudo mmcli -m "$MODEM" --enable` and repeat identity validation. For USIM
-readiness, use its actual QMI port and the [USIM check](ue_laptop_quick_commands.md#1a-read-the-inserted-sim-and-usim-state).
+readiness, use its actual QMI port and the [USIM check](single_ue/ue_laptop_quick_commands.md#1a-read-the-inserted-sim-and-usim-state).
 
 <a id="ue2-cell-lock"></a>
 

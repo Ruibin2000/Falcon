@@ -3,23 +3,23 @@
 Network update, 2026-10-23: this installed Spark now uses `ogstun_1` for UE1
 `10.45.0.1/16` and `ogstun_2` for UE2 `10.46.0.1/16`, both MTU 1400. The
 Spark commands below use UE1's new interface. The
-[TUN split guide](dual_ue_tun_split.md) contains the applied configuration,
+[TUN split guide](../networking/dual_ue_tun_split.md) contains the applied configuration,
 archived scripts and rollback; post-split UE traffic and cold-boot validation
 remain pending. Earlier measurements below retain their original scope.
 
-Last updated: 2026-10-23. The **2026-10-12 3660-MHz single-UE/DU1 uplink checkpoint passed** private ping, a 30-second TCP uplink with receiver 17.0 Mbit/s and sender Retr 0, and 12 complete five-metric KPM reports for UE F1AP ID 5. **RF stability remains pending** because of recurring underflows; downlink is outside the current acceptance scope. The earlier 2026-10-05 and 2026-10-07 results remain historical evidence. See the [daily log](../dev_logs/2026-10-12_ruibin.md), [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json), and [Spark](spark_quick_commands.md) / [UE](ue_laptop_quick_commands.md) quick commands.
+Last updated: 2026-10-23. The **2026-10-12 3660-MHz single-UE/DU1 uplink checkpoint passed** private ping, a 30-second TCP uplink with receiver 17.0 Mbit/s and sender Retr 0, and 12 complete five-metric KPM reports for UE F1AP ID 5. **RF stability remains pending** because of recurring underflows; downlink is outside the current acceptance scope. The earlier 2026-10-05 and 2026-10-07 results remain historical evidence. See the [daily log](../../dev_logs/2026-10-12_ruibin.md), [retained evidence](../evidence/2026-10-12_du1_3660mhz/manifest.json), and [Spark](../single_ue/spark_quick_commands.md) / [UE](../single_ue/ue_laptop_quick_commands.md) quick commands.
 
 **Startup:** physical connections → USB 3 verification → host performance → clean SA service selection → MongoDB → subscriber/IPv4/NRF checks → required 5GC → `ogstun_1` for UE1 → CU → FlexRIC → DU with complete 3660-MHz configuration → xApp subscription check → laptop setup → NR/SA cell lock → registration → IPv4 PDU session → active bearer → WWAN configuration → ping → traffic with KPM reception check.
 
 **Shutdown:** traffic and xApp subscription → PDU session → manual laptop addresses/routes → optional modem disable → DU → FlexRIC → CU → required 5GC → optional/legacy services for a full shutdown → optional WebUI/MongoDB stop.
 
-Open Cells SIMs OC011830 (`001010000000101`) and OC011831 (`001010000000102`) have now been provisioned, authenticated with Milenage, and verified as ready in Quectel modems. Those checks do not establish RAN/Open5GS registration of the new IMSIs. The existing single-link commands and results below retain baseline IMSI `001010000000001`. See [SIM Provisioning and Dual-UE Preparation](sim_provisioning_and_dual_ue.md) before replacing that baseline card.
+Open Cells SIMs OC011830 (`001010000000101`) and OC011831 (`001010000000102`) have now been provisioned, authenticated with Milenage, and verified as ready in Quectel modems. Those checks do not establish RAN/Open5GS registration of the new IMSIs. The existing single-link commands and results below retain baseline IMSI `001010000000001`. See [SIM Provisioning and Dual-UE Preparation](../setup/sim_provisioning_and_dual_ue.md) before replacing that baseline card.
 
 Execute one numbered stage at a time. Check the stated evidence before advancing. Labels identify the execution host: `[SPARK]`, `[LAPTOP]`, or `[RM500Q AT]`. CU/DU and application commands remain in foreground terminals. Keep the laptop's management Wi-Fi default route. Public Internet, NAT, and MASQUERADE are not needed for laptop-to-Spark traffic.
 
 ## 1. Baseline and physical connections
 
-The current functional uplink configuration is n78, carrier ARFCN **644000 / 3660 MHz**, SSB ARFCN **643680**, 20 MHz, 30 kHz SCS, PCI 1, PLMN `00101`, TAC 7, SST 1, DNN `internet`, and IPv4. B210 serial is `3271233`, sample rate 23.04 MS/s, and the actual new file uses **TX 70 / RX 35**. It includes E2/KPM and scheduler/RLC metrics in one file. Historical carrier 650000 / 3750 MHz and SSB 649632 remain documented in the [configuration history](project_progress_and_configuration.md#configuration-records); the old files are preserved. Record actual gains per run; gain is not calibrated dBm or EIRP.
+The current functional uplink configuration is n78, carrier ARFCN **644000 / 3660 MHz**, SSB ARFCN **643680**, 20 MHz, 30 kHz SCS, PCI 1, PLMN `00101`, TAC 7, SST 1, DNN `internet`, and IPv4. B210 serial is `3271233`, sample rate 23.04 MS/s, and the actual new file uses **TX 70 / RX 35**. It includes E2/KPM and scheduler/RLC metrics in one file. Historical carrier 650000 / 3750 MHz and SSB 649632 remain documented in the [configuration history](../project_progress_and_configuration.md#configuration-records); the old files are preserved. Record actual gains per run; gain is not calibrated dBm or EIRP.
 
 `[SPARK]` Connect B210 through USB 3; do not place the working DU on a 480M USB 2 path. Attach the verified RF antenna path before enabling transmission. Use the authorized laboratory frequency and power conditions. B210 frequency conversion for FR3 is future work.
 
@@ -149,7 +149,7 @@ The new cards are intended for UE1/DU1 and UE2/DU2, respectively:
 
 Create each Open5GS record through the installed administrative workflow with its own matching K/OPc, PLMN `00101`, SST 1, DNN `internet`, and IPv4 session type 1. The files remain private with mode 600; do not print them or put credentials in commands/logs committed to Git. K/OPc cannot be reconstructed from IMSI/ICCID, and SIM1's pair must not be copied into SIM2's record.
 
-The programming authentication succeeded at SQN `64` and recommended core reference `96`. Verify the installed Open5GS UI/API/database representation and current SQN before applying that reference; it is not a permanent value to reset after further authentication. Local representation verification and creation of these two subscriber records remain pending. See [Prepare Open5GS subscribers](sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers).
+The programming authentication succeeded at SQN `64` and recommended core reference `96`. Verify the installed Open5GS UI/API/database representation and current SQN before applying that reference; it is not a permanent value to reset after further authentication. Local representation verification and creation of these two subscriber records remain pending. See [Prepare Open5GS subscribers](../setup/sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers).
 
 `[SPARK]` After administrative preparation, this read-only reproduction check prints one nonsecret result per new subscriber. It does not validate the secret fields or SQN:
 
@@ -187,7 +187,7 @@ grep -nE 'device_args|srate|clock:|clock_ppm|freq_offset|tx_gain|rx_gain|dl_arfc
 sed -n '1,85p' /home/nyu/ocudu/configs/cu.yml
 ```
 
-NRF `serving` and AMF GUAMI/TAI/PLMN support must be MCC `001`, MNC `01`; AMF TAC 7 and SST 1. NRF's old `999/70` entry caused NF discovery failure and Registration Reject 95. Compare the OCUDU output with [configuration records](project_progress_and_configuration.md#configuration-records). Preserve leading zeros when editing PLMN fields.
+NRF `serving` and AMF GUAMI/TAI/PLMN support must be MCC `001`, MNC `01`; AMF TAC 7 and SST 1. NRF's old `999/70` entry caused NF discovery failure and Registration Reject 95. Compare the OCUDU output with [configuration records](../project_progress_and_configuration.md#configuration-records). Preserve leading zeros when editing PLMN fields.
 
 Runtime IP relationships: CU N2 `127.0.0.1` → AMF `127.0.0.5:38412`; DU F1-C `127.0.10.2` → CU `127.0.10.1:38472`; DU F1-U `127.0.10.2:2152` ↔ CU `127.0.10.1:2152`; CU N3 `127.0.0.1:2152` ↔ UPF `127.0.0.7:2152`; SMF PFCP `127.0.0.4:8805` ↔ UPF `127.0.0.7:8805`.
 
@@ -239,7 +239,7 @@ persistent `99-open5gs.netdev` now defines `Name=ogstun_1`, `Kind=tun`, and
 `99-open5gs.network` matches it. The separate `99-open5gs-ue2.netdev` /
 `99-open5gs-ue2.network` pair configures `ogstun_2 / 10.46.0.1/16`.
 The UPF service requests `systemd-networkd`; verify its pool-specific `dev`
-settings using the [TUN split guide](dual_ue_tun_split.md). Cold-boot recovery
+settings using the [TUN split guide](../networking/dual_ue_tun_split.md). Cold-boot recovery
 remains untested. Diagnose missing interfaces, addresses or routes through
 those files and networkd; do not restart management networking or add Internet
 NAT. Interface state alone does not prove UE connectivity.
@@ -302,7 +302,7 @@ full runtime validation or RF startup. Embedded E2 is already present; no
 
 ### 9b Start FlexRIC and the DU
 
-Use installed FlexRIC `73650812`, built with `E2AP_V3` / `KPM_V3_00`; see [installation](software_installation_and_drivers.md#8-flexric-installation-on-spark). CU must already be running. In a separate RIC terminal:
+Use installed FlexRIC `73650812`, built with `E2AP_V3` / `KPM_V3_00`; see [installation](../setup/software_installation_and_drivers.md#8-flexric-installation-on-spark). CU must already be running. In a separate RIC terminal:
 
 `[SPARK]`
 
@@ -332,10 +332,10 @@ bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
   log --filename "$DU1_RUN/du.log"
 ```
 
-The [console launcher](../scripts/dual_fr1/run_du_console.sh) uses `script`
+The [console launcher](../../scripts/dual_fr1/run_du_console.sh) uses `script`
 to preserve the interactive terminal and record output. After startup, enter
 `;h;` and require the help response. Use one semicolon-delimited console
-command at a time; see [temporary RX gain](dual_ue_spark_quick_commands.md#5d-console-input-and-temporary-rx-gain).
+command at a time; see [temporary RX gain](../dual_ue_spark_quick_commands.md#5d-console-input-and-temporary-rx-gain).
 
 Expect B210 / USB 3 initialization, 23.04 MHz master clock, cell PCI 1 / 20 MHz / n78 / carrier ARFCN 644000 / SSB ARFCN 643680, F1-C and E2 connections completed, and `==== DU started ===`. RIC should accept `ngran_gNB_DU`, DU ID 1, node ID 411 and RAN function ID 2 (`ORAN-E2SM-KPM`). Check the running DU without opening the B210 from another tool:
 
@@ -375,7 +375,7 @@ Stop this monitor with `Ctrl+C`. Continuous RF failures require investigation; a
 
 Require `Registered E2 Nodes = 1`, `SUBSCRIPTION RESPONSE rx` and `Successfully subscribed to RAN_FUNC_ID 2`. This example collects for about 10 seconds, sends a subscription delete and exits with `Test xApp run SUCCESSFULLY`. The DU block uses KPM Format 4, a 1000 ms period and five DU metrics. Without an eligible UE, subscription can succeed with no measurement indications. Actual UE reception is checked in stage 14a.
 
-If subscription fails, consult the [2026-10-07 record](troubleshooting/2026-10-07_flexric_bringup.md). `log.all_level: info` does not override the separate E2AP logger's warning default; for detailed E2 diagnosis set `log.e2ap_level: debug` in the complete DU configuration and restart DU after RIC is running. Share only narrow E2/KPM excerpts, not complete RAN logs.
+If subscription fails, consult the [2026-10-07 record](../troubleshooting/2026-10-07_flexric_bringup.md). `log.all_level: info` does not override the separate E2AP logger's warning default; for detailed E2 diagnosis set `log.e2ap_level: debug` in the complete DU configuration and restart DU after RIC is running. Share only narrow E2/KPM excerpts, not complete RAN logs.
 
 ## 10. Prepare a new Ubuntu/Linux laptop
 
@@ -392,7 +392,7 @@ ip -br link | grep -E 'wwan|rmnet' || true
 mmcli -L
 ```
 
-Expect USB `2c7c:0800`, a Quectel RM500QGL_VH modem, QMI, AT and network ports. Drivers observed in the working setup were `option`, `qmi_wwan`, and `cdc_wdm`. If ports are absent, follow the [laptop driver inspection](software_installation_and_drivers.md#72-kernel-driver-responsibilities) and inspect recurring disconnects before changing modem firmware.
+Expect USB `2c7c:0800`, a Quectel RM500QGL_VH modem, QMI, AT and network ports. Drivers observed in the working setup were `option`, `qmi_wwan`, and `cdc_wdm`. If ports are absent, follow the [laptop driver inspection](../setup/software_installation_and_drivers.md#72-kernel-driver-responsibilities) and inspect recurring disconnects before changing modem firmware.
 
 `[LAPTOP]` Use one terminal per UE. The following identity-selection wrapper is a reproduction procedure; the supplied session verified the underlying `mmcli` reads. For the provisioned-card plan, the observed modem IMEIs were `863305041978437` (Quectel #1) and `863305041980706` (Quectel #2). Select the intended device identity rather than the first entry from `mmcli -L`:
 
@@ -479,7 +479,7 @@ else
 fi
 ```
 
-Match the readout to the intended card in [SIM assignments](sim_provisioning_and_dual_ue.md#sim-assignments). Both provisioned cards were active, preferred PLMN `00101` with LTE/5G NR, and had card present, USIM/application/personalization ready, and PIN1 disabled. PIN2 `enabled-not-verified` did not prevent the reported checks and does not currently need changing. The historical baseline's all-FF ICCID did not prevent authentication; do not mistake it for the new cards' actual ICCIDs.
+Match the readout to the intended card in [SIM assignments](../setup/sim_provisioning_and_dual_ue.md#sim-assignments). Both provisioned cards were active, preferred PLMN `00101` with LTE/5G NR, and had card present, USIM/application/personalization ready, and PIN1 disabled. PIN2 `enabled-not-verified` did not prevent the reported checks and does not currently need changing. The historical baseline's all-FF ICCID did not prevent authentication; do not mistake it for the new cards' actual ICCIDs.
 
 SIM-ready status is separate from network registration. SIM2 was still `searching / detached`; its approximately 88% signal quality did not prove detection of the private `00101` cell or RAN/core attachment. Both new IMSIs still require real registration. Carrier profiles `Volte_OpenMkt-Commercial-CMCC` and `ROW_Commercial` differed between units/sessions; record the difference for later troubleshooting, without changing it solely because SIM checks succeeded.
 
@@ -494,7 +494,7 @@ else
 fi
 ```
 
-For a SIM swap, stop traffic and disconnect/clean up any bearer using [stage 16](#16-shutdown), disable the selected modem, physically power off/disconnect the RMU, swap the card, and reconnect power. Start a fresh UE terminal, then rediscover identity, modem/SIM paths, and ports. Do not hot-swap. See [Quectel verification and safe handling](sim_provisioning_and_dual_ue.md#verify-the-cards-through-quectel).
+For a SIM swap, stop traffic and disconnect/clean up any bearer using [stage 16](#16-shutdown), disable the selected modem, physically power off/disconnect the RMU, swap the card, and reconnect power. Start a fresh UE terminal, then rediscover identity, modem/SIM paths, and ports. Do not hot-swap. See [Quectel verification and safe handling](../setup/sim_provisioning_and_dual_ue.md#verify-the-cards-through-quectel).
 
 ## 11. Configure RM500Q NR SA and lock the private cell
 
@@ -540,7 +540,7 @@ AT+C5GREG?
 AT+QNWINFO
 ```
 
-Require `NR5G-SA`, PLMN `001/01`, PCI 1, TAC 7, SSB 643680, band 78 and `+C5GREG: 0,1`. `NOCONN` in QENG is acceptable idle/camped state; confirm registration with C5GREG. If not registered, use `AT+QSCAN=3` to establish whether the private cell is detectable, then follow [the troubleshooting record](troubleshooting/2026-10-05_sa_bringup.md). A scan can take time; retain its result.
+Require `NR5G-SA`, PLMN `001/01`, PCI 1, TAC 7, SSB 643680, band 78 and `+C5GREG: 0,1`. `NOCONN` in QENG is acceptable idle/camped state; confirm registration with C5GREG. If not registered, use `AT+QSCAN=3` to establish whether the private cell is detectable, then follow [the troubleshooting record](../troubleshooting/2026-10-05_sa_bringup.md). A scan can take time; retain its result.
 
 Exit minicom with `Ctrl+A`, then `X`. Leave ModemManager managing the connection; do not open the same AT port in another terminal simultaneously. If another process holds the selected AT port, close the conflicting session and inspect ownership rather than resetting the firmware.
 
@@ -731,9 +731,9 @@ else
 fi
 ```
 
-Require a positive UE-report count, `report_age_us` and a gNB-DU UE ID together. `NO_UE` means subscription, deletion and exit succeeded but no UE report arrived in this run; confirm UE registration and traffic overlap rather than treating this as a timestamp-repair failure. A repaired live run passed with UE ID `2`, 12 report-age values of **499–717 microseconds** and normal subscription deletion/exit. This verifies the display, not precise clock/delay accuracy. See [Spark step 7a](spark_quick_commands.md#7a-verify-reports-after-the-timestamp-repair) for the two-host sequence and [step 7](spark_quick_commands.md#7-validate-ue-traffic-and-kpm-reports) for the five-metric log summary.
+Require a positive UE-report count, `report_age_us` and a gNB-DU UE ID together. `NO_UE` means subscription, deletion and exit succeeded but no UE report arrived in this run; confirm UE registration and traffic overlap rather than treating this as a timestamp-repair failure. A repaired live run passed with UE ID `2`, 12 report-age values of **499–717 microseconds** and normal subscription deletion/exit. This verifies the display, not precise clock/delay accuracy. See [Spark step 7a](../single_ue/spark_quick_commands.md#7a-verify-reports-after-the-timestamp-repair) for the two-host sequence and [step 7](../single_ue/spark_quick_commands.md#7-validate-ue-traffic-and-kpm-reports) for the five-metric log summary.
 
-Require actual `UE ID type = gNB-DU` reports with measurement names and values such as `DRB.UEThpUl` and `RRU.PrbTotUl`. Record the current UE ID, direction, application rate and report cadence. Throughput is in kbps, PRB usage in percent, and `DRB.RlcSduDelayDl` in 0.1 ms units. Earlier UE `14` selected samples were UL 14163–14675 kbps, UL PRB 86% and RLC DL delay 1.580–1.730 ms after conversion. Later UE `2` selected samples were UL 11916–11927 kbps, UL PRB 88% and RLC DL delay 1.380–1.440 ms. The [timestamp repair](troubleshooting/2026-10-07_flexric_latency_fix.md) is installed and its live display is verified; signed `report_age_us` includes processing and queuing time.
+Require actual `UE ID type = gNB-DU` reports with measurement names and values such as `DRB.UEThpUl` and `RRU.PrbTotUl`. Record the current UE ID, direction, application rate and report cadence. Throughput is in kbps, PRB usage in percent, and `DRB.RlcSduDelayDl` in 0.1 ms units. Earlier UE `14` selected samples were UL 14163–14675 kbps, UL PRB 86% and RLC DL delay 1.580–1.730 ms after conversion. Later UE `2` selected samples were UL 11916–11927 kbps, UL PRB 88% and RLC DL delay 1.380–1.440 ms. The [timestamp repair](../troubleshooting/2026-10-07_flexric_latency_fix.md) is installed and its live display is verified; signed `report_age_us` includes processing and queuing time.
 
 ## 15. Video experiment (procedure; not yet verified)
 
@@ -876,4 +876,4 @@ Completed: OC011830 / IMSI `001010000000101` and OC011831 / IMSI `00101000000010
 
 Next: prepare both correctly matched core records and verify SQN handling; provide and review DU2's configuration, radio serial, cell/SSB/PCI, and distinct DU/network identifiers and addresses; start Open5GS → shared CU → FlexRIC → DU1 → DU2 with their corresponding RF paths; then validate each modem's actual serving cell, `5gnr / 00101 / home / attached`, active IPv4 bearer, and independent WWAN/IP path. Start FlexRIC before either DU; DU1 uses its complete 3660-MHz configuration and DU2 requires its own reviewed E2 settings. The existing launch and cell-lock commands cover DU1 only. IMSI does not select a DU automatically.
 
-Two simultaneous paths, source/interface-specific routing, MPTCP, and per-DU/per-UE metrics for path steering remain unverified. See [Validate two UE paths](sim_provisioning_and_dual_ue.md#validate-two-ue-paths) for the required evidence and [SIM troubleshooting lessons](sim_provisioning_and_dual_ue.md#troubleshooting-and-lessons-learned).
+Two simultaneous paths, source/interface-specific routing, MPTCP, and per-DU/per-UE metrics for path steering remain unverified. See [Validate two UE paths](../setup/sim_provisioning_and_dual_ue.md#validate-two-ue-paths) for the required evidence and [SIM troubleshooting lessons](../setup/sim_provisioning_and_dual_ue.md#troubleshooting-and-lessons-learned).

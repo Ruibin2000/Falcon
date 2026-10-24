@@ -31,7 +31,7 @@ identify tasks; they do not require executing Plan 1 before this baseline.
 
 ## Current State and Scope
 
-The [single-link runbook](../docs/full_reproduction_runbook.md) records successful
+The [single-link runbook](../docs/runbooks/full_reproduction_runbook.md) records successful
 SA registration and application traffic with IMSI `001010000000001`, followed
 by real five-metric KPM reception from DU1. This is historical evidence, not a
 claim that those services or radios are running now.
@@ -43,7 +43,7 @@ Single-UE uplink functionality and five-metric KPM reception passed. Underflow
 remediation is deferred by the operator's 2026-10-13 instruction; the dual-link
 UL acceptance requirements remain pending.
 
-The [SIM preparation record](../docs/sim_provisioning_and_dual_ue.md) identifies
+The [SIM preparation record](../docs/setup/sim_provisioning_and_dual_ue.md) identifies
 two provisioned cards and two physical RM500Q modems. Both new subscribers have now registered on their intended cells. Two DU/radios
 have started; both private IP paths and concurrent TCP UL functionality have
 passed. Full repeatability and the remaining acceptance gates are pending.
@@ -76,7 +76,7 @@ per-UE KPM attribution. Pi-Radio/FR3 conversion, MPTCP steering, AI prediction,
 and calibrated RF measurement work have separate acceptance requirements.
 
 The operator subsequently requested separate UE/server subnets. The prepared
-[migration](../docs/dual_ue_subnets.md) retains UE1 `internet / 10.45.0.0/16`
+[migration](../docs/networking/dual_ue_subnets.md) retains UE1 `internet / 10.45.0.0/16`
 and assigns UE2 `internet2 / 10.46.0.0/16`, with Spark endpoints `10.45.0.1`
 and `10.46.0.1` on the shared `ogstun`. The operator applied the migration:
 SMF/UPF were active, UE2 read back `internet2`, and both gateway addresses/routes
@@ -249,7 +249,7 @@ Preparation completed in this revision:
 - [ ] Verify UE2 identity, registration, IPv4 PDU and UL. Repeat discovery after
   reconnecting hardware before the later dual-DU test.
 
-See the [DU2 bring-up procedure](../docs/dual_fr1_runbook.md) and
+See the [DU2 bring-up procedure](../docs/runbooks/dual_fr1_runbook.md) and
 [preparation evidence](../docs/evidence/2026-10-13_du2_preparation/manifest.json)
 for current commands and explicit preparation-versus-live acceptance status.
 
@@ -375,14 +375,14 @@ they already exist:
 | `scripts/dual_fr1/check_config.py` | Implemented offline identities, F1/E2, nominal channels, missing serial, metrics and writable log checks; operating authorization and SSB derivation remain separate |
 | `scripts/dual_fr1/configure_ue_routes.sh` | Guarded per-UE policy routes and precise rollback |
 | `scripts/dual_fr1/verify_kpm.py` | Per-link report/lifecycle/evidence checks |
-| `docs/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; startup/F1/E2, UE2 solo UL and subsequent concurrent TCP UL / two-DU KPM checkpoints observed; full acceptance pending |
+| `docs/runbooks/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; startup/F1/E2, UE2 solo UL and subsequent concurrent TCP UL / two-DU KPM checkpoints observed; full acceptance pending |
 | `docs/dual_ue_laptop_quick_commands.md` | Separate ordered UE1/UE2 sequences, source/server-destination rules and complete per-role IPv4 reset using current state only. Latest measured launcher record is UE1 modem/SIM 13 / bearer 9 / 10.45.0.6/30 / wwan0 / table 151 and UE2 modem/SIM 14 / bearer 10 / 10.46.0.5/30 / wwan1 / table 152. Both exits 0, receiver 13.8/17.3 Mbit/s; latest KPM has 123 callbacks per DU and 63/61 complete UL-active rows. Approximate +199.27-second clock correction gives 62/61 rows inside the laptop run. Full cross-layer correlation and repeatability/UDP/guard/survivor/cold-start gates pending |
 | `scripts/dual_fr1/reset_ue_network.py` / `tests/dual_ue_reset_test.py` | Implemented per-role IPv4 reset from current IMEI/ports and kernel state, with optional PDU disconnect. Added `--shutdown`: disconnect, clear the role's host path, delete all selected-modem bearer objects and disable it; rereads identity and verifies zero bearers / disabled state. Ordinary reset and disconnect-only behavior are preserved. Thirty-two offline stateful tests passed, covering both roles, other-UE preservation, stale bearers, idempotence, dry run, failed deletion/disable, reconnection and changed identity. No live laptop shutdown executed by the agent |
 | `scripts/dual_fr1/run_dual_ul.py` / `tests/dual_ue_ul_test.py` | Implemented concurrent launcher that discovers both current IMEI/SIM/APN/bearer addresses and interfaces instead of historical tuples, checks installed prefixes and source/unbound routes, and rereads identities before starting either client; supports read-only preflight and records real per-process status/time/metadata, with partial-start/interrupt cleanup. Twenty-five offline tests passed, including indexed/scalar access technologies, LTE/missing-report rejection and different/unreported gateways. Operator's measured concurrent run completed with both exits 0 and receiver 13.8/17.3 Mbit/s, overlapping the latest dual-DU KPM after approximate clock correction. Full acceptance pending |
 | `docs/dual_ue_spark_quick_commands.md` | Spark commands for core/CU/RIC/two-DU startup, both server endpoints, DU-tagged KPM capture and shutdown |
 | `scripts/dual_fr1/xapp_oran_moni_dual.c` / `scripts/dual_fr1/build_kpm_monitor.sh` | Built isolated diagnostic using pinned FlexRIC API/library; labels each callback with DU ID, supports finite capture and dense subscription cleanup; latest two completed captures each have 123 real UE callbacks per DU, both subscription/delete pairs and normal exit. Latest capture has 61 simultaneous complete UL-active row pairs. Earlier disconnected-xApp deletion-failure abort path remains unfixed |
 | `docs/evidence/2026-10-13_dual_kpm_reports/` | Retained two full Spark captures, 492 parsed rows, RIC lifecycle, selected CU identity ledger, operator laptop summary/receiver intervals, approximate clock alignment, PUSCH aggregates, reproducible analysis and throughput/CRC plot |
-| `docs/dual_ue_subnets.md` / `scripts/dual_fr1/prepare_dual_subnets.py` / `scripts/dual_fr1/apply_dual_subnets.sh` / `scripts/dual_fr1/ue2_dnn.js` | Dual-subnet migration, backups, saved apply command, targeted UE2 DNN rename and rollback; six mocked apply tests passed; core, registered IPv4/private-ping paths, solo UL and subsequent concurrent TCP UL / dual-DU KPM checkpoints observed; full acceptance pending |
+| `docs/networking/dual_ue_subnets.md` / `scripts/dual_fr1/prepare_dual_subnets.py` / `scripts/dual_fr1/apply_dual_subnets.sh` / `scripts/dual_fr1/ue2_dnn.js` | Dual-subnet migration, backups, saved apply command, targeted UE2 DNN rename and rollback; six mocked apply tests passed; core, registered IPv4/private-ping paths, solo UL and subsequent concurrent TCP UL / dual-DU KPM checkpoints observed; full acceptance pending |
 
 Keep DU1's maintained configuration in Falcon and deploy it to
 `$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml`. DU1 parse/start commands use
@@ -397,8 +397,8 @@ and raw security-bearing logs outside Git; publish only reviewed excerpts.
 
 ## Step 1 Capture the Historical Single Link
 
-- [ ] Read the [handoff](../docs/development_handoff.md), single-link runbook,
-  [Spark commands](../docs/spark_quick_commands.md), and SIM preparation record.
+- [ ] Read the [handoff](../docs/development/development_handoff.md), single-link runbook,
+  [Spark commands](../docs/single_ue/spark_quick_commands.md), and SIM preparation record.
 - [ ] Record source revisions/local diffs, binary/plugin hashes, installed RIC
   and xApp configs, current DU1/CU files, gains, and relevant host settings.
 - [ ] Preserve FlexRIC's uncommitted timestamp repair and `kpm_timestamp.h`.
@@ -663,7 +663,7 @@ their own credentials. Their live registration is still required in Step 7.
   accepting live attribution. The fixture cannot substitute for two live links.
 
 Build after applying the reviewed diagnostic delta while retaining local
-timestamp changes, using the [recorded FlexRIC build settings](../docs/software_installation_and_drivers.md):
+timestamp changes, using the [recorded FlexRIC build settings](../docs/setup/software_installation_and_drivers.md):
 
 ```bash
 cmake -S "$FLEXRIC_SOURCE" -B "$FLEXRIC_DUAL_BUILD" \
@@ -736,7 +736,7 @@ the existing five-metric xApp subscribes successfully to each.
 - [ ] Require private PLMN `00101`, intended cell/PCI/SSB, SA registration,
   attached packet service, and connected non-suspended IPv4 bearer: UE1
   `internet / 10.45.0.0/16`, UE2 `internet2 / 10.46.0.0/16` after the
-  [subnet migration](../docs/dual_ue_subnets.md).
+  [subnet migration](../docs/networking/dual_ue_subnets.md).
   A ready SIM, high signal indicator, or idle `NOCONN` text alone is insufficient.
 - [ ] Attach both concurrently. Record actual bearer IDs, WWAN interfaces,
   addresses/prefix/MTU/gateway, serving cells, and CU/DU UE contexts.

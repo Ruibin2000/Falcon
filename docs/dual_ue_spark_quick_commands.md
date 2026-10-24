@@ -49,7 +49,7 @@ installs destination blocks that survive reset/shutdown: ordinary ping and
 TCP/UDP to these service IPs cannot fall back to Wi-Fi. Rebuilding installs both
 source and destination lookups; verify both routes before traffic. Management
 Wi-Fi and its default route remain available for other destinations.
-The October 23 [TUN split](dual_ue_tun_split.md) is applied: UE1 uses `ogstun_1`
+The October 23 [TUN split](networking/dual_ue_tun_split.md) is applied: UE1 uses `ogstun_1`
 and UE2 uses `ogstun_2`, both with MTU 1400. Spark configuration checks passed;
 post-split UE/PDU/ping/traffic and cold-boot validation remain pending.
 
@@ -75,8 +75,8 @@ post-split UE/PDU/ping/traffic and cold-boot validation remain pending.
 The reviewed dual-subnet migration is complete. Preserve bundle
 `/tmp/falcon-dual-subnets.Ir8TjqjO`; do not reapply the first-migration script to
 the migrated core. The old two-address `ogstun` was subsequently split;
-use the [current layout, archived scripts and rollback](dual_ue_tun_split.md).
-See [Dual UE Subnets](dual_ue_subnets.md) for the historical DNN migration. Both cells use
+use the [current layout, archived scripts and rollback](networking/dual_ue_tun_split.md).
+See [Dual UE Subnets](networking/dual_ue_subnets.md) for the historical DNN migration. Both cells use
 PLMN `00101`, TAC 7, SST 1 and n78 / 20 MHz / SCS 30 kHz. Keep K/OPc private
 and preserve the baseline subscriber; do not blindly reset SQN.
 
@@ -146,7 +146,7 @@ Stop on any build/config error. Require `/tmp/falcon-xapp-ue-identity` and
 The isolated KPM plugin includes the 40-bit AMF ID decoder fix; both RIC and
 xApp configs select it. Installed FlexRIC files and its source tree are left
 unchanged. Build only `ocu` here; retain the accepted DU executable/configs.
-See the [identity implementation guide](ue_identity_xapp.md#build-and-offline-verification)
+See the [identity implementation guide](development/ue_identity_xapp.md#build-and-offline-verification)
 for dependency/build troubleshooting. A successful build is preparation, not
 live binding acceptance.
 
@@ -198,7 +198,7 @@ if (failed) quit(1);
 ```
 
 Stop if either profile fails. Prepare it using its own protected credentials via
-the [subscriber procedure](sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers).
+the [subscriber procedure](setup/sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers).
 This projection does not verify K/OPc or SQN. Preserve the historical subscriber
 `001010000000001`; do not reset SQN to 96 without checking its current state.
 
@@ -238,10 +238,10 @@ ip -4 route show 10.46.0.0/16
 Require `10/10`; `ogstun_1` must be UP, MTU 1400, with `10.45.0.1/16`, and
 `ogstun_2` must be UP, MTU 1400, with `10.46.0.1/16`. The private routes must
 use their corresponding TUNs. The old name `ogstun` is absent. Current setup,
-archived scripts and rollback are in the [TUN split guide](dual_ue_tun_split.md);
-the two-DNN subscriber history is in the [subnet migration guide](dual_ue_subnets.md).
+archived scripts and rollback are in the [TUN split guide](networking/dual_ue_tun_split.md);
+the two-DNN subscriber history is in the [subnet migration guide](networking/dual_ue_subnets.md).
 Original single-subnet repair is in the
-[full runbook](full_reproduction_runbook.md#7-start-only-the-required-5gc-functions).
+[full runbook](runbooks/full_reproduction_runbook.md#7-start-only-the-required-5gc-functions).
 
 Check the existing read-only identity APIs from Spark before starting RAN:
 
