@@ -4,6 +4,7 @@
 import contextlib
 import io
 import json
+import multiprocessing
 from pathlib import Path
 import signal
 import subprocess
@@ -52,6 +53,7 @@ class ReconnectTest(unittest.TestCase):
                 self.addCleanup(mock.stop)
         for mock in (patch.object(CONNECT.reset, "table_aliases", lambda: self.network.aliases),
                      patch.object(CONNECT, "network_driver", lambda interface: "qmi_wwan"),
+                     patch.object(CONNECT, "network_device", lambda interface: self.network.device(interface)),
                      patch.dict(CONNECT.os.environ, {"SSH_CONNECTION": ""})):
             mock.start()
             self.addCleanup(mock.stop)
@@ -62,6 +64,10 @@ class ReconnectTest(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
+        for module, name in ((CONNECT, "NETWORK_LOCK"), (WATCH, "SHARED_LOCK")):
+            mock = patch.object(module, name, str(self.root / "network.lock"))
+            mock.start()
+            self.addCleanup(mock.stop)
         self.log = io.StringIO()
 
     def watcher(self, ue=1, level=1, extra=(), stop=None):
@@ -374,19 +380,136 @@ class ReconnectTest(unittest.TestCase):
         self.assertEqual(self.network.modems[next(iter(self.network.modems))][2], "disabled")
         self.assertEqual(len(self.disconnects()), 1)
 
-    def test_busy_shared_lock_waits_without_counting_attempt_or_mutating(self):
+    def test_shared_host_readers_can_overlap_and_exclude_a_writer(self):
         path = str(self.root / "network.lock")
-        watcher = self.watcher(stop=Stop(after=2))
-        with patch.object(WATCH, "SHARED_LOCK", path), open(path, "a") as lock:
-            WATCH.fcntl.flock(lock, WATCH.fcntl.LOCK_EX | WATCH.fcntl.LOCK_NB)
-            watcher.run()
-        self.assertEqual(watcher.attempts, 0)
-        self.assertEqual(self.network.changes, [])
-        self.assertEqual(self.console.getvalue(), "")
-        with patch.object(WATCH, "SHARED_LOCK", path):
-            watcher.stop = Stop()
-            watcher.args.once = True
-            self.assertEqual(watcher.run(), 0)
+        with CONNECT.network_lock(shared=True, path=path):
+            with open(path, "a") as peer:
+                CONNECT.fcntl.flock(peer, CONNECT.fcntl.LOCK_SH | CONNECT.fcntl.LOCK_NB)
+                with open(path, "a") as writer:
+                    with self.assertRaises(BlockingIOError):
+                        CONNECT.fcntl.flock(writer, CONNECT.fcntl.LOCK_EX | CONNECT.fcntl.LOCK_NB)
+        with CONNECT.network_lock(path=path):
+            with open(path, "a") as reader:
+                with self.assertRaises(BlockingIOError):
+                    CONNECT.fcntl.flock(reader, CONNECT.fcntl.LOCK_SH | CONNECT.fcntl.LOCK_NB)
+
+    def test_routine_probe_and_recovery_do_not_query_unresponsive_peer_modem(self):
+        watcher = self.watcher()
+        watcher.attempt()
+        modem = watcher.modem_cache["selected"][0]
+        read = self.network.read
+        self.network.reads.clear()
+
+        def reject_peer(*command):
+            if command[:2] == ("mmcli", "-m") and command[2] != modem:
+                raise subprocess.TimeoutExpired(command, 75)
+            return read(*command)
+
+        with patch.object(CONNECT, "read", reject_peer):
+            WATCH.probe(watcher.session())
+            self.network.bearers[modem] = {path: "no" for path in self.network.bearers[modem]}
+            watcher.attempt()
+        self.assertTrue(watcher.healthy)
+        self.assertNotIn(("mmcli", "-L"), self.network.reads)
+        self.assertTrue(all(command[2] == modem for command in self.network.reads
+                            if command[:2] == ("mmcli", "-m")))
+
+    def test_changed_wwan_mapping_refreshes_inventory_then_resumes_own_only_queries(self):
+        watcher = self.watcher()
+        watcher.attempt()
+        modem = watcher.modem_cache["selected"][0]
+        imei, previous, state = self.network.modems[modem]
+        interface = "wwan17"
+        self.network.modems[modem] = (imei, interface, state)
+        self.network.links[interface] = self.network.links.pop(previous)
+        for device in self.network.addresses:
+            if device["ifname"] == previous:
+                device["ifname"] = interface
+        for route in self.network.routes:
+            if route.get("dev") == previous:
+                route["dev"] = interface
+        self.network.reads.clear()
+        watcher.attempt()
+        self.assertTrue(watcher.healthy)
+        self.assertIn(("mmcli", "-L"), self.network.reads)
+        self.assertEqual(watcher.modem_cache["selected"][0], modem)
+        self.network.reads.clear()
+        WATCH.probe(watcher.session())
+        self.assertNotIn(("mmcli", "-L"), self.network.reads)
+        self.assertTrue(all(command[2] == modem for command in self.network.reads
+                            if command[:2] == ("mmcli", "-m")))
+
+    def test_selected_modem_timeout_does_not_rediscover_or_query_peer(self):
+        watcher = self.watcher()
+        watcher.attempt()
+        modem = watcher.modem_cache["selected"][0]
+        read = self.network.read
+        commands = []
+
+        def timeout(*command):
+            commands.append(command)
+            if command[:3] == ("mmcli", "-m", modem):
+                raise subprocess.TimeoutExpired(command, 75)
+            return read(*command)
+
+        with patch.object(CONNECT, "read", timeout):
+            with self.assertRaises(subprocess.TimeoutExpired):
+                WATCH.probe(watcher.session())
+        self.assertNotIn(("mmcli", "-L"), commands)
+        self.assertEqual([command[2] for command in commands if command[:2] == ("mmcli", "-m")], [modem])
+        self.assertEqual(watcher.modem_cache["selected"][0], modem)
+
+    def test_slow_ue2_cell_query_does_not_block_ue1_monitor_process(self):
+        # Separate processes exercise the actual flock and per-process log/capture
+        # state; no modem/network commands reach the real host.
+        context = multiprocessing.get_context("fork")
+        entered, release, ue1_done = context.Event(), context.Event(), context.Event()
+        results = context.Queue()
+        watchers = {}
+        for ue in (1, 2):
+            watcher = self.watcher(ue, stop=Stop())
+            watcher.attempt()
+            watchers[ue] = watcher
+        read = self.network.read
+        ue2_modem = watchers[2].modem_cache["selected"][0]
+
+        def worker(ue):
+            def slow(*command):
+                if command[:3] == ("mmcli", "-m", ue2_modem) and "--get-cell-info" in command:
+                    entered.set()
+                    if not release.wait(5):
+                        raise ValueError("Test release timed out")
+                return read(*command)
+            try:
+                with patch.object(CONNECT, "read", slow), patch.object(WATCH, "SHARED_LOCK", str(self.root / "network.lock")):
+                    results.put((ue, watchers[ue].run(), None))
+            except BaseException as error:
+                results.put((ue, None, repr(error)))
+            finally:
+                if ue == 1:
+                    ue1_done.set()
+
+        workers = []
+        try:
+            workers.append(context.Process(target=worker, args=(2,)))
+            workers[-1].start()
+            self.assertTrue(entered.wait(2), "UE2 did not reach its slow cell query")
+            workers.append(context.Process(target=worker, args=(1,)))
+            workers[-1].start()
+            self.assertTrue(ue1_done.wait(2), "UE1 was blocked by UE2's radio query")
+            self.assertTrue(workers[0].is_alive(), "UE2 must still be waiting for its radio reply")
+        finally:
+            release.set()
+            for process in workers:
+                process.join(3)
+                if process.is_alive():
+                    process.terminate()
+                    process.join(2)
+        rows = [results.get(timeout=1) for _ in workers]
+        self.assertEqual(sorted(rows), [(1, 0, None), (2, 0, None)])
+        self.assertTrue(all(process.exitcode == 0 for process in workers))
+        results.close()
+        results.join_thread()
 
     def test_stop_during_wait_shuts_down_and_returns_signal_status(self):
         stop = Stop(after=1)
@@ -431,46 +554,49 @@ class ReconnectTest(unittest.TestCase):
         self.assertIn("UE1 shutdown: FAIL", self.console.getvalue())
         self.assertIn("Cleanup incomplete:", self.console.getvalue())
 
-    def test_shutdown_waits_for_shared_lock_when_interrupted_before_first_attempt(self):
+    def test_shutdown_waits_only_for_host_updates_and_radio_calls_are_unlocked(self):
         self.connect()
         path = str(self.root / "network.lock")
         ready = threading.Event()
-        status = CONNECT.status
-        change = self.network.change
+        status, change = CONNECT.status, self.network.change
 
         def announce(message, **kwargs):
-            if "shared network lock before UE shutdown" in message:
+            if "Waiting for a host network update" in message:
                 ready.set()
             return status(message, **kwargs)
 
-        def stop(index):
+        def interrupt(session, enable):
             raise CONNECT.StopRequested(signal.SIGINT)
 
         def check_lock(*command):
             with open(path, "a") as contender:
-                with self.assertRaises(BlockingIOError):
-                    WATCH.fcntl.flock(contender, WATCH.fcntl.LOCK_EX | WATCH.fcntl.LOCK_NB)
+                if command[0] == "ip":
+                    with self.assertRaises(BlockingIOError):
+                        CONNECT.fcntl.flock(contender, CONNECT.fcntl.LOCK_EX | CONNECT.fcntl.LOCK_NB)
+                else:
+                    CONNECT.fcntl.flock(contender, CONNECT.fcntl.LOCK_EX | CONNECT.fcntl.LOCK_NB)
             change(*command)
 
-        watcher = self.watcher(stop=Stop(after=5, on_wait=stop))
+        watcher = self.watcher(stop=Stop())
         with open(path, "a") as held:
-            WATCH.fcntl.flock(held, WATCH.fcntl.LOCK_EX | WATCH.fcntl.LOCK_NB)
+            CONNECT.fcntl.flock(held, CONNECT.fcntl.LOCK_EX | CONNECT.fcntl.LOCK_NB)
 
             def release():
                 ready.wait(timeout=2)
-                WATCH.fcntl.flock(held, WATCH.fcntl.LOCK_UN)
+                CONNECT.fcntl.flock(held, CONNECT.fcntl.LOCK_UN)
 
             worker = threading.Thread(target=release)
             worker.start()
             try:
                 with patch.object(WATCH, "SHARED_LOCK", path), patch.object(CONNECT, "status", announce), \
+                        patch.object(CONNECT.Connection, "registered", interrupt), \
                         patch.object(CONNECT, "change", check_lock):
                     self.assertEqual(watcher.run(), 130)
             finally:
                 worker.join(timeout=3)
         self.assertTrue(ready.is_set())
         self.assertFalse(worker.is_alive())
-        self.assertEqual(watcher.attempts, 0)
+        self.assertEqual(watcher.attempts, 1)
         self.assertEqual(self.network.modems[next(iter(self.network.modems))][2], "disabled")
 
     def test_main_duplicate_watch_rejected_and_role_locks_are_independent(self):
@@ -484,7 +610,7 @@ class ReconnectTest(unittest.TestCase):
         with patch("builtins.open", local_open), patch.object(WATCH.os, "geteuid", return_value=0), \
                 patch.object(WATCH.shutil, "which", return_value="installed"):
             with open("/run/lock/falcon-ue1-reconnect.lock", "a") as lock:
-                WATCH.fcntl.flock(lock, WATCH.fcntl.LOCK_EX | WATCH.fcntl.LOCK_NB)
+                CONNECT.fcntl.flock(lock, CONNECT.fcntl.LOCK_EX | CONNECT.fcntl.LOCK_NB)
                 with self.assertRaisesRegex(ValueError, "already has an active connection or reconnect script"):
                     WATCH.main(["--ue", "1", "--once", "--output-root", str(self.root)])
                 self.assertEqual(WATCH.main(["--ue", "2", "--once", "--output-root", str(self.root)]), 0)

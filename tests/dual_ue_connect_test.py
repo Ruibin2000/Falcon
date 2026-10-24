@@ -67,6 +67,10 @@ class Network(ResetKernel):
     def role(self, modem):
         return list(self.modems).index(modem) + 1
 
+    def device(self, interface):
+        modem = next(path for path, (_, name, _) in self.modems.items() if name == interface)
+        return Path(f"/sys/mock/ue{self.role(modem)}")
+
     def lookup(self, command):
         destination = command[command.index("get") + 1]
         source = command[command.index("from") + 1] if "from" in command else None
@@ -90,6 +94,8 @@ class Network(ResetKernel):
     def read(self, *command):
         self.reads.append(command)
         if command[:2] == ("mmcli", "-m"):
+            if command[2] not in self.modems:
+                raise subprocess.CalledProcessError(1, command, stderr="couldn't find modem")
             ue = self.role(command[2])
             config = self.settings[ue]
             if "--get-cell-info" in command:
@@ -99,6 +105,7 @@ class Network(ResetKernel):
                 return kv_text({"modem.generic.cell-info.length": "1", "modem.generic.cell-info.value[1]": config["cell"]})
             return super().read(*command) + "\n" + kv_text({
                 "modem.generic.device-identifier": config["identity"],
+                "modem.generic.physdev": f"/sys/mock/ue{ue}",
                 "modem.generic.access-technologies.value[1]": config["technology"],
                 "modem.3gpp.operator-code": config["plmn"], "modem.generic.sim": f"/org/freedesktop/ModemManager1/SIM/{ue}"})
         if command[:2] == ("mmcli", "-i"):
@@ -172,6 +179,12 @@ class Network(ResetKernel):
 
 class ConnectTest(unittest.TestCase):
     def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.lock_path = str(Path(self.temporary.name) / "network.lock")
+        mock = patch.object(CONNECT, "NETWORK_LOCK", self.lock_path)
+        mock.start()
+        self.addCleanup(mock.stop)
         self.network = Network()
         self.real_change = CONNECT.change
         for module in (CONNECT, CONNECT.reset):
@@ -181,6 +194,7 @@ class ConnectTest(unittest.TestCase):
                 self.addCleanup(mock.stop)
         for mock in (patch.object(CONNECT.reset, "table_aliases", lambda: self.network.aliases),
                      patch.object(CONNECT, "network_driver", lambda interface: "qmi_wwan"),
+                     patch.object(CONNECT, "network_device", lambda interface: self.network.device(interface)),
                      patch.dict(CONNECT.os.environ, {"SSH_CONNECTION": ""})):
             mock.start()
             self.addCleanup(mock.stop)
@@ -711,7 +725,7 @@ class ConnectTest(unittest.TestCase):
         self.assertEqual(self.network.changes, [("mmcli", "-m", modem, "--simple-disconnect")])
         self.assertTrue(any(r["priority"] == 20152 for r in self.network.rules))
 
-    def test_other_ue_changes_during_ping_prevent_final_success(self):
+    def test_other_ue_changes_during_ping_are_independent(self):
         original_read = self.network.read
         def read_with_change(*command):
             output = original_read(*command)
@@ -719,19 +733,149 @@ class ConnectTest(unittest.TestCase):
                 self.network.links["wwan1"] = (1300, "UP")
             return output
         with patch.object(CONNECT, "read", read_with_change):
-            with self.assertRaisesRegex(ValueError, "other-UE configuration changed"):
-                self.session().run()
+            self.assertEqual(self.session().run()["status"], "connected")
 
-    def test_other_ue_changes_during_connect_prevent_host_reset(self):
+    def test_other_ue_changes_during_connect_are_independent(self):
         original_change = self.network.change
         def change_with_drift(*command):
             original_change(*command)
             if command[0] == "mmcli":
                 self.network.links["wwan1"] = (1300, "UP")
         with patch.object(CONNECT, "change", change_with_drift):
-            with self.assertRaisesRegex(ValueError, "during PDU connection"):
+            self.assertEqual(self.session().run()["status"], "connected")
+        self.assertEqual(self.network.links["wwan1"], (1300, "UP"))
+
+    def test_management_changes_during_pdu_or_ping_still_fail_verification(self):
+        for phase in ("pdu", "ping"):
+            with self.subTest(phase=phase):
+                self.network.__dict__.update(Network().__dict__)
+                read, change = self.network.read, self.network.change
+
+                def drift():
+                    self.network.links["wifi"] = (1300, "UP")
+
+                def changing_read(*command):
+                    output = read(*command)
+                    if phase == "ping" and command[0] == "ping":
+                        drift()
+                    return output
+
+                def changing_change(*command):
+                    change(*command)
+                    if phase == "pdu" and command[-1].startswith("--simple-connect="):
+                        drift()
+
+                with patch.object(CONNECT, "read", changing_read), patch.object(CONNECT, "change", changing_change):
+                    with self.assertRaisesRegex(ValueError, "Management configuration changed"):
+                        self.session().run()
+
+    def test_peer_changes_during_our_kernel_writes_are_still_rejected(self):
+        change = self.network.change
+
+        def corrupt(*command):
+            change(*command)
+            if command[:4] == ("ip", "-4", "addr", "add"):
+                self.network.links["wwan1"] = (1300, "UP")
+
+        with patch.object(CONNECT, "change", corrupt):
+            with self.assertRaisesRegex(ValueError, "other-UE configuration changed during host update"):
+                self.session().run()
+
+    def test_radio_and_ping_are_unlocked_but_kernel_writes_are_exclusive(self):
+        read, change = self.network.read, self.network.change
+        seen = set()
+
+        def unlocked():
+            with open(self.lock_path, "a") as contender:
+                CONNECT.fcntl.flock(contender, CONNECT.fcntl.LOCK_EX | CONNECT.fcntl.LOCK_NB)
+
+        def checked_read(*command):
+            if command[0] in ("mmcli", "ping"):
+                unlocked()
+                seen.add(command[0])
+            return read(*command)
+
+        def checked_change(*command):
+            if command[0] == "ip":
+                with open(self.lock_path, "a") as contender:
+                    with self.assertRaises(BlockingIOError):
+                        CONNECT.fcntl.flock(contender, CONNECT.fcntl.LOCK_SH | CONNECT.fcntl.LOCK_NB)
+                seen.add("host_write")
+            else:
+                unlocked()
+                seen.add("radio_write")
+            change(*command)
+
+        with patch.object(CONNECT, "read", checked_read), patch.object(CONNECT, "change", checked_change):
+            session = self.session()
+            session.run()
+            result = CONNECT.shutdown_on_interrupt(1, modem_cache=session.modem_cache)
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual(seen, {"mmcli", "ping", "host_write", "radio_write"})
+
+    def test_changed_physical_wwan_owner_stops_before_host_reset(self):
+        with patch.object(CONNECT, "network_device", return_value=Path("/sys/mock/other-modem")):
+            with self.assertRaisesRegex(ValueError, "WWAN physical device changed"):
                 self.session().run()
         self.assertFalse(any("flush" in command for command in self.network.changes))
+        self.assertEqual(self.network.addresses[0]["addr_info"], [])
+
+    def test_partial_rebuild_does_not_cleanup_a_replaced_physical_interface(self):
+        change = self.network.change
+        replaced = False
+        changes_at_failure = []
+
+        def owner(interface):
+            return Path("/sys/mock/replacement") if replaced else self.network.device(interface)
+
+        def fail_after_replacement(*command):
+            nonlocal replaced
+            change(*command)
+            if command[:4] == ("ip", "-4", "addr", "add"):
+                replaced = True
+                changes_at_failure.append(len(self.network.changes))
+                raise subprocess.CalledProcessError(1, command)
+
+        with patch.object(CONNECT, "network_device", owner), patch.object(CONNECT, "change", fail_after_replacement):
+            with self.assertRaises(subprocess.CalledProcessError):
+                self.session().run()
+        self.assertEqual(len(self.network.changes), changes_at_failure[0])
+        self.assertIn("Cleanup incomplete", self.output.getvalue())
+        self.assertTrue(any(rule["priority"] == 20151 for rule in self.network.rules))
+
+    def test_two_ues_connect_concurrently_and_keep_separate_host_paths(self):
+        # Share one simulated kernel between threads and synchronize both radio
+        # connects. Host changes still use real flock on separate descriptors.
+        barrier = threading.Barrier(2)
+        change = self.network.change
+        results, errors = {}, []
+        wifi = self.network.links["wifi"]
+
+        def together(*command):
+            change(*command)
+            if command[0] == "mmcli" and command[-1].startswith("--simple-connect="):
+                barrier.wait(timeout=2)
+
+        def worker(ue):
+            try:
+                results[ue] = self.session(ue).run()
+            except BaseException as error:
+                errors.append(error)
+
+        with patch.object(CONNECT, "change", together):
+            workers = [threading.Thread(target=worker, args=(ue,), daemon=True) for ue in (1, 2)]
+            for worker_thread in workers:
+                worker_thread.start()
+            for worker_thread in workers:
+                worker_thread.join(timeout=4)
+        self.assertFalse(any(worker_thread.is_alive() for worker_thread in workers), "Concurrent startup stalled")
+        self.assertEqual(errors, [])
+        self.assertEqual(set(results), {1, 2})
+        for ue, result in results.items():
+            self.assertEqual(result["status"], "connected")
+            self.assertTrue(self.session(ue).configured(result))
+        self.assertEqual(self.network.links["wifi"], wifi)
+        self.assertEqual({rule["priority"] for rule in self.network.rules if rule["priority"] in (20151, 20152)}, {20151, 20152})
 
     def test_multiple_active_bearers_require_manual_inspection(self):
         path = next(iter(self.network.modems))

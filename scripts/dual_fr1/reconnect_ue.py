@@ -4,7 +4,6 @@
 import argparse
 import contextlib
 from datetime import datetime, timezone
-import fcntl
 import ipaddress
 import json
 import math
@@ -63,20 +62,6 @@ def capture(log, level):
             connect.read, connect.reset.read = original_read, original_reset_read
 
 
-@contextlib.contextmanager
-def shared_lock():
-    """Do not hold the host-wide mutation lock while waiting between checks."""
-    with open(SHARED_LOCK, "a") as lock:
-        try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            yield False
-        else:
-            try:
-                yield True
-            finally:
-                fcntl.flock(lock, fcntl.LOCK_UN)
-
 
 class Recovery(connect.Connection):
     def __init__(self, *args, redial=False, redial_allowed=True, failed_bearer=None, **kwargs):
@@ -134,13 +119,16 @@ class Recovery(connect.Connection):
         interface = details.get("bearer.status.interface", "")
         connect.require(connect.ports(info) == {interface} and connect.reset.WWAN.fullmatch(interface),
                         "Expected one dedicated, owned WWAN for automatic disconnect")
-        self.host_preflight(dict(interface=interface))
-        before = self.surroundings(dict(interface=interface))
+        with self.network(shared=True):
+            self.host_preflight(dict(interface=interface))
+            self.block(install=False)
         self.serving_cell()
         _, current = self.active()
         connect.require(self.allocation(current) == self.allocation(active),
                         "Bearer changed before disconnect; retry discovery")
-        self.block(install=False)
+        with self.network(shared=True):
+            self.host_preflight(dict(interface=interface))
+            self.block(install=False)
         connect.status("Recover stuck PDU: disconnect selected UE, clear its host path, then redial")
         # Track failed disconnects too, so a rejected request cannot be hammered.
         self.redial_started_at = time.monotonic()
@@ -150,22 +138,23 @@ class Recovery(connect.Connection):
         _, remaining = self.active()
         connect.require(not remaining, "Bearer still connected after disconnect; stopping this attempt")
         self.checked_modem()
-        connect.reset.reset(self.ue)
-        self.block(install=False)
-        connect.require(self.surroundings(dict(interface=interface)) == before,
-                        "Other UE/management state changed during disconnect")
+        self.clear_host(dict(interface=interface))
         self.redial_requested = False
 
 
 def probe(session):
     """Read current state and send two single pings; no modem/network mutations."""
+    started = time.monotonic()
+    print(f"{now()} UE{session.ue} health check started", flush=True)
     session.discover()
     session.serving_cell()
     bearer = session.bearer()
-    session.host_preflight(bearer)
-    connect.require(session.configured(bearer), "Host path is incomplete or the bearer IP changed")
+    with session.network(shared=True):
+        session.host_preflight(bearer)
+        connect.require(session.configured(bearer), "Host path is incomplete or the bearer IP changed")
     for bound in (True, False):
-        session.routes(bearer)
+        with session.network(shared=True):
+            session.routes(bearer)
         command = ["ping", "-n", "-c", "1", "-W", "2", "-w", "3"]
         if bound:
             command.extend(["-I", bearer["source"]])
@@ -177,8 +166,11 @@ def probe(session):
                 print(error.stderr, file=sys.stderr)
             raise
     connect.require(session.bearer() == bearer, "PDU changed during health check")
-    connect.require(session.configured(bearer), "Host path changed during health check")
-    session.routes(bearer)
+    with session.network(shared=True):
+        connect.require(session.configured(bearer), "Host path changed during health check")
+        session.routes(bearer)
+    print(f"{now()} UE{session.ue} health check OK: {bearer['source']} via {bearer['interface']}; "
+          f"elapsed={time.monotonic() - started:.3f}s", flush=True)
     return bearer
 
 
@@ -193,10 +185,11 @@ class Watcher:
         self.healthy = False
         self.started_at = now()
         self.exit_signal = None
+        self.modem_cache = {}
 
     def session(self, recovery=False):
         kwargs = dict(at_port=self.args.at_port, registration_timeout=self.args.registration_timeout,
-                      ping_count=1)
+                      ping_count=1, modem_cache=self.modem_cache, network_lock_path=SHARED_LOCK)
         if recovery:
             allowed = self.last_redial is None or time.monotonic() - self.last_redial >= self.args.redial_cooldown
             return Recovery(self.args.ue, redial=self.ping_failures >= self.args.redial_after,
@@ -255,36 +248,28 @@ class Watcher:
         self.log.flush()
 
     def run(self):
-        waiting = False
         try:
-            self.say(f"Watching UE{self.args.ue}; interval={self.args.interval:g}s, evidence={self.directory}; Ctrl+C to shut down this UE")
+            self.say(f"Watching UE{self.args.ue}; interval={self.args.interval:g}s; independent modem/PDU checks, "
+                     f"shared host updates; evidence={self.directory}; Ctrl+C to shut down this UE")
             while not self.stop.is_set():
-                with shared_lock() as acquired:
-                    if not acquired:
-                        if not waiting:
-                            self.say("Waiting for another UE operation to release the shared network lock")
-                        waiting = True
-                    else:
-                        waiting = False
-                        if self.healthy:
-                            with capture(self.log, 3 if self.args.verbose == 3 else 1):
-                                try:
-                                    probe(self.session())
-                                except ERRORS as error:
-                                    self.healthy = False
-                                    print(f"{now()} Health check failed: {error}", flush=True)
-                            if not self.healthy:
-                                self.say("Link check failed; starting recovery")
-                        if not self.healthy and not self.stop.is_set():
-                            self.attempt()
-                            if self.stop.is_set():
-                                break
-                            if self.args.once and self.healthy:
-                                return 0
-                            if self.args.max_attempts and self.attempts >= self.args.max_attempts:
-                                return 0 if self.healthy else 1
-                # No overlap: a slow command/registration is never interrupted to
-                # create another attempt, and the other UE may work during this wait.
+                if self.healthy:
+                    with capture(self.log, 3 if self.args.verbose == 3 else 1):
+                        try:
+                            probe(self.session())
+                        except ERRORS as error:
+                            self.healthy = False
+                            print(f"{now()} Health check failed: {error}", flush=True)
+                    if not self.healthy:
+                        self.say("Link check failed; starting recovery")
+                if not self.healthy and not self.stop.is_set():
+                    self.attempt()
+                    if self.stop.is_set():
+                        break
+                    if self.args.once and self.healthy:
+                        return 0
+                    if self.args.max_attempts and self.attempts >= self.args.max_attempts:
+                        return 0 if self.healthy else 1
+                # Radio/PDU operations and ping never hold the shared network lock.
                 self.stop.wait(self.args.interval)
             return 128 + self.exit_signal if self.exit_signal else 0
         except KeyboardInterrupt as error:
@@ -297,7 +282,8 @@ class Watcher:
             shutdown = None
             if self.exit_signal is not None:
                 with capture(self.log, self.args.verbose):
-                    shutdown = connect.shutdown_on_interrupt(self.args.ue, lock_path=SHARED_LOCK)
+                    shutdown = connect.shutdown_on_interrupt(self.args.ue, lock_path=SHARED_LOCK,
+                                                             modem_cache=self.modem_cache)
                 self.healthy = False
                 outcome = "SUCCESS" if shutdown["status"] == "completed" else "FAIL"
                 message = f"UE{self.args.ue} shutdown: {outcome}"

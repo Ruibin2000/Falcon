@@ -35,6 +35,7 @@ ROLES = {
             pci=2, nci=0x66C001, ssb=639648, carrier=640000, label="FR3"),
 }
 # FR1/FR3 are the demo path labels; both current radio configurations use n78.
+NETWORK_LOCK = "/run/lock/falcon-ue-connect.lock"
 
 
 class CellError(ValueError):
@@ -88,6 +89,22 @@ def role_lock(ue):
         except BlockingIOError:
             raise ValueError(f"UE{ue} already has an active connection or reconnect script; stop it first") from None
         yield
+
+
+@contextlib.contextmanager
+def network_lock(*, shared=False, path=None):
+    """Protect kernel network transactions, never modem calls or ping waits."""
+    with open(path or NETWORK_LOCK, "a") as lock:
+        mode = fcntl.LOCK_SH if shared else fcntl.LOCK_EX
+        try:
+            fcntl.flock(lock, mode | fcntl.LOCK_NB)
+        except BlockingIOError:
+            status("Waiting for a host network update to finish ...")
+            fcntl.flock(lock, mode)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
 
 
 def interruption(error):
@@ -154,6 +171,10 @@ def host(value, address):
 
 def network_driver(interface):
     return (Path("/sys/class/net") / interface / "device/driver").resolve().name
+
+
+def network_device(interface):
+    return usb_parent(Path("/sys/class/net") / interface / "device")
 
 
 def ip_json(*args):
@@ -296,11 +317,16 @@ def serial_cell(at_port, info, role):
 
 
 class Connection:
-    def __init__(self, ue, at_port=None, registration_timeout=45, ping_count=5):
+    def __init__(self, ue, at_port=None, registration_timeout=45, ping_count=5,
+                 modem_cache=None, network_lock_path=None):
         self.ue, self.role = ue, ROLES[ue]
         self.at_port, self.registration_timeout = at_port, registration_timeout
         self.ping_count = ping_count
         self.modem = self.identity = None
+        self.device = None
+        self.modem_cache = modem_cache if modem_cache is not None else {}
+        self.network_lock_path = network_lock_path
+        self.inventory = []
         self.stage = "preflight"
         self.result = dict(ue=ue, path=self.role["label"], status="started",
                            started_at=datetime.now(timezone.utc).isoformat())
@@ -326,15 +352,40 @@ class Connection:
                  for address in device.get("addr_info", [])}
         require(not local.intersection(role["server"] for role in ROLES.values()),
                 "Spark service IP is local; run this script on the UE laptop")
-        paths = sorted(set(re.findall(r"/org/freedesktop/ModemManager1/Modem/\d+", read("mmcli", "-L"))))
-        matches = [(path, kv("mmcli", "-m", path, "-K")) for path in paths]
-        matches = [(path, info) for path, info in matches
-                   if info.get("modem.generic.equipment-identifier") == self.role["imei"]]
-        require(len(matches) == 1, "Expected IMEI must match exactly one current modem")
-        self.modem, info = matches[0]
-        self.identity = info.get("modem.generic.device-identifier")
-        require(self.identity not in (None, "", "--"), "Missing current modem device identifier")
+        cached = self.modem_cache.get("selected")
+        info = None
+        if cached:
+            self.modem, self.identity = cached
+            try:
+                info = kv("mmcli", "-m", self.modem, "-K")
+            except subprocess.CalledProcessError as error:
+                # Rediscover a removed object, but never query the other UE to
+                # work around a slow or unresponsive selected modem.
+                message = (str(error) + (error.stderr or "")).lower()
+                if not any(word in message for word in ("couldn't find modem", "unknownobject", "does not exist")):
+                    raise
+            if info is not None and (info.get("modem.generic.equipment-identifier") != self.role["imei"]
+                                     or info.get("modem.generic.device-identifier") != self.identity):
+                info = None
+            if info is not None:
+                self.inventory = list(self.modem_cache.get("inventory", []))
+                previous_ports = [item[2] for item in self.inventory if item[1] == self.role["imei"]]
+                if previous_ports != [ports(info)]:
+                    info = None
+        if info is None:
+            self.modem_cache.clear()
+            paths = sorted(set(re.findall(r"/org/freedesktop/ModemManager1/Modem/\d+", read("mmcli", "-L"))))
+            records = [(path, kv("mmcli", "-m", path, "-K")) for path in paths]
+            matches = [(path, item) for path, item in records
+                       if item.get("modem.generic.equipment-identifier") == self.role["imei"]]
+            require(len(matches) == 1, "Expected IMEI must match exactly one current modem")
+            self.modem, info = matches[0]
+            self.identity = info.get("modem.generic.device-identifier")
+            require(self.identity not in (None, "", "--"), "Missing current modem device identifier")
+            self.inventory = [(path, item.get("modem.generic.equipment-identifier"), ports(item),
+                               item.get("modem.generic.state")) for path, item in records]
         self.checked_modem()
+        self.modem_cache.update(selected=(self.modem, self.identity), inventory=self.inventory)
         self.result.update(modem=self.modem, imei=self.role["imei"], imsi=self.role["imsi"],
                            apn=self.role["apn"], server=self.role["server"], table=self.role["table"])
         print(f"UE{self.ue} / {self.role['label']}: IMEI={self.role['imei']} IMSI={self.role['imsi']} modem={self.modem}")
@@ -349,7 +400,50 @@ class Connection:
         sim_info = kv("mmcli", "-i", sim, "-K")
         require(sim_info.get("sim.properties.active") == "yes"
                 and sim_info.get("sim.properties.imsi") == self.role["imsi"], "Active SIM IMSI mismatch")
+        self.device = info.get("modem.generic.physdev") or info.get("modem.generic.device")
+        previous_ports = [item[2] for item in self.inventory if item[1] == self.role["imei"]]
+        if previous_ports and previous_ports != [ports(info)]:
+            self.modem_cache.pop("selected", None)
+        self.inventory = [item for item in self.inventory if item[1] != self.role["imei"]]
+        self.inventory.append((self.modem, self.role["imei"], ports(info), info.get("modem.generic.state")))
+        self.modem_cache["inventory"] = self.inventory
         return info
+
+    def network(self, *, shared=False):
+        return network_lock(shared=shared, path=self.network_lock_path)
+
+    @contextlib.contextmanager
+    def host_update(self, bearer):
+        """Compare the peer/management state only across our own kernel writes."""
+        with self.network():
+            before = self.surroundings(bearer)
+            yield
+            require(self.surroundings(bearer) == before,
+                    "Management/other-UE configuration changed during host update")
+
+    def clear_host(self, bearer):
+        # Inventory was refreshed from this modem outside the network lock.
+        # Host-only reset must not issue ModemManager queries under that lock.
+        with self.host_update(bearer):
+            self.host_preflight(bearer)
+            reset.reset(self.ue, inventory=self.inventory)
+            self.block(install=False)
+
+    def verify_host_cleared(self, interface):
+        pool = ipaddress.IPv4Network(self.role["pool"])
+        require(not any(ipaddress.IPv4Address(address["local"]) in pool
+                        for device in ip_json("addr", "show") for address in device.get("addr_info", [])),
+                "Role IPv4 address remains after shutdown")
+        require(not ip_json("route", "show", "table", str(self.role["table"]))
+                and not any(rule.get("priority") in self.role["priorities"]
+                            or number(rule.get("table")) == self.role["table"]
+                            for rule in ip_json("rule", "show")), "Role routes/rules remain after shutdown")
+        require(not any(route.get("dev") == interface for route in ip_json("route", "show", "table", "main")),
+                "Role main-table route remains after shutdown")
+        links = [link for link in json.loads(read("ip", "-j", "link", "show")) if link["ifname"] == interface]
+        require(all(link.get("mtu") == 1500 and "UP" not in link.get("flags", []) for link in links),
+                "Role WWAN is not DOWN / MTU 1500 after shutdown")
+        self.block(install=False)
 
     def registered(self, enable):
         started = time.monotonic()
@@ -474,9 +568,11 @@ class Connection:
         interface = bearer["interface"]
         require(network_driver(interface) == "qmi_wwan",
                 "Expected a dedicated qmi_wwan interface; inspect its driver before configuration")
-        inventory = reset.modem_inventory()
+        require(self.device not in (None, "", "--"), "Missing selected modem physical device path")
+        require(network_device(interface) == Path(self.device).resolve(),
+                "WWAN physical device changed; rediscover modem ownership before host configuration")
         require(not any(interface in net_ports and imei != self.role["imei"]
-                        for _, imei, net_ports, _ in inventory), "WWAN is shared with another modem")
+                        for _, imei, net_ports, _ in self.inventory), "WWAN is shared with another modem")
         pool = ipaddress.IPv4Network(self.role["pool"])
         for device in ip_json("addr", "show"):
             for address in device.get("addr_info", []):
@@ -528,6 +624,26 @@ class Connection:
                  for link in json.loads(read("ip", "-j", "link", "show")) if link["ifname"] != interface]
         return dict(rules=rules, addresses=addresses, main_routes=main_routes, other_routes=other_routes, links=links)
 
+    def management_state(self):
+        """Keep management validation across radio waits, allowing UE activity."""
+        def managed_rule(rule):
+            for ue, role in ROLES.items():
+                if rule.get("priority") in (*role["priorities"], role["block"]):
+                    if Connection(ue).owned_rule(rule, block=rule.get("priority") == role["block"]):
+                        return True
+            return False
+
+        addresses = [dict(ifname=device["ifname"], addresses=sorted(
+            (item["local"], item["prefixlen"]) for item in device.get("addr_info", [])))
+            for device in ip_json("addr", "show") if not reset.WWAN.fullmatch(device["ifname"])]
+        rules = [rule for rule in ip_json("rule", "show") if not managed_rule(rule)]
+        routes = [route for route in ip_json("route", "show", "table", "main")
+                  if not reset.WWAN.fullmatch(route.get("dev", ""))]
+        links = [dict(ifname=link["ifname"], mtu=link["mtu"], up="UP" in link.get("flags", []))
+                 for link in json.loads(read("ip", "-j", "link", "show"))
+                 if not reset.WWAN.fullmatch(link["ifname"])]
+        return dict(addresses=addresses, rules=rules, routes=routes, links=links)
+
     def expected_rules(self, bearer):
         lookup, guard, dest_lookup, dest_guard = self.role["priorities"]
         return ((lookup, bearer["source"], self.role["table"]), (guard, bearer["source"], None),
@@ -572,53 +688,59 @@ class Connection:
                 require(routes[0].get("prefsrc") == bearer["source"], "Ordinary route selects the wrong UE IP")
 
     def configure(self, bearer):
-        self.host_preflight(bearer)
-        if self.configured(bearer):
-            self.routes(bearer)
-            print("Host path already correct; reusing PDU, addresses and policy rules")
-            return
         self.checked_modem()
         require(self.bearer() == bearer, "Bearer changed before host reset; retry discovery")
-        try:
-            reset.reset(self.ue)
-            self.block(install=False)
+        with self.network(shared=True):
+            self.host_preflight(bearer)
+            if self.configured(bearer):
+                self.routes(bearer)
+                print("Host path already correct; reusing PDU, addresses and policy rules")
+                return
+        with self.host_update(bearer):
+            self.host_preflight(bearer)
+            if self.configured(bearer):
+                self.routes(bearer)
+                print("Host path already correct; reusing PDU, addresses and policy rules")
+                return
             try:
-                read("ip", "-N", "-j", "-4", "route", "get", self.role["server"])
-            except subprocess.CalledProcessError:
-                pass
-            else:
-                raise ValueError("Ordinary traffic is still routable after reset; Wi-Fi fallback is not blocked")
-            require(self.bearer() == bearer, "Bearer changed during reset; retry discovery")
-            for priority, source, table in self.expected_rules(bearer):
-                if table is None:
-                    command = ["ip", "-4", "rule", "add", "pref", str(priority)]
-                    if source != "all":
-                        command.extend(["from", source + "/32"])
-                    change(*command, "to", self.role["server"] + "/32", "unreachable")
-            change("ip", "link", "set", "dev", bearer["interface"], "mtu", str(bearer["mtu"]), "up")
-            change("ip", "-4", "addr", "add", f"{bearer['source']}/{bearer['prefix']}", "dev", bearer["interface"], "noprefixroute")
-            change("ip", "-4", "route", "add", "table", str(self.role["table"]), self.role["server"] + "/32",
-                   "dev", bearer["interface"], "scope", "link", "src", bearer["source"])
-            for priority, source, table in self.expected_rules(bearer):
-                if table is not None:
-                    command = ["ip", "-4", "rule", "add", "pref", str(priority)]
-                    if source != "all":
-                        command.extend(["from", source + "/32"])
-                    change(*command, "to", self.role["server"] + "/32", "lookup", str(table))
-            require(self.configured(bearer), "Installed host configuration changed unexpectedly")
-            self.routes(bearer)
-        except BaseException as error:
-            if isinstance(error, StopRequested):
-                # The launcher's signal cleanup disconnects/deletes/disables
-                # under the shared lock; do not start a second partial reset.
+                reset.reset(self.ue, inventory=self.inventory)
+                self.block(install=False)
+                try:
+                    read("ip", "-N", "-j", "-4", "route", "get", self.role["server"])
+                except subprocess.CalledProcessError:
+                    pass
+                else:
+                    raise ValueError("Ordinary traffic is still routable after reset; Wi-Fi fallback is not blocked")
+                for priority, source, table in self.expected_rules(bearer):
+                    if table is None:
+                        command = ["ip", "-4", "rule", "add", "pref", str(priority)]
+                        if source != "all":
+                            command.extend(["from", source + "/32"])
+                        change(*command, "to", self.role["server"] + "/32", "unreachable")
+                change("ip", "link", "set", "dev", bearer["interface"], "mtu", str(bearer["mtu"]), "up")
+                change("ip", "-4", "addr", "add", f"{bearer['source']}/{bearer['prefix']}", "dev", bearer["interface"], "noprefixroute")
+                change("ip", "-4", "route", "add", "table", str(self.role["table"]), self.role["server"] + "/32",
+                       "dev", bearer["interface"], "scope", "link", "src", bearer["source"])
+                for priority, source, table in self.expected_rules(bearer):
+                    if table is not None:
+                        command = ["ip", "-4", "rule", "add", "pref", str(priority)]
+                        if source != "all":
+                            command.extend(["from", source + "/32"])
+                        change(*command, "to", self.role["server"] + "/32", "lookup", str(table))
+                require(self.configured(bearer), "Installed host configuration changed unexpectedly")
+                self.routes(bearer)
+            except BaseException as error:
+                if isinstance(error, StopRequested):
+                    # Signal cleanup will reset the host path in a new network
+                    # transaction after this one has unwound.
+                    raise
+                print("Host rebuild failed; retaining the independent destination block and clearing the partial UE path", flush=True)
+                try:
+                    self.host_preflight(bearer)
+                    reset.reset(self.ue, inventory=self.inventory)
+                except (ValueError, OSError, subprocess.SubprocessError) as cleanup_error:
+                    status(f"\nCleanup incomplete: {cleanup_error}; inspect this UE before retrying", error=True)
                 raise
-            print("Host rebuild failed; retaining the independent destination block and clearing the partial UE path", flush=True)
-            try:
-                self.checked_modem()
-                reset.reset(self.ue)
-            except (ValueError, OSError, subprocess.SubprocessError) as cleanup_error:
-                status(f"\nCleanup incomplete: {cleanup_error}; inspect this UE before retrying", error=True)
-            raise
 
     def run(self, check_only=False):
         with self.step(1, "Modem / SIM identity", "preflight"):
@@ -630,28 +752,34 @@ class Connection:
             net_ports = ports(self.checked_modem())
             require(len(net_ports) == 1, "Expected exactly one dedicated net port for the selected modem")
             before_interface = next(iter(net_ports))
-            surroundings = self.surroundings(dict(interface=before_interface))
+            with self.network(shared=True):
+                management = self.management_state()
         with self.step(4, "PDU session / serving-cell recheck", "PDU session"):
             if not check_only:
-                self.block(install=True)
+                with self.host_update(dict(interface=before_interface)):
+                    self.block(install=True)
             bearer = self.bearer(connect=not check_only)
             require(bearer["interface"] == before_interface, "Selected modem net port changed while connecting")
             self.result.update(bearer)
             self.serving_cell()
             print(f"PDU PASS: APN={self.role['apn']} IP={bearer['source']}/{bearer['prefix']} WWAN={bearer['interface']} MTU={bearer['mtu']}")
         with self.step(5, "WWAN / policy routing / Wi-Fi fallback block", "host network"):
-            self.host_preflight(bearer)
-            require(self.surroundings(bearer) == surroundings, "Management/other-UE configuration changed during PDU connection")
+            with self.network(shared=True):
+                require(self.management_state() == management, "Management configuration changed during PDU connection")
             if not check_only:
                 self.configure(bearer)
             else:
-                require(self.configured(bearer), "Host path is incomplete")
+                with self.network(shared=True):
+                    self.host_preflight(bearer)
+                    require(self.configured(bearer), "Host path is incomplete")
         with self.step(6, "Source-bound and ordinary routes", "route verification"):
-            self.routes(bearer)
+            with self.network(shared=True):
+                self.routes(bearer)
         if not check_only:
             for bound in (True, False):
                 with self.step(7 if bound else 8, "Source-bound ping" if bound else "Ordinary ping", "ping"):
-                    self.routes(bearer)
+                    with self.network(shared=True):
+                        self.routes(bearer)
                     command = ["ping", "-n", "-c", str(self.ping_count), "-W", "2",
                                "-w", str(max(5, self.ping_count * 3))]
                     if bound:
@@ -671,9 +799,10 @@ class Connection:
         with self.step(9, "Final identity / cell / network verification", "final verification"):
             require(self.bearer() == bearer, "PDU changed during verification; rerun this UE")
             self.serving_cell()
-            require(self.configured(bearer), "Host path changed during verification")
-            self.routes(bearer)
-            require(self.surroundings(bearer) == surroundings, "Management/other-UE configuration changed during this run; inspect before acceptance")
+            with self.network(shared=True):
+                require(self.configured(bearer), "Host path changed during verification")
+                self.routes(bearer)
+                require(self.management_state() == management, "Management configuration changed during verification")
         self.result["status"] = "checked" if check_only else "connected"
         status(f"PASS: UE{self.ue} / {self.role['label']} " + ("checked (ping not run)" if check_only else "connected"),
                detail=f"PASS: UE{self.ue} / {self.role['label']} -> {self.role['server']} via {bearer['interface']} table {self.role['table']}"
@@ -724,38 +853,48 @@ class Tee:
 @contextlib.contextmanager
 def capture_reset_output():
     """Use captured subprocess output for this launcher's existing reset helper."""
-    original = reset.change
+    original, original_read = reset.change, reset.read
     reset.change = change
+    reset.read = read
     try:
         yield
     finally:
         reset.change = original
+        reset.read = original_read
 
 
-def shutdown_on_interrupt(ue, *, lock=None, lock_path="/run/lock/falcon-ue-connect.lock"):
-    """Run the existing verified shutdown for this role, recording incomplete cleanup."""
+def shutdown_on_interrupt(ue, *, lock_path=None, modem_cache=None):
+    """Run per-modem shutdown outside the short kernel network transactions."""
     result = dict(ue=ue, status="started", started_at=datetime.now(timezone.utc).isoformat())
     with ignore_stop_signals():
         status(f"UE{ue} shutdown: disconnect PDU, clear host path, delete bearers and disable modem ...")
         original_read = reset.read
-        reset.read = read  # Give shutdown queries the same bounded timeout as the launcher.
+        reset.read = read
         try:
-            with contextlib.ExitStack() as stack:
-                status("Waiting for the shared network lock before UE shutdown ...")
-                if lock is None:
-                    lock = stack.enter_context(open(lock_path, "a"))
-                # Re-lock the same descriptor whether setup still owns it or
-                # the successful connection has released it while idle.
-                fcntl.flock(lock, fcntl.LOCK_EX)
-                stack.enter_context(capture_reset_output())
-                local = {a["local"] for device in ip_json("addr", "show")
-                         for a in device.get("addr_info", [])}
-                require(not local.intersection(role["server"] for role in ROLES.values()),
-                        "Spark service IP is local; refusing laptop shutdown on Spark")
-                # Retain the destination guard even when interrupted before the
-                # PDU/host setup stage installed it.
-                Connection(ue).block(install=True)
-                reset.reset(ue, shutdown=True)
+            with capture_reset_output():
+                session = Connection(ue, modem_cache=modem_cache, network_lock_path=lock_path)
+                session.discover()
+                info = session.checked_modem()
+                net_ports = ports(info)
+                require(len(net_ports) == 1, "Expected one dedicated WWAN for shutdown")
+                bearer = dict(interface=next(iter(net_ports)))
+                with session.host_update(bearer):
+                    session.block(install=True)
+                connected = info.get("modem.generic.state") in ("connected", "connecting", "disconnecting")
+                for path in reset.bearer_paths(info):
+                    connected = (kv("mmcli", "-b", path, "-K").get("bearer.status.connected") == "yes"
+                                 or connected)
+                if connected:
+                    session.checked_modem()
+                    change("mmcli", "-m", session.modem, "--simple-disconnect")
+                info = session.checked_modem()
+                for path in reset.bearer_paths(info):
+                    require(kv("mmcli", "-b", path, "-K").get("bearer.status.connected") == "no",
+                            "Bearer remains connected; stopping shutdown before host reset")
+                session.clear_host(bearer)
+                reset.shutdown_modem(session.modem, session.role["imei"])
+                with session.network(shared=True):
+                    session.verify_host_cleared(bearer["interface"])
             result["status"] = "completed"
             status(f"UE{ue} shutdown [OK]: bearers=0, state=disabled, role host path cleared")
         except (ValueError, OSError, subprocess.SubprocessError) as error:
@@ -789,12 +928,8 @@ def main():
     require(os.geteuid() == 0, "Run with sudo (including --check-only for modem access)")
     for command in ("mmcli", "ip", "ping"):
         require(shutil.which(command), f"Missing required command: {command}")
-    # Both roles share the host policy database; serialize our own launches.
-    with role_lock(args.ue), open("/run/lock/falcon-ue-connect.lock", "a") as lock:
-        try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            raise ValueError("Another UE connection script is running; finish it before launching the other role") from None
+    # Each role owns its modem; only kernel network transactions share a lock.
+    with role_lock(args.ue):
         directory = Path(tempfile.mkdtemp(prefix=f"falcon-ue{args.ue}-connect-", dir=args.output_root))
         session = Connection(args.ue, args.at_port, args.registration_timeout)
         with (directory / "run.log").open("w") as log, StopSignals() as stops, \
@@ -808,9 +943,6 @@ def main():
                     session.result.update(stage=session.stage, lifecycle="waiting_for_stop",
                                           connected_at=datetime.now(timezone.utc).isoformat())
                     (directory / "summary.json").write_text(json.dumps(session.result, indent=2) + "\n")
-                    # Retain only this UE's role lock while idle, so UE2 and
-                    # other-role shutdown are free to use the policy database.
-                    fcntl.flock(lock, fcntl.LOCK_UN)
                     status(f"UE{args.ue} connected; waiting for Ctrl+C to shut down (no polling or ping)")
                     wait_for_stop()
                 return 0
@@ -831,7 +963,7 @@ def main():
                 if interrupted:
                     session.result["signal"] = signum
                     session.result["lifecycle"] = "stopping"
-                    session.result["shutdown"] = shutdown_on_interrupt(args.ue, lock=lock)
+                    session.result["shutdown"] = shutdown_on_interrupt(args.ue, modem_cache=session.modem_cache)
                     session.result["lifecycle"] = "stopped"
                 return 128 + signum if interrupted else 1
             finally:

@@ -237,8 +237,8 @@ authentication; an expired cache can prompt again.
 A successful run **holds the connection and waits for Ctrl+C** after the ping
 checks. Waiting uses `signal.pause()`, with no periodic wakeup, modem queries,
 health probes, ping or automatic redial. The Python process and a few open file
-handles remain; it does not busy-wait. The shared network lock is released while
-idle, so preparing/stopping the other UE remains possible. For ongoing monitoring, use the separate
+handles remain; it does not busy-wait. No shared network lock is held while
+idle; the other UE can prepare, monitor and stop independently. For ongoing monitoring, use the separate
 [laptop automatic reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md).
 
 These are self-checking connection launchers: they perform checks and prepare
@@ -293,14 +293,45 @@ sudo bash scripts/dual_fr1/connect_ue2.sh
 
 The remaining examples use the copied files under `~/falcon-ue-connect`.
 
-Complete UE1 startup first, leave it waiting, then start UE2 in another terminal.
-Each role has one owner: a second launcher or watcher for the **same UE** is
-rejected. The shared network lock serializes setup and shutdown; idle holders
-release it. Existing manual modem/network operations and network
-managers are outside that lock; finish those operations before running a script.
+The commands above demonstrate UE1 followed by UE2. The two roles can also
+start concurrently in separate terminals; each retains its own modem lock.
+Only host network transactions are coordinated as described below.
 A run can reuse an already correct PDU and host path when no other script owns
 that role. Ctrl+C on a current holder/watcher first shuts that role down; a later
 launcher enables/reconnects it. No cell-lock configuration is sent automatically.
+
+### Independent UE operation and host network locking
+
+Each launcher/watcher keeps its own role lock for its lifetime, so a second
+process for the **same UE** is rejected. UE1 and UE2 can run at the same time.
+Their modem queries, registration waits, PDU connect/disconnect, bearer deletion,
+modem disable and ping run outside the shared network lock.
+
+The watcher remembers its verified modem path and device identifier in memory.
+Routine checks and recovery query only that modem, its SIM and its bearers,
+while still checking IMEI/IMSI on every use. Initial discovery, or discovery after
+an object disappears/is replaced or its WWAN mapping changes, enumerates
+available modems by IMEI and may read both. A query timeout on an existing object does not trigger a scan of the
+other UE. ModemManager and the USB/kernel services are still shared dependencies;
+this is isolation of the scripts' operations, not a separate ModemManager daemon.
+
+The shared lock covers only kernel network updates and consistent host-state
+reads. Read-only host checks can overlap; address/route/rule/MTU/UP changes are
+exclusive. Host ownership also checks the WWAN's physical USB device against
+this modem's current identity through sysfs. Each update compares peer and
+management state immediately before and after its own writes. Across radio waits and ping, legitimate peer-UE
+changes are allowed and management state remains checked. A failed check is
+reported rather than accepted as success. Wi-Fi fallback guards remain installed.
+
+`Waiting for a host network update to finish ...` now means waiting for one of
+these host transactions; a slow radio query does not hold that lock. Healthy
+checks record UTC start/completion markers and elapsed time in `run.log`; level 3
+also shows them in the terminal. Normal external-command timeouts still apply.
+
+**Stop both old launchers/watchers before updating**, copy the complete file set
+from this guide's transfer section, and restart both. An already-running Python
+process keeps its loaded version. Manual commands and NetworkManager do not
+participate in these locks; finish/stop the selected role before manual configuration.
 
 ### Ctrl+C shutdown and optional immediate exit
 
@@ -308,8 +339,8 @@ Ctrl+C (SIGINT) or SIGTERM cancels the current work/wait and invokes the existin
 [`reset_ue_network.py --shutdown`](../scripts/dual_fr1/reset_ue_network.py) logic
 for **only this UE** before exit:
 
-1. Re-discover the current modem by the role's IMEI, so a changed object number
-   is not reused accidentally.
+1. Verify this role's current modem IMEI/SIM/device identity; rediscover by IMEI
+   if its object has disappeared or been replaced.
 2. Install/retain its independent destination block against Wi-Fi fallback.
 3. Disconnect the selected PDU, clear its IPv4 addresses/routes/policy rules,
    and return the WWAN to DOWN / MTU 1500.
@@ -317,9 +348,9 @@ for **only this UE** before exit:
 5. Verify shutdown, write the outcome to `summary.json`, then exit 130 for Ctrl+C
    or 143 for SIGTERM. Management Wi-Fi and the other UE remain available.
 
-Shutdown takes the shared network lock; it can wait for an ongoing operation on
-the other UE. Repeated Ctrl+C/SIGTERM does not interrupt this cleanup, and cleanup
-children are isolated from subsequent terminal stop signals. A failed disconnect,
+Shutdown takes the shared lock only for its host updates/verification; modem
+operations happen outside it. Repeated Ctrl+C/SIGTERM does not interrupt cleanup;
+cleanup children are isolated from subsequent terminal stop signals. A failed disconnect,
 bearer deletion or disable prints `shutdown [FAIL]` and records the error; it
 never prints successful shutdown without the final checks.
 
@@ -384,10 +415,10 @@ exits 1 with evidence for diagnosis; it does not claim shutdown completed.
    output, including packet loss, is saved. A successful ping command can still
    report some packet loss, so inspect the log for link quality.
 8. Recheck the current bearer, serving cell, host configuration and routes.
-   Check management and the other UE's IPv4 addresses, rules, main/private
-   routes and interface UP/MTU state against the snapshot taken before PDU
-   connection.
-   Print `PASS` only after all checks succeed.
+   Check management state across the run. Check the other UE's addresses,
+   rules, main/private routes and interface UP/MTU state immediately before
+   and after each exclusive host update, allowing its independent recovery
+   between those transactions. Print `PASS` only after all checks succeed.
 
 Management Wi-Fi remains available for SSH and destinations outside these
 two Spark service IPs. The independent `20151` / `20152` blocks survive the

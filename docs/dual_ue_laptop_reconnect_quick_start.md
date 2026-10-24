@@ -214,6 +214,39 @@ sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 1
 sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 1
 ```
 
+### Independent UE operation and host network locking
+
+Each launcher/watcher keeps its own role lock for its lifetime, so a second
+process for the **same UE** is rejected. UE1 and UE2 can run at the same time.
+Their modem queries, registration waits, PDU connect/disconnect, bearer deletion,
+modem disable and ping run outside the shared network lock.
+
+The watcher remembers its verified modem path and device identifier in memory.
+Routine checks and recovery query only that modem, its SIM and its bearers,
+while still checking IMEI/IMSI on every use. Initial discovery, or discovery after
+an object disappears/is replaced or its WWAN mapping changes, enumerates
+available modems by IMEI and may read both. A query timeout on an existing object does not trigger a scan of the
+other UE. ModemManager and the USB/kernel services are still shared dependencies;
+this is isolation of the scripts' operations, not a separate ModemManager daemon.
+
+The shared lock covers only kernel network updates and consistent host-state
+reads. Read-only host checks can overlap; address/route/rule/MTU/UP changes are
+exclusive. Host ownership also checks the WWAN's physical USB device against
+this modem's current identity through sysfs. Each update compares peer and
+management state immediately before and after its own writes. Across radio waits and ping, legitimate peer-UE
+changes are allowed and management state remains checked. A failed check is
+reported rather than accepted as success. Wi-Fi fallback guards remain installed.
+
+`Waiting for a host network update to finish ...` now means waiting for one of
+these host transactions; a slow radio query does not hold that lock. Healthy
+checks record UTC start/completion markers and elapsed time in `run.log`; level 3
+also shows them in the terminal. Normal external-command timeouts still apply.
+
+**Stop both old launchers/watchers before updating**, copy the complete file set
+from this guide's transfer section, and restart both. An already-running Python
+process keeps its loaded version. Manual commands and NetworkManager do not
+participate in these locks; finish/stop the selected role before manual configuration.
+
 ### Retry and health-check interval
 
 `--interval` defaults to **1 second** and accepts positive fractional seconds.
@@ -268,20 +301,23 @@ sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 0.5 --verbose 3
 ### Stop or switch to manual operations
 
 Run only **one launcher or watcher per role**; duplicate ownership is rejected.
-UE1 and UE2 can run together: a shared lock serializes each check/recovery and
-shutdown. The lock is released during retry waits and while a one-shot holder is
-idle; waiting for it does not count as a connection attempt.
+UE1 and UE2 run their radio/PDU work and ping independently. They coordinate
+only kernel host-state checks and updates as described above. An attempt is
+counted when it starts; waiting inside its host-update step remains part of
+that attempt.
 
 **Ctrl+C now shuts down this UE**, rather than merely stopping monitoring.
-SIGTERM has the same cleanup behavior. The script cancels its work/wait, takes
-the shared network lock, re-discovers this role by IMEI and runs the existing
-shutdown helper: disconnect PDU, clear role IPv4/routes/rules, bring WWAN DOWN /
-MTU 1500, delete bearers and disable modem. The independent Wi-Fi fallback block
-stays installed; the other UE and management Wi-Fi are preserved.
+SIGTERM has the same cleanup behavior. The script cancels its work/wait,
+verifies this role's current identity and uses the shutdown helper logic:
+disconnect PDU, clear role IPv4/routes/rules, bring WWAN DOWN / MTU 1500,
+delete bearers and disable modem. Only the host updates/verification take
+the shared network lock; modem operations remain independent. The independent
+Wi-Fi fallback block stays installed; the other UE and management Wi-Fi are preserved.
 
 Wait for `UE1 shutdown: SUCCESS` / `UE2 shutdown: SUCCESS` before manual
-configuration or restarting that role. Cleanup can wait for the other role's
-current operation. Repeated Ctrl+C/SIGTERM cannot re-enter or interrupt cleanup;
+configuration or restarting that role. Host cleanup can wait for the other
+role's kernel network transaction. Repeated Ctrl+C/SIGTERM cannot re-enter or
+interrupt cleanup;
 a failed cleanup prints `FAIL` plus the reason, even at verbosity 1. The outcome
 is saved in `summary.json`. A later startup can enable/reconnect the disabled UE.
 Stopping the watcher interrupts that UE's traffic path, including video using it.
@@ -295,7 +331,8 @@ boot job or background daemon is installed automatically.
 
 Recovery proceeds as follows:
 
-1. Rediscover the modem/SIM and current serving cell. Missing registration or
+1. Verify the selected modem/SIM and current serving cell; rediscover by IMEI
+   when its object disappears/is replaced or its WWAN mapping changes. Missing registration or
    unproved/mismatching cells fail that attempt and continue polling. Level 2/3
    explains the required manual checks. No cell lock, band, mode or CFUN write is
    sent; correct the serial settings manually if needed. A wrong cell never
@@ -358,7 +395,8 @@ terminal; locate it in a second terminal with:
 sudo ls -td /tmp/falcon-ue1-reconnect-* /tmp/falcon-ue2-reconnect-*
 ```
 
-`run.log` retains detailed attempts and health checks; `attempts.jsonl` records
+`run.log` retains detailed attempts and health checks, including UTC health-check
+start/completion markers and elapsed times; `attempts.jsonl` records
 each attempt's UTC times, outcome, failed stage, current IP, ping output and
 forced-redial reason when applicable. `summary.json` is written on exit and
 records the last verified state **before shutdown** (not a post-exit measurement)

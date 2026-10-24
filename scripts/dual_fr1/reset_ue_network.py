@@ -97,7 +97,7 @@ def modem_inventory():
     return inventory
 
 
-def reset(ue, dry_run=False, disconnect=False, shutdown=False):
+def reset(ue, dry_run=False, disconnect=False, shutdown=False, *, inventory=None):
     imei, subnet, server, table, priorities = ROLES[ue]
     pool = ipaddress.IPv4Network(subnet)
     aliases = table_aliases()
@@ -121,7 +121,7 @@ def reset(ue, dry_run=False, disconnect=False, shutdown=False):
     if any(not WWAN.fullmatch(device) for device in pool_devices):
         raise ValueError("Role addresses exist on a non-WWAN interface; inspect that interface")
     try:
-        inventory = modem_inventory()
+        inventory = modem_inventory() if inventory is None else inventory
     except (subprocess.CalledProcessError, FileNotFoundError):
         if pool_devices:
             raise ValueError("Cannot read current modem ownership; start ModemManager before address reset") from None
