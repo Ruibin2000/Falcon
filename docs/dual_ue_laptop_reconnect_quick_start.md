@@ -122,6 +122,7 @@ section 1. No manual AT commands are needed before launching them:
 ```bash
 # Terminal 1: UE1 / FR1
 sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 1 \
+  --registration-grace 10 --registration-request-timeout 20 \
   --auto-cell-lock --cell-lock-cooldown 30 \
   --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0
 ```
@@ -129,6 +130,7 @@ sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 1 \
 ```bash
 # Terminal 2: UE2 / FR3
 sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 1 \
+  --registration-grace 10 --registration-request-timeout 20 \
   --auto-cell-lock --cell-lock-cooldown 30 \
   --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
 ```
@@ -172,13 +174,16 @@ participate in these locks; finish/stop the selected role before manual configur
 It is the wait **after a check or completed connection attempt**, before the next
 check/attempt. Registration, ModemManager commands and ping take additional time;
 this is not a guaranteed one-second recovery or a new overlapping process every
-second. An attempt waits up to five seconds for registration by default
-(`--registration-timeout 90` extends that wait); individual external commands have
-a 75-second process timeout. Automatic recovery's registration request also
-explicitly sets the mmcli D-Bus timeout to **70 seconds**
-(`--registration-request-timeout 70`, range 1..70). This is separate from the
-five-second registration-state polling budget and the retry interval. mmcli
-commands without an explicit timeout may return earlier than the process limit.
+second. By default, each attempt reads registration state once without a
+built-in sleep (`--registration-timeout 0`). An explicit nonzero value adds that
+many seconds of state polling inside each attempt and will slow the loop.
+Other modem queries, initial enable, AT operations, PDU setup and ping still
+have their own execution time; the one-second interval is not a hard deadline
+for the complete round. Ordinary external commands retain a 75-second process
+limit. A background registration child instead uses a **20-second mmcli D-Bus
+wait** by default and a **25-second process watchdog** (client wait plus 5).
+`--registration-request-timeout N` accepts 1..70 seconds and changes both limits.
+The parent does not synchronously wait for this child's registration reply.
 Healthy checks and recovery both verify source-bound and
 ordinary routes and use **one ping in each mode**, rather than the one-shot
 launcher's five. Healthy checks read modem/cell/bearer/host state and send ping;
@@ -186,6 +191,41 @@ they do not modify the modem, addresses or routes. **Healthy monitoring and fail
 retries share this same interval; there is no separate health-check timer.**
 Each healthy round sends one source-bound and one ordinary ping per UE to its
 Spark service. A failed earlier check ends the round before those pings complete.
+
+### Observe before requesting registration
+
+When radio checks first fail, the watcher gives the modem **10 seconds** to
+recover on its own (`--registration-grace 10`). It keeps checking current state
+at the configured loop interval. During this window it does not force a PDU
+disconnect, rewrite cell-lock settings or issue a registration request. Initial
+enable of a disabled modem remains part of ordinary startup.
+
+If the registered target cell returns, normal PDU/host/ping verification resumes
+immediately. A PDU-only fault with a valid registration/cell follows the normal
+PDU-repair path without waiting for this radio grace window.
+
+If radio checks still fail after the window, the watcher performs the guarded
+radio preparation below and can start **one background registration client for
+this UE**. The attempt returns `FAIL` while connectivity is unverified; later
+attempts continue checking rather than waiting inside that client. If modem/cell
+state becomes ready, those attempts immediately continue PDU, route and ping
+verification even if the registration client has not returned yet. A pending
+client prevents another lock/registration recovery for that UE.
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `--interval` | `1` second | Delay after each completed check/attempt. |
+| `--registration-grace` | `10` seconds | Observe automatic radio recovery before forcing radio/PDU recovery; `0` skips this window. |
+| `--registration-timeout` | `0` seconds | Extra state polling inside each attempt; default is one snapshot. |
+| `--registration-request-timeout` | `20` seconds | Background mmcli D-Bus wait; process watchdog adds 5 seconds. |
+| `--cell-lock-cooldown` | `30` seconds | Minimum gap before another radio recovery after the previous preparation/request finishes. |
+
+A client timeout does not prove that ModemManager stopped its backend task.
+After a timeout/busy response the watcher conservatively observes until at least
+65 seconds from that request's start before issuing another request; the normal
+cooldown also applies. These gates only suppress repeated recovery requests.
+Connection checks continue, and a verified connection can succeed during either
+window. No CFUN reset or global ModemManager restart is introduced.
 
 ### Output levels
 
@@ -235,7 +275,8 @@ counted when it starts; waiting inside its host-update step remains part of
 that attempt.
 
 **Ctrl+C now shuts down this UE**, rather than merely stopping monitoring.
-SIGTERM has the same cleanup behavior. The script cancels its work/wait,
+SIGTERM has the same cleanup behavior. The script first terminates/reaps any
+owned registration client (with a kill fallback), then cancels its work/wait,
 verifies this role's current identity and uses the shutdown helper logic:
 disconnect PDU, clear role IPv4/routes/rules, bring WWAN DOWN / MTU 1500,
 delete bearers and disable modem. Only the host updates/verification take
@@ -293,8 +334,8 @@ Recovery proceeds as follows:
 The [startup commands above](#start-the-watchers) enable `--auto-cell-lock`
 for each UE using its by-path AT port. Copy the complete updated five-file set
 before starting; stop old watchers before updating shared helpers. The first
-attempt checks registration/cell and can restore the radio settings after a
-failure, so a separate manual lock step is unnecessary.
+attempt checks registration/cell; persistent failures trigger guarded recovery
+after the observation window, so a separate manual lock step is unnecessary.
 
 The option requires `--at-port`; it does not guess a tty number. Registration
 failure or missing/mismatching serving-cell evidence triggers radio recovery.
@@ -302,7 +343,8 @@ Identity/SIM errors, ping failures and host route errors do not directly trigger
 AT configuration. The default remains read-only radio checking when this option
 is absent; `--at-port` alone still only enables the read-only cell fallback.
 
-Each eligible recovery does the following:
+After the grace window, with no pending registration client, backend observation
+or cooldown gate, each eligible radio recovery does the following:
 
 1. Recheck this modem's IMEI, active SIM IMSI, active-bearer APN and dedicated
    WWAN ownership. Check host resources under a short shared read lock. Reject
@@ -333,8 +375,8 @@ Each eligible recovery does the following:
    retains a connected bearer, use the same guarded selected-UE disconnect above.
    If the correct live SA cell and C5GREG `1`/`5` already prove registration and MM
    also reports the expected NR SA registration, preserve the working PDU.
-   Otherwise enable the modem if needed and request registration using
-   `mmcli -m <current-selected-modem> --3gpp-register-in-operator=00101 --timeout=70`.
+   Otherwise enable the modem if needed and launch one background registration
+   client using `mmcli -m <current-selected-modem> --3gpp-register-in-operator=00101 --timeout=20`.
    ModemManager may reject registration while it still considers the modem
    connected; an owned stale PDU must be released first. A generic `connected`
    state alone is not accepted as registration: the startup check also requires
@@ -343,21 +385,23 @@ Each eligible recovery does the following:
    On the next attempt, require the usual registration, exact serving cell,
    PDU, current-IP routing, both pings and final checks before `SUCCESS`.
 
-The first radio failure can trigger recovery immediately. Subsequent radio
-recoveries have a **30-second minimum gap after the previous recovery ends**,
-including failed/rejected writes or registration requests. During that gap,
-normal checks/retries continue and can reconnect as soon as the radio is ready.
-`--cell-lock-cooldown` accepts positive seconds; for example `1` permits radio
-recovery on each eligible failed attempt once a second has elapsed. A correct
-saved lock is reused regardless of this interval. Keeping `30`
-gives network selection time to settle and avoids repeated saved-setting writes.
-`--interval` still controls the delay after a completed attempt/check; it is not
-the timeout of AT or registration work. AT commands allow five seconds each;
-the registration request defaults to a 70-second mmcli D-Bus timeout within the
-75-second process limit. Levels 2/3 show the wait budget before the request and
-the result/actual elapsed time when it returns. This does not guarantee that
-registration or the full attempt takes exactly 70 seconds. A client timeout also
-does not prove that background network selection was cancelled.
+The first radio failure begins the observation window. After guarded radio
+preparation, a pending background request prevents duplicate radio recovery.
+When a request ends, or preparation fails before a request starts, subsequent
+radio recoveries have a **30-second minimum gap** by default. Checks and verified
+PDU recovery continue during the grace, pending-request, cooldown and possible
+backend-observation phases. A correct saved lock is reused regardless of these
+intervals. `--cell-lock-cooldown` accepts positive seconds; reducing it does not
+cancel a pending request or skip the backend-observation guard.
+
+The default registration client wait is **20 seconds**, with a **25-second
+process watchdog**; adjust the client wait using `--registration-request-timeout`.
+The child writes to private files, so output cannot fill a pipe and block its
+exit. Level 2 shows the observing/pending/completed phases; level 3 also prints
+commands and the collected child output. Level 1 still prints only connection
+attempt numbers/results (plus required shutdown/cleanup failures). A `FAIL`
+during observation or a pending request means that round did not verify a
+connection; it does not mean the background request has already failed.
 
 Serial/registration work never holds the shared host-network lock. UE1 and UE2
 retain separate ownership and cooldown state. Healthy checks never write AT
@@ -422,11 +466,13 @@ the first. This is consistent with the old command's default 30-second mmcli
 wait plus the five-second initial state check and other queries. The 75-second
 outer watchdog did not override that shorter inner timeout.
 
-The watcher now explicitly supplies `--timeout=70`. Use
-`--registration-request-timeout N` to change that client wait within 1..70 seconds;
-`--registration-timeout` continues to control the separate state-polling step.
-Detailed evidence records a nested `registration_request` with the requested
-D-Bus/process limits, elapsed time, status and error/stderr. A returned request
+An intermediate implementation explicitly used a 70-second synchronous wait.
+The current implementation first observes for 10 seconds, then launches the
+registration client in the background with **`--timeout=20` by default**. Use
+`--registration-request-timeout N` (1..70 seconds) to adjust that client limit;
+`--registration-timeout` now defaults to `0` for a single state snapshot per
+attempt. Registration events retain the requested limits, elapsed time and
+result/error independently of the connection-attempt results. A returned request
 still requires all connection checks before `SUCCESS`.
 
 A correct saved lock proves the configuration tuple, not reception of the
@@ -436,7 +482,8 @@ after the earlier 60 dB setting. The DU2 log during the supplied registration
 window also contained RF `underflow` and `late` warnings. Their causal link to
 this modem's failed cell acquisition has not been established. Increasing the
 client wait does not repair a missing/unusable radio signal or DU scheduling
-failures. Live acceptance of the explicit 70-second timeout change remains pending.
+failures. Live acceptance of the deferred/background 20-second request flow
+remains pending.
 
 ### Operator-reported connection recovery
 
@@ -463,7 +510,7 @@ Minimal output does not establish the failure trigger, elapsed recovery time,
 whether the modem re-registered/redialled or changed IP, or whether MPX/video
 traffic recovered. Retain this run's `run.log` and `attempts.jsonl` for those
 details. The output does not identify the installed timeout implementation, so
-it is not acceptance evidence for the new explicit 70-second request wait.
+it is not acceptance evidence for the deferred/background registration flow.
 
 ### Optional parameters
 
@@ -513,14 +560,19 @@ sudo ls -td /tmp/falcon-ue1-reconnect-* /tmp/falcon-ue2-reconnect-*
 `run.log` retains detailed attempts and health checks, including UTC health-check
 start/completion markers and elapsed times; `attempts.jsonl` records
 each attempt's UTC times, outcome, failed stage, current IP, ping output and
-forced-redial reason when applicable. `summary.json` is written on exit and
-records the last verified state **before shutdown** (not a post-exit measurement)
+forced-redial reason when applicable. `registration_events.jsonl` separately records background request start,
+completion and cancellation, with modem/device identity, PID, time limits,
+elapsed time, raw result/error and private stdout/stderr file paths. An attempt's
+`registration_request` is a snapshot; use the event file for the later outcome.
+A failed client request can coexist with successful connection checks if the
+modem recovers independently. `summary.json` is written on exit and records the
+last registration event and the last verified state **before shutdown** (not a post-exit measurement)
 and the nested `shutdown` completion/error. With automatic cell locking enabled,
 `attempts.jsonl` also records `radio_recovery`: the original radio error,
 commands/writes attempted, previous/verified lock, diagnostic QENG/C5GREG output,
 lock reuse/write/error details, live serial registration, stale-PDU disconnect,
-registration-request timeout/elapsed/error details and `applied` / `failed` /
-`cooldown` / `interrupted` result.
+registration-request snapshots and `observing` / `registration_pending` /
+`backend_observation` / `applied` / `failed` / `cooldown` / `interrupted` results.
 `applied` means the radio settings were applied; only the full connection checks
 can produce connection `SUCCESS`. `attempts.jsonl` marks a cancelled
 in-progress attempt as `interrupted`. Logs accumulate

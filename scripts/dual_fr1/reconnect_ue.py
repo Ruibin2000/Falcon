@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Watch one laptop UE; recover PDU/host state and optional cell lock until Ctrl+C."""
+"""Watch one laptop UE; observe radio loss, register in background and recover until Ctrl+C."""
 
 import argparse
 import contextlib
+import copy
 import csv
 from datetime import datetime, timezone
 import ipaddress
@@ -25,6 +26,31 @@ import connect_ue as connect
 
 ERRORS = (ValueError, OSError, subprocess.SubprocessError, connect.termios.error, csv.Error)
 SHARED_LOCK = "/run/lock/falcon-ue-connect.lock"
+# A timed-out D-Bus client does not prove cancellation of MM's registration
+# task (normally a 60s backend budget). Observe before issuing another request.
+BACKEND_SETTLE_SECONDS = 65
+
+
+@contextlib.contextmanager
+def defer_spawn_stop():
+    """Keep a spawned child reachable before delivering a terminal stop."""
+    signals = (signal.SIGINT, signal.SIGTERM)
+    originals = {sig: signal.getsignal(sig) for sig in signals}
+    pending = []
+    try:
+        for sig in signals:
+            signal.signal(sig, lambda signum, frame: pending.append((signum, frame)))
+        yield
+    finally:
+        for sig, handler in originals.items():
+            signal.signal(sig, handler)
+        if pending:
+            signum, frame = pending[0]
+            handler = originals[signum]
+            if callable(handler):
+                handler(signum, frame)
+            elif handler != signal.SIG_IGN:
+                raise connect.StopRequested(signum)
 
 
 def radio_query(fd, command, evidence):
@@ -161,15 +187,93 @@ def capture(log, level):
 
 
 
+class RegistrationRequest:
+    """One isolated mmcli child; polling never waits for its registration reply."""
+    def __init__(self, command, timeout, directory, target):
+        self.command, self.timeout = command, timeout
+        self.directory, self.target = Path(directory), target
+        self.process = None
+        self.files = []
+        self.started = time.monotonic()
+        self.expired = False
+        self.data = dict(status="starting", started_at=now(), modem=target[0],
+                         device_identifier=target[1], mmcli_timeout_seconds=timeout,
+                         process_timeout_seconds=timeout + 5)
+
+    def start(self):
+        try:
+            for stream in ("stdout", "stderr"):
+                file = tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", errors="replace",
+                                                   prefix="registration-", suffix=f".{stream}.log",
+                                                   dir=self.directory, delete=False)
+                self.files.append(file)
+                self.data[stream + "_file"] = file.name
+            with defer_spawn_stop():
+                self.process = subprocess.Popen(self.command, stdin=subprocess.DEVNULL,
+                                                stdout=self.files[0], stderr=self.files[1],
+                                                start_new_session=True, close_fds=True,
+                                                env=dict(os.environ, LC_ALL="C"))
+                self.data.update(status="waiting", pid=self.process.pid)
+        except BaseException:
+            self.cancel("start interrupted or failed")
+            raise
+
+    def finish(self, status, returncode):
+        self.data.update(status=status, returncode=returncode, ended_at=now(),
+                         elapsed_seconds=round(time.monotonic() - self.started, 3))
+        for stream, file in zip(("stdout", "stderr"), self.files):
+            file.seek(0)
+            self.data[stream] = file.read(65536)
+            file.close()
+        self.files = []
+
+    def poll(self):
+        if self.data["status"] not in ("starting", "waiting"):
+            return True
+        if self.process is None:
+            return False
+        code = self.process.poll()
+        if code is None and time.monotonic() - self.started >= self.timeout + 5:
+            self.expired = True
+            self.process.kill()
+            code = self.process.poll()
+        if code is None:
+            return False
+        self.finish("process_timeout" if self.expired else "returned" if code == 0 else "failed", code)
+        return True
+
+    def cancel(self, reason):
+        if self.data["status"] not in ("starting", "waiting"):
+            return
+        code = None
+        if self.process is not None:
+            if self.process.poll() is None:
+                self.process.terminate()
+                try:
+                    self.process.wait(timeout=1)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+                    self.process.wait(timeout=1)
+            code = self.process.returncode
+        self.data["cancel_reason"] = reason
+        self.finish("cancelled", code)
+
+
 class Recovery(connect.Connection):
     def __init__(self, *args, redial=False, redial_allowed=True, failed_bearer=None,
-                 registration_request_timeout=70, **kwargs):
+                 registration_request_timeout=20, registration_dispatch=None, discovery_guard=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.redial_requested = redial
         self.redial_allowed = redial_allowed
         self.failed_bearer = failed_bearer
         self.redial_started_at = None
         self.registration_request_timeout = registration_request_timeout
+        self.registration_dispatch, self.discovery_guard = registration_dispatch, discovery_guard
+
+    def discover(self):
+        super().discover()
+        if self.discovery_guard:
+            self.discovery_guard(self)
 
     def repair_radio(self):
         evidence = self.result["radio_recovery"]
@@ -208,38 +312,13 @@ class Recovery(connect.Connection):
         else:
             evidence["registration_requested"] = False
         self.checked_modem()
-        evidence["status"] = "applied"
-        connect.status("Radio recovery [OK]: lock read back; next attempt must verify registration, cell, PDU and ping")
+        evidence["status"] = ("registration_pending" if evidence.get("registration_request", {}).get("status") == "waiting"
+                              else "applied")
+        connect.status("Radio recovery: lock verified; continue checking registration, cell, PDU and ping on following attempts")
 
     def request_registration(self, evidence):
-        request = dict(status="waiting", started_at=now(),
-                       mmcli_timeout_seconds=self.registration_request_timeout,
-                       process_timeout_seconds=75)
-        evidence["registration_request"] = request
-        started = time.monotonic()
-        connect.status(f"Registration request: PLMN=00101; mmcli wait up to {self.registration_request_timeout}s, "
-                       "process limit 75s; waiting for reply ...")
-        try:
-            # mmcli defaults to 30s independently of our subprocess watchdog.
-            # Leave five seconds above the largest supported D-Bus timeout for
-            # the CLI to return its own result before the process watchdog fires.
-            connect.change("mmcli", "-m", self.modem, "--3gpp-register-in-operator=00101",
-                           f"--timeout={self.registration_request_timeout}")
-        except KeyboardInterrupt:
-            request["status"] = "interrupted"
-            raise
-        except ERRORS as error:
-            request.update(status="process_timeout" if isinstance(error, subprocess.TimeoutExpired) else "failed",
-                           error=str(error))
-            if isinstance(error, subprocess.CalledProcessError):
-                request.update(returncode=error.returncode, stderr=error.stderr or "")
-            raise
-        else:
-            request["status"] = "returned"
-        finally:
-            request.update(ended_at=now(), elapsed_seconds=round(time.monotonic() - started, 3))
-            connect.status(f"Registration request {request['status'].upper()}: "
-                           f"elapsed={request['elapsed_seconds']:g}s; connection still requires full verification")
+        connect.require(self.registration_dispatch is not None, "Missing registration request scheduler")
+        self.registration_dispatch(self, evidence)
 
     @staticmethod
     def registration_lost(info):
@@ -400,6 +479,12 @@ class Watcher:
         self.started_at = now()
         self.exit_signal = None
         self.modem_cache = {}
+        self.radio_failure_since = None
+        self.registration_job = None
+        self.registration_job_reported = False
+        self.registration_factory = RegistrationRequest
+        self.registration_uncertain_until = 0
+        self.last_registration = None
 
     def session(self, recovery=False):
         kwargs = dict(at_port=self.args.at_port, registration_timeout=self.args.registration_timeout,
@@ -408,7 +493,8 @@ class Watcher:
             allowed = self.last_redial is None or time.monotonic() - self.last_redial >= self.args.redial_cooldown
             return Recovery(self.args.ue, redial=self.ping_failures >= self.args.redial_after,
                             redial_allowed=allowed, failed_bearer=self.failed_bearer,
-                            registration_request_timeout=self.args.registration_request_timeout, **kwargs)
+                            registration_request_timeout=self.args.registration_request_timeout,
+                            registration_dispatch=self.start_registration, discovery_guard=self.guard_registration, **kwargs)
         return connect.Connection(self.args.ue, **kwargs)
 
     def say(self, message):
@@ -417,12 +503,92 @@ class Watcher:
         if self.args.verbose >= 2:
             print(message, file=self.terminal, flush=True)
 
+    def registration_event(self, event):
+        record = dict(event=event, recorded_at=now(), ue=self.args.ue, **copy.deepcopy(self.registration_job.data))
+        with (self.directory / "registration_events.jsonl").open("a") as log:
+            log.write(json.dumps(record) + "\n")
+        self.last_registration = record
+
+    def poll_registration(self):
+        job = self.registration_job
+        if job is None:
+            return False
+        done = job.poll()
+        if done and not self.registration_job_reported:
+            self.registration_job_reported = True
+            self.last_cell_lock = time.monotonic()
+            output = job.data.get("stdout", "") + job.data.get("stderr", "")
+            self.log.write(output)
+            if self.args.verbose == 3:
+                print(output, end="" if output.endswith("\n") else "\n", file=self.terminal, flush=True)
+            self.say(f"Registration request {job.data['status'].upper()}: "
+                     f"elapsed={job.data.get('elapsed_seconds', 0):g}s; continuing connection checks")
+            if job.data["status"] == "process_timeout" or (job.data["status"] == "failed"
+                    and any(word in output.lower() for word in ("timeout", "timed out", "in progress"))):
+                self.registration_uncertain_until = max(self.registration_uncertain_until,
+                                                        job.started + BACKEND_SETTLE_SECONDS)
+            self.registration_event("finished")
+        return not done
+
+    def cancel_registration(self, reason):
+        job = self.registration_job
+        if job is not None and not job.poll():
+            job.cancel(reason)
+            self.registration_job_reported = True
+            self.say("Registration client stopped: " + reason)
+            self.registration_event("cancelled")
+
+    def guard_registration(self, session):
+        if (self.registration_job is not None and not self.registration_job.poll()
+                and self.registration_job.target != (session.modem, session.identity)):
+            self.cancel_registration("selected modem object or identity changed")
+            self.registration_uncertain_until = 0
+            self.radio_failure_since = None
+
+    def start_registration(self, session, evidence):
+        if self.poll_registration():
+            evidence["registration_request"] = copy.deepcopy(self.registration_job.data)
+            return
+        session.checked_modem()
+        command = ("mmcli", "-m", session.modem, "--3gpp-register-in-operator=00101",
+                   f"--timeout={self.args.registration_request_timeout}")
+        self.say(f"Background registration started: PLMN=00101; mmcli limit {self.args.registration_request_timeout}s; "
+                 "connection checks continue; no duplicate request")
+        print("+ " + shlex.join(command), flush=True)
+        self.registration_job = self.registration_factory(command, self.args.registration_request_timeout,
+                                                          self.directory, (session.modem, session.identity))
+        self.registration_job_reported = False
+        try:
+            self.registration_job.start()
+        finally:
+            evidence["registration_request"] = copy.deepcopy(self.registration_job.data)
+            self.registration_event("started")
+        self.poll_registration()
+        evidence["registration_request"] = copy.deepcopy(self.registration_job.data)
+
     def repair_radio(self, session, error):
+        current = time.monotonic()
+        if self.radio_failure_since is None:
+            self.radio_failure_since = current
+        grace = max(0, self.args.registration_grace - (current - self.radio_failure_since))
+        evidence = dict(status="observing", reason=str(error), started_at=now(), at_port=self.args.at_port)
+        session.result["radio_recovery"] = evidence
+        if self.poll_registration():
+            evidence.update(status="registration_pending", registration_request=copy.deepcopy(self.registration_job.data))
+            connect.status("Registration request is running in background; check current state, no duplicate request")
+            return
+        if grace:
+            evidence["remaining_seconds"] = round(grace, 1)
+            connect.status(f"Radio recovery: observe automatic recovery for {grace:.1f}s more; no forced radio/PDU changes")
+            return
+        backend = max(0, self.registration_uncertain_until - current)
+        if backend:
+            evidence.update(status="backend_observation", remaining_seconds=round(backend, 1))
+            connect.status(f"Registration client timed out; observe modem/backend state for {backend:.1f}s more; no duplicate request")
+            return
         remaining = (0 if self.last_cell_lock is None else
                      max(0, self.args.cell_lock_cooldown - (time.monotonic() - self.last_cell_lock)))
-        evidence = dict(status="cooldown" if remaining else "started", reason=str(error),
-                        started_at=now(), at_port=self.args.at_port)
-        session.result["radio_recovery"] = evidence
+        evidence["status"] = "cooldown" if remaining else "started"
         if remaining:
             evidence["remaining_seconds"] = round(remaining, 1)
             connect.status(f"Radio recovery: cell-lock cooldown, {remaining:.1f}s remaining; continue checking registration")
@@ -442,6 +608,7 @@ class Watcher:
             evidence["ended_at"] = now()
 
     def attempt(self):
+        self.poll_registration()
         self.attempts += 1
         prefix = f"UE{self.args.ue} / {connect.ROLES[self.args.ue]['label']} attempt {self.attempts}"
         print(prefix + " ...", end=" " if self.args.verbose == 1 else "\n", file=self.terminal, flush=True)
@@ -456,6 +623,7 @@ class Watcher:
                         self.repair_radio(session, error)
                     raise
                 self.healthy = True
+                self.radio_failure_since = None
                 self.ping_failures = 0
                 self.failed_bearer = None
             except KeyboardInterrupt as error:
@@ -468,6 +636,11 @@ class Watcher:
                 raise
             except ERRORS as error:
                 self.healthy = False
+                if session.stage == "preflight":
+                    self.cancel_registration("modem/SIM discovery or identity check failed")
+                    self.radio_failure_since = None
+                if not isinstance(error, connect.CellError) and "serving_cell" in session.result:
+                    self.radio_failure_since = None
                 ping_error = (session.stage == "ping" and isinstance(error, subprocess.SubprocessError)
                               and getattr(error, "cmd", [None])[0] == "ping")
                 self.ping_failures = self.ping_failures + 1 if ping_error else 0
@@ -497,6 +670,7 @@ class Watcher:
             self.say(f"Watching UE{self.args.ue}; interval={self.args.interval:g}s; independent modem/PDU checks, "
                      f"shared host updates; evidence={self.directory}; Ctrl+C to shut down this UE")
             while not self.stop.is_set():
+                self.poll_registration()
                 if self.healthy:
                     with capture(self.log, 3 if self.args.verbose == 3 else 1):
                         try:
@@ -525,6 +699,16 @@ class Watcher:
         finally:
             verified_before_stop = self.healthy
             shutdown = None
+            registration_cleanup = None
+            try:
+                with connect.ignore_stop_signals():
+                    self.cancel_registration("watcher stopped before UE cleanup" if self.exit_signal else "bounded watcher exit")
+                    self.poll_registration()
+            except ERRORS as error:
+                registration_cleanup = dict(status="failed", error=str(error))
+                message = "Registration client cleanup incomplete: " + str(error)
+                print(message, file=self.terminal, flush=True)
+                self.log.write(message + "\n")
             if self.exit_signal is not None:
                 with capture(self.log, self.args.verbose):
                     shutdown = connect.shutdown_on_interrupt(self.args.ue, lock_path=SHARED_LOCK,
@@ -543,6 +727,8 @@ class Watcher:
                            verbose=self.args.verbose, signal=self.exit_signal, shutdown=shutdown,
                            auto_cell_lock=self.args.auto_cell_lock, cell_lock_cooldown=self.args.cell_lock_cooldown,
                            registration_request_timeout=self.args.registration_request_timeout,
+                           registration_grace=self.args.registration_grace, last_registration=self.last_registration,
+                           registration_cleanup=registration_cleanup,
                            note="SIGINT/SIGTERM runs selected-role shutdown; normal --once success leaves the UE connected")
             (self.directory / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
             self.say(f"Stopped; evidence saved: {self.directory}")
@@ -568,6 +754,16 @@ def positive_int(value):
     return value
 
 
+def nonnegative_int(value):
+    try:
+        value = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("expected a nonnegative integer") from None
+    if value < 0:
+        raise argparse.ArgumentTypeError("expected an integer greater than or equal to zero")
+    return value
+
+
 def arguments(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ue", required=True, type=int, choices=(1, 2))
@@ -580,10 +776,12 @@ def arguments(argv=None):
                         help="On registration/cell failure, restore this UE's NR SA/cell lock and request registration; requires --at-port")
     parser.add_argument("--cell-lock-cooldown", type=positive_seconds, default=30.0,
                         help="Minimum seconds AFTER a radio recovery before another, default 30; checks continue meanwhile")
-    parser.add_argument("--registration-timeout", type=positive_int, default=5,
-                        help="Registration wait per attempt, 1..300 seconds (default 5)")
-    parser.add_argument("--registration-request-timeout", type=positive_int, default=70,
-                        help="mmcli D-Bus wait for radio-recovery registration, 1..70 seconds (default 70); process limit remains 75s")
+    parser.add_argument("--registration-timeout", type=nonnegative_int, default=0,
+                        help="Extra registration-state wait inside an attempt, 0..300 seconds; default 0 checks once per loop")
+    parser.add_argument("--registration-grace", type=nonnegative_int, default=10,
+                        help="Observe automatic radio recovery before forced lock/PDU/registration recovery, default 10s; 0 disables grace")
+    parser.add_argument("--registration-request-timeout", type=positive_int, default=20,
+                        help="Background mmcli D-Bus registration timeout, 1..70 seconds (default 20); process watchdog adds 5s")
     parser.add_argument("--redial-after", type=positive_int, default=3,
                         help="Redial on the next attempt after this many consecutive failed ping attempts, default 3")
     parser.add_argument("--redial-cooldown", type=positive_seconds, default=30.0,
@@ -593,7 +791,7 @@ def arguments(argv=None):
     parser.add_argument("--output-root", default="/tmp", help="Existing parent for private logs, attempts.jsonl and summary.json")
     args = parser.parse_args(argv)
     if args.registration_timeout > 300:
-        parser.error("--registration-timeout must be in 1..300")
+        parser.error("--registration-timeout must be in 0..300")
     if args.registration_request_timeout > 70:
         parser.error("--registration-request-timeout must be in 1..70 (below the 75s process limit)")
     if args.auto_cell_lock and not args.at_port:
