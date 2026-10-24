@@ -262,7 +262,7 @@ class RegistrationRequest:
 class Recovery(connect.Connection):
     def __init__(self, *args, redial=False, redial_allowed=True, failed_bearer=None,
                  registration_request_timeout=5, registration_dispatch=None, discovery_guard=None,
-                 startup_prepare=None, **kwargs):
+                 startup_prepare=None, pending_disconnect=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.redial_requested = redial
         self.redial_allowed = redial_allowed
@@ -271,6 +271,7 @@ class Recovery(connect.Connection):
         self.registration_request_timeout = registration_request_timeout
         self.registration_dispatch, self.discovery_guard = registration_dispatch, discovery_guard
         self.startup_prepare = startup_prepare
+        self.pending_disconnect = pending_disconnect if pending_disconnect is not None else {}
 
     def discover(self):
         super().discover()
@@ -284,9 +285,10 @@ class Recovery(connect.Connection):
 
     def repair_radio(self):
         evidence = self.result["radio_recovery"]
-        info, _ = self.active()  # Includes fresh IMEI/SIM and foreign-APN guards.
+        info, active = self.active()  # Includes fresh IMEI/SIM and foreign-APN guards.
         connect.require(info.get("modem.generic.state") not in ("connecting", "disconnecting"),
                         "PDU operation is still in progress; continue checking modem/bearer state before radio recovery")
+        self.finish_pending_disconnect(info, active)
         net_ports = connect.ports(info)
         connect.require(len(net_ports) == 1, "Expected one owned WWAN for automatic cell lock")
         interface = next(iter(net_ports))
@@ -348,6 +350,57 @@ class Recovery(connect.Connection):
                         "Expected one dedicated, owned WWAN for automatic disconnect")
         return dict(source=str(source), interface=interface)
 
+    def remember_disconnect(self, active, bearer):
+        # Keep intent across attempts even if the short D-Bus client times out.
+        # A registered radio does not prove that this old PDU is usable again.
+        self.pending_disconnect.clear()
+        self.pending_disconnect.update(ue=self.ue, modem=self.modem, device_identifier=self.identity,
+                                       bearer=active[0][0], source=bearer["source"],
+                                       interface=bearer["interface"], requested_at=now())
+        self.result["pending_pdu_release"] = dict(status="requested", **self.pending_disconnect)
+
+    def finish_pending_disconnect(self, info, active):
+        """Return True only when the old connected allocation needs a guarded retry."""
+        pending = self.pending_disconnect
+        if not pending:
+            return False
+        connect.require(pending["ue"] == self.ue, "Pending disconnect belongs to another UE")
+        record = dict(status="waiting", **pending)
+        self.result["pending_pdu_release"] = record
+        if active:
+            path, details = active[0]
+            bearer = self.disconnectable(info, details)
+            with self.network(shared=True):
+                self.host_preflight(bearer)
+            old = (pending["bearer"], pending["source"])
+            current = (path, bearer["source"])
+            if current != old:
+                # A new allocation can appear without reusing the old object's
+                # identity. Validate/rebuild it normally; never require a new IP.
+                record.update(status="allocation_replaced", current_source=bearer["source"])
+                pending.clear()
+                connect.status("PDU allocation changed after disconnect; verify the current allocation before ping")
+                return False
+            record["status"] = "retry_due" if self.redial_allowed else "waiting"
+            connect.require(self.redial_allowed,
+                            "Previous PDU disconnect is not confirmed; skip the old IP and keep checking bearer state")
+            return True
+        # No connected bearer is observable: clear only this UE's old host path
+        # before the caller establishes a PDU and reads its fresh allocation.
+        net_ports = connect.ports(info)
+        connect.require(len(net_ports) == 1, "Expected one owned WWAN after PDU release")
+        bearer = dict(interface=next(iter(net_ports)))
+        with self.network(shared=True):
+            self.host_preflight(bearer)
+        latest, remaining = self.active()
+        connect.require(not remaining and latest.get("modem.generic.state") not in ("connecting", "disconnecting"),
+                        "PDU state changed while confirming release; retry before host cleanup")
+        self.clear_host(bearer)
+        record["status"] = "released"
+        pending.clear()
+        connect.status("Old PDU release confirmed; connect and read the current IP before route/ping verification")
+        return False
+
     def release_radio_pdu(self, evidence, *, serial_lost=False):
         info, active = self.active()
         if not active or not (serial_lost or self.registration_lost(info)):
@@ -374,11 +427,14 @@ class Recovery(connect.Connection):
         evidence["pdu_disconnect_requested"] = True
         self.result.update(redial=True, previous_source=bearer["source"], previous_bearer=active[0][0],
                            redial_reason="radio lost with stale connected PDU")
+        self.remember_disconnect(active, bearer)
         connect.change("mmcli", "-m", self.modem, "--simple-disconnect")
         _, remaining = self.active()
         connect.require(not remaining, "Bearer still connected after radio recovery disconnect")
         self.checked_modem()
         self.clear_host(bearer)
+        self.pending_disconnect.clear()
+        self.result["pending_pdu_release"]["status"] = "released"
         evidence["pdu_disconnected"] = True
 
     def active(self):
@@ -412,12 +468,13 @@ class Recovery(connect.Connection):
         info, active = self.active()
         connect.require(info.get("modem.generic.state") not in ("connecting", "disconnecting"),
                         "PDU operation is still in progress; continue checking modem/bearer state before reconnecting")
+        pending_retry = self.finish_pending_disconnect(info, active)
         if not active:
             return
         path, details = active[0]
         suspended = details.get("bearer.status.suspended") == "yes"
         same_failed = self.failed_bearer == (path, details.get("bearer.ipv4-config.address"))
-        if not (suspended or (self.redial_requested and same_failed)) or not self.redial_allowed:
+        if not (pending_retry or suspended or (self.redial_requested and same_failed)) or not self.redial_allowed:
             return
         # Refuse destructive recovery for foreign/malformed resources, just as
         # the one-shot launcher does. A suspended *valid* static bearer is allowed.
@@ -437,12 +494,16 @@ class Recovery(connect.Connection):
         # Track failed disconnects too, so a rejected request cannot be hammered.
         self.redial_started_at = time.monotonic()
         self.result.update(redial=True, previous_source=str(source), previous_bearer=path,
-                           redial_reason="suspended" if suspended else "consecutive ping failures")
+                           redial_reason="pending disconnect" if pending_retry else
+                                         "suspended" if suspended else "consecutive ping failures")
+        self.remember_disconnect(active, bearer)
         connect.change("mmcli", "-m", self.modem, "--simple-disconnect")
         _, remaining = self.active()
         connect.require(not remaining, "Bearer still connected after disconnect; stopping this attempt")
         self.checked_modem()
         self.clear_host(dict(interface=interface))
+        self.pending_disconnect.clear()
+        self.result["pending_pdu_release"]["status"] = "released"
         self.redial_requested = False
 
 
@@ -487,6 +548,7 @@ class Watcher:
         self.last_redial = None
         self.last_cell_lock = None
         self.failed_bearer = None
+        self.pending_disconnect = {}
         self.healthy = False
         self.started_at = now()
         self.exit_signal = None
@@ -508,7 +570,8 @@ class Watcher:
                             redial_allowed=allowed, failed_bearer=self.failed_bearer,
                             registration_request_timeout=self.args.registration_request_timeout,
                             registration_dispatch=self.start_registration, discovery_guard=self.guard_registration,
-                            startup_prepare=self.prepare_startup_radio if self.args.auto_cell_lock else None, **kwargs)
+                            startup_prepare=self.prepare_startup_radio if self.args.auto_cell_lock else None,
+                            pending_disconnect=self.pending_disconnect, **kwargs)
         return connect.Connection(self.args.ue, **kwargs)
 
     def say(self, message):
@@ -752,6 +815,8 @@ class Watcher:
                 self.log.write(message + "\n")
                 if shutdown["status"] != "completed":
                     print("Cleanup incomplete: " + shutdown["error"], file=self.terminal, flush=True)
+                else:
+                    self.pending_disconnect.clear()
             summary = dict(ue=self.args.ue, path=connect.ROLES[self.args.ue]["label"],
                            started_at=self.started_at, ended_at=now(), attempts=self.attempts,
                            last_connection_verified=verified_before_stop, interval_seconds=self.args.interval,
@@ -759,6 +824,7 @@ class Watcher:
                            auto_cell_lock=self.args.auto_cell_lock, cell_lock_cooldown=self.args.cell_lock_cooldown,
                            registration_request_timeout=self.args.registration_request_timeout,
                            pdu_disconnect_timeout=connect.PDU_DISCONNECT_TIMEOUT_SECONDS,
+                           pending_pdu_release=copy.deepcopy(self.pending_disconnect),
                            registration_grace=self.args.registration_grace, last_registration=self.last_registration,
                            startup_radio=self.startup_radio,
                            registration_cleanup=registration_cleanup,

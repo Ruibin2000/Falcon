@@ -127,12 +127,28 @@ section 1. No manual AT commands are needed before launching them:
 
 ```bash
 # Terminal 1: UE1 / FR1
+sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 1
+```
+```bash
+# Terminal 1: UE1 / FR1
 sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 2
+```
+```bash
+# Terminal 1: UE1 / FR1
+sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 3 --verbose 1
 ```
 
 ```bash
 # Terminal 2: UE2 / FR3
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 1
+```
+```bash
+# Terminal 2: UE2 / FR3
 sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 2
+```
+```bash
+# Terminal 2: UE2 / FR3
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 3 --verbose 1
 ```
 
 The command line shows only the retry interval and output level. The role entry
@@ -281,6 +297,26 @@ reconfiguration. It does not clear the host path or start a replacement PDU
 after a failed disconnect in that attempt. Recovery resumes once the current
 state is suitable, with the usual ownership checks and cooldowns.
 
+The watcher now retains a per-UE **pending PDU release** after issuing a
+disconnect, including when the client returns an error or times out. A return
+to `registered` alone does not make the old connected bearer/IP usable: while
+that release remains unconfirmed, the attempt stops before route/ping testing
+of the old allocation. This avoids the observed extra failed ping after radio
+reconnection.
+
+Once no connected bearer remains and the modem is no longer transitioning,
+the watcher clears that UE's old host path, connects the PDU and reads its
+current IP in the same attempt. Ordinary connection after a confirmed release
+does not wait for the forced-disconnect cooldown. If a different, fully validated
+bearer/IP allocation has already appeared, it verifies/rebuilds that allocation
+instead of disconnecting it again. If the old connected allocation persists,
+another guarded disconnect is allowed after the existing redial cooldown;
+the watcher does not ping the old IP while waiting. Ownership, APN and peer/Wi-Fi
+protections remain in effect.
+
+The core may assign the **same IP** to a new connection. Fresh PDU/allocation
+verification is required; a numerically different address is not required.
+
 ### Output levels
 
 | Watcher option | Terminal output |
@@ -356,7 +392,9 @@ Recovery proceeds as follows:
    The entry scripts supply `--auto-cell-lock --at-port ...`, so the watcher performs the guarded radio
    recovery below, then retries full verification on the next attempt. A wrong
    cell never bypasses verification to dial a PDU or rebuild host networking.
-2. Connect a disconnected PDU, or reuse a valid connected one. A **suspended**
+2. Finish any pending release before connecting a PDU or reusing an allocation;
+   skip old-IP ping checks while an earlier disconnect remains unconfirmed.
+   Otherwise connect a disconnected PDU, or reuse a valid connected one. A **suspended**
    connected static bearer on the expected APN triggers a guarded disconnect and
    redial. Host ownership, policy resources, IMEI/IMSI and serving cell must pass
    before a ping/suspended-PDU forced disconnect. Radio-loss recovery has the
@@ -623,6 +661,7 @@ A failed client request can coexist with successful connection checks if the
 modem recovers independently. `summary.json` is written on exit and records the
 last registration event, initial `startup_radio` preparation outcome, and the
 PDU-disconnect client timeout, along with the
+remaining `pending_pdu_release` state and the
 last verified state **before shutdown** (not a post-exit measurement)
 and the nested `shutdown` completion/error. With automatic cell locking enabled,
 `attempts.jsonl` also records `radio_recovery`: the `startup` / `radio_failure`
@@ -634,6 +673,9 @@ registration-request snapshots and `observing` / `registration_pending` /
 `applied` means the radio settings were applied; only the full connection checks
 can produce connection `SUCCESS`. A `startup_radio` status of `completed` likewise
 means preparation succeeded, not that registration or connectivity was proven.
+Each affected attempt also records `pending_pdu_release`: the prior bearer/IP,
+request identity/time and `requested` / `waiting` / `retry_due` / `released` /
+`allocation_replaced` outcome. This is separate from connection `SUCCESS`.
 `attempts.jsonl` marks a cancelled
 in-progress attempt as `interrupted`. Logs accumulate
 for the invocation; retain the evidence you need and remove old run directories

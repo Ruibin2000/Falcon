@@ -318,6 +318,115 @@ class ReconnectTest(unittest.TestCase):
                 lock.assert_not_called()
         self.assertFalse(self.network.changes)
 
+    def test_radio_registration_does_not_reuse_pending_old_pdu_for_either_role(self):
+        for ue in (1, 2):
+            for same_ip in (False, True):
+                with self.subTest(ue=ue, same_ip=same_ip):
+                    self.network.__dict__.update(Network().__dict__)
+                    self.connect(1)
+                    self.connect(2)
+                    peer = self.network.survivor(ue)
+                    path = list(self.network.modems)[ue - 1]
+                    old_source = self.network.settings[ue]["source"]
+                    self.network.settings[ue]["suspended"] = "yes"
+                    self.network.changes.clear()
+                    self.network.pings.clear()
+                    watcher = self.watcher(ue=ue)
+                    original = self.network.change
+                    def change(*command):
+                        if command[-1] == "--simple-disconnect":
+                            self.network.changes.append(command)
+                            self.network.modems[path] = (*self.network.modems[path][:2], "disconnecting")
+                            raise subprocess.CalledProcessError(1, command, stderr="Timeout was reached")
+                        return original(*command)
+                    with patch.object(CONNECT, "change", change):
+                        watcher.attempt()
+                        self.assertTrue(watcher.pending_disconnect)
+                        # Reproduce the live trace: radio registration returns,
+                        # but MM still reports the old bearer connected/IP allocated.
+                        self.network.modems[path] = (*self.network.modems[path][:2], "registered")
+                        self.network.settings[ue]["suspended"] = "no"
+                        watcher.attempt()
+                        self.assertFalse(watcher.healthy)
+                        self.assertFalse(self.network.pings)
+                        self.assertEqual(len(self.network.changes), 1)
+                        self.assertEqual(len(self.disconnects()), 1)
+                        # Only after release is observed may a connection request
+                        # obtain/re-read an allocation, even if the same IP is assigned.
+                        self.network.bearers[path] = {bearer: "no" for bearer in self.network.bearers[path]}
+                        source = old_source if same_ip else f"10.{44 + ue}.0.88"
+                        self.network.settings[ue]["source"] = source
+                        watcher.attempt()
+                    self.assertTrue(watcher.healthy)
+                    self.assertFalse(watcher.pending_disconnect)
+                    self.assertEqual(len(self.disconnects()), 1)
+                    self.assertTrue(any(command[-1].startswith("--simple-connect=") for command in self.network.changes))
+                    bound = [command for command in self.network.pings if "-I" in command]
+                    self.assertEqual(len(bound), 1)
+                    self.assertEqual(bound[0][bound[0].index("-I") + 1], source)
+                    self.assertEqual(self.network.survivor(ue), peer)
+
+    def test_unfinished_old_pdu_is_retried_after_cooldown_without_pinging_it(self):
+        self.connect()
+        path = next(iter(self.network.modems))
+        self.network.settings[1]["suspended"] = "yes"
+        self.network.changes.clear()
+        self.network.pings.clear()
+        watcher = self.watcher()
+        original = self.network.change
+        def change(*command):
+            if command[-1] == "--simple-disconnect" and not self.disconnects():
+                self.network.changes.append(command)
+                raise subprocess.CalledProcessError(1, command, stderr="Timeout was reached")
+            return original(*command)
+        with patch.object(CONNECT, "change", change):
+            watcher.attempt()
+            self.network.settings[1]["suspended"] = "no"
+            watcher.attempt()
+            self.assertFalse(watcher.healthy)
+            self.assertFalse(self.network.pings)
+            self.assertEqual(len(self.disconnects()), 1)
+            watcher.last_redial -= watcher.args.redial_cooldown + 1
+            watcher.attempt()
+        self.assertTrue(watcher.healthy)
+        self.assertEqual(len(self.disconnects()), 2)
+        self.assertFalse(watcher.pending_disconnect)
+
+    def test_new_allocation_replaces_pending_old_pdu_without_another_disconnect(self):
+        self.connect()
+        path = next(iter(self.network.modems))
+        self.network.settings[1]["suspended"] = "yes"
+        watcher = self.watcher()
+        self.network.changes.clear()
+        self.network.fail = ("mmcli", "-m", path, "--simple-disconnect")
+        watcher.attempt()
+        self.network.fail = None
+        self.network.settings[1].update(suspended="no", source="10.45.0.89")
+        self.network.pings.clear()
+        watcher.attempt()
+        self.assertTrue(watcher.healthy)
+        self.assertFalse(watcher.pending_disconnect)
+        self.assertEqual(len(self.disconnects()), 1)
+        self.assertTrue(any("10.45.0.89" in command for command in self.network.pings))
+
+    def test_foreign_bearer_cannot_be_accepted_while_old_pdu_release_is_pending(self):
+        self.connect()
+        path = next(iter(self.network.modems))
+        self.network.settings[1]["suspended"] = "yes"
+        watcher = self.watcher()
+        self.network.changes.clear()
+        self.network.fail = ("mmcli", "-m", path, "--simple-disconnect")
+        watcher.attempt()
+        self.network.fail = None
+        self.network.settings[1].update(suspended="no", apn="foreign")
+        self.network.changes.clear()
+        self.network.pings.clear()
+        watcher.attempt()
+        self.assertFalse(watcher.healthy)
+        self.assertTrue(watcher.pending_disconnect)
+        self.assertFalse(self.network.changes)
+        self.assertFalse(self.network.pings)
+
     def test_changing_bearer_counters_do_not_prevent_suspended_recovery(self):
         self.connect()
         self.network.settings[1]["suspended"] = "yes"

@@ -316,6 +316,36 @@ class RadioRecoveryTest(unittest.TestCase):
         self.assertFalse(any(cmd[0] == "ip" for cmd in self.network.changes))
         self.assertIn("yes", self.network.bearers[path].values())
 
+    def test_radio_recovery_timeout_does_not_ping_the_old_ip_after_registration_returns(self):
+        watcher, path = self.lost_connected_ue()
+        peer = self.network.survivor(2)
+        original = self.network.change
+        def change(*command):
+            if command[-1] == "--simple-disconnect":
+                self.network.changes.append(command)
+                self.network.modems[path] = (*self.network.modems[path][:2], "disconnecting")
+                raise subprocess.CalledProcessError(1, command, stderr="Timeout was reached")
+            return original(*command)
+        with FakeAT().port(), patch.object(CONNECT, "change", change):
+            watcher.attempt()
+        self.assertTrue(watcher.pending_disconnect)
+        self.network.modems[path] = (*self.network.modems[path][:2], "registered")
+        self.network.settings[2].update(registration="home", packet="attached", plmn="00101", technology="5gnr")
+        with patch.object(WATCH, "restore_cell_lock") as lock:
+            watcher.attempt()
+        lock.assert_not_called()
+        self.assertFalse(watcher.healthy)
+        self.assertFalse(self.network.pings)
+        self.assertEqual(len(self.disconnects()), 1)
+        self.network.bearers[path] = {bearer: "no" for bearer in self.network.bearers[path]}
+        self.network.settings[2]["source"] = "10.46.0.90"
+        watcher.attempt()
+        self.assertTrue(watcher.healthy)
+        self.assertFalse(watcher.pending_disconnect)
+        self.assertEqual(len(self.disconnects()), 1)
+        self.assertTrue(any("10.46.0.90" in command for command in self.network.pings))
+        self.assertEqual(self.network.survivor(2), peer)
+
     def test_stale_pdu_radio_calls_and_registration_are_outside_shared_lock(self):
         watcher, _ = self.lost_connected_ue()
         original_read, original_change, original_at = self.network.read, self.network.change, CONNECT.at_reply
