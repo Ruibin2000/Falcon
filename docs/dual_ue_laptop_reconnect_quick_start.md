@@ -264,7 +264,8 @@ Recovery proceeds as follows:
 2. Connect a disconnected PDU, or reuse a valid connected one. A **suspended**
    connected static bearer on the expected APN triggers a guarded disconnect and
    redial. Host ownership, policy resources, IMEI/IMSI and serving cell must pass
-   before any forced disconnect. Foreign APNs, multiple active bearers, malformed
+   before a ping/suspended-PDU forced disconnect. Radio-loss recovery has the
+   separate stale-PDU checks described below. Foreign APNs, multiple active bearers, malformed
    allocations or foreign host resources fail without automatic deletion/redial.
 3. If the expected PDU remains connected but ping fails for **three consecutive
    connection attempts**, force a disconnect on the **next attempt**, then redial.
@@ -301,22 +302,39 @@ Each eligible recovery does the following:
 1. Recheck this modem's IMEI, active SIM IMSI, active-bearer APN and dedicated
    WWAN ownership. Check host resources under a short shared read lock. Reject
    foreign resources, a wrong USB serial device or an occupied port.
-2. Exclusively open the AT port and verify `AT+CGSN` and `AT+CIMI` before any
+2. If an expected connected bearer remains while ModemManager reports
+   `idle`/`searching`/`denied`/`unknown` registration and packet service `detached`,
+   verify the serial IMEI/IMSI too, recheck the bearer allocation and host
+   ownership, retain/install the Wi-Fi fallback block, then disconnect only this
+   UE's stale PDU and clear its host path. The redial cooldown also applies.
+   A failed disconnect does not proceed to lock writes, host reset or registration.
+3. Exclusively open the AT port and verify `AT+CGSN` and `AT+CIMI` before any
    configuration. Read the NR settings; restore `mode_pref=NR5G` and
    `nr5g_disable_mode=2` only when different, verifying each readback. Read
    `nr5g_band`; if n78 is excluded, set it to `78` and verify the readback.
-3. Read the saved lock, reapply this role's lock, and require an exact readback:
+4. Read the saved lock. Reuse an exact match without a duplicate write; otherwise
+   apply this role's lock and require an exact readback:
 
    | Role | Lock command |
    | --- | --- |
    | UE1 / FR1 | `AT+QNWLOCK="common/5g",1,643680,30,78` |
    | UE2 / FR3 | `AT+QNWLOCK="common/5g",2,639648,30,78` |
 
-4. Record `AT+QENG="servingcell"` and `AT+C5GREG?`, then restore serial settings
-   and close the port. Enable the modem if needed. If ModemManager still does
-   not report registered NR SA on `00101`, request registration using
+   If a lock write returns `+CME ERROR: 902`, read the lock again and retain both
+   the error and readback in evidence. Continue only if that independent readback
+   exactly matches this UE's target. A `0` or other tuple remains a failure.
+5. Record `AT+QENG="servingcell"` and `AT+C5GREG?`, then restore serial settings
+   and close the port. If these live diagnostics prove radio loss while MM still
+   retains a connected bearer, use the same guarded selected-UE disconnect above.
+   If the correct live SA cell and C5GREG `1`/`5` already prove registration and MM
+   also reports the expected NR SA registration, preserve the working PDU.
+   Otherwise enable the modem if needed and request registration using
    `mmcli -m <current-selected-modem> --3gpp-register-in-operator=00101`.
-5. Mark the current attempt `FAIL`: applying a lock is not proof of connectivity.
+   ModemManager may reject registration while it still considers the modem
+   connected; an owned stale PDU must be released first. A generic `connected`
+   state alone is not accepted as registration: the startup check also requires
+   3GPP `home` or `roaming` before accepting PLMN and NR SA access.
+6. Mark the current attempt `FAIL`: applying a lock is not proof of connectivity.
    On the next attempt, require the usual registration, exact serving cell,
    PDU, current-IP routing, both pings and final checks before `SUCCESS`.
 
@@ -324,8 +342,9 @@ The first radio failure can trigger recovery immediately. Subsequent radio
 recoveries have a **30-second minimum gap after the previous recovery ends**,
 including failed/rejected writes or registration requests. During that gap,
 normal checks/retries continue and can reconnect as soon as the radio is ready.
-`--cell-lock-cooldown` accepts positive seconds; for example `1` permits a fresh
-lock on each eligible failed attempt once a second has elapsed. Keeping `30`
+`--cell-lock-cooldown` accepts positive seconds; for example `1` permits radio
+recovery on each eligible failed attempt once a second has elapsed. A correct
+saved lock is reused regardless of this interval. Keeping `30`
 gives network selection time to settle and avoids repeated saved-setting writes.
 `--interval` still controls the delay after a completed attempt/check; it is not
 the timeout of AT or registration work. AT commands allow five seconds each;
@@ -335,8 +354,8 @@ Serial/registration work never holds the shared host-network lock. UE1 and UE2
 retain separate ownership and cooldown state. Healthy checks never write AT
 configuration. No CFUN reset or ModemManager restart is performed. Ctrl+C still
 closes the serial context and runs the selected UE's normal shutdown cleanup.
-A rejected write/readback leaves the attempt failed; earlier successful writes
-may already have taken effect and are recorded in `attempts.jsonl`.
+An unverified write/readback leaves the attempt failed; earlier successful
+writes may already have taken effect and are recorded in `attempts.jsonl`.
 
 Lowering DU TX gain can leave too little downlink signal for cell acquisition
 or registration. Restoring a lock does not restore RF coverage. If registration
@@ -349,6 +368,36 @@ come from the [Quectel RG50xQ/RM5xxQ AT manual](https://www.quectel.com/content/
 The lock readback format also matches the retained
 [UE2 operator evidence](evidence/2026-10-13_du2_registration/operator_at_readback.txt).
 The registration option is provided by [ModemManager's 3GPP CLI](https://github.com/linux-mobile-broadband/ModemManager/blob/main/cli/mmcli-modem-3gpp.c).
+Its [registration handler](https://github.com/linux-mobile-broadband/ModemManager/blob/main/src/mm-iface-modem-3gpp.c)
+rejects operations while the modem is connected/connecting/disconnecting and
+performs fresh registration checks before deciding whether to register again.
+
+### CME 902 after a DU gain drop
+
+The operator's 2026-10-24 trace started with a successful UE2 connection, then
+failed recovery after a DU2 TX-gain experiment (`10` dB, later restored to `60`
+dB in the DU terminal). The UE trace recorded both:
+
+```text
+state=connected 3gpp=searching packet=detached PLMN=-- access=--
++QNWLOCK: "common/5g",0
++CME ERROR: 902
+```
+
+The lock readback was `0` on both captured recovery attempts; this was not a
+duplicate write of an already-correct lock. The original recovery aborted at the
+rejected write before requesting registration, and retained the stale bearer
+until Ctrl+C shutdown. The countdown messages were the configured cooldown.
+The trace ended with successful selected-UE shutdown, not successful recovery.
+
+The updated flow releases a verified stale PDU before attempting lock/registration,
+reuses an existing correct lock, and checks live AT registration rather than
+trusting generic MM `connected`. Copy the updated five files and restart the
+watcher using the commands above. These cases pass offline regression tests;
+the modem's precise reason for 902 and live recovery after this fix remain
+unverified. If 902 persists and the lock still reads `0`, retain `run.log` and
+`attempts.jsonl`; the script will keep reporting failure rather than dialing
+with an unverified cell lock. No CFUN reset or ModemManager restart is added.
 
 ### Optional parameters
 
@@ -403,6 +452,7 @@ records the last verified state **before shutdown** (not a post-exit measurement
 and the nested `shutdown` completion/error. With automatic cell locking enabled,
 `attempts.jsonl` also records `radio_recovery`: the original radio error,
 commands/writes attempted, previous/verified lock, diagnostic QENG/C5GREG output,
+lock reuse/write/error details, live serial registration, stale-PDU disconnect,
 registration request and `applied` / `failed` / `cooldown` / `interrupted` result.
 `applied` means the radio settings were applied; only the full connection checks
 can produce connection `SUCCESS`. `attempts.jsonl` marks a cancelled

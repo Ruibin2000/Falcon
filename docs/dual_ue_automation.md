@@ -472,8 +472,10 @@ again. This does not change a NetworkManager profile or install a boot service.
 
 ### Waiting at modem registration
 
-Step 2 waits for ModemManager state `registered`, `connecting` or `connected`,
-then verifies PLMN `00101` and NR SA access. `enabled` means powered on but not
+Step 2 waits for ModemManager state `registered`, `connecting` or `connected`
+and 3GPP registration `home` or `roaming`, then verifies PLMN `00101` and NR SA
+access. Generic `connected` alone does not pass when 3GPP is still `searching`.
+`enabled` means powered on but not
 registered, while `searching` means searching for a network; neither passes this
 step. See the [ModemManager state definitions](https://www.freedesktop.org/software/ModemManager/doc/1.18.0/ModemManager/ModemManager-Flags-and-Enumerations.html#MMModemState).
 

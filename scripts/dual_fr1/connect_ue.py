@@ -42,6 +42,15 @@ class CellError(ValueError):
     """No acceptable live registration/serving-cell evidence."""
 
 
+class ATCommandError(CellError):
+    """Keep a rejected command's raw reply and vendor code as evidence."""
+    def __init__(self, command, reply):
+        self.command, self.reply = command, reply
+        match = re.search(r"\+CME ERROR:\s*(\d+)", reply)
+        self.cme_code = int(match[1]) if match else None
+        super().__init__(f"No successful reply to AT command {command}: {reply.strip() or 'timeout/closed port'}")
+
+
 class StopRequested(KeyboardInterrupt):
     def __init__(self, signum):
         self.signum = signum
@@ -280,7 +289,7 @@ def at_reply(fd, command):
             break
     reply = result.decode("ascii", errors="replace")
     if not re.search(r"(?:^|[\r\n])OK(?:[\r\n]|$)", reply):
-        raise CellError(f"No successful reply to AT command {command}: {reply.strip() or 'timeout/closed port'}")
+        raise ATCommandError(command, reply)
     return reply
 
 
@@ -474,7 +483,8 @@ class Connection:
                            f"packet={snapshot['packet_service_state']} PLMN={snapshot['plmn']} "
                            f"access={','.join(snapshot['access_technologies']) or '--'}")
             print(f"Registration: {description}; elapsed={snapshot['elapsed_seconds']:g}s", flush=True)
-            if info.get("modem.generic.state") in ("registered", "connecting", "connected"):
+            if (info.get("modem.generic.state") in ("registered", "connecting", "connected")
+                    and info.get("modem.3gpp.registration-state") in ("home", "roaming")):
                 break
             remaining = deadline - time.monotonic()
             if remaining <= 0:

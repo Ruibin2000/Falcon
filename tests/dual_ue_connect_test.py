@@ -55,7 +55,8 @@ class Network(ResetKernel):
             self.settings[ue] = dict(imsi=CONNECT.ROLES[ue]["imsi"], technology="5gnr", plmn="00101",
                                      identity=f"device-{ue}", cell=cell_text(ue), mtu="1400", prefix="29",
                                      source="10.45.0.9" if ue == 1 else "10.46.0.34",
-                                     apn=CONNECT.ROLES[ue]["apn"], suspended="no", method="static", sim_active="yes")
+                                     apn=CONNECT.ROLES[ue]["apn"], suspended="no", method="static", sim_active="yes",
+                                     registration="home", packet="attached")
         self.ping_failure = False
         self.ordinary_wrong = False
         self.bypass_after_reset = False
@@ -107,7 +108,10 @@ class Network(ResetKernel):
                 "modem.generic.device-identifier": config["identity"],
                 "modem.generic.physdev": f"/sys/mock/ue{ue}",
                 "modem.generic.access-technologies.value[1]": config["technology"],
-                "modem.3gpp.operator-code": config["plmn"], "modem.generic.sim": f"/org/freedesktop/ModemManager1/SIM/{ue}"})
+                "modem.3gpp.operator-code": config["plmn"],
+                "modem.3gpp.registration-state": config["registration"],
+                "modem.3gpp.packet-service-state": config["packet"],
+                "modem.generic.sim": f"/org/freedesktop/ModemManager1/SIM/{ue}"})
         if command[:2] == ("mmcli", "-i"):
             config = self.settings[int(command[2].rsplit("/", 1)[1])]
             return kv_text({"sim.properties.active": config["sim_active"], "sim.properties.imsi": config["imsi"]})
@@ -145,6 +149,9 @@ class Network(ResetKernel):
             imei, interface, _ = self.modems[path]
             if command[3] == "--enable":
                 self.modems[path] = (imei, interface, "registered")
+            elif command[3] == "--3gpp-register-in-operator=00101":
+                self.modems[path] = (imei, interface, "registered")
+                self.settings[self.role(path)].update(registration="home", packet="attached", plmn="00101", technology="5gnr")
             elif command[3] == "--simple-disconnect":
                 self.modems[path] = (imei, interface, "registered")
                 self.bearers[path] = {bearer: "no" for bearer in self.bearers[path]}
@@ -324,6 +331,23 @@ class ConnectTest(unittest.TestCase):
         self.assertIn("state=registered", self.output.getvalue())
         self.assertEqual(session.result["registration"]["elapsed_seconds"], 4)
         self.assertEqual(self.network.changes, [])
+
+    def test_connected_state_does_not_bypass_searching_3gpp_registration(self):
+        session = self.session(registration_timeout=3)
+        session.discover()
+        modem = next(iter(self.network.modems))
+        self.network.modems[modem] = (*self.network.modems[modem][:2], "connected")
+        self.network.settings[1].update(registration="searching", packet="detached")
+        clock, waits = [0.0], []
+        def advance(seconds):
+            waits.append(seconds)
+            clock[0] += seconds
+        with patch.object(CONNECT.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(CONNECT.time, "sleep", advance):
+            with self.assertRaisesRegex(CONNECT.CellError, "3gpp=searching packet=detached"):
+                session.registered(True)
+        self.assertEqual(waits, [2, 1])
+        self.assertFalse(self.network.changes)
 
     def test_registration_timeout_retains_last_state_and_does_not_oversleep(self):
         session = self.session(registration_timeout=3)

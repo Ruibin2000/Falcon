@@ -10,6 +10,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import shlex
 import shutil
 import signal
@@ -26,14 +27,18 @@ ERRORS = (ValueError, OSError, subprocess.SubprocessError, connect.termios.error
 SHARED_LOCK = "/run/lock/falcon-ue-connect.lock"
 
 
+def radio_query(fd, command, evidence):
+    print("AT > " + command, flush=True)
+    evidence.setdefault("commands", []).append(command)
+    reply = connect.at_reply(fd, command)
+    print(reply.strip(), flush=True)
+    return reply
+
+
 def restore_cell_lock(at_port, info, role, evidence):
     """Restore this verified modem's NR SA settings; OK is not serving proof."""
     def query(fd, command):
-        print("AT > " + command, flush=True)
-        evidence.setdefault("commands", []).append(command)
-        reply = connect.at_reply(fd, command)
-        print(reply.strip(), flush=True)
-        return reply
+        return radio_query(fd, command, evidence)
 
     def fields(fd, command, prefix, name):
         reply = query(fd, command)
@@ -68,10 +73,28 @@ def restore_cell_lock(at_port, info, role, evidence):
         lock_query = 'AT+QNWLOCK="common/5g"'
         evidence["previous_lock"] = fields(fd, lock_query, "+QNWLOCK", "common/5g")
         target = [str(role["pci"]), str(role["ssb"]), "30", "78"]
-        # A radio failure requests a fresh lock even if its saved tuple is right;
-        # the watcher cooldown prevents repeating this on every one-second poll.
-        write(fd, lock_query + "," + ",".join(target))
-        actual = fields(fd, lock_query, "+QNWLOCK", "common/5g")
+        actual = evidence["previous_lock"]
+        evidence["lock_action"] = "reused"
+        if actual != target:
+            evidence["lock_action"] = "written"
+            try:
+                write(fd, lock_query + "," + ",".join(target))
+            except connect.ATCommandError as error:
+                evidence["lock_write_error"] = dict(cme_code=error.cme_code, reply=error.reply)
+                if error.cme_code != 902:
+                    raise
+                # A vendor rejection is never interpreted as success. Continue
+                # only if an independent readback proves the exact target tuple.
+                actual = fields(fd, lock_query, "+QNWLOCK", "common/5g")
+                evidence["lock_after_error"] = actual
+                if actual != target:
+                    raise
+                evidence["lock_action"] = "verified_after_902"
+                connect.status("Radio recovery: lock write returned 902; exact target lock read back independently")
+            else:
+                actual = fields(fd, lock_query, "+QNWLOCK", "common/5g")
+        else:
+            connect.status("Radio recovery: saved cell lock already matches; skipping duplicate QNWLOCK write")
         if actual != target:
             raise connect.CellError(f"Cell-lock readback mismatch: expected {target}, got {actual}")
         evidence["verified_lock"] = actual
@@ -79,6 +102,25 @@ def restore_cell_lock(at_port, info, role, evidence):
             # SEARCH / not registered is valid diagnostic output after a lock
             # write; full registration and cell checks run on the next attempt.
             evidence[key] = query(fd, command).strip()
+
+
+def serial_registration(evidence, role):
+    """Distinguish live SA proof, known radio loss, and unparseable diagnostics."""
+    matches = re.findall(r"(?m)^\s*\+C5GREG:\s*\d+\s*,\s*(\d+)(?:\s*,|\s*$)", evidence.get("c5greg", ""))
+    registration = int(matches[0]) if len(matches) == 1 else None
+    try:
+        cell = connect.qeng_serving_cell(evidence.get("qeng", ""))
+    except connect.CellError:
+        cell = None
+    expected_cell = (cell is not None and cell["pci"] == role["pci"] and cell["nci"] == role["nci"]
+                     and cell.get("plmn") == "00101" and cell.get("tac") == 7
+                     and cell.get("arfcn") in (role["ssb"], role["carrier"]) and cell.get("band") == 78)
+    search = bool(re.search(r'\+QENG:\s*"servingcell"\s*,\s*"(?:SEARCH|LIMSRV)"', evidence.get("qeng", "")))
+    result = dict(c5greg_status=registration, expected_serving_cell=expected_cell,
+                  registered=expected_cell and registration in (1, 5),
+                  radio_lost=search or registration in (0, 2, 3, 4))
+    evidence["serial_registration"] = result
+    return result
 
 
 def now():
@@ -137,7 +179,15 @@ class Recovery(connect.Connection):
             self.host_preflight(dict(interface=interface))
         connect.status(f"Radio recovery: UE{self.ue} / {self.role['label']}; restore NR SA / "
                        f"PCI={self.role['pci']} SSB={self.role['ssb']}, then request PLMN 00101 registration")
+        # MM can retain connected bearers after its own 3GPP state becomes
+        # searching/detached. Release that owned stale PDU before locking.
+        self.release_radio_pdu(evidence)
+        info = self.checked_modem()
         restore_cell_lock(self.at_port, info, self.role, evidence)
+        live = serial_registration(evidence, self.role)
+        # Cover a stale positive MM registration cache when AT proves radio loss.
+        if live["radio_lost"]:
+            self.release_radio_pdu(evidence, serial_lost=True)
         # The serial context is closed before talking to ModemManager again.
         info = self.checked_modem()
         if info.get("modem.generic.state") == "disabled":
@@ -148,7 +198,9 @@ class Recovery(connect.Connection):
         registered = (info.get("modem.generic.state") in ("registered", "connecting", "connected")
                       and info.get("modem.3gpp.operator-code") == "00101"
                       and "5gnr" in technologies and "lte" not in technologies)
-        if not registered:
+        if not registered or not live["registered"]:
+            connect.require(info.get("modem.generic.state") not in ("connecting", "connected", "disconnecting"),
+                            "Modem still reports an active PDU; refusing registration until owned stale PDU is released")
             evidence["registration_requested"] = True
             connect.change("mmcli", "-m", self.modem, "--3gpp-register-in-operator=00101")
         else:
@@ -156,6 +208,57 @@ class Recovery(connect.Connection):
         self.checked_modem()
         evidence["status"] = "applied"
         connect.status("Radio recovery [OK]: lock read back; next attempt must verify registration, cell, PDU and ping")
+
+    @staticmethod
+    def registration_lost(info):
+        return (info.get("modem.3gpp.registration-state") in ("idle", "searching", "denied", "unknown")
+                and info.get("modem.3gpp.packet-service-state") == "detached")
+
+    def disconnectable(self, info, details):
+        connect.require(details.get("bearer.ipv4-config.method") == "static", "Non-static bearer; inspect its owner")
+        source = ipaddress.IPv4Address(details.get("bearer.ipv4-config.address", ""))
+        connect.require(source in ipaddress.IPv4Network(self.role["pool"])
+                        and str(source) != self.role["server"], "Bearer IP is outside the role pool")
+        ipaddress.IPv4Interface(f"{source}/{int(details.get('bearer.ipv4-config.prefix', '-1'))}")
+        connect.require(576 <= int(details.get("bearer.ipv4-config.mtu", "0")) <= 65535,
+                        "Invalid bearer MTU; refusing automatic disconnect")
+        interface = details.get("bearer.status.interface", "")
+        connect.require(connect.ports(info) == {interface} and connect.reset.WWAN.fullmatch(interface),
+                        "Expected one dedicated, owned WWAN for automatic disconnect")
+        return dict(source=str(source), interface=interface)
+
+    def release_radio_pdu(self, evidence, *, serial_lost=False):
+        info, active = self.active()
+        if not active or not (serial_lost or self.registration_lost(info)):
+            return
+        connect.require(self.redial_allowed, "Stale-PDU disconnect is in redial cooldown; continue radio checks")
+        bearer = self.disconnectable(info, active[0][1])
+        with self.network(shared=True):
+            self.host_preflight(bearer)
+        # Prove the serial endpoint before disrupting a PDU. Close it before
+        # MM disconnects; the later lock transaction validates identities again.
+        with connect.serial_modem(self.at_port, info, self.role,
+                                  query=lambda fd, cmd: radio_query(fd, cmd, evidence)):
+            pass
+        latest, current = self.active()
+        connect.require(self.allocation(current) == self.allocation(active),
+                        "Bearer changed before radio recovery disconnect; retry discovery")
+        connect.require(serial_lost or self.registration_lost(latest),
+                        "3GPP registration recovered before stale-PDU disconnect; retry verification")
+        with self.host_update(bearer):
+            self.host_preflight(bearer)
+            self.block(install=True)
+        connect.status("Radio recovery: release selected UE's stale PDU before registration; Wi-Fi fallback stays blocked")
+        self.redial_started_at = time.monotonic()
+        evidence["pdu_disconnect_requested"] = True
+        self.result.update(redial=True, previous_source=bearer["source"], previous_bearer=active[0][0],
+                           redial_reason="radio lost with stale connected PDU")
+        connect.change("mmcli", "-m", self.modem, "--simple-disconnect")
+        _, remaining = self.active()
+        connect.require(not remaining, "Bearer still connected after radio recovery disconnect")
+        self.checked_modem()
+        self.clear_host(bearer)
+        evidence["pdu_disconnected"] = True
 
     def active(self):
         info = self.checked_modem()
@@ -195,16 +298,8 @@ class Recovery(connect.Connection):
             return
         # Refuse destructive recovery for foreign/malformed resources, just as
         # the one-shot launcher does. A suspended *valid* static bearer is allowed.
-        connect.require(details.get("bearer.ipv4-config.method") == "static", "Non-static bearer; inspect its owner")
-        source = ipaddress.IPv4Address(details.get("bearer.ipv4-config.address", ""))
-        connect.require(source in ipaddress.IPv4Network(self.role["pool"])
-                        and str(source) != self.role["server"], "Bearer IP is outside the role pool")
-        ipaddress.IPv4Interface(f"{source}/{int(details.get('bearer.ipv4-config.prefix', '-1'))}")
-        connect.require(576 <= int(details.get("bearer.ipv4-config.mtu", "0")) <= 65535,
-                        "Invalid bearer MTU; refusing automatic disconnect")
-        interface = details.get("bearer.status.interface", "")
-        connect.require(connect.ports(info) == {interface} and connect.reset.WWAN.fullmatch(interface),
-                        "Expected one dedicated, owned WWAN for automatic disconnect")
+        bearer = self.disconnectable(info, details)
+        source, interface = bearer["source"], bearer["interface"]
         with self.network(shared=True):
             self.host_preflight(dict(interface=interface))
             self.block(install=False)
