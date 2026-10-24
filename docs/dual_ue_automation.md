@@ -325,6 +325,9 @@ visible in both modes. `--verbose` changes only terminal detail; checks,
 connection actions, exit status and full log capture are the same.
 During registration, the detailed output reports the modem state, 3GPP
 registration/packet-service states, PLMN, access technology and elapsed wait.
+Startup registration polls sleep at most **0.25 seconds** between queries;
+this faster polling ends once registration is ready. The default passive hold
+after success still performs no polling or ping.
 It also announces each modem/SIM query, so a slow query can be distinguished
 from a completed query reporting an unregistered modem. These details are
 saved in `run.log` even without `--verbose`.
@@ -488,15 +491,22 @@ With `--verbose`, a wait can look like this (illustrative):
 ```text
 Registration: querying current modem / active SIM status (wait budget 45s; command timeout 75s)
 Registration: state=enabled 3gpp=idle packet=detached PLMN=-- access=--; elapsed=0s
-Registration: waiting 2s before the next modem / SIM query
+Registration: waiting 0.25s before the next modem / SIM query
 ```
 
-The script waits at most two seconds between completed status polls. The wait
+The script waits at most 0.25 seconds between completed status polls. The wait
 budget is checked between queries; an individual external command can take up
 to 75 seconds, so it is not a hard wall-clock limit for the whole step. On
 timeout, the error includes the last reported registration state. On Ctrl+C,
 the step prints `[CANCELLED]`, the summary records `interrupted`, and the launcher
 runs selected-UE shutdown before exiting 130. Cancellation does not establish that network registration failed.
+
+The Spark CU configuration now sets `cu_cp.request_pdu_session_timeout: 10`
+seconds in the base file and identity overlay. It takes effect at the next CU
+start. The earlier 3-second window released a newly connected UE before the
+laptop requested a PDU during a measured startup. Faster polling and the longer
+CU window reduce this race; they do not guarantee a specific registration time.
+Use the [Spark CU launch sequence](dual_ue_spark_quick_commands.md#4-start-identity-ric-then-identity-enabled-cu-in-separate-terminals).
 
 For a bounded read-only diagnosis, use the current modem path/index printed by
 the IMEI check; indices can change after USB reconnect:

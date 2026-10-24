@@ -292,6 +292,12 @@ Require N2 connection to `127.0.0.5:38412`, E2 connection to RIC, F1 listener
 `127.0.10.1:38472`, and `==== CU started ===`. RIC must accept the CU/gNB 411
 node and KPM function 2. The overlay enables CU-CP E2/identity metrics; using
 only `configs/cu.yml` will omit the identity source required by this test.
+The base CU file and the versioned identity overlay set
+`cu_cp.request_pdu_session_timeout: 10` seconds. This allows the laptop to finish
+its registration/cell checks before requesting a PDU; the earlier 3-second
+window caused one measured startup to release and reconnect its RRC context.
+The change applies when CU starts with these files. A running CU keeps its
+previous setting until restarted using the normal CU/DU shutdown/start sequence.
 Keep this terminal running. If RIC restarts, stop the test and restart CU and
 both DUs in order before launching a new xApp; automatic E2 recovery is not
 assumed.

@@ -155,6 +155,7 @@ The modem cell lock uses **SSB ARFCN 649632**, not carrier ARFCN 650000. DU star
 
 ```yaml
 cu_cp:
+  request_pdu_session_timeout: 10
   amf:
     addrs: 127.0.0.5
     bind_addrs: 127.0.0.1

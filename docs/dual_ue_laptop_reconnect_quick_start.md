@@ -398,7 +398,9 @@ Recovery proceeds as follows:
    connected static bearer on the expected APN triggers a guarded disconnect and
    redial. Host ownership, policy resources, IMEI/IMSI and serving cell must pass
    before a ping/suspended-PDU forced disconnect. Radio-loss recovery has the
-   separate stale-PDU checks described below. Foreign APNs, multiple active bearers, malformed
+   separate configuration checks described below. Radio loss with matching saved
+   settings preserves the connected PDU until radio recovery and current-IP
+   verification. Foreign APNs, multiple active bearers, malformed
    allocations or foreign host resources fail without automatic deletion/redial.
 3. If the expected PDU remains connected but ping fails for **three consecutive
    connection attempts**, force a disconnect on the **next attempt**, then redial.
@@ -441,17 +443,22 @@ cooldown gate, each eligible radio recovery does the following:
 1. Recheck this modem's IMEI, active SIM IMSI, active-bearer APN and dedicated
    WWAN ownership. Check host resources under a short shared read lock. Reject
    foreign resources, a wrong USB serial device or an occupied port.
-2. If an expected connected bearer remains while ModemManager reports
-   `idle`/`searching`/`denied`/`unknown` registration and packet service `detached`,
-   verify the serial IMEI/IMSI too, recheck the bearer allocation and host
-   ownership, retain/install the Wi-Fi fallback block, then disconnect only this
-   UE's stale PDU and clear its host path. The redial cooldown also applies.
-   A failed disconnect does not proceed to lock writes, host reset or registration.
-3. Exclusively open the AT port and verify `AT+CGSN` and `AT+CIMI` before any
-   configuration. Read the NR settings; restore `mode_pref=NR5G` and
-   `nr5g_disable_mode=2` only when different, verifying each readback. Read
-   `nr5g_band`; if n78 is excluded, set it to `78` and verify the readback.
-4. Read the saved lock. Reuse an exact match without a duplicate write; otherwise
+2. Exclusively open the AT port and verify `AT+CGSN` and `AT+CIMI`. Read the saved
+   lock first, then the NR preferences and live QENG/C5GREG diagnostics. If an
+   expected connected bearer remains and the settings match, keep the PDU even
+   when MM reports `searching/detached` or AT reports `SEARCH`. Record
+   `waiting_radio` and continue checking registration/cell state. No forced
+   disconnect or registration request is issued against that active PDU.
+3. Handle a proven settings mismatch separately. Read-only inspection records
+   the required change before any write. If the live target cell is already
+   registered, attempt the missing setting/lock without tearing down its PDU.
+   Otherwise release only this UE's owned stale PDU before modifying radio
+   settings, after rechecking identity, SIM, APN, allocation, host ownership and
+   radio loss. The redial cooldown and pending-release guard still apply. A failed
+   disconnect stops before setting writes, host reset or registration. With no
+   active bearer, restore `mode_pref=NR5G`, `nr5g_disable_mode=2`, and n78 support
+   only where necessary, verifying each readback.
+4. Reuse an exact saved lock without a duplicate write; otherwise
    apply this role's lock and require an exact readback:
 
    | Role | Lock command |
@@ -462,15 +469,18 @@ cooldown gate, each eligible radio recovery does the following:
    If a lock write returns `+CME ERROR: 902`, read the lock again and retain both
    the error and readback in evidence. Continue only if that independent readback
    exactly matches this UE's target. A `0` or other tuple remains a failure.
-5. Record `AT+QENG="servingcell"` and `AT+C5GREG?`, then restore serial settings
-   and close the port. If these live diagnostics prove radio loss while MM still
-   retains a connected bearer, use the same guarded selected-UE disconnect above.
-   If the correct live SA cell and C5GREG `1`/`5` already prove registration and MM
-   also reports the expected NR SA registration, preserve the working PDU.
-   Otherwise enable the modem if needed and launch one background registration
+5. Record `AT+QENG="servingcell"` and `AT+C5GREG?`, restore serial settings and
+   close the port. Once radio registration recovers, reread the current bearer/IP
+   and verify its data path. An existing PDU may resume with its original IP;
+   a replacement allocation is rebuilt using its current IP. Radio recovery alone
+   does not justify reusing a cached allocation or force a new IP. A suspended
+   bearer or sustained ping failure can trigger the guarded redial described
+   above, after serving-cell verification. With no active PDU, enable the modem
+   if needed and launch one background registration
    client using `mmcli -m <current-selected-modem> --3gpp-register-in-operator=00101 --timeout=5`.
    ModemManager may reject registration while it still considers the modem
-   connected; an owned stale PDU must be released first. A generic `connected`
+   connected; preserve a correctly configured active PDU while waiting for natural
+   radio recovery. A generic `connected`
    state alone is not accepted as registration: the startup check also requires
    3GPP `home` or `roaming` before accepting PLMN and NR SA access.
 6. For a later radio failure, mark the current attempt `FAIL`: applying a lock is not proof of connectivity.
@@ -496,6 +506,21 @@ commands and the collected child output. Level 1 still prints only connection
 attempt numbers/results (plus required shutdown/cleanup failures). A `FAIL`
 during observation or a pending request means that round did not verify a
 connection; it does not mean the background request has already failed.
+
+If MM reports `disconnecting`, level 2 explicitly shows **waiting for this UE's
+PDU release** and the elapsed time since this watcher requested the disconnect.
+No duplicate disconnect, serial reconfiguration or forced registration is
+issued while that operation remains in progress. A 2-second disconnect client
+timeout does not cancel the modem/backend operation. A `connecting` modem is
+likewise observed until its current operation finishes.
+
+The one-shot startup helper now sleeps at most **0.25 seconds** between
+registration polls; the reconnect loop still uses the requested `--interval`
+and defaults to a zero extra registration-state wait. Healthy monitoring has no
+new fast poll. Spark's base CU config and identity overlay now use
+`cu_cp.request_pdu_session_timeout: 10` seconds, effective at the next CU start.
+This avoids the earlier 3-second PDU-request window competing with laptop
+registration checks. Changing the file does not alter the running CU.
 
 Serial/registration work never holds the shared host-network lock. UE1 and UE2
 retain separate ownership and cooldown state. Healthy checks never write AT
@@ -541,9 +566,12 @@ rejected write before requesting registration, and retained the stale bearer
 until Ctrl+C shutdown. The countdown messages were the configured cooldown.
 The trace ended with successful selected-UE shutdown, not successful recovery.
 
-The updated flow releases a verified stale PDU before attempting lock/registration,
-reuses an existing correct lock, and checks live AT registration rather than
-trusting generic MM `connected`. Copy the updated five files and restart the
+The earlier fix released a verified stale PDU before attempting lock/registration.
+The current flow first inspects the saved lock/preferences and live AT state:
+matching settings preserve the active PDU while radio recovers; only a proven
+configuration mismatch can enter that radio-repair disconnect branch. Restored
+radio service is followed by current bearer/IP and traffic verification, with
+suspended/ping-failure recovery handled separately. Copy the updated five files and restart the
 watcher using the commands above. These cases pass offline regression tests;
 the modem's precise reason for 902 and which recovery branch resolves it on the
 testbed remain unverified. If 902 persists and the lock still reads `0`, retain `run.log` and
@@ -669,7 +697,10 @@ trigger, original radio error,
 commands/writes attempted, previous/verified lock, diagnostic QENG/C5GREG output,
 lock reuse/write/error details, live serial registration, stale-PDU disconnect,
 registration-request snapshots and `observing` / `registration_pending` /
-`backend_observation` / `applied` / `failed` / `cooldown` / `interrupted` results.
+`backend_observation` / `waiting_radio` / `waiting_pdu_release` /
+`waiting_pdu_connect` / `applied` / `failed` / `cooldown` / `interrupted` results.
+`pdu_preserved` records a correctly configured active PDU being retained during
+radio/state recovery; `required_write` records a proven configuration difference.
 `applied` means the radio settings were applied; only the full connection checks
 can produce connection `SUCCESS`. A `startup_radio` status of `completed` likewise
 means preparation succeeded, not that registration or connectivity was proven.

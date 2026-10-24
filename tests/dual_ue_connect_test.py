@@ -326,7 +326,7 @@ class ConnectTest(unittest.TestCase):
                 patch.object(CONNECT.time, "sleep", advance):
             info = session.registered(True)
         self.assertEqual(info["modem.generic.state"], "registered")
-        self.assertEqual(waits, [2, 2])
+        self.assertEqual(waits, [0.25] * 16)
         self.assertIn("state=enabled", self.output.getvalue())
         self.assertIn("state=registered", self.output.getvalue())
         self.assertEqual(session.result["registration"]["elapsed_seconds"], 4)
@@ -346,7 +346,7 @@ class ConnectTest(unittest.TestCase):
                 patch.object(CONNECT.time, "sleep", advance):
             with self.assertRaisesRegex(CONNECT.CellError, "3gpp=searching packet=detached"):
                 session.registered(True)
-        self.assertEqual(waits, [2, 1])
+        self.assertEqual(waits, [0.25] * 12)
         self.assertFalse(self.network.changes)
 
     def test_registration_timeout_retains_last_state_and_does_not_oversleep(self):
@@ -364,7 +364,7 @@ class ConnectTest(unittest.TestCase):
                 patch.object(CONNECT.time, "sleep", advance):
             with self.assertRaisesRegex(CONNECT.CellError, "after 3s: state=enabled"):
                 session.registered(True)
-        self.assertEqual(waits, [2, 1])
+        self.assertEqual(waits, [0.25] * 12)
         self.assertEqual(session.result["registration"]["state"], "enabled")
         self.assertEqual(session.result["registration"]["plmn"], "00101")
         self.assertEqual(self.network.changes, [])

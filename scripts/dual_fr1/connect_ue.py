@@ -504,7 +504,9 @@ class Connection:
             if remaining <= 0:
                 raise CellError(f"Modem is not registered after {snapshot['elapsed_seconds']:g}s: {description}; "
                                 "check serving cell, registration and serial configuration")
-            delay = min(2, remaining)
+            # Poll promptly only while an explicit startup wait is in progress.
+            # Healthy/watch snapshots use a zero wait budget and never sleep.
+            delay = min(0.25, remaining)
             print(f"Registration: waiting {delay:g}s before the next modem / SIM query", flush=True)
             time.sleep(delay)
             print("Registration: querying current modem / active SIM status ...", flush=True)

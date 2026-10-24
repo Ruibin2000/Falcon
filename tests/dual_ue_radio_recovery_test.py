@@ -387,17 +387,93 @@ class RadioRecoveryTest(unittest.TestCase):
                 session.release_radio_pdu({})
         self.assertFalse(self.network.changes)
 
-    def test_live_at_radio_loss_releases_stale_positive_mm_connected_state(self):
+    def test_live_at_radio_loss_preserves_pdu_when_saved_settings_match(self):
         self.connect(2)
         self.wrong_cell()
         watcher = self.auto()
         self.network.changes.clear()
         with FakeAT(correct_settings=True).port():
             watcher.attempt()
-        self.assertEqual(len(self.disconnects()), 1)
+        self.assertFalse(self.network.changes)
         record = json.loads((watcher.directory / "attempts.jsonl").read_text())
-        self.assertTrue(record["radio_recovery"]["registration_requested"])
+        self.assertFalse(record["radio_recovery"]["registration_requested"])
+        self.assertTrue(record["radio_recovery"]["pdu_preserved"])
+        self.assertEqual(record["radio_recovery"]["status"], "waiting_radio")
         self.assertTrue(record["radio_recovery"]["serial_registration"]["radio_lost"])
+
+    def test_radio_loss_with_correct_lock_recovers_each_role_without_disconnect(self):
+        for ue in (1, 2):
+            for changed_ip in (False, True):
+                with self.subTest(ue=ue, changed_ip=changed_ip):
+                    self.network.__dict__.update(fixture.Network().__dict__)
+                    self.connect(1)
+                    self.connect(2)
+                    peer = self.network.survivor(ue)
+                    path = list(self.network.modems)[ue - 1]
+                    self.network.settings[ue].update(registration="searching", packet="detached",
+                                                     plmn="--", technology="--")
+                    self.network.changes.clear()
+                    self.network.pings.clear()
+                    watcher = self.auto(ue=ue)
+                    records = watcher.directory / "attempts.jsonl"
+                    records.unlink(missing_ok=True)
+                    with FakeAT(ue, correct_settings=True).port() as modem:
+                        watcher.attempt()
+                    record = json.loads(records.read_text())
+                    self.assertEqual(record["radio_recovery"]["status"], "waiting_radio")
+                    self.assertFalse(self.network.changes)
+                    self.assertFalse(self.network.pings)
+                    self.assertFalse(watcher.pending_disconnect)
+                    self.assertFalse(any(command.startswith('AT+QNWLOCK="common/5g",')
+                                         for command in modem.commands))
+                    self.network.settings[ue].update(registration="home", packet="attached",
+                                                     plmn="00101", technology="5gnr")
+                    if changed_ip:
+                        self.network.settings[ue]["source"] = f"10.{44 + ue}.0.91"
+                    current_ip = self.network.settings[ue]["source"]
+                    watcher.attempt()
+                    self.assertTrue(watcher.healthy)
+                    self.assertFalse(self.disconnects())
+                    self.assertFalse(any("--3gpp-register" in argument or "--simple-connect=" in argument
+                                         for command in self.network.changes for argument in command))
+                    bound = [command for command in self.network.pings if "-I" in command]
+                    self.assertEqual(len(bound), 1)
+                    self.assertEqual(bound[0][bound[0].index("-I") + 1], current_ip)
+                    self.assertEqual(self.network.survivor(ue), peer)
+
+    def test_read_only_radio_inspection_never_writes_mismatched_settings(self):
+        for only_lock_missing in (False, True):
+            with self.subTest(only_lock_missing=only_lock_missing), FakeAT(correct_settings=only_lock_missing).port() as modem:
+                modem.lock = "0"
+                evidence = {}
+                with self.assertRaises(WATCH.RadioSettingsMismatch):
+                    WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence, read_only=True)
+                self.assertEqual(evidence["previous_lock"], ["0"])
+                self.assertEqual(evidence["lock_action"], "write_required")
+                self.assertIn("required_write", evidence)
+                self.assertIn("qeng", evidence)
+                self.assertFalse(evidence.get("writes"))
+                self.assertFalse(any(command.startswith('AT+QNWPREFCFG="mode_pref",')
+                                     or command.startswith('AT+QNWLOCK="common/5g",')
+                                     for command in modem.commands))
+
+    def test_disconnecting_state_reports_pending_release_without_radio_work(self):
+        self.connect(2)
+        path = list(self.network.modems)[1]
+        self.network.modems[path] = (*self.network.modems[path][:2], "disconnecting")
+        self.network.settings[2].update(registration="idle", packet="detached", plmn="--", technology="--")
+        self.network.changes.clear()
+        watcher = self.auto(level=2)
+        watcher.last_redial = WATCH.time.monotonic() - 3
+        with patch.object(WATCH, "restore_cell_lock") as radio:
+            watcher.attempt()
+        radio.assert_not_called()
+        self.assertFalse(self.network.changes)
+        record = json.loads((watcher.directory / "attempts.jsonl").read_text())
+        self.assertEqual(record["radio_recovery"]["status"], "waiting_pdu_release")
+        self.assertGreaterEqual(record["radio_recovery"]["elapsed_seconds"], 3)
+        self.assertIn("PDU release to finish", self.console.getvalue())
+        self.assertIn("no duplicate request", self.console.getvalue())
 
     def test_live_registered_expected_cell_preserves_working_pdu(self):
         self.connect(2)
@@ -446,7 +522,7 @@ class RadioRecoveryTest(unittest.TestCase):
                 return reply
             with patch.object(modem, "reply", ignore_setting), self.assertRaisesRegex(CONNECT.CellError, "Setting readback"):
                 WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], {})
-            self.assertFalse(any(cmd.startswith("AT+QNWLOCK=") for cmd in modem.commands))
+            self.assertFalse(any(cmd.startswith('AT+QNWLOCK="common/5g",') for cmd in modem.commands))
 
     def test_radio_recovery_then_next_attempt_verifies_everything(self):
         self.wrong_cell()

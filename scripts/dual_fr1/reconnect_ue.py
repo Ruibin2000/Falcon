@@ -61,8 +61,12 @@ def radio_query(fd, command, evidence):
     return reply
 
 
-def restore_cell_lock(at_port, info, role, evidence):
-    """Restore this verified modem's NR SA settings; OK is not serving proof."""
+class RadioSettingsMismatch(connect.CellError):
+    """An owned active PDU needs a real configuration change, not just RF recovery."""
+
+
+def restore_cell_lock(at_port, info, role, evidence, *, read_only=False):
+    """Inspect or restore verified NR SA settings; OK is not serving proof."""
     def query(fd, command):
         return radio_query(fd, command, evidence)
 
@@ -77,12 +81,24 @@ def restore_cell_lock(at_port, info, role, evidence):
         return [value.strip() for value in records[0][1:]]
 
     def write(fd, command):
+        if read_only:
+            evidence["required_write"] = command
+            for diagnostic, key in (('AT+QENG="servingcell"', "qeng"), ("AT+C5GREG?", "c5greg")):
+                evidence[key] = query(fd, diagnostic).strip()
+            raise RadioSettingsMismatch("Radio configuration differs; an owned PDU is still active")
         # Record even a failed/interrupted write: some settings may already have
         # taken effect. Never report the operation as an atomic rollback.
         evidence.setdefault("writes", []).append(command)
         query(fd, command)
 
     with connect.serial_modem(at_port, info, role, query=query) as fd:
+        # Read the saved lock before deciding whether a live PDU needs any
+        # intervention. SEARCH alone is not a reason to tear down a session.
+        lock_query = 'AT+QNWLOCK="common/5g"'
+        evidence["previous_lock"] = fields(fd, lock_query, "+QNWLOCK", "common/5g")
+        target = [str(role["pci"]), str(role["ssb"]), "30", "78"]
+        actual = evidence["previous_lock"]
+        evidence["lock_action"] = "reused" if actual == target else "write_required"
         for name, expected in (("mode_pref", "NR5G"), ("nr5g_disable_mode", "2")):
             command = f'AT+QNWPREFCFG="{name}"'
             if fields(fd, command, "+QNWPREFCFG", name) != [expected]:
@@ -96,13 +112,8 @@ def restore_cell_lock(at_port, info, role, evidence):
             bands = fields(fd, band_query, "+QNWPREFCFG", "nr5g_band")
             if len(bands) != 1 or "78" not in bands[0].split(":"):
                 raise connect.CellError("NR SA band readback does not include n78")
-        lock_query = 'AT+QNWLOCK="common/5g"'
-        evidence["previous_lock"] = fields(fd, lock_query, "+QNWLOCK", "common/5g")
-        target = [str(role["pci"]), str(role["ssb"]), "30", "78"]
-        actual = evidence["previous_lock"]
-        evidence["lock_action"] = "reused"
         if actual != target:
-            evidence["lock_action"] = "written"
+            evidence["lock_action"] = "write_required" if read_only else "written"
             try:
                 write(fd, lock_query + "," + ",".join(target))
             except connect.ATCommandError as error:
@@ -294,17 +305,31 @@ class Recovery(connect.Connection):
         interface = next(iter(net_ports))
         with self.network(shared=True):
             self.host_preflight(dict(interface=interface))
-        connect.status(f"Radio recovery: UE{self.ue} / {self.role['label']}; restore NR SA / "
-                       f"PCI={self.role['pci']} SSB={self.role['ssb']}, then request PLMN 00101 registration")
-        # MM can retain connected bearers after its own 3GPP state becomes
-        # searching/detached. Release that owned stale PDU before locking.
-        self.release_radio_pdu(evidence)
-        info = self.checked_modem()
-        restore_cell_lock(self.at_port, info, self.role, evidence)
+        connect.status(f"Radio recovery: UE{self.ue} / {self.role['label']}; check saved NR SA settings / "
+                       f"PCI={self.role['pci']} SSB={self.role['ssb']} and PLMN 00101 registration")
+        try:
+            restore_cell_lock(self.at_port, info, self.role, evidence,
+                              **({"read_only": True} if active else {}))
+        except RadioSettingsMismatch:
+            # Only a proven configuration mismatch can justify releasing an
+            # active PDU during radio repair. A correct lock + lost coverage
+            # keeps the session available for automatic radio recovery.
+            live = serial_registration(evidence, self.role)
+            if not live["registered"]:
+                self.release_radio_pdu(evidence, serial_lost=live["radio_lost"])
+                info, remaining = self.active()
+                connect.require(not remaining, "Radio settings differ but the active PDU is retained; retry live radio checks")
+            else:
+                # Already on the correct live cell: install missing preferences
+                # or a saved lock without needlessly releasing a working PDU.
+                info = self.checked_modem()
+            restore_cell_lock(self.at_port, info, self.role, evidence)
         live = serial_registration(evidence, self.role)
-        # Cover a stale positive MM registration cache when AT proves radio loss.
-        if live["radio_lost"]:
-            self.release_radio_pdu(evidence, serial_lost=True)
+        info, active = self.active()
+        if active and not live["registered"]:
+            evidence.update(status="waiting_radio", pdu_preserved=True, registration_requested=False)
+            connect.status("Waiting for radio recovery: saved lock is correct; preserve the current PDU, then verify its current IP and traffic")
+            return
         # The serial context is closed before talking to ModemManager again.
         info = self.checked_modem()
         if info.get("modem.generic.state") == "disabled":
@@ -317,6 +342,10 @@ class Recovery(connect.Connection):
                       and info.get("modem.3gpp.operator-code") == "00101"
                       and "5gnr" in technologies and "lte" not in technologies)
         if not registered or not live["registered"]:
+            if active:
+                evidence.update(status="waiting_radio", pdu_preserved=True, registration_requested=False)
+                connect.status("Waiting for registration state to synchronize; preserve the current PDU and keep checking this modem")
+                return
             connect.require(info.get("modem.generic.state") not in ("connecting", "connected", "disconnecting"),
                             "Modem still reports an active PDU; refusing registration until owned stale PDU is released")
             evidence["registration_requested"] = True
@@ -422,11 +451,11 @@ class Recovery(connect.Connection):
         with self.host_update(bearer):
             self.host_preflight(bearer)
             self.block(install=True)
-        connect.status("Radio recovery: release selected UE's stale PDU before registration; Wi-Fi fallback stays blocked")
+        connect.status("Radio configuration differs: release this UE's stale PDU before repairing settings; Wi-Fi fallback stays blocked")
         self.redial_started_at = time.monotonic()
         evidence["pdu_disconnect_requested"] = True
         self.result.update(redial=True, previous_source=bearer["source"], previous_bearer=active[0][0],
-                           redial_reason="radio lost with stale connected PDU")
+                           redial_reason="radio configuration mismatch with stale connected PDU")
         self.remember_disconnect(active, bearer)
         connect.change("mmcli", "-m", self.modem, "--simple-disconnect")
         _, remaining = self.active()
@@ -652,7 +681,7 @@ class Watcher:
         finally:
             self.startup_radio = copy.deepcopy(session.result.get("radio_recovery", self.startup_radio))
         evidence = session.result["radio_recovery"]
-        if evidence["status"] in ("applied", "registration_pending") and "verified_lock" in evidence:
+        if evidence["status"] in ("applied", "registration_pending", "waiting_radio") and "verified_lock" in evidence:
             self.startup_radio["status"] = "completed"
             connect.status("Startup radio [OK]: cell lock verified; checking registration, PDU and ping")
             return
@@ -667,6 +696,14 @@ class Watcher:
         evidence = dict(status="observing", reason=str(error), started_at=now(), at_port=self.args.at_port,
                         trigger="startup" if startup else "radio_failure")
         session.result["radio_recovery"] = evidence
+        state = session.result.get("registration", {}).get("state")
+        if state in ("connecting", "disconnecting"):
+            evidence.update(status="waiting_pdu_release" if state == "disconnecting" else "waiting_pdu_connect")
+            if self.last_redial is not None:
+                evidence["elapsed_seconds"] = round(max(0, current - self.last_redial), 1)
+            elapsed = f"; elapsed={evidence['elapsed_seconds']:g}s" if "elapsed_seconds" in evidence else ""
+            connect.status(f"Waiting for this UE's PDU {'release' if state == 'disconnecting' else 'connection'} to finish{elapsed}; keep polling, no duplicate request")
+            return
         if self.poll_registration():
             evidence.update(status="registration_pending", registration_request=copy.deepcopy(self.registration_job.data))
             connect.status("Registration request is running in background; check current state, no duplicate request")
