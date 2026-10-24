@@ -18,8 +18,9 @@ on the laptop and close minicom before starting a watcher.
 **No manual modem selection, serving-cell query or AT lock sequence is required
 before each start.** The startup commands below enable `--auto-cell-lock` and
 supply each UE's AT port. The script selects the modem by IMEI, verifies its SIM,
-enables it, checks registration/cell, restores the radio settings after a radio
-failure, and continues through PDU, network and ping verification.
+immediately verifies/restores its serial cell lock, enables it and requests
+registration if needed, then continues through PDU, network and ping verification.
+Later radio failures follow the observation and recovery procedure below.
 
 ### AT port mapping
 
@@ -135,6 +136,35 @@ sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 1 \
   --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
 ```
 
+### Initial serial cell lock and registration
+
+With `--auto-cell-lock --at-port ...`, **each new watcher invocation immediately
+prepares its selected UE's radio during step 2**, after modem/SIM discovery and
+before normal registration/PDU checks. It does not wait for the 10-second grace
+window on this initial preparation.
+
+The script exclusively opens the verified AT port, checks serial IMEI/IMSI,
+reads/restores NR SA preferences and the role's cell lock, and requires the exact
+lock readback. A correct saved lock is reused. It then reads serving-cell and
+registration diagnostics, closes the serial port, enables the modem if needed,
+and starts one background PLMN `00101` registration request when registration
+is not already proven. The client wait defaults to **5 seconds**. A correctly
+registered target cell and working PDU are preserved without a duplicate request.
+The same ownership and stale-PDU guards used for later recovery apply here.
+
+Serial/lock preparation must succeed before proceeding to normal connection
+checks. If it fails, the watcher reports `FAIL` and retries subject to the normal
+cooldown; it cannot skip the serial check just because ModemManager reports a
+registered cell. Once preparation succeeds, later attempts and healthy checks
+do not repeat it. A pending registration request does not block those checks.
+Only successful registration, serving-cell, PDU, route and ping verification
+produces connection `SUCCESS`.
+
+At `--verbose 2`, `Startup radio ...` and `Startup radio [OK] ...` describe this
+preparation; the latter is not a connection-success result. Level 1 still shows
+only attempt numbers/results. Without `--auto-cell-lock`, radio checks retain
+their read-only behavior. The one-shot `connect_ue*.sh` scripts are unchanged.
+
 ### Independent UE operation and host network locking
 
 Each launcher/watcher keeps its own role lock for its lifetime, so a second
@@ -196,7 +226,7 @@ Spark service. A failed earlier check ends the round before those pings complete
 
 ### Observe before requesting registration
 
-When radio checks first fail, the watcher gives the modem **10 seconds** to
+After initial serial preparation, when radio checks fail, the watcher gives the modem **10 seconds** to
 recover on its own (`--registration-grace 10`). It keeps checking current state
 at the configured loop interval. During this window it does not force a PDU
 disconnect, rewrite cell-lock settings or issue a registration request. Initial
@@ -217,7 +247,7 @@ client prevents another lock/registration recovery for that UE.
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `--interval` | `1` second | Delay after each completed check/attempt. |
-| `--registration-grace` | `10` seconds | Observe automatic radio recovery before forcing radio/PDU recovery; `0` skips this window. |
+| `--registration-grace` | `10` seconds | Observe later radio failures before forced recovery; startup prepares the radio immediately; `0` skips this window. |
 | `--registration-timeout` | `0` seconds | Extra state polling inside each attempt; default is one snapshot. |
 | `--registration-request-timeout` | `5` seconds | Background mmcli D-Bus wait; process watchdog adds 5 seconds. |
 | `--cell-lock-cooldown` | `30` seconds | Minimum gap before another radio recovery after the previous preparation/request finishes. |
@@ -336,8 +366,10 @@ Recovery proceeds as follows:
 The [startup commands above](#start-the-watchers) enable `--auto-cell-lock`
 for each UE using its by-path AT port. Copy the complete updated five-file set
 before starting; stop old watchers before updating shared helpers. The first
-attempt checks registration/cell; persistent failures trigger guarded recovery
-after the observation window, so a separate manual lock step is unnecessary.
+attempt immediately performs the guarded serial lock/registration preparation
+described [above](#initial-serial-cell-lock-and-registration). Later persistent
+radio failures trigger recovery after the observation window; a separate manual
+lock step is unnecessary.
 
 The option requires `--at-port`; it does not guess a tty number. Registration
 failure or missing/mismatching serving-cell evidence triggers radio recovery.
@@ -345,8 +377,9 @@ Identity/SIM errors, ping failures and host route errors do not directly trigger
 AT configuration. The default remains read-only radio checking when this option
 is absent; `--at-port` alone still only enables the read-only cell fallback.
 
-After the grace window, with no pending registration client, backend observation
-or cooldown gate, each eligible radio recovery does the following:
+The initial preparation runs immediately. For later radio failures, after the
+grace window and with no pending registration client, backend observation or
+cooldown gate, each eligible radio recovery does the following:
 
 1. Recheck this modem's IMEI, active SIM IMSI, active-bearer APN and dedicated
    WWAN ownership. Check host resources under a short shared read lock. Reject
@@ -383,11 +416,13 @@ or cooldown gate, each eligible radio recovery does the following:
    connected; an owned stale PDU must be released first. A generic `connected`
    state alone is not accepted as registration: the startup check also requires
    3GPP `home` or `roaming` before accepting PLMN and NR SA access.
-6. Mark the current attempt `FAIL`: applying a lock is not proof of connectivity.
+6. For a later radio failure, mark the current attempt `FAIL`: applying a lock is not proof of connectivity.
    On the next attempt, require the usual registration, exact serving cell,
    PDU, current-IP routing, both pings and final checks before `SUCCESS`.
+   Initial preparation instead continues these checks in the same attempt when
+   possible; a pending/unready registration still leaves that attempt failed.
 
-The first radio failure begins the observation window. After guarded radio
+The first later radio failure begins the observation window. After guarded radio
 preparation, a pending background request prevents duplicate radio recovery.
 When a request ends, or preparation fails before a request starts, subsequent
 radio recoveries have a **30-second minimum gap** by default. Checks and verified
@@ -469,8 +504,10 @@ wait plus the five-second initial state check and other queries. The 75-second
 outer watchdog did not override that shorter inner timeout.
 
 An intermediate implementation explicitly used a 70-second synchronous wait.
-The current implementation first observes for 10 seconds, then launches the
-registration client in the background with **`--timeout=5` by default**. Use
+The current implementation prepares the serial lock/registration immediately
+on startup. Later radio failures first get a 10-second observation window.
+Any required registration client runs in the background with **`--timeout=5`
+by default**. Use
 `--registration-request-timeout N` (1..70 seconds) to adjust that client limit;
 `--registration-timeout` now defaults to `0` for a single state snapshot per
 attempt. Registration events retain the requested limits, elapsed time and
@@ -568,15 +605,19 @@ elapsed time, raw result/error and private stdout/stderr file paths. An attempt'
 `registration_request` is a snapshot; use the event file for the later outcome.
 A failed client request can coexist with successful connection checks if the
 modem recovers independently. `summary.json` is written on exit and records the
-last registration event and the last verified state **before shutdown** (not a post-exit measurement)
+last registration event, initial `startup_radio` preparation outcome, and the
+last verified state **before shutdown** (not a post-exit measurement)
 and the nested `shutdown` completion/error. With automatic cell locking enabled,
-`attempts.jsonl` also records `radio_recovery`: the original radio error,
+`attempts.jsonl` also records `radio_recovery`: the `startup` / `radio_failure`
+trigger, original radio error,
 commands/writes attempted, previous/verified lock, diagnostic QENG/C5GREG output,
 lock reuse/write/error details, live serial registration, stale-PDU disconnect,
 registration-request snapshots and `observing` / `registration_pending` /
 `backend_observation` / `applied` / `failed` / `cooldown` / `interrupted` results.
 `applied` means the radio settings were applied; only the full connection checks
-can produce connection `SUCCESS`. `attempts.jsonl` marks a cancelled
+can produce connection `SUCCESS`. A `startup_radio` status of `completed` likewise
+means preparation succeeded, not that registration or connectivity was proven.
+`attempts.jsonl` marks a cancelled
 in-progress attempt as `interrupted`. Logs accumulate
 for the invocation; retain the evidence you need and remove old run directories
 after stopping the watcher. Signal exit codes are 130 (Ctrl+C) / 143 (SIGTERM),

@@ -23,8 +23,10 @@ import reconnect_ue as WATCH
 
 
 class FakeAT:
-    def __init__(self, ue=2, wrong_identity=None, reject=None, wrong_lock=False, correct_settings=False):
+    def __init__(self, ue=2, wrong_identity=None, reject=None, wrong_lock=False, correct_settings=False,
+                 registered=False):
         self.role = CONNECT.ROLES[ue]
+        self.registered = registered
         self.wrong_identity, self.reject, self.wrong_lock = wrong_identity, reject, wrong_lock
         self.settings = dict(mode_pref="NR5G" if correct_settings else "LTE",
                              nr5g_disable_mode="2" if correct_settings else "1",
@@ -56,9 +58,11 @@ class FakeAT:
         elif command == 'AT+QNWLOCK="common/5g"':
             response = '+QNWLOCK: "common/5g",' + self.lock
         elif command == 'AT+QENG="servingcell"':
-            response = '+QENG: "servingcell","SEARCH"'
+            response = (f'+QENG: "servingcell","NOCONN","NR5G-SA","TDD",001,01,'
+                        f'{self.role["nci"]:09X},{self.role["pci"]},7,{self.role["ssb"]},78,1,-95,-11,20,1,35'
+                        if self.registered else '+QENG: "servingcell","SEARCH"')
         elif command == "AT+C5GREG?":
-            response = "+C5GREG: 0,2"
+            response = "+C5GREG: 0,1" if self.registered else "+C5GREG: 0,2"
         else:
             return "\r\nERROR\r\n"
         return "\r\n" + response + "\r\nOK\r\n"
@@ -122,6 +126,7 @@ class RadioRecoveryTest(unittest.TestCase):
         watcher = self.watcher(ue=ue, extra=("--auto-cell-lock", "--registration-grace", "0",
                                            "--at-port", "owned-at-port"), **kwargs)
         watcher.registration_factory = ImmediateRegistrationRequest
+        watcher.startup_radio = dict(status="completed")  # These scenarios exercise later radio failures.
         return watcher
 
     def wrong_cell(self, ue=2):

@@ -261,7 +261,8 @@ class RegistrationRequest:
 
 class Recovery(connect.Connection):
     def __init__(self, *args, redial=False, redial_allowed=True, failed_bearer=None,
-                 registration_request_timeout=5, registration_dispatch=None, discovery_guard=None, **kwargs):
+                 registration_request_timeout=5, registration_dispatch=None, discovery_guard=None,
+                 startup_prepare=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.redial_requested = redial
         self.redial_allowed = redial_allowed
@@ -269,11 +270,17 @@ class Recovery(connect.Connection):
         self.redial_started_at = None
         self.registration_request_timeout = registration_request_timeout
         self.registration_dispatch, self.discovery_guard = registration_dispatch, discovery_guard
+        self.startup_prepare = startup_prepare
 
     def discover(self):
         super().discover()
         if self.discovery_guard:
             self.discovery_guard(self)
+
+    def registered(self, enable):
+        if enable and self.startup_prepare is not None:
+            self.startup_prepare(self)
+        return super().registered(enable=enable)
 
     def repair_radio(self):
         evidence = self.result["radio_recovery"]
@@ -302,6 +309,7 @@ class Recovery(connect.Connection):
         technologies = {token.strip().lower() for value in connect.values(info, "modem.generic.access-technologies")
                         for token in value.split(",")}
         registered = (info.get("modem.generic.state") in ("registered", "connecting", "connected")
+                      and info.get("modem.3gpp.registration-state") in ("home", "roaming")
                       and info.get("modem.3gpp.operator-code") == "00101"
                       and "5gnr" in technologies and "lte" not in technologies)
         if not registered or not live["registered"]:
@@ -485,6 +493,7 @@ class Watcher:
         self.registration_factory = RegistrationRequest
         self.registration_uncertain_until = 0
         self.last_registration = None
+        self.startup_radio = dict(status="pending" if args.auto_cell_lock else "not_requested")
 
     def session(self, recovery=False):
         kwargs = dict(at_port=self.args.at_port, registration_timeout=self.args.registration_timeout,
@@ -494,7 +503,8 @@ class Watcher:
             return Recovery(self.args.ue, redial=self.ping_failures >= self.args.redial_after,
                             redial_allowed=allowed, failed_bearer=self.failed_bearer,
                             registration_request_timeout=self.args.registration_request_timeout,
-                            registration_dispatch=self.start_registration, discovery_guard=self.guard_registration, **kwargs)
+                            registration_dispatch=self.start_registration, discovery_guard=self.guard_registration,
+                            startup_prepare=self.prepare_startup_radio if self.args.auto_cell_lock else None, **kwargs)
         return connect.Connection(self.args.ue, **kwargs)
 
     def say(self, message):
@@ -566,12 +576,29 @@ class Watcher:
         self.poll_registration()
         evidence["registration_request"] = copy.deepcopy(self.registration_job.data)
 
-    def repair_radio(self, session, error):
+    def prepare_startup_radio(self, session):
+        if self.startup_radio["status"] == "completed":
+            return
+        connect.status("Startup radio: verify/restore serial cell lock and check registration before connecting PDU")
+        try:
+            self.repair_radio(session, connect.CellError("Initial serial cell-lock and registration preparation"), startup=True)
+        finally:
+            self.startup_radio = copy.deepcopy(session.result.get("radio_recovery", self.startup_radio))
+        evidence = session.result["radio_recovery"]
+        if evidence["status"] in ("applied", "registration_pending") and "verified_lock" in evidence:
+            self.startup_radio["status"] = "completed"
+            connect.status("Startup radio [OK]: cell lock verified; checking registration, PDU and ping")
+            return
+        raise connect.CellError("Startup cell-lock/registration preparation incomplete: "
+                                + evidence.get("error", evidence["status"]))
+
+    def repair_radio(self, session, error, *, startup=False):
         current = time.monotonic()
         if self.radio_failure_since is None:
             self.radio_failure_since = current
-        grace = max(0, self.args.registration_grace - (current - self.radio_failure_since))
-        evidence = dict(status="observing", reason=str(error), started_at=now(), at_port=self.args.at_port)
+        grace = 0 if startup else max(0, self.args.registration_grace - (current - self.radio_failure_since))
+        evidence = dict(status="observing", reason=str(error), started_at=now(), at_port=self.args.at_port,
+                        trigger="startup" if startup else "radio_failure")
         session.result["radio_recovery"] = evidence
         if self.poll_registration():
             evidence.update(status="registration_pending", registration_request=copy.deepcopy(self.registration_job.data))
@@ -619,7 +646,7 @@ class Watcher:
                 try:
                     session.run()
                 except connect.CellError as error:
-                    if self.args.auto_cell_lock:
+                    if self.args.auto_cell_lock and "radio_recovery" not in session.result:
                         self.repair_radio(session, error)
                     raise
                 self.healthy = True
@@ -728,6 +755,7 @@ class Watcher:
                            auto_cell_lock=self.args.auto_cell_lock, cell_lock_cooldown=self.args.cell_lock_cooldown,
                            registration_request_timeout=self.args.registration_request_timeout,
                            registration_grace=self.args.registration_grace, last_registration=self.last_registration,
+                           startup_radio=self.startup_radio,
                            registration_cleanup=registration_cleanup,
                            note="SIGINT/SIGTERM runs selected-role shutdown; normal --once success leaves the UE connected")
             (self.directory / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
@@ -773,13 +801,13 @@ def arguments(argv=None):
                         help="1: attempt number/result only (default); 2: steps; 3: full command/details/ping output")
     parser.add_argument("--at-port", help="Owned USB AT port for read-only cell fallback, or radio writes with --auto-cell-lock")
     parser.add_argument("--auto-cell-lock", action="store_true",
-                        help="On registration/cell failure, restore this UE's NR SA/cell lock and request registration; requires --at-port")
+                        help="Verify/restore this UE's serial cell lock and registration at startup and after radio loss; requires --at-port")
     parser.add_argument("--cell-lock-cooldown", type=positive_seconds, default=30.0,
                         help="Minimum seconds AFTER a radio recovery before another, default 30; checks continue meanwhile")
     parser.add_argument("--registration-timeout", type=nonnegative_int, default=0,
                         help="Extra registration-state wait inside an attempt, 0..300 seconds; default 0 checks once per loop")
     parser.add_argument("--registration-grace", type=nonnegative_int, default=10,
-                        help="Observe automatic radio recovery before forced lock/PDU/registration recovery, default 10s; 0 disables grace")
+                        help="Observe later radio failures before forced recovery, default 10s; startup prepares the radio immediately")
     parser.add_argument("--registration-request-timeout", type=positive_int, default=5,
                         help="Background mmcli D-Bus registration timeout, 1..70 seconds (default 5); process watchdog adds 5s")
     parser.add_argument("--redial-after", type=positive_int, default=3,
