@@ -112,6 +112,69 @@ class RadioRecoveryTest(unittest.TestCase):
                 WATCH.arguments(["--ue", "2", *options])
         self.assertFalse(WATCH.arguments(["--ue", "2"]).auto_cell_lock)
 
+    def test_cli_registration_request_timeout_is_bounded_below_process_watchdog(self):
+        self.assertEqual(WATCH.arguments(["--ue", "2"]).registration_request_timeout, 70)
+        for value in ("0", "71", "nan"):
+            with self.subTest(value=value), self.assertRaises(SystemExit):
+                WATCH.arguments(["--ue", "2", "--registration-request-timeout", value])
+        args = WATCH.arguments(["--ue", "2", "--registration-request-timeout", "12"])
+        self.assertEqual(args.registration_request_timeout, 12)
+
+    def test_selected_dbus_wait_is_sent_to_mmcli_and_request_return_is_recorded(self):
+        self.wrong_cell()
+        watcher = self.auto(level=2)
+        watcher.args.registration_request_timeout = 12
+        with FakeAT().port():
+            watcher.attempt()
+        record = json.loads((watcher.directory / "attempts.jsonl").read_text())
+        request = record["radio_recovery"]["registration_request"]
+        self.assertEqual((request["status"], request["mmcli_timeout_seconds"], request["process_timeout_seconds"]),
+                         ("returned", 12, 75))
+        self.assertGreaterEqual(request["elapsed_seconds"], 0)
+        self.assertTrue(any(cmd[-1] == "--timeout=12" for cmd in self.network.changes))
+        self.assertIn("mmcli wait up to 12s", self.console.getvalue())
+        self.assertFalse(watcher.healthy)  # A returned registration call is not connectivity proof.
+
+    def test_dbus_error_and_process_watchdog_have_separate_request_evidence(self):
+        for process_timeout in (False, True):
+            with self.subTest(process_timeout=process_timeout):
+                self.wrong_cell()
+                watcher = self.auto()
+                records_path = watcher.directory / "attempts.jsonl"
+                records_path.unlink(missing_ok=True)
+                def change(*command):
+                    if process_timeout:
+                        raise CONNECT.subprocess.TimeoutExpired(command, 75)
+                    raise CONNECT.subprocess.CalledProcessError(1, command, stderr="Timeout was reached")
+                with FakeAT().port(), patch.object(CONNECT, "change", change):
+                    watcher.attempt()
+                evidence = json.loads(records_path.read_text())["radio_recovery"]
+                request = evidence["registration_request"]
+                self.assertEqual(request["status"], "process_timeout" if process_timeout else "failed")
+                self.assertEqual(evidence["status"], "failed")
+                if not process_timeout:
+                    self.assertEqual(request["stderr"], "Timeout was reached")
+                self.assertIn("elapsed_seconds", request)
+                self.assertEqual(self.console.getvalue().splitlines()[-1], "UE2 / FR3 attempt 1 ... FAIL")
+
+    def test_ctrl_c_while_registration_waits_records_interruption_and_shuts_down(self):
+        self.wrong_cell()
+        watcher = self.auto()
+        original_change = self.network.change
+        def change(*command):
+            if "--3gpp-register-in-operator=00101" in command:
+                raise CONNECT.StopRequested(signal.SIGINT)
+            return original_change(*command)
+        with FakeAT().port(), patch.object(CONNECT, "change", change):
+            self.assertEqual(watcher.run(), 130)
+        evidence = json.loads((watcher.directory / "attempts.jsonl").read_text())["radio_recovery"]
+        self.assertEqual(evidence["registration_request"]["status"], "interrupted")
+        self.assertEqual(evidence["status"], "interrupted")
+        summary = json.loads((watcher.directory / "summary.json").read_text())
+        self.assertEqual(summary["shutdown"]["status"], "completed")
+        self.assertEqual(summary["registration_request_timeout"], 70)
+        self.assertEqual(self.network.modems[next(iter(self.network.modems))][2], "registered")
+
     def test_both_roles_restore_own_lock_with_verified_readback(self):
         for ue in (1, 2):
             with self.subTest(ue=ue), FakeAT(ue).port() as modem:
@@ -356,7 +419,7 @@ class RadioRecoveryTest(unittest.TestCase):
         watcher.args.registration_timeout = 0  # No simulated-clock sleep needed.
         original_change = self.network.change
         def change(*command):
-            if command[-1] == "--3gpp-register-in-operator=00101":
+            if "--3gpp-register-in-operator=00101" in command:
                 with open(WATCH.SHARED_LOCK, "a") as lock:
                     CONNECT.fcntl.flock(lock, CONNECT.fcntl.LOCK_EX | CONNECT.fcntl.LOCK_NB)
                 self.network.changes.append(command)
@@ -365,7 +428,7 @@ class RadioRecoveryTest(unittest.TestCase):
                 original_change(*command)
         with FakeAT().port(), patch.object(CONNECT, "change", change):
             watcher.attempt()
-        self.assertIn(("mmcli", "-m", modem_path, "--3gpp-register-in-operator=00101"), self.network.changes)
+        self.assertIn(("mmcli", "-m", modem_path, "--3gpp-register-in-operator=00101", "--timeout=70"), self.network.changes)
         self.assertFalse(watcher.healthy)
         watcher.attempt()
         self.assertTrue(watcher.healthy)

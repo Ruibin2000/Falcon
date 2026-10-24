@@ -162,12 +162,14 @@ def capture(log, level):
 
 
 class Recovery(connect.Connection):
-    def __init__(self, *args, redial=False, redial_allowed=True, failed_bearer=None, **kwargs):
+    def __init__(self, *args, redial=False, redial_allowed=True, failed_bearer=None,
+                 registration_request_timeout=70, **kwargs):
         super().__init__(*args, **kwargs)
         self.redial_requested = redial
         self.redial_allowed = redial_allowed
         self.failed_bearer = failed_bearer
         self.redial_started_at = None
+        self.registration_request_timeout = registration_request_timeout
 
     def repair_radio(self):
         evidence = self.result["radio_recovery"]
@@ -202,12 +204,42 @@ class Recovery(connect.Connection):
             connect.require(info.get("modem.generic.state") not in ("connecting", "connected", "disconnecting"),
                             "Modem still reports an active PDU; refusing registration until owned stale PDU is released")
             evidence["registration_requested"] = True
-            connect.change("mmcli", "-m", self.modem, "--3gpp-register-in-operator=00101")
+            self.request_registration(evidence)
         else:
             evidence["registration_requested"] = False
         self.checked_modem()
         evidence["status"] = "applied"
         connect.status("Radio recovery [OK]: lock read back; next attempt must verify registration, cell, PDU and ping")
+
+    def request_registration(self, evidence):
+        request = dict(status="waiting", started_at=now(),
+                       mmcli_timeout_seconds=self.registration_request_timeout,
+                       process_timeout_seconds=75)
+        evidence["registration_request"] = request
+        started = time.monotonic()
+        connect.status(f"Registration request: PLMN=00101; mmcli wait up to {self.registration_request_timeout}s, "
+                       "process limit 75s; waiting for reply ...")
+        try:
+            # mmcli defaults to 30s independently of our subprocess watchdog.
+            # Leave five seconds above the largest supported D-Bus timeout for
+            # the CLI to return its own result before the process watchdog fires.
+            connect.change("mmcli", "-m", self.modem, "--3gpp-register-in-operator=00101",
+                           f"--timeout={self.registration_request_timeout}")
+        except KeyboardInterrupt:
+            request["status"] = "interrupted"
+            raise
+        except ERRORS as error:
+            request.update(status="process_timeout" if isinstance(error, subprocess.TimeoutExpired) else "failed",
+                           error=str(error))
+            if isinstance(error, subprocess.CalledProcessError):
+                request.update(returncode=error.returncode, stderr=error.stderr or "")
+            raise
+        else:
+            request["status"] = "returned"
+        finally:
+            request.update(ended_at=now(), elapsed_seconds=round(time.monotonic() - started, 3))
+            connect.status(f"Registration request {request['status'].upper()}: "
+                           f"elapsed={request['elapsed_seconds']:g}s; connection still requires full verification")
 
     @staticmethod
     def registration_lost(info):
@@ -375,7 +407,8 @@ class Watcher:
         if recovery:
             allowed = self.last_redial is None or time.monotonic() - self.last_redial >= self.args.redial_cooldown
             return Recovery(self.args.ue, redial=self.ping_failures >= self.args.redial_after,
-                            redial_allowed=allowed, failed_bearer=self.failed_bearer, **kwargs)
+                            redial_allowed=allowed, failed_bearer=self.failed_bearer,
+                            registration_request_timeout=self.args.registration_request_timeout, **kwargs)
         return connect.Connection(self.args.ue, **kwargs)
 
     def say(self, message):
@@ -509,6 +542,7 @@ class Watcher:
                            last_connection_verified=verified_before_stop, interval_seconds=self.args.interval,
                            verbose=self.args.verbose, signal=self.exit_signal, shutdown=shutdown,
                            auto_cell_lock=self.args.auto_cell_lock, cell_lock_cooldown=self.args.cell_lock_cooldown,
+                           registration_request_timeout=self.args.registration_request_timeout,
                            note="SIGINT/SIGTERM runs selected-role shutdown; normal --once success leaves the UE connected")
             (self.directory / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
             self.say(f"Stopped; evidence saved: {self.directory}")
@@ -548,6 +582,8 @@ def arguments(argv=None):
                         help="Minimum seconds AFTER a radio recovery before another, default 30; checks continue meanwhile")
     parser.add_argument("--registration-timeout", type=positive_int, default=5,
                         help="Registration wait per attempt, 1..300 seconds (default 5)")
+    parser.add_argument("--registration-request-timeout", type=positive_int, default=70,
+                        help="mmcli D-Bus wait for radio-recovery registration, 1..70 seconds (default 70); process limit remains 75s")
     parser.add_argument("--redial-after", type=positive_int, default=3,
                         help="Redial on the next attempt after this many consecutive failed ping attempts, default 3")
     parser.add_argument("--redial-cooldown", type=positive_seconds, default=30.0,
@@ -558,6 +594,8 @@ def arguments(argv=None):
     args = parser.parse_args(argv)
     if args.registration_timeout > 300:
         parser.error("--registration-timeout must be in 1..300")
+    if args.registration_request_timeout > 70:
+        parser.error("--registration-request-timeout must be in 1..70 (below the 75s process limit)")
     if args.auto_cell_lock and not args.at_port:
         parser.error("--auto-cell-lock requires --at-port for this UE's verified AT port")
     return args

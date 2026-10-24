@@ -174,7 +174,12 @@ check/attempt. Registration, ModemManager commands and ping take additional time
 this is not a guaranteed one-second recovery or a new overlapping process every
 second. An attempt waits up to five seconds for registration by default
 (`--registration-timeout 90` extends that wait); individual external commands have
-a 75-second timeout. Healthy checks and recovery both verify source-bound and
+a 75-second process timeout. Automatic recovery's registration request also
+explicitly sets the mmcli D-Bus timeout to **70 seconds**
+(`--registration-request-timeout 70`, range 1..70). This is separate from the
+five-second registration-state polling budget and the retry interval. mmcli
+commands without an explicit timeout may return earlier than the process limit.
+Healthy checks and recovery both verify source-bound and
 ordinary routes and use **one ping in each mode**, rather than the one-shot
 launcher's five. Healthy checks read modem/cell/bearer/host state and send ping;
 they do not modify the modem, addresses or routes. **Healthy monitoring and failed
@@ -329,7 +334,7 @@ Each eligible recovery does the following:
    If the correct live SA cell and C5GREG `1`/`5` already prove registration and MM
    also reports the expected NR SA registration, preserve the working PDU.
    Otherwise enable the modem if needed and request registration using
-   `mmcli -m <current-selected-modem> --3gpp-register-in-operator=00101`.
+   `mmcli -m <current-selected-modem> --3gpp-register-in-operator=00101 --timeout=70`.
    ModemManager may reject registration while it still considers the modem
    connected; an owned stale PDU must be released first. A generic `connected`
    state alone is not accepted as registration: the startup check also requires
@@ -348,7 +353,11 @@ saved lock is reused regardless of this interval. Keeping `30`
 gives network selection time to settle and avoids repeated saved-setting writes.
 `--interval` still controls the delay after a completed attempt/check; it is not
 the timeout of AT or registration work. AT commands allow five seconds each;
-the registration request uses the normal 75-second external-command limit.
+the registration request defaults to a 70-second mmcli D-Bus timeout within the
+75-second process limit. Levels 2/3 show the wait budget before the request and
+the result/actual elapsed time when it returns. This does not guarantee that
+registration or the full attempt takes exactly 70 seconds. A client timeout also
+does not prove that background network selection was cancelled.
 
 Serial/registration work never holds the shared host-network lock. UE1 and UE2
 retain separate ownership and cooldown state. Healthy checks never write AT
@@ -360,14 +369,18 @@ writes may already have taken effect and are recorded in `attempts.jsonl`.
 Lowering DU TX gain can leave too little downlink signal for cell acquisition
 or registration. Restoring a lock does not restore RF coverage. If registration
 continues to fail with the expected lock, restore adequate DU gain/coverage and
-check CU/DU/core status. No live recovery after a gain change has been validated
-for this new option; validation so far uses simulated modems and pseudo-terminals.
+check CU/DU/core status. A later operator-reported connection self-check recovery
+is recorded below; the exact radio/PDU recovery branch after a gain change still
+needs retained detailed evidence.
 
 The NR preference query/write formats and `nr5g_disable_mode=2` (disable NSA)
 come from the [Quectel RG50xQ/RM5xxQ AT manual](https://www.quectel.com/content/uploads/2024/05/Quectel_RG50xQRM5xxQ_Series_AT_Commands_Manual_V1.2.pdf).
 The lock readback format also matches the retained
 [UE2 operator evidence](evidence/2026-10-13_du2_registration/operator_at_readback.txt).
 The registration option is provided by [ModemManager's 3GPP CLI](https://github.com/linux-mobile-broadband/ModemManager/blob/main/cli/mmcli-modem-3gpp.c).
+The [mmcli entry point](https://github.com/linux-mobile-broadband/ModemManager/blob/main/cli/mmcli.c)
+defaults to a 30-second operation timeout; the watcher overrides it specifically
+for this registration request.
 Its [registration handler](https://github.com/linux-mobile-broadband/ModemManager/blob/main/src/mm-iface-modem-3gpp.c)
 rejects operations while the modem is connected/connecting/disconnecting and
 performs fresh registration checks before deciding whether to register again.
@@ -394,10 +407,63 @@ The updated flow releases a verified stale PDU before attempting lock/registrati
 reuses an existing correct lock, and checks live AT registration rather than
 trusting generic MM `connected`. Copy the updated five files and restart the
 watcher using the commands above. These cases pass offline regression tests;
-the modem's precise reason for 902 and live recovery after this fix remain
-unverified. If 902 persists and the lock still reads `0`, retain `run.log` and
+the modem's precise reason for 902 and which recovery branch resolves it on the
+testbed remain unverified. If 902 persists and the lock still reads `0`, retain `run.log` and
 `attempts.jsonl`; the script will keep reporting failure rather than dialing
 with an unverified cell lock. No CFUN reset or ModemManager restart is added.
+
+### Registration times out with a correct saved lock
+
+The subsequent 2026-10-24 operator run read back the correct UE2 lock
+`2,639648,30,78`, with NR5G mode, NSA disabled, and n78 included. It still reported
+`QENG=SEARCH`, `C5GREG=0,0`, and MM `enabled/idle/detached`. The registration CLI
+returned `Timeout was reached`; the next attempt began about 36 seconds after
+the first. This is consistent with the old command's default 30-second mmcli
+wait plus the five-second initial state check and other queries. The 75-second
+outer watchdog did not override that shorter inner timeout.
+
+The watcher now explicitly supplies `--timeout=70`. Use
+`--registration-request-timeout N` to change that client wait within 1..70 seconds;
+`--registration-timeout` continues to control the separate state-polling step.
+Detailed evidence records a nested `registration_request` with the requested
+D-Bus/process limits, elapsed time, status and error/stderr. A returned request
+still requires all connection checks before `SUCCESS`.
+
+A correct saved lock proves the configuration tuple, not reception of the
+target cell. If SEARCH persists, investigate the radio path and DU health.
+Spark's DU2 startup transcript later confirmed `tx_gain 0 70` (the YAML baseline)
+after the earlier 60 dB setting. The DU2 log during the supplied registration
+window also contained RF `underflow` and `late` warnings. Their causal link to
+this modem's failed cell acquisition has not been established. Increasing the
+client wait does not repair a missing/unusable radio signal or DU scheduling
+failures. Live acceptance of the explicit 70-second timeout change remains pending.
+
+### Operator-reported connection recovery
+
+Later on 2026-10-24, the operator supplied this UE2 watcher output at
+`--interval 1 --verbose 1`, with automatic cell locking enabled:
+
+```text
+UE2 / FR3 attempt 1 ... SUCCESS
+UE2 / FR3 attempt 2 ... FAIL
+UE2 / FR3 attempt 3 ... FAIL
+UE2 / FR3 attempt 4 ... FAIL
+UE2 / FR3 attempt 5 ... FAIL
+UE2 / FR3 attempt 6 ... FAIL
+UE2 / FR3 attempt 7 ... FAIL
+UE2 / FR3 attempt 8 ... SUCCESS
+```
+
+This is an operator-reported successful recovery of the script's connection
+self-checks: it was initially healthy, retried failed checks, and passed again
+on attempt 8. A watcher `SUCCESS` requires registration, serving cell, PDU/host
+configuration, routes, both ping modes and final verification.
+
+Minimal output does not establish the failure trigger, elapsed recovery time,
+whether the modem re-registered/redialled or changed IP, or whether MPX/video
+traffic recovered. Retain this run's `run.log` and `attempts.jsonl` for those
+details. The output does not identify the installed timeout implementation, so
+it is not acceptance evidence for the new explicit 70-second request wait.
 
 ### Optional parameters
 
@@ -453,7 +519,8 @@ and the nested `shutdown` completion/error. With automatic cell locking enabled,
 `attempts.jsonl` also records `radio_recovery`: the original radio error,
 commands/writes attempted, previous/verified lock, diagnostic QENG/C5GREG output,
 lock reuse/write/error details, live serial registration, stale-PDU disconnect,
-registration request and `applied` / `failed` / `cooldown` / `interrupted` result.
+registration-request timeout/elapsed/error details and `applied` / `failed` /
+`cooldown` / `interrupted` result.
 `applied` means the radio settings were applied; only the full connection checks
 can produce connection `SUCCESS`. `attempts.jsonl` marks a cancelled
 in-progress attempt as `interrupted`. Logs accumulate
@@ -466,8 +533,9 @@ These watchers repair the PDU and laptop network, and can restore radio settings
 with `--auto-cell-lock`. A running MPX client then follows
 host IP changes as described [below](#which-ip-bindings-change-and-how-mpx-follows-them).
 They do not start MPX or restart applications bound explicitly to an old IP.
-Offline simulated checks pass; **physical obstruction/recovery and MPTCP traffic
-acceptance with these new watchers remain pending**.
+Offline simulated checks pass, and the operator has reported a connection
+self-check recovery as recorded above. **Timed radio-failure trials, attribution
+of the recovery branch, and MPTCP/video traffic acceptance remain pending**.
 
 ### Video during monitoring and recovery
 
