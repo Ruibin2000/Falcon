@@ -25,79 +25,24 @@ Run all commands in this file on the UE laptop. Use Bash, one terminal per UE
 for modem/bearer/path variables, and stop at failed checks. Spark startup, servers
 and KPM capture are in [Dual UE Spark Quick Commands](dual_ue_spark_quick_commands.md).
 
-## Before every start: check the cell lock
+## Manual startup order
 
-Manually check only the selected UE's serving cell/cell lock before startup.
-Use the three `mmcli` queries and, when needed, the role-specific NR SA/lock AT
-commands in [the cell-lock check](dual_ue_automation.md#1-before-every-start-check-the-cell-lock).
-UE1 / FR1 targets PCI `1`, NCI `66C000`, SSB `643680`; UE2 / FR3 targets PCI `2`,
-NCI `66C001`, SSB `639648`. Both use n78. Exit minicom before running a script.
+This booklet starts the two UEs **manually**, one step at a time. Complete the
+section 0 tool/helper preparation, then follow the full
+[UE1 sequence](#ue1-start) first and the full [UE2 sequence](#ue2-start) in another
+fresh Bash terminal. Both DUs and the required Spark servers must already be
+running; Spark startup is in the paired booklet.
 
-The automation below handles modem/SIM verification, enable/registration, PDU,
-interface/routing configuration and ping.
+For each role, select the current modem by IMEI and verify its active SIM
+(section 1.1 / 2.1), enable it if disabled, then check the serving cell and
+restore its lock if needed (1.2 / 2.2). Continue with registration/PDU checks,
+fresh bearer discovery, host IPv4 reset, policy routing and both bound and
+ordinary ping (1.3–1.6 / 2.3–2.6). Run UL only after those checks pass.
 
-## Automation scripts
-
-After the cell-lock check, run UE1's automation first, then UE2's in another
-terminal. Both DUs and the required Spark servers must already be running;
-Spark startup is in the paired booklet. The full manual sequences later in this
-file remain available for diagnosis.
-
-For automated preparation through ping, use the new
-[one-shot startup and self-check](dual_ue_automation.md) on the laptop:
-
-```bash
-# Laptop terminal 1: leave it waiting after PASS.
-sudo bash scripts/dual_fr1/connect_ue1.sh
-# Laptop terminal 2: start after UE1 PASS; leave it waiting too.
-sudo bash scripts/dual_fr1/connect_ue2.sh
-```
-
-The default terminal output shows self-check steps and completion markers.
-Add `--verbose` to either command to display full commands, connection details
-and ping output. Full logs are saved in both modes; failures and required
-manual serial instructions remain visible. Use `--check-only` for checks
-without startup connection/network changes or ping; it can also take `--verbose`.
-After normal startup succeeds, the launcher blocks until Ctrl+C without further
-queries, ping or CPU polling. The other UE can be started in a second terminal.
-**Ctrl+C/SIGTERM runs selected-UE shutdown** (disconnect, clear role host path,
-delete bearers and disable), including an interrupted `--check-only`. A completed
-`--check-only` exits immediately; optional `--exit-on-success` gives verify-and-exit
-behavior for batch startup. See Automation for shutdown outcomes and logs.
-
-These cover sections 1.1–1.6 and 2.1–2.6: modem/SIM identification,
-enable/registration, actual serving-cell checks, PDU connection, current bearer
-discovery, guarded host reset/rebuild and both source-bound and ordinary ping.
-They skip serial configuration when the serving cell matches; otherwise they
-stop with manual serial instructions. A read-only `--at-port` fallback is
-available if ModemManager cannot expose complete cell identifiers. Wi-Fi
-fallback blocks survive the existing reset/shutdown commands. Keep the four
-one-shot files together when transferring them; see the linked guide for setup,
-logs, rechecks and limitations. The scripts are not yet validated end to end
-on the physical laptop modems. Manual sequences remain below for diagnosis;
-do not run their reset/rebuild blocks concurrently with the scripts.
-
-For continuous recovery during an experiment, use the new
-[laptop automatic reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md) in separate
-laptop terminals, after copying the five files listed in that guide:
-
-```bash
-# Terminal 1
-sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 1
-# Terminal 2
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 1
-```
-
-`--verbose 1` shows only attempt number and result; `2` shows steps; `3` shows
-full details. The default interval is a one-second wait after each completed
-check/attempt; attempts do not overlap. Both watchers may run together. They
-recover suspended PDUs and use a threshold/cooldown for connected-but-unreachable
-PDUs, refresh changed bearer IPs and preserve Wi-Fi fallback guards. Stop the
-affected launcher/watcher with Ctrl+C before manual configuration. Ctrl+C now
-disconnects that UE, deletes its bearers, clears its host path and disables its
-modem; wait for the shutdown result. The other UE and management Wi-Fi remain
-available. New hardware validation is
-pending; see the reconnect Quick Start for redial controls, logs and bounded retries.
+Keep each role's terminal and variables for later traffic checks and shutdown.
+Keep UE1's verified PDU/path active while preparing UE2. After a modem power or
+reconnection event, repeat the affected role's complete manual sequence using
+fresh modem, bearer, IP and interface values. Stop at any failed check.
 
 The October 21 Laptop truth identified UE1 as IMSI `001010000000101`, APN `internet`,
 IPv4 `10.45.0.2`, and UE2 as IMSI `001010000000102`, APN `internet2`, IPv4

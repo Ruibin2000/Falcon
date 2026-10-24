@@ -15,29 +15,60 @@ On the laptop, manually check each UE's serving cell and restore its cell lock
 if needed. **Modem/SIM verification, enable/registration, PDU setup, network
 configuration and ping are handled by the automation in section 2.**
 
-### Check the serving cell
+### Select the current modem by IMEI
 
-Use a separate terminal for each UE. `$MODEM` is this UE's current modem
-path/index. In a fresh terminal, run `mmcli -L` first, then enter the current
-path/index with `read -r -p 'Current modem for this UE: ' MODEM`. Use the
-`equipment id` shown by `mmcli -m` to confirm the role; modem indices can change.
-
-**UE1 / FR1:**
+Use a separate **Bash terminal for each UE**. Run this function definition in
+each terminal, then run that role's block below. It sets `$MODEM` from the current
+IMEI match, so a changed modem index is handled without guessing. A missing or
+duplicate match stops before the cell query. This selection only reads modem
+identity; the automation performs the remaining self-checks.
 
 ```bash
-# UE1: $MODEM belongs to IMEI 863305041978437.
-mmcli -L
-mmcli -m "$MODEM"
-sudo mmcli -m "$MODEM" --get-cell-info
+select_ue_modem() {
+  local expected_imei="$1" listing path info imei
+  local -a paths=() matches=()
+  MODEM=''
+  listing=$(mmcli -L) || return 1
+  mapfile -t paths < <(printf '%s\n' "$listing" |
+    sed -n 's|.*\(/org/freedesktop/ModemManager1/Modem/[0-9][0-9]*\).*|\1|p' | sort -u)
+  for path in "${paths[@]}"; do
+    info=$(mmcli -m "$path" -K) || return 1
+    imei=$(printf '%s\n' "$info" | awk '
+      /^[[:space:]]*modem[.]generic[.]equipment-identifier[[:space:]]*:/ {
+        sub(/^[^:]*:[[:space:]]*/, ""); sub(/[[:space:]]*$/, ""); print; exit
+      }')
+    [[ "$imei" = "$expected_imei" ]] && matches+=("$path")
+  done
+  if [[ ${#matches[@]} -ne 1 ]]; then
+    printf 'FAIL: IMEI %s matched %s modems; stop here.\n' \
+      "$expected_imei" "${#matches[@]}"
+    return 1
+  fi
+  MODEM=${matches[0]}
+  printf 'Selected modem: %s (IMEI %s)\n' "$MODEM" "$expected_imei"
+}
 ```
 
-**UE2 / FR3:**
+### Check the serving cell
+
+**UE1 / FR1 — IMEI `863305041978437`:**
 
 ```bash
-# UE2: $MODEM belongs to IMEI 863305041980706.
-mmcli -L
-mmcli -m "$MODEM"
-sudo mmcli -m "$MODEM" --get-cell-info
+if select_ue_modem 863305041978437; then
+  mmcli -L
+  mmcli -m "$MODEM"
+  sudo mmcli -m "$MODEM" --get-cell-info
+fi
+```
+
+**UE2 / FR3 — IMEI `863305041980706`:**
+
+```bash
+if select_ue_modem 863305041980706; then
+  mmcli -L
+  mmcli -m "$MODEM"
+  sudo mmcli -m "$MODEM" --get-cell-info
+fi
 ```
 
 Check the NR record marked `serving: yes` against these targets:
