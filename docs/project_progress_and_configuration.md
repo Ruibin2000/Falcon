@@ -1,5 +1,12 @@
 # Project Progress and System Configuration
 
+Automation checkpoint, **2026-10-24**: the current UE automatic-reconnect script
+optimization stage is complete by operator decision. Retain the current recovery
+policy and parameters. The next recovery test will use fresh logs after Spark
+and laptop NTP synchronization; its experiment report will be written in
+**English** after the new measurements are available. The dated architecture
+and phase table below remain historical records.
+
 Network update, **2026-10-23**: the applied [Spark TUN split](networking/dual_ue_tun_split.md)
 places UE1 `10.45.0.1/16` on `ogstun_1` and UE2 `10.46.0.1/16` on `ogstun_2`,
 both MTU 1400, using the existing UPF. Independent checks of Spark configuration,
@@ -8,7 +15,7 @@ remain pending. The radio and traffic checkpoints below retain their dates.
 
 Radio/UE checkpoint summary, **2026-10-13**. DU1 migrated from 3750 to **3660 MHz within n78**. Single-UE IPv4 ping, a 30-second TCP uplink (receiver **17.0 Mbit/s**, sender Retr **0**), and **12 complete five-metric KPM reports for UE F1AP ID 5** passed. The operator now prioritizes DU2 and UL-only dual-link acceptance. Underflow remediation is deferred; count/growth alone does not block this UL scope. DU2 is configured/deployed for B210 `328B021` (USB 3) and passes offline checks. Actual DU2 radio startup/F1/E2 passed; UE2 registration/UL, the dual-link baseline and subscriber identity correlation remain pending. See the [DU2 procedure](runbooks/dual_fr1_runbook.md), historical [daily log](../dev_logs/2026-10-12_ruibin.md) and [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json).
 
-## Current verified single-link architecture
+## Verified single-link architecture as of 2026-10-13
 
 ```mermaid
 flowchart LR

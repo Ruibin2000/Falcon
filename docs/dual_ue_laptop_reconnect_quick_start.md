@@ -11,6 +11,10 @@ This guide uses **`reconnect_ue1.sh` / `reconnect_ue2.sh`**. The separate
 and a passive wait. Both modes share a per-UE lock, so only one can own a given
 UE at a time.
 
+**2026-10-24 checkpoint:** the current script optimization stage is complete.
+Keep the recovery policy and defaults below. A new recovery test will use fresh
+logs after host clock synchronization, followed by an English experiment report.
+
 <a id="before-starting"></a>
 
 ## 1. Before starting

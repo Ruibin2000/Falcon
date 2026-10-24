@@ -16,7 +16,10 @@ import unittest
 
 REPO = Path(__file__).resolve().parents[1]
 LAUNCHER = REPO / "scripts/dual_fr1/run_du_console.sh"
-CHILD = '''import json, os, signal, sys
+sys.path.insert(0, str(REPO / "scripts/dual_fr1"))
+import extract_du_gain_times as GAINS
+
+CHILD = '''import json, os, signal, sys, termios, time
 assert all(os.isatty(fd) for fd in (0, 1, 2)), "Missing terminal"
 assert os.getpgrp() == os.tcgetpgrp(0), "Not in terminal foreground"
 if sys.argv[1] == "exit":
@@ -27,9 +30,22 @@ def interrupted(signum, frame):
     sys.exit(130)
 signal.signal(signal.SIGINT, interrupted)
 print("ARGV=" + json.dumps(sys.argv[2:]), flush=True)
+if sys.argv[1] == "hidden":
+    original = termios.tcgetattr(0)
+    hidden = termios.tcgetattr(0)
+    hidden[3] &= ~termios.ECHO
+    termios.tcsetattr(0, termios.TCSANOW, hidden)
 print("READY", flush=True)
 line = sys.stdin.readline()
-print("RECEIVED=" + line.rstrip("\\r\\n"), flush=True)
+if sys.argv[1] == "hidden":
+    termios.tcsetattr(0, termios.TCSANOW, original)
+    print("HIDDEN_INPUT_READ", flush=True)
+else:
+    print("RECEIVED=" + line.rstrip("\\r\\n"), flush=True)
+if sys.argv[1] == "gain":
+    print("Tx gain set to 40 dB for port 0.", flush=True)
+    time.sleep(0.06)
+    print("Rx gain set to 35 dB for port 0.", flush=True)
 '''
 
 
@@ -107,6 +123,30 @@ class ConsoleTest(unittest.TestCase):
         code, output = self.run_terminal(mode="exit", arguments=["42"])
         self.assertEqual(code, 42, output)
         self.assertIn("CHILD_EXIT", self.log.read_text())
+
+    def test_gain_reply_times_are_extracted_from_real_output_timing(self):
+        before = time.time()
+        code, output = self.run_terminal(mode="gain", send=b";tx_gain 0 40;\n")
+        after = time.time()
+        self.assertEqual(code, 0, output)
+        timing = Path(str(self.log) + ".timing")
+        events = GAINS.gain_events(self.log, timing)
+        self.assertEqual([(e["direction"], e["port"], e["gain_db"]) for e in events],
+                         [("tx", 0, 40), ("rx", 0, 35)])
+        moments = [GAINS.datetime.fromisoformat(e["time_utc"]).timestamp() for e in events]
+        self.assertTrue(all(before <= moment <= after for moment in moments))
+        self.assertGreater(moments[1] - moments[0], 0.03)
+        self.assertFalse(any(line.startswith("I ") for line in timing.read_text().splitlines()))
+
+    def test_hidden_input_is_not_saved_in_transcript_or_timing(self):
+        secret = "fake-password-that-must-not-be-logged"
+        code, output = self.run_terminal(mode="hidden", send=(secret + "\n").encode())
+        self.assertEqual(code, 0, output)
+        self.assertIn("HIDDEN_INPUT_READ", output)
+        self.assertNotIn(secret, self.log.read_text())
+        timing = Path(str(self.log) + ".timing").read_text()
+        self.assertNotIn(secret, timing)
+        self.assertFalse(any(line.startswith("I ") for line in timing.splitlines()))
 
     def test_ctrl_c_reaches_the_interactive_child(self):
         code, output = self.run_terminal(send=b"\x03")

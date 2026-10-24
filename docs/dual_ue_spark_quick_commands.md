@@ -313,7 +313,9 @@ The [console launcher](../scripts/dual_fr1/run_du_console.sh) uses util-linux
 recording `startup.log`. Run it directly in an interactive terminal. It
 replaces the old `sudo ... | tee` pipeline, which left the DU behind sudo's
 pseudo-terminal foreground group and prevented console input. The launcher
-flushes output and propagates the child exit status; see
+flushes output and propagates the child exit status. It also records
+`startup.log.timing` and prints a precise UTC clock marker before launching the
+DU, so gain replies can be correlated with DU/CU events; see
 [script(1)](https://man7.org/linux/man-pages/man1/script.1.html).
 
 ### 5a. Spark DU1 terminal
@@ -397,6 +399,53 @@ startup, replacing the temporary per-PID foreground repair. The launcher was
 tested with real PTYs and a fake DU, including foreground ownership, command
 input, live output logging, literal arguments, child exit codes and `Ctrl+C`:
 `python3 -B /home/nyu/Desktop/Falcon_repo/Falcon/tests/du_console_test.py`.
+
+### 5e. Record gain change times
+
+Start each DU using the existing launcher command above. The updated launcher
+automatically records `startup.log` and `startup.log.timing` in that DU's run
+directory. Continue entering gain commands normally in the DU terminal:
+
+```text
+;tx_gain 0 40;
+```
+
+Restore it with a separate command:
+
+```text
+;tx_gain 0 70;
+```
+
+In another **Spark** terminal, display the gain acknowledgement times for the
+latest DU2 run:
+
+```bash
+python3 /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/extract_du_gain_times.py --du 2
+```
+
+Use `--du 1` for DU1, or pass an explicit `startup.log` path instead of `--du`.
+The tool reads a snapshot and exits; rerun after another gain command. Use
+`--json` to emit JSON lines for archival/analysis. It works while the DU is
+running and records successful TX and RX gain replies. It does not send commands
+to the DU or change its foreground terminal.
+
+The timestamp is the reconstructed UTC time at which `script` observed the
+successful `Tx/Rx gain set to ...` output, anchored to the launcher's precise
+clock marker. It is an experiment alignment marker, not a hardware measurement
+of when RF power settled. A command's hardware call completes before its reply;
+output delivery/scheduling can add delay. Spark's DU/CU logs use the same host's
+UTC clock; Laptop events still need the independently measured clock offset.
+
+Retain **both** `startup.log` and `startup.log.timing` along with `du.log`.
+No input stream is logged, so hidden sudo password input stays unrecorded. The
+gain extraction code rejects input timing records and refuses to invent times
+for old logs without the new clock marker/timing file. This recording starts on
+the next DU launch with the updated script; an already-running old console
+cannot acquire historical timestamps retroactively. No DU rebuild is required.
+
+PTY tests verify foreground input, Ctrl+C, exit codes, timing extraction and
+hidden-input exclusion. Byte/timing tests cover split replies and incomplete
+live records; hardware timing accuracy still needs measurement on the testbed.
 These tests do not start radios; verify
 F1/E2, console help, both UE paths and traffic after the next actual launch.
 

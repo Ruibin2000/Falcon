@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Keep sudo and the DU on a full terminal while recording console output.
+# Keep sudo and the DU on a full terminal while recording console output/timing.
 # Usage: bash run_du_console.sh STARTUP_LOG COMMAND [ARG ...]
 set -euo pipefail
 
@@ -24,7 +24,10 @@ shift
 printf -v DU_CONSOLE_COMMAND '%q ' "$@"
 export SHELL=/bin/bash
 
-# Log output only: sudo's hidden password input must not be recorded.
+# Log output only: sudo's hidden password input must not be recorded. The
+# advanced timing stream records output chunks, not terminal input. A precise
+# UTC marker anchors those elapsed times without the timing header's rounding.
 # --return propagates the DU exit status; --flush keeps the transcript current.
 exec script --quiet --flush --return --log-out "$DU_CONSOLE_LOG" \
-  --command "exec $DU_CONSOLE_COMMAND"
+  --log-timing "${DU_CONSOLE_LOG}.timing" --logging-format advanced \
+  --command "date -u '+FALCON_CONSOLE_CLOCK %Y-%m-%dT%H:%M:%S.%NZ'; exec $DU_CONSOLE_COMMAND"
