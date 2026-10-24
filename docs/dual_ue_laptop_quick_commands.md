@@ -332,6 +332,7 @@ reports incomplete; address-removal failures retain the existing guards.
 | Spark iperf3 port | `5201` | `5202` |
 | Proposed policy table / lookup / guard priority | `151` / `10151` / `10152` | `152` / `10161` / `10162` |
 | Server destination lookup / guard priority | `10153` / `10154` | `10163` / `10164` |
+| Reset-surviving destination block priority | `20151` | `20152` |
 | WWAN / UE IP / modem / bearer / AT port | Discover each run | Discover each run |
 
 | Observed before the latest modem power cycle | UE1 | UE2 |
@@ -356,6 +357,37 @@ describes NV saving, but this device's actual readback is the operational gate.
 A correct APN/subnet does not bind a SIM to a DU in the shared PLMN. Require the
 exact lock, actual PCI/NCI/SSB and SA before PDU/routes; recheck the cell after
 PDU establishment and before UL. Controlled cold-start restoration remains pending.
+
+<a id="block-wifi-fallback"></a>
+
+### 0.2. Block ordinary ping and test traffic from falling back to Wi-Fi
+
+**Use the guarded reset blocks in 1.4 / 2.4.** Before clearing a role's host
+path, they install an independent destination `unreachable` rule: priority
+`20151` for `10.45.0.1/32`, or `20152` for `10.46.0.1/32`. These rules run before
+the main-table Wi-Fi route (priority `32766`) and survive the reset helper's
+cleanup of tables 151/152 and priorities 10151–10154 / 10161–10164.
+The bare section 0.1 helper does not install these extra blocks.
+
+After reset, ordinary `ping 10.45.0.1` / `ping 10.46.0.1` and TCP/UDP traffic
+to that role's server must fail with an unreachable error, rather than succeed
+over Wi-Fi. Each reset block checks the route and ordinary ping before allowing
+a rebuild. Only these two IPv4 service destinations are covered; Wi-Fi stays
+connected with its default route for SSH, management and other destinations.
+This does not force general Internet traffic onto the UEs.
+
+Sections 1.5 / 2.5 install all four normal role rules together: source lookup,
+source guard, destination lookup and destination guard. Their priorities precede
+`20151/20152`, so a healthy path sends both bound and ordinary traffic through
+the correct WWAN/table. Sections 1.6 / 2.6 verify both routes before ping/UL.
+A source-bound ping alone does not establish the path of an ordinary ping.
+
+The independent blocks remain after shutdown and repeated resets. They are
+runtime kernel rules, so rerun the guarded sequence after a laptop reboot;
+this is not a persistent firewall installation. If a reserved block priority
+contains a different rule, stop and inspect it. Do not delete an occupied slot
+or add duplicates to make the command pass. A reused path must pass 1.6 / 2.6;
+rebuild an old source-only path with 1.4–1.6 / 2.4–2.6.
 
 <a id="ue1-start"></a>
 
@@ -561,15 +593,41 @@ the role's interfaces to DOWN / MTU 1500. Table 152 and the other UE's
 addresses remain available. The current PDU stays connected for rebuilding.
 
 If the existing path already matches the current verified bearer and works,
-reuse it by going to 1.6. Otherwise execute the reset, require
-`UE1 reset complete`, then proceed to 1.5:
+reuse it only after 1.6 verifies both bound and ordinary routes. Otherwise use
+this guarded reset. It installs the independent destination block **before**
+removing the path, requires `UE1 reset complete`, and checks that ordinary
+traffic is blocked after reset. Require `UE1 Wi-Fi fallback blocked: OK`
+before proceeding to 1.5:
 
 ```bash
-sudo python3 ~/falcon-reset-ue-network.py --ue 1
-ip -o -4 addr show
-ip -4 rule show
-ip -4 route show table 151
-ip -4 route show default
+reset_ue1_block_wifi() {
+  local rules block_rule
+  rules=$(ip -4 rule show) || return 1
+  block_rule=$(awk '$1 == "20151:" {$1=$1; print}' <<< "$rules")
+  case "$block_rule" in
+    '') sudo ip -4 rule add pref 20151 to 10.45.0.1/32 type unreachable || return 1 ;;
+    '20151: from all to 10.45.0.1 unreachable'|'20151: from all to 10.45.0.1/32 unreachable') : ;;
+    *) printf 'STOP: priority 20151 occupied; inspect before reset.\n'; return 1 ;;
+  esac
+  sudo python3 ~/falcon-reset-ue-network.py --ue 1 || return 1
+  if ip -4 route get 10.45.0.1; then
+    printf 'STOP: UE1 server is still routable after reset; inspect earlier policy rules.\n'
+    return 1
+  fi
+  if ping -c 1 -W 1 10.45.0.1; then
+    printf 'STOP: UE1 ordinary ping still succeeds after reset.\n'
+    return 1
+  fi
+  printf 'UE1 Wi-Fi fallback blocked: OK\n'
+}
+if reset_ue1_block_wifi; then
+  ip -o -4 addr show
+  ip -4 rule show
+  ip -4 route show table 151 || true
+  ip -4 route show default
+else
+  printf 'STOP: guarded reset/check failed; do not rebuild or start traffic.\n'
+fi
 ```
 
 An empty/absent table can report `FIB table does not exist`; that is expected
@@ -581,9 +639,10 @@ preflight only after reset, never on an existing valid path.**
 
 ### 1.5. Build UE1's fresh table 151 and rules
 
-Reinspect table `151` and priorities `10151/10152`; require them free
-for a new path. Use the just-read bearer IP/prefix/MTU/interface. This preflight
-refuses collisions and an earlier matching policy rule:
+Reinspect table `151` and priorities `10151`–`10154`; require all four
+slots free for a new path. Keep the independent priority-20151 block installed.
+Use the just-read bearer IP/prefix/MTU/interface. This preflight refuses
+collisions and an earlier matching policy rule:
 
 ```bash
 python3 - "$UE_IP" "$UE_PREFIX" "$UE_MTU" "$ROUTE_TABLE" "$RULE_PREF" "$GUARD_PREF" "$UE_SUBNET" "$SERVER_IP" <<'PY'
@@ -607,7 +666,7 @@ def contains(selector, value):
 rules = json.loads(subprocess.check_output(['ip', '-j', '-4', 'rule', 'show']))
 for rule in rules:
     priority = int(rule.get('priority', 0))
-    assert priority not in (int(lookup), int(guard)), f'Rule priority {priority} already occupied: {rule}'
+    assert priority not in (int(lookup), int(guard), int(lookup) + 2, int(guard) + 2), f'Rule priority {priority} already occupied: {rule}'
     assert table_number(rule.get('table')) != int(table), 'Routing table already referenced'
     if priority < int(lookup) and not (priority == 0 and table_number(rule.get('table')) == 255):
         assert not rule.get('not') and 'not' not in rule.get('flags', []), 'Inverted earlier policy rule requires review'
@@ -617,12 +676,17 @@ if routes.returncode:
     assert 'FIB table does not exist' in routes.stderr, routes.stderr
 else:
     assert not json.loads(routes.stdout), 'Routing table already has routes'
+blocks = [rule for rule in rules if rule.get('priority') == 20151]
+assert len(blocks) == 1, 'Run the guarded reset first: missing/duplicate reset block'
+block = blocks[0]
+assert block.get('src', 'all') == 'all' and block.get('dst') in ('10.45.0.1', '10.45.0.1/32') and block.get('action') == 'unreachable', f'Wrong reset block: {block}'
 print('Policy slots and IPv4 parameters: OK')
 PY
 ```
 
-Require `Policy slots and IPv4 parameters: OK`. Install the source guard before
-exposing the source address, and save this run's rollback/ownership values:
+Require `Policy slots and IPv4 parameters: OK`. Install the source and
+destination guards before exposing the source address, then install both
+lookups. Save this run's ownership values and destination-rule record:
 
 ```bash
 prepare_dual_path() {
@@ -649,84 +713,77 @@ prepare_dual_path() {
   ip -o link show dev "$PATH_IF" | grep -Eq '(<|,)UP(,|>)' && PATH_WAS_UP=yes
   declare -p MODEM MODEM_IDENTITY EXPECTED_IMEI EXPECTED_IMSI BEARER \
     APN UE_SUBNET PATH_SERVER PATH_IP PATH_CIDR PATH_IF PATH_TABLE PATH_RULE PATH_GUARD PATH_OLD_MTU PATH_WAS_UP \
-    > "$UE_RUN/route-state.txt"
+    > "$UE_RUN/route-state.txt" || return 1
+  printf 'destination_lookup=10153 destination_guard=10154 server=10.45.0.1 table=151\n' \
+    > "$UE_RUN/server-route-state.txt" || return 1
   sudo ip -4 rule add pref 10152 from "$PATH_IP/32" to 10.45.0.1/32 type unreachable &&
+  sudo ip -4 rule add pref 10154 to 10.45.0.1/32 type unreachable &&
   sudo ip link set dev "$PATH_IF" mtu "$UE_MTU" up &&
   sudo ip -4 addr add "$PATH_CIDR" dev "$PATH_IF" noprefixroute &&
   sudo ip -4 route add table 151 10.45.0.1/32 dev "$PATH_IF" src "$PATH_IP" &&
-  sudo ip -4 rule add pref 10151 from "$PATH_IP/32" to 10.45.0.1/32 lookup 151
+  sudo ip -4 rule add pref 10151 from "$PATH_IP/32" to 10.45.0.1/32 lookup 151 &&
+  sudo ip -4 rule add pref 10153 to 10.45.0.1/32 lookup 151
 }
 if prepare_dual_path; then
   ip -4 route get 10.45.0.1 from "$PATH_IP"
+  ip -4 route get 10.45.0.1
   ip -4 route show default
-  ping -q -I "$PATH_IP" -c 5 "$PATH_SERVER"
+  printf 'UE1 rules installed; complete 1.6 before traffic.\n'
 else
   printf 'FAIL: path setup incomplete; stop and clean only this run.\n'
 fi
 ```
 
-Stop on a setup failure and use the same role reset helper before retrying.
-Keep `route-state.txt` as evidence; reset does not depend on it.
+Stop on a setup failure and repeat 1.4's guarded reset before retrying.
+Keep `route-state.txt` and `server-route-state.txt` as evidence; reset does not
+depend on them. The independent block remains installed throughout rebuilding.
 The setup requires a dedicated QMI interface with no existing IPv4 address or
 default route. Resolve unexpected interface ownership before continuing.
 
-### 1.6. Verify table 151, private ping and management routing
+### 1.6. Verify bound and ordinary routes, private ping and management routing
+
+Section 1.5 already installed all four role rules; this block only verifies
+them. Require both route lookups to select UE1's current WWAN and table
+`151`, and the ordinary lookup's preferred source to equal `$UE_IP`.
+Reused paths must also have the independent reset block. Do not accept ping
+success over Wi-Fi as a UE check.
 
 ```bash
 ip -4 rule show
 ip -4 route show table 151
-ip -4 route get 10.45.0.1 from "$UE_IP"
-ping -I "$UE_IP" -c 5 10.45.0.1
-ip -4 route show default
-```
-
-Require this UE's actual interface and `table 151`, private ping replies,
-and the unchanged Wi-Fi default route. Save `PATH_*` values even if a later
-bearer allocation changes. Recheck cell/SA after reconnect/reattachment.
-
-The source rules above support programs that bind UE1's IP, including the
-iperf commands below. **Complete the destination lookup/guard installation here
-to make ordinary `ping 10.45.0.1` select UE1. Reset plus 1.5 alone does not do
-that.** Table 151's existing route supplies the current UE1 preferred source. Run this
-after the source-bound checks pass and verify priorities `10153/10154` are
-unused; inspect an occupied slot rather than adding duplicates.
-
-```bash
-ip -4 rule show
-if ip -4 rule show | grep -Eq '^(10153|10154):'; then
-  printf 'STOP: UE1 destination priorities occupied; inspect existing rules.\n'
-else
-  if printf 'destination_lookup=10153 destination_guard=10154 server=10.45.0.1 table=151\n' > "$UE_RUN/server-route-state.txt" &&
-     sudo ip -4 rule add pref 10154 to 10.45.0.1/32 type unreachable &&
-     sudo ip -4 rule add pref 10153 to 10.45.0.1/32 lookup 151; then
-    if python3 - "$WWAN_IF" "$UE_IP" <<'PY'
+if python3 - "$WWAN_IF" "$UE_IP" <<'PY'
 import json, subprocess, sys
 interface, source = sys.argv[1:]
-routes = json.loads(subprocess.check_output(['ip', '-N', '-j', '-4', 'route', 'get', '10.45.0.1'], text=True))
-assert len(routes) == 1, 'UE1: expected one unbound route'
-route = routes[0]
-assert route.get('dev') == interface and int(route.get('table', -1)) == 151 and route.get('prefsrc') == source, f'UE1: wrong unbound route: {route}'
-print('UE1 unbound route: OK', route)
+rules = json.loads(subprocess.check_output(['ip', '-j', '-4', 'rule', 'show'], text=True))
+blocks = [rule for rule in rules if rule.get('priority') == 20151]
+assert len(blocks) == 1, 'UE1: run 1.4–1.6 to install the reset block'
+block = blocks[0]
+assert block.get('src', 'all') == 'all' and block.get('dst') in ('10.45.0.1', '10.45.0.1/32') and block.get('action') == 'unreachable', f'UE1: wrong reset block: {block}'
+for mode, extra in [('source-bound', ['from', source]), ('ordinary', [])]:
+    routes = json.loads(subprocess.check_output(['ip', '-N', '-j', '-4', 'route', 'get', '10.45.0.1', *extra], text=True))
+    assert len(routes) == 1, f'UE1: expected one {mode} route'
+    route = routes[0]
+    assert route.get('dev') == interface and int(route.get('table', -1)) == 151, f'UE1: wrong {mode} route: {route}'
+    if mode == 'ordinary':
+        assert route.get('prefsrc') == source, f'UE1: wrong ordinary source: {route}'
+    print(f'UE1 {mode} route: OK', route)
 PY
-    then
-      ping -c 5 10.45.0.1
-    else
-      printf 'FAIL: ordinary traffic is not routed over UE1; stop before UL.\n'
-    fi
-  else
-    printf 'FAIL: UE1 destination installation incomplete; stop before UL.\n'
-  fi
+then
+  ping -I "$UE_IP" -c 5 10.45.0.1 &&
+  ping -c 5 10.45.0.1 &&
+  ip -4 route show default
+else
+  printf 'STOP: UE1 route verification failed; use 1.4–1.6 to reset/rebuild before traffic.\n'
 fi
 ```
 
-Require UE1's current WWAN, `table 151`, `src` equal to `$UE_IP`, and ping
-replies. The destination guard prevents unbound traffic from falling through
-to Wi-Fi if table 151 loses its server route. The Wi-Fi default stays available
-for other destinations. With Wi-Fi off, repeat both the unbound and source-bound
-checks; both must use UE1. This configuration targets only `10.45.0.1/32`.
-The previous source-only recipe did not guarantee routing for an unbound ping.
-Ping success over the Wi-Fi interface is not a passing UE check. The gate above
-checks the unbound route's interface, table and source before sending the ping.
+Require both ping checks to pass and the management Wi-Fi default to remain
+intact. Save `PATH_*` values and recheck cell/SA after reconnect/reattachment.
+The destination guard blocks ordinary traffic if table 151 loses its server
+route; independent priority `20151` continues blocking after a reset removes
+the four role rules. Other destinations can still use Wi-Fi.
+An old source-only path must be reset/rebuilt with 1.4–1.6; do not skip the
+destination rules or add duplicate priorities on top of an existing path.
 
 ### 1.7. Run UE1's 60-second TCP UL, then keep it connected
 
@@ -955,15 +1012,41 @@ the role's interfaces to DOWN / MTU 1500. Table 151 and the other UE's
 addresses remain available. The current PDU stays connected for rebuilding.
 
 If the existing path already matches the current verified bearer and works,
-reuse it by going to 2.6. Otherwise execute the reset, require
-`UE2 reset complete`, then proceed to 2.5:
+reuse it only after 2.6 verifies both bound and ordinary routes. Otherwise use
+this guarded reset. It installs the independent destination block **before**
+removing the path, requires `UE2 reset complete`, and checks that ordinary
+traffic is blocked after reset. Require `UE2 Wi-Fi fallback blocked: OK`
+before proceeding to 2.5:
 
 ```bash
-sudo python3 ~/falcon-reset-ue-network.py --ue 2
-ip -o -4 addr show
-ip -4 rule show
-ip -4 route show table 152
-ip -4 route show default
+reset_ue2_block_wifi() {
+  local rules block_rule
+  rules=$(ip -4 rule show) || return 1
+  block_rule=$(awk '$1 == "20152:" {$1=$1; print}' <<< "$rules")
+  case "$block_rule" in
+    '') sudo ip -4 rule add pref 20152 to 10.46.0.1/32 type unreachable || return 1 ;;
+    '20152: from all to 10.46.0.1 unreachable'|'20152: from all to 10.46.0.1/32 unreachable') : ;;
+    *) printf 'STOP: priority 20152 occupied; inspect before reset.\n'; return 1 ;;
+  esac
+  sudo python3 ~/falcon-reset-ue-network.py --ue 2 || return 1
+  if ip -4 route get 10.46.0.1; then
+    printf 'STOP: UE2 server is still routable after reset; inspect earlier policy rules.\n'
+    return 1
+  fi
+  if ping -c 1 -W 1 10.46.0.1; then
+    printf 'STOP: UE2 ordinary ping still succeeds after reset.\n'
+    return 1
+  fi
+  printf 'UE2 Wi-Fi fallback blocked: OK\n'
+}
+if reset_ue2_block_wifi; then
+  ip -o -4 addr show
+  ip -4 rule show
+  ip -4 route show table 152 || true
+  ip -4 route show default
+else
+  printf 'STOP: guarded reset/check failed; do not rebuild or start traffic.\n'
+fi
 ```
 
 An empty/absent table can report `FIB table does not exist`; that is expected
@@ -975,9 +1058,10 @@ preflight only after reset, never on an existing valid path.**
 
 ### 2.5. Build UE2's fresh table 152 and rules
 
-Reinspect table `152` and priorities `10161/10162`; require them free
-for a new path. Use the just-read bearer IP/prefix/MTU/interface. This preflight
-refuses collisions and an earlier matching policy rule:
+Reinspect table `152` and priorities `10161`–`10164`; require all four
+slots free for a new path. Keep the independent priority-20152 block installed.
+Use the just-read bearer IP/prefix/MTU/interface. This preflight refuses
+collisions and an earlier matching policy rule:
 
 ```bash
 python3 - "$UE_IP" "$UE_PREFIX" "$UE_MTU" "$ROUTE_TABLE" "$RULE_PREF" "$GUARD_PREF" "$UE_SUBNET" "$SERVER_IP" <<'PY'
@@ -1001,7 +1085,7 @@ def contains(selector, value):
 rules = json.loads(subprocess.check_output(['ip', '-j', '-4', 'rule', 'show']))
 for rule in rules:
     priority = int(rule.get('priority', 0))
-    assert priority not in (int(lookup), int(guard)), f'Rule priority {priority} already occupied: {rule}'
+    assert priority not in (int(lookup), int(guard), int(lookup) + 2, int(guard) + 2), f'Rule priority {priority} already occupied: {rule}'
     assert table_number(rule.get('table')) != int(table), 'Routing table already referenced'
     if priority < int(lookup) and not (priority == 0 and table_number(rule.get('table')) == 255):
         assert not rule.get('not') and 'not' not in rule.get('flags', []), 'Inverted earlier policy rule requires review'
@@ -1011,12 +1095,17 @@ if routes.returncode:
     assert 'FIB table does not exist' in routes.stderr, routes.stderr
 else:
     assert not json.loads(routes.stdout), 'Routing table already has routes'
+blocks = [rule for rule in rules if rule.get('priority') == 20152]
+assert len(blocks) == 1, 'Run the guarded reset first: missing/duplicate reset block'
+block = blocks[0]
+assert block.get('src', 'all') == 'all' and block.get('dst') in ('10.46.0.1', '10.46.0.1/32') and block.get('action') == 'unreachable', f'Wrong reset block: {block}'
 print('Policy slots and IPv4 parameters: OK')
 PY
 ```
 
-Require `Policy slots and IPv4 parameters: OK`. Install the source guard before
-exposing the source address, and save this run's rollback/ownership values:
+Require `Policy slots and IPv4 parameters: OK`. Install the source and
+destination guards before exposing the source address, then install both
+lookups. Save this run's ownership values and destination-rule record:
 
 ```bash
 prepare_dual_path() {
@@ -1043,84 +1132,77 @@ prepare_dual_path() {
   ip -o link show dev "$PATH_IF" | grep -Eq '(<|,)UP(,|>)' && PATH_WAS_UP=yes
   declare -p MODEM MODEM_IDENTITY EXPECTED_IMEI EXPECTED_IMSI BEARER \
     APN UE_SUBNET PATH_SERVER PATH_IP PATH_CIDR PATH_IF PATH_TABLE PATH_RULE PATH_GUARD PATH_OLD_MTU PATH_WAS_UP \
-    > "$UE_RUN/route-state.txt"
+    > "$UE_RUN/route-state.txt" || return 1
+  printf 'destination_lookup=10163 destination_guard=10164 server=10.46.0.1 table=152\n' \
+    > "$UE_RUN/server-route-state.txt" || return 1
   sudo ip -4 rule add pref 10162 from "$PATH_IP/32" to 10.46.0.1/32 type unreachable &&
+  sudo ip -4 rule add pref 10164 to 10.46.0.1/32 type unreachable &&
   sudo ip link set dev "$PATH_IF" mtu "$UE_MTU" up &&
   sudo ip -4 addr add "$PATH_CIDR" dev "$PATH_IF" noprefixroute &&
   sudo ip -4 route add table 152 10.46.0.1/32 dev "$PATH_IF" src "$PATH_IP" &&
-  sudo ip -4 rule add pref 10161 from "$PATH_IP/32" to 10.46.0.1/32 lookup 152
+  sudo ip -4 rule add pref 10161 from "$PATH_IP/32" to 10.46.0.1/32 lookup 152 &&
+  sudo ip -4 rule add pref 10163 to 10.46.0.1/32 lookup 152
 }
 if prepare_dual_path; then
   ip -4 route get 10.46.0.1 from "$PATH_IP"
+  ip -4 route get 10.46.0.1
   ip -4 route show default
-  ping -q -I "$PATH_IP" -c 5 "$PATH_SERVER"
+  printf 'UE2 rules installed; complete 2.6 before traffic.\n'
 else
   printf 'FAIL: path setup incomplete; stop and clean only this run.\n'
 fi
 ```
 
-Stop on a setup failure and use the same role reset helper before retrying.
-Keep `route-state.txt` as evidence; reset does not depend on it.
+Stop on a setup failure and repeat 2.4's guarded reset before retrying.
+Keep `route-state.txt` and `server-route-state.txt` as evidence; reset does not
+depend on them. The independent block remains installed throughout rebuilding.
 The setup requires a dedicated QMI interface with no existing IPv4 address or
 default route. Resolve unexpected interface ownership before continuing.
 
-### 2.6. Verify table 152, private ping and management routing
+### 2.6. Verify bound and ordinary routes, private ping and management routing
+
+Section 2.5 already installed all four role rules; this block only verifies
+them. Require both route lookups to select UE2's current WWAN and table
+`152`, and the ordinary lookup's preferred source to equal `$UE_IP`.
+Reused paths must also have the independent reset block. Do not accept ping
+success over Wi-Fi as a UE check.
 
 ```bash
 ip -4 rule show
 ip -4 route show table 152
-ip -4 route get 10.46.0.1 from "$UE_IP"
-ping -I "$UE_IP" -c 5 10.46.0.1
-ip -4 route show default
-```
-
-Require this UE's actual interface and `table 152`, private ping replies,
-and the unchanged Wi-Fi default route. Save `PATH_*` values even if a later
-bearer allocation changes. Recheck cell/SA after reconnect/reattachment.
-
-The source rules above support programs that bind UE2's IP, including the
-iperf commands below. **Complete the destination lookup/guard installation here
-to make ordinary `ping 10.46.0.1` select UE2. Reset plus 2.5 alone does not do
-that.** Table 152's existing route supplies the current UE2 preferred source. Run this
-after the source-bound checks pass and verify priorities `10163/10164` are
-unused; inspect an occupied slot rather than adding duplicates.
-
-```bash
-ip -4 rule show
-if ip -4 rule show | grep -Eq '^(10163|10164):'; then
-  printf 'STOP: UE2 destination priorities occupied; inspect existing rules.\n'
-else
-  if printf 'destination_lookup=10163 destination_guard=10164 server=10.46.0.1 table=152\n' > "$UE_RUN/server-route-state.txt" &&
-     sudo ip -4 rule add pref 10164 to 10.46.0.1/32 type unreachable &&
-     sudo ip -4 rule add pref 10163 to 10.46.0.1/32 lookup 152; then
-    if python3 - "$WWAN_IF" "$UE_IP" <<'PY'
+if python3 - "$WWAN_IF" "$UE_IP" <<'PY'
 import json, subprocess, sys
 interface, source = sys.argv[1:]
-routes = json.loads(subprocess.check_output(['ip', '-N', '-j', '-4', 'route', 'get', '10.46.0.1'], text=True))
-assert len(routes) == 1, 'UE2: expected one unbound route'
-route = routes[0]
-assert route.get('dev') == interface and int(route.get('table', -1)) == 152 and route.get('prefsrc') == source, f'UE2: wrong unbound route: {route}'
-print('UE2 unbound route: OK', route)
+rules = json.loads(subprocess.check_output(['ip', '-j', '-4', 'rule', 'show'], text=True))
+blocks = [rule for rule in rules if rule.get('priority') == 20152]
+assert len(blocks) == 1, 'UE2: run 2.4–2.6 to install the reset block'
+block = blocks[0]
+assert block.get('src', 'all') == 'all' and block.get('dst') in ('10.46.0.1', '10.46.0.1/32') and block.get('action') == 'unreachable', f'UE2: wrong reset block: {block}'
+for mode, extra in [('source-bound', ['from', source]), ('ordinary', [])]:
+    routes = json.loads(subprocess.check_output(['ip', '-N', '-j', '-4', 'route', 'get', '10.46.0.1', *extra], text=True))
+    assert len(routes) == 1, f'UE2: expected one {mode} route'
+    route = routes[0]
+    assert route.get('dev') == interface and int(route.get('table', -1)) == 152, f'UE2: wrong {mode} route: {route}'
+    if mode == 'ordinary':
+        assert route.get('prefsrc') == source, f'UE2: wrong ordinary source: {route}'
+    print(f'UE2 {mode} route: OK', route)
 PY
-    then
-      ping -c 5 10.46.0.1
-    else
-      printf 'FAIL: ordinary traffic is not routed over UE2; stop before UL.\n'
-    fi
-  else
-    printf 'FAIL: UE2 destination installation incomplete; stop before UL.\n'
-  fi
+then
+  ping -I "$UE_IP" -c 5 10.46.0.1 &&
+  ping -c 5 10.46.0.1 &&
+  ip -4 route show default
+else
+  printf 'STOP: UE2 route verification failed; use 2.4–2.6 to reset/rebuild before traffic.\n'
 fi
 ```
 
-Require UE2's current WWAN, `table 152`, `src` equal to `$UE_IP`, and ping
-replies. The destination guard prevents unbound traffic from falling through
-to Wi-Fi if table 152 loses its server route. The Wi-Fi default stays available
-for other destinations. With Wi-Fi off, repeat both the unbound and source-bound
-checks; both must use UE2. This configuration targets only `10.46.0.1/32`.
-The previous source-only recipe did not guarantee routing for an unbound ping.
-Ping success over the Wi-Fi interface is not a passing UE check. The gate above
-checks the unbound route's interface, table and source before sending the ping.
+Require both ping checks to pass and the management Wi-Fi default to remain
+intact. Save `PATH_*` values and recheck cell/SA after reconnect/reattachment.
+The destination guard blocks ordinary traffic if table 152 loses its server
+route; independent priority `20152` continues blocking after a reset removes
+the four role rules. Other destinations can still use Wi-Fi.
+An old source-only path must be reset/rebuilt with 2.4–2.6; do not skip the
+destination rules or add duplicate priorities on top of an existing path.
 
 ### 2.7. Run UE2's 60-second TCP UL, then keep it connected
 
@@ -1386,8 +1468,9 @@ python3 ~/falcon-dual-ul.py --check-only
 
 Require both current role summaries and `Both current bearer/host routes checked`.
 If UE2 is not connected, complete its sequence first. A missing current WWAN
-address needs 1.5/2.5 rebuilding; a wrong ordinary route needs 1.6/2.6. Do not
-substitute an old address to bypass a failed preflight.
+address or wrong ordinary route needs the affected role's guarded reset,
+rebuild and verification (1.4–1.6 / 2.4–2.6). Do not substitute an old address
+to bypass a failed preflight.
 
 Then start [Spark step 7a](dual_ue_spark_quick_commands.md#7a-first-verify-both-ip-bindings-during-a-60-second-dual-upload)'s
 120-second identity capture and check its log in a separate Spark terminal.
@@ -1661,9 +1744,11 @@ keeps bearer objects and leaves the modem enabled.
 No saved `MODEM`, `BEARER`, `WWAN_IF`, `PATH_*`, IP/CIDR or old-session ledger is
 needed. Each operation discovers the current modem by the role's IMEI and reads
 its bearer list again. The other UE's modem, bearers, host path and Wi-Fi are
-preserved. A failure prints `STOP`; require the shutdown success marker before
-continuing. If the modem was already unplugged, use the ordinary `--ue 1/2`
-reset for leftover host configuration; its hardware shutdown cannot be verified.
+preserved. The independent destination blocks installed in 1.4 / 2.4 also
+remain; shutdown must not reopen the private service destinations through Wi-Fi.
+A failure prints `STOP`; require the shutdown success marker before continuing.
+If the modem was already unplugged, use the ordinary `--ue 1/2` reset for
+leftover host configuration; its hardware shutdown cannot be verified.
 
 `--disable` disables network operations and enters the modem's low-power state.
 Physical power disconnection is a separate step in 4.3. See the
@@ -1708,8 +1793,10 @@ Require `UE2 reset complete` and `UE2 shutdown complete`, with `bearers=0` and
 IPv4 addresses, table-152 routes and reserved rules are cleared.
 
 The two tables may then report `FIB table does not exist`; that is expected when
-their routes have been removed. Confirm no UE1/UE2 test addresses or reserved
-policy rules remain and that the management Wi-Fi default route is intact.
+their routes have been removed. Confirm no UE1/UE2 test addresses or priorities
+10151–10154 / 10161–10164 remain, and that the management Wi-Fi default route is
+intact. Keep priorities `20151/20152`: ordinary route lookups/pings to
+`10.45.0.1` and `10.46.0.1` must still fail after shutdown.
 
 ### 4.3. Physical power disconnection and the next experiment
 

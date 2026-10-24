@@ -323,13 +323,19 @@ Require `127.0.0.1:36421` for E2 and `127.0.0.1:36422` for xApp E42. Start DU on
 
 ```bash
 cd /home/nyu/ocudu
-set -o pipefail
 DU1_RUN=$(mktemp -d /tmp/falcon-du1-3660.XXXXXXXX)
 printf 'DU1 run directory: %s\n' "$DU1_RUN"
-sudo stdbuf -oL -eL build/apps/du_split_8/odu \
+bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
+  "$DU1_RUN/startup.log" \
+  sudo stdbuf -oL -eL build/apps/du_split_8/odu \
   -c configs/du1_b210_n78_3660mhz.yml \
-  log --filename "$DU1_RUN/du.log" 2>&1 | tee "$DU1_RUN/startup.log"
+  log --filename "$DU1_RUN/du.log"
 ```
+
+The [console launcher](../scripts/dual_fr1/run_du_console.sh) uses `script`
+to preserve the interactive terminal and record output. After startup, enter
+`;h;` and require the help response. Use one semicolon-delimited console
+command at a time; see [temporary RX gain](dual_ue_spark_quick_commands.md#5d-console-input-and-temporary-rx-gain).
 
 Expect B210 / USB 3 initialization, 23.04 MHz master clock, cell PCI 1 / 20 MHz / n78 / carrier ARFCN 644000 / SSB ARFCN 643680, F1-C and E2 connections completed, and `==== DU started ===`. RIC should accept `ngran_gNB_DU`, DU ID 1, node ID 411 and RAN function ID 2 (`ORAN-E2SM-KPM`). Check the running DU without opening the B210 from another tool:
 

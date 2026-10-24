@@ -1,0 +1,6 @@
+18:33:30.502 INFO player reports -> /home/nyu/Desktop/MPX/falcon-app-template/out/demo/player-demo.jsonl
+18:33:30.503 INFO panel: STAT from mpxd at /tmp/mpx-server.sock every 1000 ms
+18:33:30.503 INFO webui on http://127.0.0.1:8090/  (player /player/, panel /panel/); video from http://127.0.0.1:8080/loop.mpd
+19:21:00.478 INFO player reports -> /home/nyu/Desktop/MPX/falcon-app-template/out/demo/player-demo.jsonl
+19:21:00.478 INFO panel: STAT from mpxd at /tmp/mpx-server.sock every 1000 ms
+19:21:00.479 INFO webui on http://127.0.0.1:8090/  (player /player/, panel /panel/); video from http://127.0.0.1:8080/loop.mpd

@@ -158,11 +158,17 @@ prerequisites separately, covering both full channels.
 
    ```bash
    cd /home/nyu/ocudu
-   sudo build/apps/du_split_8/odu \
+   bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
+     "${DUAL_FR1_EVIDENCE:?Use the prepared run directory}/du2_startup.log" \
+     sudo stdbuf -oL -eL build/apps/du_split_8/odu \
      -c configs/du2_b210_n78_20mhz.yml \
      -c configs/du2_flexric.yml \
      log --filename "${DUAL_FR1_EVIDENCE:?Use the prepared run directory}/du2.log"
    ```
+
+   After startup, enter `;h;` in this terminal and require help output. The
+   launcher records the console while preserving interactive input. See
+   [console and runtime RX gain](dual_ue_spark_quick_commands.md#5d-console-input-and-temporary-rx-gain).
 
 3. Retain actual startup: second serial, USB 3, PCI 2, carrier 640000 / 3600 MHz,
    observed `dl_ssb_arfcn`, and successful F1/E2. Confirm CU sees DU ID 2 / NCI

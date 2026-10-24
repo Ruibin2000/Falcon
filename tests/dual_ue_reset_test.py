@@ -259,6 +259,37 @@ class ResetTest(unittest.TestCase):
         self.assert_clean(1)
         self.assertEqual(self.kernel.survivor(1), survivor)
 
+    def test_independent_destination_blocks_survive_both_roles_and_repeat_reset(self):
+        blocks = [
+            {"priority": 20151, "src": "all", "dst": "10.45.0.1", "action": "unreachable"},
+            {"priority": 20152, "src": "all", "dst": "10.46.0.1", "action": "unreachable"},
+        ]
+        self.kernel.rules.extend(copy.deepcopy(blocks))
+        wifi_default = {"table": 254, "dst": "default", "dev": "wifi", "gateway": "10.20.0.1"}
+        for ue in (1, 2, 1, 2):
+            with self.subTest(ue=ue):
+                survivor = self.kernel.survivor(ue)
+                RESET.reset(ue)
+                self.assert_clean(ue)
+                self.assertEqual(self.kernel.survivor(ue), survivor)
+                self.assertEqual([rule for rule in self.kernel.rules if rule["priority"] in (20151, 20152)], blocks)
+                self.assertIn(wifi_default, self.kernel.routes)
+
+    def test_independent_destination_blocks_survive_both_modem_shutdowns(self):
+        blocks = [
+            {"priority": 20151, "src": "all", "dst": "10.45.0.1", "action": "unreachable"},
+            {"priority": 20152, "src": "all", "dst": "10.46.0.1", "action": "unreachable"},
+        ]
+        self.kernel.rules.extend(copy.deepcopy(blocks))
+        for ue in (1, 2):
+            with self.subTest(ue=ue):
+                survivor = self.kernel.survivor(ue)
+                RESET.reset(ue, shutdown=True)
+                self.assert_clean(ue)
+                self.assertEqual(self.kernel.survivor(ue), survivor)
+                self.assertEqual([rule for rule in self.kernel.rules if rule["priority"] in (20151, 20152)], blocks)
+                self.assertIn(f"UE{ue} shutdown complete", self.stdout.getvalue())
+
     def test_address_failure_keeps_guards_and_never_reports_complete(self):
         self.kernel.fail = ("ip", "-4", "addr", "flush")
         with self.assertRaises(subprocess.CalledProcessError):

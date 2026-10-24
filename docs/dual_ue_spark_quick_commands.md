@@ -44,6 +44,11 @@ without old-session parameters, guarded rebuilding and both private-path checks 
 [UE2 recovery](dual_ue_laptop_quick_commands.md#ue2-clean-old-path).
 These tables belong to the laptop. Spark keeps service addresses `10.45.0.1`
 and `10.46.0.1`, and its two iperf listeners continue to use the same bindings.
+The laptop's [guarded reset](dual_ue_laptop_quick_commands.md#block-wifi-fallback)
+installs destination blocks that survive reset/shutdown: ordinary ping and
+TCP/UDP to these service IPs cannot fall back to Wi-Fi. Rebuilding installs both
+source and destination lookups; verify both routes before traffic. Management
+Wi-Fi and its default route remain available for other destinations.
 The October 23 [TUN split](dual_ue_tun_split.md) is applied: UE1 uses `ogstun_1`
 and UE2 uses `ogstun_2`, both with MTU 1400. Spark configuration checks passed;
 post-split UE/PDU/ping/traffic and cold-boot validation remain pending.
@@ -297,17 +302,25 @@ Complete the shared MongoDB/core/CU/RIC startup first. Start each DU in its own
 foreground terminal before beginning either laptop UE sequence. Both DUs stay
 running while UE1 and UE2 are prepared and measured.
 
+The [console launcher](../scripts/dual_fr1/run_du_console.sh) uses util-linux
+`script` to give sudo and the DU terminal-backed stdin/stdout/stderr while
+recording `startup.log`. Run it directly in an interactive terminal. It
+replaces the old `sudo ... | tee` pipeline, which left the DU behind sudo's
+pseudo-terminal foreground group and prevented console input. The launcher
+flushes output and propagates the child exit status; see
+[script(1)](https://man7.org/linux/man-pages/man1/script.1.html).
+
 ### 5a. Spark DU1 terminal
 
 ```bash
 cd /home/nyu/ocudu
 DU1_RUN=$(mktemp -d /tmp/falcon-du1-3660.XXXXXXXX)
 printf 'DU1 run directory: %s\n' "$DU1_RUN"
-set -o pipefail
-sudo stdbuf -oL -eL build/apps/du_split_8/odu \
+bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
+  "$DU1_RUN/startup.log" \
+  sudo stdbuf -oL -eL build/apps/du_split_8/odu \
   -c configs/du1_b210_n78_3660mhz.yml \
-  log --filename "$DU1_RUN/du.log" 2>&1 | tee "$DU1_RUN/startup.log"
-
+  log --filename "$DU1_RUN/du.log"
 ```
 
 Require radio `3271233` / USB 3, PCI 1 / carrier `644000` / SSB `643680`,
@@ -320,11 +333,11 @@ Leave this terminal running.
 cd /home/nyu/ocudu
 DU2_RUN=$(mktemp -d /tmp/falcon-du2-3600.XXXXXXXX)
 printf 'DU2 run directory: %s\n' "$DU2_RUN"
-set -o pipefail
-sudo stdbuf -oL -eL build/apps/du_split_8/odu \
+bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
+  "$DU2_RUN/startup.log" \
+  sudo stdbuf -oL -eL build/apps/du_split_8/odu \
   -c configs/du2_b210_n78_20mhz.yml -c configs/du2_flexric.yml \
-  log --filename "$DU2_RUN/du.log" 2>&1 | tee "$DU2_RUN/startup.log"
-
+  log --filename "$DU2_RUN/du.log"
 ```
 
 Require radio `328B021` / USB 3, PCI 2 / carrier `640000` / SSB `639648`,
@@ -345,6 +358,41 @@ CU NR CGI/F1AP and startup evidence. Starting the two foreground terminals
 separately results in concurrent operation; it does not establish synchronized
 RF timing. Keep the recorded clock/RF settings and the remaining Plan 3 gates.
 If both DUs are already running correctly, reuse them for modem recovery.
+
+### 5d. Console input and temporary RX gain
+
+After `==== DU started ===`, enter this line in each corresponding DU terminal
+and press Enter. Require an `Available commands` response:
+
+```text
+;h;
+```
+
+The current OCUDU console splits commands on semicolons and removes newlines.
+Send one command at a time with surrounding semicolons so queued lines do not
+merge. In the selected DU's terminal, temporarily reduce its RX gain to 30 dB:
+
+```text
+;rx_gain 0 30;
+```
+
+Require `Rx gain set to 30 dB for port 0.` (numeric formatting may differ).
+Port `0` is local to that DU process and is not its DU ID. This changes its
+radio's uplink reception gain. Restore the configured 35 dB with a separate
+command:
+
+```text
+;rx_gain 0 35;
+```
+
+Runtime gain changes do not rewrite YAML; restart reads the configuration
+again. The new launcher is stored in the repository and is used on each
+startup, replacing the temporary per-PID foreground repair. The launcher was
+tested with real PTYs and a fake DU, including foreground ownership, command
+input, live output logging, literal arguments, child exit codes and `Ctrl+C`:
+`python3 -B /home/nyu/Desktop/Falcon_repo/Falcon/tests/du_console_test.py`.
+These tests do not start radios; verify
+F1/E2, console help, both UE paths and traffic after the next actual launch.
 
 ## 6. Start both iperf servers before the laptop sequences
 

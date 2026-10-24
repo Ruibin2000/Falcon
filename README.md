@@ -1,10 +1,24 @@
 # Falcomm
 
+**DU console startup:** the [DU1/DU2 launch commands](docs/dual_ue_spark_quick_commands.md#5-start-du1-and-du2-in-separate-terminals-and-keep-both-running)
+use the [PTY console launcher](scripts/dual_fr1/run_du_console.sh) to retain
+interactive commands and record startup output. After startup, verify `;h;`
+in each DU terminal; runtime RX gain changes use semicolon-delimited commands.
+
 **Spark network update, 2026-10-23:** UE1 now uses `ogstun_1 / 10.45.0.1/16`
 and UE2 uses `ogstun_2 / 10.46.0.1/16`, both with MTU 1400 and the existing
 shared UPF. The migration and independent Spark-side checks passed; fresh
-post-split UE traffic and cold-boot validation remain pending. See the
+post-split application traffic was subsequently verified in the MPTCP run below.
+Cold-boot validation remains pending. See the
 [TUN split guide and archived scripts](docs/dual_ue_tun_split.md).
+
+**MPTCP experiment report: [2026-10-23 FR1/FR3 Video and Switching](docs/reports/mptcp_video_experiment_report_2026-10-23.md)**
+reconstructs the screenshot's complete session from 9,624 transport records and
+948 player reports: 870.269 MB of MPX application data, mean payload goodput
+7.228 Mbit/s, seven FR3 down/up cycles, and one 9.819-second rebuffer.
+It includes full-session and screenshot-window plots, downloadable CSVs,
+original records and reproducible analysis. Both radios used n78 FR1; “FR3”
+was the second path's logical demo label.
 
 **Experiment report: [2026-10-13 Dual UE and Dual DU Uplink Experiment](docs/reports/dual_ue_ul_experiment_report_2026-10-13.md)** covers link configurations, concurrent TCP UL, KPM from both DUs, clock correction, throughput and CRC plots, and the scope of path-isolation acceptance.
 
@@ -14,7 +28,7 @@ Falcomm is a 5G/AI-RAN experimental platform based on the NVIDIA DGX Spark. **On
 
 For daily operation, use the command booklets: **[Spark quick commands](docs/spark_quick_commands.md)** and **[UE laptop quick commands](docs/ue_laptop_quick_commands.md)**. They show compact confirmations; the full runbook retains detailed diagnostics. The [2026-10-07 FlexRIC record](docs/troubleshooting/2026-10-07_flexric_bringup.md) records the codec/version repair, successful subscription and actual UE measurements.
 
-For the two-modem setup, use **[Dual UE laptop quick commands](docs/dual_ue_laptop_quick_commands.md)** and **[Dual UE Spark quick commands](docs/dual_ue_spark_quick_commands.md)**. Start the shared core/CU/RIC, both DUs and both iperf servers on Spark first; then follow the laptop's complete UE1 sequence and complete UE2 sequence in separate terminals before concurrent UL. Each role has its own modem/SIM selection, cell lock, complete host IPv4 reset, policy table and connectivity checks. [The reset helper](scripts/dual_fr1/reset_ue_network.py) discovers current state and needs only the UE role, without any old IP/CIDR/interface or session ledger. The operator completed the [two-subnet core migration](docs/dual_ue_subnets.md) for UE2 `internet2 / 10.46.0.1`; both role IPv4/private-ping, individual UL and subsequent concurrent UL/KPM functionality checkpoints passed. Repeatable modem-power recovery and the remaining full acceptance gates are pending.
+For the two-modem setup, use **[Dual UE laptop quick commands](docs/dual_ue_laptop_quick_commands.md)** and **[Dual UE Spark quick commands](docs/dual_ue_spark_quick_commands.md)**. Start the shared core/CU/RIC, both DUs and both iperf servers on Spark first; then follow the laptop's complete UE1 sequence and complete UE2 sequence in separate terminals before concurrent UL. Each role has its own modem/SIM selection, cell lock, complete host IPv4 reset, policy table and connectivity checks. [The reset helper](scripts/dual_fr1/reset_ue_network.py) discovers current state and needs only the UE role, without any old IP/CIDR/interface or session ledger. Use the handbook's [guarded reset blocks](docs/dual_ue_laptop_quick_commands.md#block-wifi-fallback) to prevent ordinary ping and traffic to `10.45.0.1` / `10.46.0.1` from falling back to Wi-Fi after reset; rebuilding installs both source and destination lookups. Management Wi-Fi remains available. The operator completed the [two-subnet core migration](docs/dual_ue_subnets.md) for UE2 `internet2 / 10.46.0.1`; both role IPv4/private-ping, individual UL and subsequent concurrent UL/KPM functionality checkpoints passed. Repeatable modem-power recovery and the remaining full acceptance gates are pending.
 
 As of **2026-10-13**, [Plan 3](plans/dual-ue-du-fr1-channels.md) uses **UL-only dual-link acceptance**. Underflow remediation is deferred and count/growth alone is nonblocking for this scope. Both B210 DUs are deployed with distinct radio/cell/F1/E2 identities, and both intended SIMs have registration/PDU/private-ping and individual UL checkpoints. The latest concurrent run now passes application UL functionality and real DU-tagged KPM reception. Full repeatability and the remaining acceptance gates are recorded in Plan 3. The earlier disconnected-xApp deletion-failure RIC abort path remains unfixed; normal monitor completion is still required. Follow the [DU2 bring-up procedure](docs/dual_fr1_runbook.md). The [2026-10-12 daily log](dev_logs/2026-10-12_ruibin.md) and [retained evidence](docs/evidence/2026-10-12_du1_3660mhz/manifest.json) remain the historical single-DU UL result.
 

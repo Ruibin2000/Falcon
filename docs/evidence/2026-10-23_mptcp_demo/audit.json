@@ -1,0 +1,101 @@
+{
+  "status": "Passed",
+  "timezone": "America/New_York",
+  "backend": "mptcp",
+  "session": "3d293a88328ef4b45294ee09cd7d3d28",
+  "retained_metrics_records": 1197,
+  "first_metrics_at": "2026-10-23T19:32:00.076518-04:00",
+  "last_metrics_at": "2026-10-23T19:33:59.905782-04:00",
+  "records_with_both_expected_established_subflows": 1197,
+  "expected_server_to_ue_address_pairs": {
+    "0": [
+      "10.45.0.1",
+      "10.45.0.3"
+    ],
+    "1": [
+      "10.46.0.1",
+      "10.46.0.4"
+    ]
+  },
+  "positive_receive_counter_examples": {
+    "1": {
+      "from": "2026-10-23T19:32:47.973710-04:00",
+      "to": "2026-10-23T19:32:48.073865-04:00",
+      "bytes_recv_before": 2093902,
+      "bytes_recv_after": 2302462,
+      "delta_bytes": 208560
+    },
+    "0": {
+      "from": "2026-10-23T19:32:45.870793-04:00",
+      "to": "2026-10-23T19:32:45.970935-04:00",
+      "bytes_recv_before": 25700590,
+      "bytes_recv_after": 26004190,
+      "delta_bytes": 303600
+    }
+  },
+  "link_2_cycle": [
+    {
+      "at": "2026-10-23T19:33:04.278661-04:00",
+      "event": "path_degraded",
+      "detail": "consecutive heartbeat misses reached degrade threshold"
+    },
+    {
+      "at": "2026-10-23T19:33:04.678671-04:00",
+      "event": "path_down",
+      "detail": "consecutive heartbeat misses reached down threshold"
+    },
+    {
+      "at": "2026-10-23T19:33:07.615246-04:00",
+      "event": "path_up",
+      "detail": "consecutive heartbeats recovered"
+    }
+  ],
+  "player_report_matching_visible_screenshot_fields": {
+    "received_at": "2026-10-23T19:33:42.744000-04:00",
+    "record": {
+      "record": "player",
+      "seq": 733,
+      "rx_unix_ms": 1792798422744,
+      "report": {
+        "v": 1,
+        "ts_ms": 1792798422743,
+        "state": "playing",
+        "url": "http://127.0.0.1:8080/loop.mpd?hours=2",
+        "rendition": {
+          "index": 2,
+          "height": 720,
+          "width": 1280,
+          "kbps": 5000
+        },
+        "renditions": 4,
+        "buffer_s": 8.92,
+        "throughput_kbps": 15028,
+        "position_s": 727.33,
+        "startup_ms": 395,
+        "stalls": 1,
+        "stall_s": 9.82,
+        "stalled_now": false,
+        "loops": 4,
+        "switches": 23,
+        "errors": 0,
+        "reloads": 0,
+        "dropped_frames": 3,
+        "total_frames": 21703,
+        "events": []
+      }
+    }
+  },
+  "du2_rx_gain_acknowledgments_dB": [
+    5,
+    20,
+    15
+  ],
+  "limits": [
+    "Primary/backup operation; this does not establish simultaneous bandwidth aggregation",
+    "Counter examples are individual intervals, not end-to-end throughput or failover latency",
+    "Screenshot filename time differs from the matched player report; no cause is assigned",
+    "DU gain commands lack timestamps; causal alignment with path events is not established",
+    "DU1 startup/logging/exit are retained; a live DU1 help or gain acknowledgment is not recorded",
+    "The new laptop reset blocks, cold boot and RIC broker integration are not validated here"
+  ]
+}

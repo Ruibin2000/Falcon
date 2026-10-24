@@ -1,0 +1,34 @@
+Script started on 2026-10-23 19:06:03-04:00 [COMMAND="exec sudo stdbuf -oL -eL build/apps/du_split_8/odu -c configs/du1_b210_n78_3660mhz.yml log --filename /tmp/falcon-du1-3660.DkNDbC21/du.log " TERM="xterm-256color" TTY="/dev/pts/6" COLUMNS="144" LINES="24"]
+[sudo] password for nyu: 
+
+--== OCUDU DU (commit 4cffc0479f) ==--
+
+Lower PHY in triple executor mode.
+Available radio types: uhd.
+[0;32m[INFO] [UHD] [0;39mlinux; GNU C++ version 13.2.0; Boost_108300; UHD_4.6.0.0+ds1-5.1ubuntu0.24.04.1
+[0;32m[INFO] [LOGGING] [0;39mFastpath logging disabled at runtime.
+Making USRP object with args 'type=b200,serial=3271233,num_recv_frames=64,num_send_frames=64'
+[0;32m[INFO] [B200] [0;39mDetected Device: B210
+[0;32m[INFO] [B200] [0;39mOperating over USB 3.
+[0;32m[INFO] [B200] [0;39mInitialize CODEC control...
+[0;32m[INFO] [B200] [0;39mInitialize Radio control...
+[0;32m[INFO] [B200] [0;39mPerforming register loopback test... 
+[0;32m[INFO] [B200] [0;39mRegister loopback test passed
+[0;32m[INFO] [B200] [0;39mPerforming register loopback test... 
+[0;32m[INFO] [B200] [0;39mRegister loopback test passed
+[0;32m[INFO] [B200] [0;39mSetting master clock rate selection to 'automatic'.
+[0;32m[INFO] [B200] [0;39mAsking for clock rate 16.000000 MHz... 
+[0;32m[INFO] [B200] [0;39mActually got clock rate 16.000000 MHz.
+[0;32m[INFO] [MULTI_USRP] [0;39mSetting master clock rate selection to 'manual'.
+[0;32m[INFO] [B200] [0;39mAsking for clock rate 23.040000 MHz... 
+[0;32m[INFO] [B200] [0;39mActually got clock rate 23.040000 MHz.
+Cell pci=1, bw=20 MHz, 1T1R, dl_arfcn=644000 (n78), dl_freq=3660 MHz, dl_ssb_arfcn=643680, ul_freq=3660 MHz
+
+F1-C: Connection to CU-CP on 127.0.10.1:38472 completed
+E2AP: Connection to Near-RT-RIC completed (configured addrs 127.0.0.1, port 36421)
+==== DU started ===
+Type <h> to view help
+^CStopping...
+Logfile stored in /tmp/falcon-du1-3660.DkNDbC21/du.log
+
+Script done on 2026-10-23 19:48:29-04:00 [COMMAND_EXIT_CODE="0"]

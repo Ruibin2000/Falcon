@@ -1,5 +1,24 @@
 # Development Handoff
 
+Laptop routing update, 2026-10-23: use the handbook's
+[guarded reset blocks](dual_ue_laptop_quick_commands.md#block-wifi-fallback).
+They install independent destination blocks `20151/20152` before reset so
+ordinary ping and TCP/UDP to `10.45.0.1` / `10.46.0.1` cannot fall back to Wi-Fi
+after the normal role rules are cleared. Rebuilding now installs all four role
+rules together; verification checks both bound and ordinary routes before ping.
+The independent blocks survive reset/shutdown, while management Wi-Fi stays
+available. They must be reinstalled after a laptop reboot. The underlying reset
+helper is unchanged; these are handbook commands, pending live laptop validation.
+
+DU console update, 2026-10-23: [DU1/DU2 startup commands](dual_ue_spark_quick_commands.md#5-start-du1-and-du2-in-separate-terminals-and-keep-both-running)
+now use the repository's [PTY console launcher](../scripts/dual_fr1/run_du_console.sh)
+with output-only `script` logging. This replaces the `sudo ... | tee` launch
+path that blocked console input behind sudo's foreground process group.
+Real-PTY tests with a fake DU passed for input, live logs, argument quoting,
+exit status and `Ctrl+C`; live radio startup with the new launcher remains
+to be verified. Use `;h;` for help and send gain commands separately as
+`;rx_gain 0 30;` / `;rx_gain 0 35;` in the selected DU terminal.
+
 Network handoff, 2026-10-23: the [Spark TUN split](dual_ue_tun_split.md) is
 applied and independently checked. UE1 uses `ogstun_1 / 10.45.0.1/16`; UE2
 uses `ogstun_2 / 10.46.0.1/16`, both MTU 1400, with the existing UPF. The guide

@@ -157,13 +157,19 @@ The deployed `configs/du1_b210_n78_3660mhz.yml` already enables DU1 E2/KPM and m
 
 ```bash
 cd /home/nyu/ocudu
-set -o pipefail
 DU1_RUN=$(mktemp -d /tmp/falcon-du1-3660.XXXXXXXX)
 printf 'DU1 run directory: %s\n' "$DU1_RUN"
-sudo stdbuf -oL -eL build/apps/du_split_8/odu \
+bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
+  "$DU1_RUN/startup.log" \
+  sudo stdbuf -oL -eL build/apps/du_split_8/odu \
   -c configs/du1_b210_n78_3660mhz.yml \
-  log --filename "$DU1_RUN/du.log" 2>&1 | tee "$DU1_RUN/startup.log"
+  log --filename "$DU1_RUN/du.log"
 ```
+
+The launcher records output with `script` while keeping a full interactive
+terminal for sudo and the DU. Run it directly in the terminal. After startup,
+enter `;h;` and require help output; send each console command separately with
+surrounding semicolons. See [runtime RX gain commands](dual_ue_spark_quick_commands.md#5d-console-input-and-temporary-rx-gain).
 
 Confirm the startup cell line shows `dl_arfcn=644000 (n78)` and `dl_freq=3660 MHz`. The operator-provided 2026-10-12 startup summary recorded **PCI 1 / SSB 643680 / SCS 30 kHz**. The matching lock is now written directly in [UE step 2](ue_laptop_quick_commands.md#2-configure-nr-sa-and-lock-the-private-cell):
 
