@@ -9,165 +9,32 @@ low-resource wait until Ctrl+C (no ongoing probes), use [laptop one-shot startup
 
 <a id="before-starting"></a>
 
-## 1. Before every start: check the cell lock
+## 1. Before starting
 
-On the laptop, manually check each UE's serving cell and restore its cell lock
-if needed. **Modem/SIM verification, enable/registration, PDU setup, network
-configuration and ping are handled by the automation in section 2.**
+Start Spark's core, CU and both DUs using
+[Spark quick commands](dual_ue_spark_quick_commands.md). Keep ModemManager running
+on the laptop and close minicom before starting a watcher.
 
-### Select the current modem by IMEI
+**No manual modem selection, serving-cell query or AT lock sequence is required
+before each start.** The startup commands below enable `--auto-cell-lock` and
+supply each UE's AT port. The script selects the modem by IMEI, verifies its SIM,
+enables it, checks registration/cell, restores the radio settings after a radio
+failure, and continues through PDU, network and ping verification.
 
-Use a separate **Bash terminal for each UE**. Run this function definition in
-each terminal, then run that role's block below. It sets `$MODEM` from the current
-IMEI match, so a changed modem index is handled without guessing. A missing or
-duplicate match stops before the cell query. This selection only reads modem
-identity; the automation performs the remaining self-checks.
-
-```bash
-select_ue_modem() {
-  local expected_imei="$1" listing path info imei
-  local -a paths=() matches=()
-  MODEM=''
-  listing=$(mmcli -L) || return 1
-  mapfile -t paths < <(printf '%s\n' "$listing" |
-    sed -n 's|.*\(/org/freedesktop/ModemManager1/Modem/[0-9][0-9]*\).*|\1|p' | sort -u)
-  for path in "${paths[@]}"; do
-    info=$(mmcli -m "$path" -K) || return 1
-    imei=$(printf '%s\n' "$info" | awk '
-      /^[[:space:]]*modem[.]generic[.]equipment-identifier[[:space:]]*:/ {
-        sub(/^[^:]*:[[:space:]]*/, ""); sub(/[[:space:]]*$/, ""); print; exit
-      }')
-    [[ "$imei" = "$expected_imei" ]] && matches+=("$path")
-  done
-  if [[ ${#matches[@]} -ne 1 ]]; then
-    printf 'FAIL: IMEI %s matched %s modems; stop here.\n' \
-      "$expected_imei" "${#matches[@]}"
-    return 1
-  fi
-  MODEM=${matches[0]}
-  printf 'Selected modem: %s (IMEI %s)\n' "$MODEM" "$expected_imei"
-}
-```
-
-### Check the serving cell
-
-**UE1 / FR1 — IMEI `863305041978437`:**
-
-```bash
-if select_ue_modem 863305041978437; then
-  mmcli -L
-  mmcli -m "$MODEM"
-  sudo mmcli -m "$MODEM" --get-cell-info
-fi
-```
-
-**UE2 / FR3 — IMEI `863305041980706`:**
-
-```bash
-if select_ue_modem 863305041980706; then
-  mmcli -L
-  mmcli -m "$MODEM"
-  sudo mmcli -m "$MODEM" --get-cell-info
-fi
-```
-
-Check the NR record marked `serving: yes` against these targets:
-
-| Role | PCI | NCI (hex) | SSB NR-ARFCN / SCS / band |
-| --- | --- | --- | --- |
-| UE1 / FR1 | `1` | `66C000` | `643680` / 30 kHz / n78 |
-| UE2 / FR3 | `2` | `66C001` | `639648` / 30 kHz / n78 |
-
-Both radios use n78. A matching serving cell lets you continue to section 2.
-GetCellInfo shows the current serving cell; the stored lock is read back with
-`AT+QNWLOCK="common/5g"` below. If cell evidence is missing or mismatching,
-check/restore the selected role's lock through its AT port. After verifying
-the port mapping, the watcher can also [restore the lock automatically after
-radio failures](#automatic-cell-lock-and-registration-after-radio-failure).
-
-### Restore the lock when needed
-
-#### AT port mapping and preparation
-
-Open the AT port in the **same laptop terminal** where this UE's `$MODEM` was
-selected above. If its launcher/watcher is running, stop it with Ctrl+C, wait for
-the shutdown result, then repeat modem selection before opening the serial port.
-Keep ModemManager running.
+### AT port mapping
 
 The laptop's **2026-10-24 operator-provided serial listing** gives these ports
 for the recorded UE1 USB `4-4` / UE2 USB `4-3` wiring:
 
-| Role | `AT_PORT` (preferred by-path) | Current tty device |
+| Role | `--at-port` (preferred by-path) | Recorded tty device |
 | --- | --- | --- |
 | UE1 / FR1 | `/dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0` | `/dev/ttyUSB2` |
 | UE2 / FR3 | `/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0` | `/dev/ttyUSB6` |
 
 The by-path values follow the physical USB sockets. If the wiring changes,
-match the selected modem's physical device to `ls -l /dev/serial/by-path/` again.
-The `ttyUSB` numbers can change even when the sockets stay the same.
-
-#### UE1 / FR1
-
-Open **UE1's AT port** in the laptop terminal where its `$MODEM` was selected:
-
-```bash
-mmcli -m "$MODEM"
-AT_PORT=/dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0
-ls -l "$AT_PORT" && sudo minicom -D "$AT_PORT" -b 115200
-```
-
-In **this minicom session**, send `AT+CGSN` first and require IMEI
-`863305041978437`. Stop on a mismatch. Then send UE1's commands one at a time:
-
-```text
-AT+QNWPREFCFG="mode_pref",NR5G
-AT+QNWPREFCFG="mode_pref"
-AT+QNWPREFCFG="nr5g_disable_mode",2
-AT+QNWPREFCFG="nr5g_disable_mode"
-AT+QNWPREFCFG="nr5g_band"
-AT+QNWLOCK="common/5g",1,643680,30,78
-AT+QNWLOCK="common/5g"
-AT+QENG="servingcell"
-AT+C5GREG?
-```
-
-Read back UE1's lock tuple and actual serving cell. Exit this minicom session
-with **Ctrl+A, then X** before starting UE1's automation.
-
-#### UE2 / FR3
-
-Open **UE2's AT port** in the laptop terminal where its `$MODEM` was selected:
-
-```bash
-mmcli -m "$MODEM"
-AT_PORT=/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
-ls -l "$AT_PORT" && sudo minicom -D "$AT_PORT" -b 115200
-```
-
-In **this minicom session**, send `AT+CGSN` first and require IMEI
-`863305041980706`. Stop on a mismatch. Then send UE2's commands one at a time:
-
-```text
-AT+QNWPREFCFG="mode_pref",NR5G
-AT+QNWPREFCFG="mode_pref"
-AT+QNWPREFCFG="nr5g_disable_mode",2
-AT+QNWPREFCFG="nr5g_disable_mode"
-AT+QNWPREFCFG="nr5g_band"
-AT+QNWLOCK="common/5g",2,639648,30,78
-AT+QNWLOCK="common/5g"
-AT+QENG="servingcell"
-AT+C5GREG?
-```
-
-Read back UE2's lock tuple and actual serving cell. Exit this minicom session
-with **Ctrl+A, then X** before starting UE2's automation.
-
-Port-selection details remain in the full manual for
-[UE1](dual_ue_laptop_quick_commands.md#12-verify-the-at-port-and-restore-the-du1-lock)
-and [UE2](dual_ue_laptop_quick_commands.md#22-verify-the-at-port-and-restore-the-du2-lock).
-After completing the selected role's block, continue to section 2. If the modem
-is disabled after the previous Ctrl+C shutdown, the automation handles enabling
-it and waiting for registration.
+update the selected role's `--at-port` using its current physical USB mapping.
+`ttyUSB` numbers can change even when the sockets stay the same. The script
+verifies USB ownership and serial IMEI/IMSI before writing any configuration.
 
 ## 2. Automation scripts
 
@@ -179,7 +46,7 @@ running and close minicom before launching the script.
 ### Laptop dependencies (install once)
 
 ```bash
-sudo apt install modemmanager iproute2 iputils-ping python3 minicom
+sudo apt install modemmanager iproute2 iputils-ping python3
 sudo systemctl enable --now ModemManager
 ```
 
@@ -248,16 +115,22 @@ prompt authorizes local laptop operations; it is separate from Spark SSH login.
 Run **on the laptop**, one terminal for each role. Each watcher connects/verifies
 its UE on startup, monitors the working path, and retries when a later check fails.
 It stays running after successful recovery. The other UE and management Wi-Fi
-are preserved. These commands use the copied folder from the transfer above:
+are preserved. These commands use the copied folder from the transfer above
+and enable automatic cell-lock/registration recovery for the port mapping in
+section 1. No manual AT commands are needed before launching them:
 
 ```bash
 # Terminal 1: UE1 / FR1
-sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 1
+sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 1 \
+  --auto-cell-lock --cell-lock-cooldown 30 \
+  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0
 ```
 
 ```bash
 # Terminal 2: UE2 / FR3
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 1
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 1 \
+  --auto-cell-lock --cell-lock-cooldown 30 \
+  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
 ```
 
 ### Independent UE operation and host network locking
@@ -340,8 +213,12 @@ UE2 / FR3 attempt 3 ... SUCCESS
 For steps or full output, or a different retry delay:
 
 ```bash
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 2 --verbose 2
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 0.5 --verbose 3
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 2 --verbose 2 \
+  --auto-cell-lock --cell-lock-cooldown 30 \
+  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 0.5 --verbose 3 \
+  --auto-cell-lock --cell-lock-cooldown 30 \
+  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
 ```
 
 ### Stop or switch to manual operations
@@ -407,23 +284,11 @@ Recovery proceeds as follows:
 
 ### Automatic cell lock and registration after radio failure
 
-Enable this option on the **laptop**, after copying the updated five-file set
-above and closing minicom. Stop old watchers before updating shared helpers.
-Use one terminal per UE, with the verified by-path port from section 1:
-
-```bash
-# Terminal 1: UE1 / FR1 — USB 4-4, recorded AT port ttyUSB2
-sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 3 --verbose 2 \
-  --auto-cell-lock --cell-lock-cooldown 30 \
-  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0
-```
-
-```bash
-# Terminal 2: UE2 / FR3 — USB 4-3, recorded AT port ttyUSB6
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 3 --verbose 2 \
-  --auto-cell-lock --cell-lock-cooldown 30 \
-  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
-```
+The [startup commands above](#start-the-watchers) enable `--auto-cell-lock`
+for each UE using its by-path AT port. Copy the complete updated five-file set
+before starting; stop old watchers before updating shared helpers. The first
+attempt checks registration/cell and can restore the radio settings after a
+failure, so a separate manual lock step is unnecessary.
 
 The option requires `--at-port`; it does not guess a tty number. Registration
 failure or missing/mismatching serving-cell evidence triggers radio recovery.
@@ -497,14 +362,22 @@ sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --verbose 2 \
   --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
 ```
 
-Stop the affected watcher before opening minicom or changing serial settings;
-close minicom before restarting it. Optional bounded operation:
+For manual diagnosis only, stop the affected watcher and wait for its shutdown
+result before opening minicom or changing serial settings; close minicom before
+restarting it. Manual modem selection, port opening and AT commands are in the
+[UE1 / FR1 procedure](dual_ue_laptop_quick_commands.md#12-verify-the-at-port-and-restore-the-du1-lock)
+and [UE2 / FR3 procedure](dual_ue_laptop_quick_commands.md#22-verify-the-at-port-and-restore-the-du2-lock).
+Install `minicom` separately if needed for that diagnosis. Optional bounded operation:
 
 ```bash
 # Retry until the first successful verification, then exit.
-sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --once --verbose 2
+sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --once --verbose 2 \
+  --auto-cell-lock --cell-lock-cooldown 30 \
+  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0
 # At most five actual connection attempts; exit 1 if the last attempt failed.
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --once --max-attempts 5 --verbose 3
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --once --max-attempts 5 --verbose 3 \
+  --auto-cell-lock --cell-lock-cooldown 30 \
+  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
 ```
 
 The attempt counter increases throughout a watcher invocation, including recovery
