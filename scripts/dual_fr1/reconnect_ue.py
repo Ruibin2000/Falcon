@@ -261,7 +261,7 @@ class RegistrationRequest:
 
 class Recovery(connect.Connection):
     def __init__(self, *args, redial=False, redial_allowed=True, failed_bearer=None,
-                 registration_request_timeout=20, registration_dispatch=None, discovery_guard=None, **kwargs):
+                 registration_request_timeout=5, registration_dispatch=None, discovery_guard=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.redial_requested = redial
         self.redial_allowed = redial_allowed
@@ -780,8 +780,8 @@ def arguments(argv=None):
                         help="Extra registration-state wait inside an attempt, 0..300 seconds; default 0 checks once per loop")
     parser.add_argument("--registration-grace", type=nonnegative_int, default=10,
                         help="Observe automatic radio recovery before forced lock/PDU/registration recovery, default 10s; 0 disables grace")
-    parser.add_argument("--registration-request-timeout", type=positive_int, default=20,
-                        help="Background mmcli D-Bus registration timeout, 1..70 seconds (default 20); process watchdog adds 5s")
+    parser.add_argument("--registration-request-timeout", type=positive_int, default=5,
+                        help="Background mmcli D-Bus registration timeout, 1..70 seconds (default 5); process watchdog adds 5s")
     parser.add_argument("--redial-after", type=positive_int, default=3,
                         help="Redial on the next attempt after this many consecutive failed ping attempts, default 3")
     parser.add_argument("--redial-cooldown", type=positive_seconds, default=30.0,

@@ -122,7 +122,7 @@ section 1. No manual AT commands are needed before launching them:
 ```bash
 # Terminal 1: UE1 / FR1
 sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 1 \
-  --registration-grace 10 --registration-request-timeout 20 \
+  --registration-grace 10 --registration-request-timeout 5 \
   --auto-cell-lock --cell-lock-cooldown 30 \
   --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0
 ```
@@ -130,7 +130,7 @@ sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 1 \
 ```bash
 # Terminal 2: UE2 / FR3
 sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 1 \
-  --registration-grace 10 --registration-request-timeout 20 \
+  --registration-grace 10 --registration-request-timeout 5 \
   --auto-cell-lock --cell-lock-cooldown 30 \
   --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
 ```
@@ -180,9 +180,11 @@ many seconds of state polling inside each attempt and will slow the loop.
 Other modem queries, initial enable, AT operations, PDU setup and ping still
 have their own execution time; the one-second interval is not a hard deadline
 for the complete round. Ordinary external commands retain a 75-second process
-limit. A background registration child instead uses a **20-second mmcli D-Bus
-wait** by default and a **25-second process watchdog** (client wait plus 5).
+limit. A background registration child instead uses a **5-second mmcli D-Bus
+wait** by default and a **10-second process watchdog** (client wait plus 5).
 `--registration-request-timeout N` accepts 1..70 seconds and changes both limits.
+An explicit value overrides the default: replace `--registration-request-timeout 20`
+in an older launch command with `--registration-request-timeout 5`, or omit it.
 The parent does not synchronously wait for this child's registration reply.
 Healthy checks and recovery both verify source-bound and
 ordinary routes and use **one ping in each mode**, rather than the one-shot
@@ -217,7 +219,7 @@ client prevents another lock/registration recovery for that UE.
 | `--interval` | `1` second | Delay after each completed check/attempt. |
 | `--registration-grace` | `10` seconds | Observe automatic radio recovery before forcing radio/PDU recovery; `0` skips this window. |
 | `--registration-timeout` | `0` seconds | Extra state polling inside each attempt; default is one snapshot. |
-| `--registration-request-timeout` | `20` seconds | Background mmcli D-Bus wait; process watchdog adds 5 seconds. |
+| `--registration-request-timeout` | `5` seconds | Background mmcli D-Bus wait; process watchdog adds 5 seconds. |
 | `--cell-lock-cooldown` | `30` seconds | Minimum gap before another radio recovery after the previous preparation/request finishes. |
 
 A client timeout does not prove that ModemManager stopped its backend task.
@@ -376,7 +378,7 @@ or cooldown gate, each eligible radio recovery does the following:
    If the correct live SA cell and C5GREG `1`/`5` already prove registration and MM
    also reports the expected NR SA registration, preserve the working PDU.
    Otherwise enable the modem if needed and launch one background registration
-   client using `mmcli -m <current-selected-modem> --3gpp-register-in-operator=00101 --timeout=20`.
+   client using `mmcli -m <current-selected-modem> --3gpp-register-in-operator=00101 --timeout=5`.
    ModemManager may reject registration while it still considers the modem
    connected; an owned stale PDU must be released first. A generic `connected`
    state alone is not accepted as registration: the startup check also requires
@@ -394,7 +396,7 @@ backend-observation phases. A correct saved lock is reused regardless of these
 intervals. `--cell-lock-cooldown` accepts positive seconds; reducing it does not
 cancel a pending request or skip the backend-observation guard.
 
-The default registration client wait is **20 seconds**, with a **25-second
+The default registration client wait is **5 seconds**, with a **10-second
 process watchdog**; adjust the client wait using `--registration-request-timeout`.
 The child writes to private files, so output cannot fill a pipe and block its
 exit. Level 2 shows the observing/pending/completed phases; level 3 also prints
@@ -468,7 +470,7 @@ outer watchdog did not override that shorter inner timeout.
 
 An intermediate implementation explicitly used a 70-second synchronous wait.
 The current implementation first observes for 10 seconds, then launches the
-registration client in the background with **`--timeout=20` by default**. Use
+registration client in the background with **`--timeout=5` by default**. Use
 `--registration-request-timeout N` (1..70 seconds) to adjust that client limit;
 `--registration-timeout` now defaults to `0` for a single state snapshot per
 attempt. Registration events retain the requested limits, elapsed time and
@@ -482,7 +484,7 @@ after the earlier 60 dB setting. The DU2 log during the supplied registration
 window also contained RF `underflow` and `late` warnings. Their causal link to
 this modem's failed cell acquisition has not been established. Increasing the
 client wait does not repair a missing/unusable radio signal or DU scheduling
-failures. Live acceptance of the deferred/background 20-second request flow
+failures. Live acceptance of the deferred/background 5-second request flow
 remains pending.
 
 ### Operator-reported connection recovery

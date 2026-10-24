@@ -547,7 +547,7 @@ failure, use the reconnect watcher's explicit
 [`--auto-cell-lock --at-port ...` option](dual_ue_laptop_reconnect_quick_start.md#automatic-cell-lock-and-registration-after-radio-failure).
 This one-shot launcher keeps its read-only AT fallback.
 The watcher now observes radio failures for 10 seconds before forced recovery,
-then uses one background registration client with a default 20-second timeout.
+then uses one background registration client with a default 5-second timeout.
 Its `--registration-grace` and `--registration-request-timeout` options belong
 to the reconnect scripts; the one-shot launcher's passive-wait behavior is unchanged.
 

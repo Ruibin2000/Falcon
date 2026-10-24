@@ -135,7 +135,7 @@ class RadioRecoveryTest(unittest.TestCase):
         self.assertFalse(WATCH.arguments(["--ue", "2"]).auto_cell_lock)
 
     def test_cli_registration_request_timeout_is_bounded_below_process_watchdog(self):
-        self.assertEqual(WATCH.arguments(["--ue", "2"]).registration_request_timeout, 20)
+        self.assertEqual(WATCH.arguments(["--ue", "2"]).registration_request_timeout, 5)
         for value in ("0", "71", "nan"):
             with self.subTest(value=value), self.assertRaises(SystemExit):
                 WATCH.arguments(["--ue", "2", "--registration-request-timeout", value])
@@ -194,7 +194,7 @@ class RadioRecoveryTest(unittest.TestCase):
         self.assertEqual(evidence["status"], "interrupted")
         summary = json.loads((watcher.directory / "summary.json").read_text())
         self.assertEqual(summary["shutdown"]["status"], "completed")
-        self.assertEqual(summary["registration_request_timeout"], 20)
+        self.assertEqual(summary["registration_request_timeout"], 5)
         self.assertEqual(self.network.modems[next(iter(self.network.modems))][2], "registered")
 
     def test_both_roles_restore_own_lock_with_verified_readback(self):
@@ -450,7 +450,7 @@ class RadioRecoveryTest(unittest.TestCase):
                 original_change(*command)
         with FakeAT().port(), patch.object(CONNECT, "change", change):
             watcher.attempt()
-        self.assertIn(("mmcli", "-m", modem_path, "--3gpp-register-in-operator=00101", "--timeout=20"), self.network.changes)
+        self.assertIn(("mmcli", "-m", modem_path, "--3gpp-register-in-operator=00101", "--timeout=5"), self.network.changes)
         self.assertFalse(watcher.healthy)
         watcher.attempt()
         self.assertTrue(watcher.healthy)

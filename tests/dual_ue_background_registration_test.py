@@ -71,7 +71,7 @@ class BackgroundRegistrationTest(unittest.TestCase):
 
     def test_defaults_and_grace_validation(self):
         args = WATCH.arguments(["--ue", "2"])
-        self.assertEqual((args.registration_grace, args.registration_timeout, args.registration_request_timeout), (10, 0, 20))
+        self.assertEqual((args.registration_grace, args.registration_timeout, args.registration_request_timeout), (10, 0, 5))
         self.assertEqual(WATCH.arguments(["--ue", "2", "--registration-grace", "0"]).registration_grace, 0)
         for option in ("--registration-grace", "--registration-timeout"):
             with self.subTest(option=option), self.assertRaises(SystemExit):
@@ -114,7 +114,7 @@ class BackgroundRegistrationTest(unittest.TestCase):
         with radio.FakeAT(correct_settings=True).port():
             watcher.attempt()
         self.assertEqual(len(self.jobs), 1)
-        self.assertIn("--timeout=20", self.jobs[0].command)
+        self.assertIn("--timeout=5", self.jobs[0].command)
         with patch.object(WATCH, "restore_cell_lock") as lock:
             for elapsed in (11, 12, 13):
                 self.clock[0] = elapsed
@@ -151,11 +151,11 @@ class BackgroundRegistrationTest(unittest.TestCase):
         watcher = self.auto(grace=0)
         with radio.FakeAT(correct_settings=True).port():
             watcher.attempt()
-        self.clock[0] = 20
+        self.clock[0] = 5
         self.jobs[0].finish("failed", 1)
         self.jobs[0].data["stderr"] = "Timeout was reached"
         watcher.poll_registration()
-        self.clock[0] = 51  # Both 20s client wait and 30s cooldown elapsed.
+        self.clock[0] = 36  # Both 5s client wait and 30s cooldown elapsed.
         watcher.attempt()
         result = json.loads((watcher.directory / "attempts.jsonl").read_text().splitlines()[-1])
         self.assertEqual(result["radio_recovery"]["status"], "backend_observation")
