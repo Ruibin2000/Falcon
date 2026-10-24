@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Connect one Falcon laptop UE, verify its serving DU and PDU, then ping Spark."""
+"""Connect and verify one laptop UE, then hold until Ctrl+C shuts that UE down."""
 
 import argparse
 import contextlib
@@ -14,6 +14,7 @@ import re
 import select
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -40,6 +41,62 @@ class CellError(ValueError):
     """No acceptable live serving-cell evidence; manual serial checks required."""
 
 
+class StopRequested(KeyboardInterrupt):
+    def __init__(self, signum):
+        self.signum = signum
+        super().__init__(signal.Signals(signum).name)
+
+
+class StopSignals:
+    """Cancel on the first stop signal; subsequent signals cannot re-enter cleanup."""
+    def __init__(self):
+        self.signum = None
+
+    def handle(self, signum, frame):
+        if self.signum is None:
+            self.signum = signum
+            raise StopRequested(signum)
+
+    def __enter__(self):
+        self.originals = {sig: signal.signal(sig, self.handle) for sig in (signal.SIGINT, signal.SIGTERM)}
+        return self
+
+    def __exit__(self, *exception):
+        for sig, handler in self.originals.items():
+            signal.signal(sig, handler)
+
+
+@contextlib.contextmanager
+def ignore_stop_signals():
+    # Ignored dispositions also protect exec'ed cleanup children from another
+    # terminal Ctrl+C, which is sent to the whole foreground process group.
+    original = {sig: signal.signal(sig, signal.SIG_IGN) for sig in (signal.SIGINT, signal.SIGTERM)}
+    try:
+        yield
+    finally:
+        for sig, handler in original.items():
+            signal.signal(sig, handler)
+
+
+@contextlib.contextmanager
+def role_lock(ue):
+    # Reuse the watcher lock name so existing watcher versions also exclude a
+    # new one-shot launcher for the same modem.
+    with open(f"/run/lock/falcon-ue{ue}-reconnect.lock", "a") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise ValueError(f"UE{ue} already has an active connection or reconnect script; stop it first") from None
+        yield
+
+
+def interruption(error):
+    signum = getattr(error, "signum", signal.SIGINT)
+    reason = ("Interrupted by user (Ctrl+C)" if signum == signal.SIGINT else
+              f"Stopped by {signal.Signals(signum).name}")
+    return signum, reason
+
+
 def require(condition, message):
     if not condition:
         raise ValueError(message)
@@ -56,13 +113,13 @@ def status(message, *, detail=None, error=False, end="\n"):
 
 def read(*command):
     return subprocess.check_output(command, text=True, stderr=subprocess.PIPE,
-                                   timeout=75, env=dict(os.environ, LC_ALL="C"))
+                                   timeout=75, start_new_session=True, env=dict(os.environ, LC_ALL="C"))
 
 
 def change(*command):
     print("+ " + shlex.join(command), flush=True)
     completed = subprocess.run(command, text=True, capture_output=True, timeout=75,
-                               env=dict(os.environ, LC_ALL="C"))
+                               start_new_session=True, env=dict(os.environ, LC_ALL="C"))
     if completed.stdout:
         print(completed.stdout, end="" if completed.stdout.endswith("\n") else "\n")
     if completed.stderr:
@@ -255,6 +312,9 @@ class Connection:
         status(f"[{index}/9] {label} ...", end="\n" if verbose else " ")
         try:
             yield
+        except KeyboardInterrupt:
+            status(f"[{index}/9] {label} [CANCELLED]" if verbose else "[CANCELLED]")
+            raise
         except BaseException:
             status(f"[{index}/9] {label} [FAIL]" if verbose else "[FAIL]")
             raise
@@ -292,17 +352,37 @@ class Connection:
         return info
 
     def registered(self, enable):
+        started = time.monotonic()
+        deadline = started + (self.registration_timeout if enable else 0)
+        print("Registration: querying current modem / active SIM status "
+              f"(wait budget {self.registration_timeout if enable else 0}s; command timeout 75s)", flush=True)
         info = self.checked_modem()
         if info.get("modem.generic.state") == "disabled" and enable:
             change("mmcli", "-m", self.modem, "--enable")
-        deadline = time.monotonic() + (self.registration_timeout if enable else 0)
-        while True:
             info = self.checked_modem()
+        while True:
+            snapshot = dict(state=info.get("modem.generic.state", "--"),
+                            registration_state=info.get("modem.3gpp.registration-state", "--"),
+                            packet_service_state=info.get("modem.3gpp.packet-service-state", "--"),
+                            plmn=info.get("modem.3gpp.operator-code", "--"),
+                            access_technologies=[v for v in values(info, "modem.generic.access-technologies") if v],
+                            elapsed_seconds=round(time.monotonic() - started, 1))
+            self.result["registration"] = snapshot
+            description = (f"state={snapshot['state']} 3gpp={snapshot['registration_state']} "
+                           f"packet={snapshot['packet_service_state']} PLMN={snapshot['plmn']} "
+                           f"access={','.join(snapshot['access_technologies']) or '--'}")
+            print(f"Registration: {description}; elapsed={snapshot['elapsed_seconds']:g}s", flush=True)
             if info.get("modem.generic.state") in ("registered", "connecting", "connected"):
                 break
-            if time.monotonic() >= deadline:
-                raise CellError("Modem is not registered; check serving cell and serial configuration")
-            time.sleep(2)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise CellError(f"Modem is not registered after {snapshot['elapsed_seconds']:g}s: {description}; "
+                                "check serving cell, registration and serial configuration")
+            delay = min(2, remaining)
+            print(f"Registration: waiting {delay:g}s before the next modem / SIM query", flush=True)
+            time.sleep(delay)
+            print("Registration: querying current modem / active SIM status ...", flush=True)
+            info = self.checked_modem()
         technologies = {token.strip().lower() for value in values(info, "modem.generic.access-technologies")
                         for token in value.split(",")}
         if info.get("modem.3gpp.operator-code") != "00101" or "5gnr" not in technologies or "lte" in technologies:
@@ -527,7 +607,11 @@ class Connection:
                     change(*command, "to", self.role["server"] + "/32", "lookup", str(table))
             require(self.configured(bearer), "Installed host configuration changed unexpectedly")
             self.routes(bearer)
-        except BaseException:
+        except BaseException as error:
+            if isinstance(error, StopRequested):
+                # The launcher's signal cleanup disconnects/deletes/disables
+                # under the shared lock; do not start a second partial reset.
+                raise
             print("Host rebuild failed; retaining the independent destination block and clearing the partial UE path", flush=True)
             try:
                 self.checked_modem()
@@ -648,11 +732,55 @@ def capture_reset_output():
         reset.change = original
 
 
+def shutdown_on_interrupt(ue, *, lock=None, lock_path="/run/lock/falcon-ue-connect.lock"):
+    """Run the existing verified shutdown for this role, recording incomplete cleanup."""
+    result = dict(ue=ue, status="started", started_at=datetime.now(timezone.utc).isoformat())
+    with ignore_stop_signals():
+        status(f"UE{ue} shutdown: disconnect PDU, clear host path, delete bearers and disable modem ...")
+        original_read = reset.read
+        reset.read = read  # Give shutdown queries the same bounded timeout as the launcher.
+        try:
+            with contextlib.ExitStack() as stack:
+                status("Waiting for the shared network lock before UE shutdown ...")
+                if lock is None:
+                    lock = stack.enter_context(open(lock_path, "a"))
+                # Re-lock the same descriptor whether setup still owns it or
+                # the successful connection has released it while idle.
+                fcntl.flock(lock, fcntl.LOCK_EX)
+                stack.enter_context(capture_reset_output())
+                local = {a["local"] for device in ip_json("addr", "show")
+                         for a in device.get("addr_info", [])}
+                require(not local.intersection(role["server"] for role in ROLES.values()),
+                        "Spark service IP is local; refusing laptop shutdown on Spark")
+                # Retain the destination guard even when interrupted before the
+                # PDU/host setup stage installed it.
+                Connection(ue).block(install=True)
+                reset.reset(ue, shutdown=True)
+            result["status"] = "completed"
+            status(f"UE{ue} shutdown [OK]: bearers=0, state=disabled, role host path cleared")
+        except (ValueError, OSError, subprocess.SubprocessError) as error:
+            result.update(status="failed", error=str(error))
+            if isinstance(error, subprocess.CalledProcessError) and error.stderr:
+                print(error.stderr.strip(), file=sys.stderr)
+            status(f"UE{ue} shutdown [FAIL]: {error}; cleanup is incomplete", error=True)
+        finally:
+            reset.read = original_read
+            result["ended_at"] = datetime.now(timezone.utc).isoformat()
+    return result
+
+
+def wait_for_stop():
+    """Sleep in the kernel: no timer, modem reads, health checks or ping."""
+    while True:
+        signal.pause()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ue", type=int, required=True, choices=(1, 2))
     parser.add_argument("--verbose", action="store_true", help="Show full command/details/ping output; default shows steps and completion markers")
-    parser.add_argument("--check-only", action="store_true", help="Read identities/cell/PDU/host path; no enable, connect, route changes or ping")
+    parser.add_argument("--check-only", action="store_true", help="Read identities/cell/PDU/host path without startup changes or ping; Ctrl+C/SIGTERM still shuts this UE down")
+    parser.add_argument("--exit-on-success", action="store_true", help="Exit after successful verification instead of holding; leaves the UE connected")
     parser.add_argument("--at-port", help="Optional owned USB AT port for read-only QENG if GetCellInfo is unavailable/incomplete")
     parser.add_argument("--registration-timeout", type=int, default=45, help="Seconds to wait for registration, default 45")
     parser.add_argument("--output-root", default="/tmp", help="Existing directory for private run logs and summary.json")
@@ -662,29 +790,50 @@ def main():
     for command in ("mmcli", "ip", "ping"):
         require(shutil.which(command), f"Missing required command: {command}")
     # Both roles share the host policy database; serialize our own launches.
-    with open("/run/lock/falcon-ue-connect.lock", "a") as lock:
+    with role_lock(args.ue), open("/run/lock/falcon-ue-connect.lock", "a") as lock:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             raise ValueError("Another UE connection script is running; finish it before launching the other role") from None
         directory = Path(tempfile.mkdtemp(prefix=f"falcon-ue{args.ue}-connect-", dir=args.output_root))
         session = Connection(args.ue, args.at_port, args.registration_timeout)
-        with (directory / "run.log").open("w") as log, \
+        with (directory / "run.log").open("w") as log, StopSignals() as stops, \
                 contextlib.redirect_stdout(Tee(sys.stdout, log, args.verbose)), \
                 contextlib.redirect_stderr(Tee(sys.stderr, log, args.verbose)), capture_reset_output():
-            print(f"Run evidence: {directory}", flush=True)
             try:
+                print(f"Run evidence: {directory}", flush=True)
                 session.run(args.check_only)
+                if not args.check_only and not args.exit_on_success:
+                    session.stage = "waiting for stop"
+                    session.result.update(stage=session.stage, lifecycle="waiting_for_stop",
+                                          connected_at=datetime.now(timezone.utc).isoformat())
+                    (directory / "summary.json").write_text(json.dumps(session.result, indent=2) + "\n")
+                    # Retain only this UE's role lock while idle, so UE2 and
+                    # other-role shutdown are free to use the policy database.
+                    fcntl.flock(lock, fcntl.LOCK_UN)
+                    status(f"UE{args.ue} connected; waiting for Ctrl+C to shut down (no polling or ping)")
+                    wait_for_stop()
                 return 0
             except (ValueError, OSError, subprocess.SubprocessError, KeyboardInterrupt) as error:
-                session.result.update(status="serial_check_required" if isinstance(error, CellError) else "failed",
-                                      stage=session.stage, error=str(error))
-                status(f"STOP at {session.stage}: {error}", error=True)
+                interrupted = isinstance(error, KeyboardInterrupt)
+                signum, reason = interruption(error) if interrupted else (None, str(error))
+                if interrupted:
+                    stops.signum = signum
+                    session.result["verified_before_stop"] = session.result["status"] in ("connected", "checked")
+                session.result.update(status="interrupted" if interrupted else
+                                      "serial_check_required" if isinstance(error, CellError) else "failed",
+                                      stage=session.stage, error=reason)
+                status(f"STOP at {session.stage}: {reason}", error=True)
                 if isinstance(error, subprocess.CalledProcessError) and error.stderr:
                     print(error.stderr.strip(), file=sys.stderr)
                 if isinstance(error, CellError):
                     session.manual_hint()
-                return 1
+                if interrupted:
+                    session.result["signal"] = signum
+                    session.result["lifecycle"] = "stopping"
+                    session.result["shutdown"] = shutdown_on_interrupt(args.ue, lock=lock)
+                    session.result["lifecycle"] = "stopped"
+                return 128 + signum if interrupted else 1
             finally:
                 session.result["ended_at"] = datetime.now(timezone.utc).isoformat()
                 (directory / "summary.json").write_text(json.dumps(session.result, indent=2) + "\n")

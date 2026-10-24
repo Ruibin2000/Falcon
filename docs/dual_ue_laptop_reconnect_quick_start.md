@@ -4,8 +4,8 @@ Updated: 2026-10-24. Developer: Ruibin.
 
 Run these watchers on the **UE laptop** during an experiment. Each one prepares
 its selected UE, verifies connectivity, then keeps monitoring and recovering that
-UE until stopped. For a launcher that exits after successful self-check/ping,
-use [laptop one-shot startup and self-check](dual_ue_automation.md).
+UE until Ctrl+C shuts it down. For one startup/self-check followed by a passive,
+low-resource wait until Ctrl+C (no ongoing probes), use [laptop one-shot startup and self-check](dual_ue_automation.md).
 
 The entry points are [`reconnect_ue1.sh`](../scripts/dual_fr1/reconnect_ue1.sh)
 (**UE1 / FR1**) and [`reconnect_ue2.sh`](../scripts/dual_fr1/reconnect_ue2.sh)
@@ -43,7 +43,7 @@ automatically on the laptop.
 
 ## Copy or update the five files
 
-Run in **Bash on the laptop**. Stop active watchers before updating the shared
+Run in **Bash on the laptop**. Stop active launchers/watchers before updating the shared
 Python helpers, then repeat this block whenever the Spark scripts change:
 
 ```bash
@@ -117,6 +117,10 @@ All three levels save the same detailed `run.log`; raw bearer authentication
 properties are not dumped. Healthy monitoring is silent at levels 1 and 2.
 **Silent means no terminal output: the status checks, ping traffic and file logging
 still happen.** It does not mean passive monitoring without network traffic.
+Registration snapshots (state, 3GPP registration/packet state, PLMN, access
+technology and elapsed wait) are saved in the detailed log and shown at level 3;
+see [registration diagnosis](dual_ue_automation.md#waiting-at-modem-registration)
+if the watcher cannot get past that step.
 Verbosity changes terminal detail, not the checks or recovery actions. The older
 `connect_ue*.sh` one-shot scripts retain their boolean `--verbose` flag; the
 **new `reconnect_ue*.sh` watchers require the numeric level**.
@@ -138,16 +142,29 @@ sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 0.5 --verbose 3
 
 ## Stop or switch to manual operations
 
-Run only **one watcher per role**; duplicate watchers are rejected. UE1 and UE2
-watchers can run together: a shared lock serializes each check/recovery with the
-other role and with the one-shot connection scripts. The lock is released during
-the retry wait, and waiting for it does not count as a connection attempt.
-Stop the affected watcher with **Ctrl+C before manual modem configuration, reset,
-shutdown or a one-shot run for that role**, otherwise it will try to reconnect
-a deliberately stopped path. Ctrl+C/SIGTERM requests a stop after the current
-transaction; interval waits wake immediately. Stopping a watcher leaves the
-modem, PDU and host network configuration in place. It does not disconnect traffic.
-No service, boot job or background daemon is installed automatically.
+Run only **one launcher or watcher per role**; duplicate ownership is rejected.
+UE1 and UE2 can run together: a shared lock serializes each check/recovery and
+shutdown. The lock is released during retry waits and while a one-shot holder is
+idle; waiting for it does not count as a connection attempt.
+
+**Ctrl+C now shuts down this UE**, rather than merely stopping monitoring.
+SIGTERM has the same cleanup behavior. The script cancels its work/wait, takes
+the shared network lock, re-discovers this role by IMEI and runs the existing
+shutdown helper: disconnect PDU, clear role IPv4/routes/rules, bring WWAN DOWN /
+MTU 1500, delete bearers and disable modem. The independent Wi-Fi fallback block
+stays installed; the other UE and management Wi-Fi are preserved.
+
+Wait for `UE1 shutdown: SUCCESS` / `UE2 shutdown: SUCCESS` before manual
+configuration or restarting that role. Cleanup can wait for the other role's
+current operation. Repeated Ctrl+C/SIGTERM cannot re-enter or interrupt cleanup;
+a failed cleanup prints `FAIL` plus the reason, even at verbosity 1. The outcome
+is saved in `summary.json`. A later startup can enable/reconnect the disabled UE.
+Stopping the watcher interrupts that UE's traffic path, including video using it.
+
+Default operation has no attempt limit: it monitors healthy paths and retries
+faults until Ctrl+C. Optional `--once`/`--max-attempts` retain their bounded normal
+exit behavior; a normal `--once` success leaves the UE connected. No service,
+boot job or background daemon is installed automatically.
 
 ## Automatic recovery
 
@@ -219,9 +236,13 @@ sudo ls -td /tmp/falcon-ue1-reconnect-* /tmp/falcon-ue2-reconnect-*
 `run.log` retains detailed attempts and health checks; `attempts.jsonl` records
 each attempt's UTC times, outcome, failed stage, current IP, ping output and
 forced-redial reason when applicable. `summary.json` is written on exit and
-records the last verified state (not a new post-exit measurement). Logs accumulate
+records the last verified state **before shutdown** (not a post-exit measurement)
+and the nested `shutdown` completion/error. `attempts.jsonl` marks a cancelled
+in-progress attempt as `interrupted`. Logs accumulate
 for the invocation; retain the evidence you need and remove old run directories
-after stopping the watcher. Signal exit codes are 130 (Ctrl+C) / 143 (SIGTERM).
+after stopping the watcher. Signal exit codes are 130 (Ctrl+C) / 143 (SIGTERM),
+after the selected-UE shutdown attempt. Cleanup failure remains visible in output
+and the summary; successful cleanup requires zero bearers and modem disabled.
 
 These watchers repair the PDU and laptop network. A running MPX client then follows
 host IP changes as described [below](#which-ip-bindings-change-and-how-mpx-follows-them).

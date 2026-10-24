@@ -5,8 +5,9 @@ Updated: 2026-10-24. Developer: Ruibin.
 Run these scripts on the **UE laptop**. Start the core, CU and both DUs on
 **Spark first**, following [Spark quick commands](dual_ue_spark_quick_commands.md).
 This guide covers one-shot modem enable/registration, live serving-cell checks,
-IPv4 PDU connection, WWAN/policy routing and ping. A successful launcher exits;
-monitoring during an experiment is covered separately in the
+IPv4 PDU connection, WWAN/policy routing and ping. After success the launcher
+**stays in the terminal, blocking until Ctrl+C**. It performs no further status
+queries or ping during that wait. For ongoing monitoring/recovery use the
 [laptop automatic reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md).
 
 The entry points are [`connect_ue1.sh`](../scripts/dual_fr1/connect_ue1.sh) and
@@ -15,8 +16,10 @@ The entry points are [`connect_ue1.sh`](../scripts/dual_fr1/connect_ue1.sh) and
 [`reset_ue_network.py`](../scripts/dual_fr1/reset_ue_network.py).
 Keep these **four files together** when copying them to the laptop. The older
 standalone `~/falcon-reset-ue-network.py` does not install the launchers.
-Stop the selected UE's reconnect watcher before a one-shot run or manual reset;
-stop both watchers before updating their shared helper files.
+Stop the selected UE's existing launcher/watcher before a new run or manual
+configuration. **Ctrl+C now shuts down that UE**, including bearer deletion and
+modem disable. Stop both roles before updating their shared helper files, then
+restart them to load the new version.
 
 ## Transfer the four scripts from Spark
 
@@ -47,7 +50,7 @@ The `ls` command must list all four files before continuing. Repeat the transfer
 after updating the scripts on Spark so that the laptop uses the current versions.
 The archive is streamed directly between `tar` processes; no intermediate archive
 or temporary extraction directory is created. Repeating the transfer overwrites
-the four named files. **Stop active reconnect watchers before replacing their
+the four named files. **Stop active launchers and reconnect watchers before replacing their
 files**, then restart them so the running Python process loads the new version.
 
 The management addresses for this setup are Spark `10.20.44.26` and laptop
@@ -60,33 +63,44 @@ Spark, substituting the laptop's current IP if needed, and use the reported
 
 ## Run
 
-After the transfer, run on the **UE laptop**:
+After the transfer, use **two laptop terminals**. Start UE1 first:
 
 ```bash
-cd ~/falcon-ue-connect
-sudo bash connect_ue1.sh
-# Continue only after UE1 prints PASS and exits with status 0.
-sudo bash connect_ue2.sh
+# Laptop terminal 1: leave this running after PASS.
+sudo bash ~/falcon-ue-connect/connect_ue1.sh
+```
+
+After UE1 prints PASS and its waiting message, start UE2 in terminal 2:
+
+```bash
+# Laptop terminal 2: leave this running after PASS.
+sudo bash ~/falcon-ue-connect/connect_ue2.sh
 ```
 
 `[sudo] password for david:` is a separate prompt for the **laptop's `david`
 account**. It grants local permission to configure the modem and networking.
 It is independent of the Spark password used for the file transfer. Running
-the two commands in the same terminal may reuse sudo's cached authentication;
-another terminal or an expired cache can prompt again.
+the two launchers in separate terminals can require separate local sudo
+authentication; an expired cache can prompt again.
 
-A successful run exits after the ping checks; it does not keep pinging, monitor
-later outages or redial automatically. For ongoing monitoring, use the separate
+A successful run **holds the connection and waits for Ctrl+C** after the ping
+checks. Waiting uses `signal.pause()`, with no periodic wakeup, modem queries,
+health probes, ping or automatic redial. The Python process and a few open file
+handles remain; it does not busy-wait. The shared network lock is released while
+idle, so preparing/stopping the other UE remains possible. For ongoing monitoring, use the separate
 [laptop automatic reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md).
 
 These are self-checking connection launchers: they perform checks and prepare
 the selected UE through successful ping. Without extra options, the terminal
-shows the current step, `[OK]` / `[FAIL]` markers, final `PASS`, and the log
-directory. Modem details, commands and raw ping output are saved in the log.
+shows the current step, `[OK]` / `[FAIL]` markers, final `PASS`, the idle-wait
+message and the run evidence directory. After Ctrl+C it shows shutdown progress
+and the saved evidence path. Modem details, commands and raw ping output are saved in the log.
 Use `--verbose` to also show that full output in the terminal:
 
 ```bash
+# Laptop terminal 1
 sudo bash ~/falcon-ue-connect/connect_ue1.sh --verbose
+# Laptop terminal 2
 sudo bash ~/falcon-ue-connect/connect_ue2.sh --verbose
 ```
 
@@ -103,19 +117,26 @@ Example of the default display (illustrative, not a new hardware result):
 [8/9] Ordinary ping ... [OK]
 [9/9] Final identity / cell / network verification ... [OK]
 PASS: UE1 / FR1 connected
-Evidence saved: /tmp/falcon-ue1-connect-<unique-suffix>
+UE1 connected; waiting for Ctrl+C to shut down (no polling or ping)
 ```
 
 The step label appears immediately; its completion marker follows when the
 operation finishes. Errors and required manual serial instructions remain
 visible in both modes. `--verbose` changes only terminal detail; checks,
 connection actions, exit status and full log capture are the same.
+During registration, the detailed output reports the modem state, 3GPP
+registration/packet-service states, PLMN, access technology and elapsed wait.
+It also announces each modem/SIM query, so a slow query can be distinguished
+from a completed query reporting an unregistered modem. These details are
+saved in `run.log` even without `--verbose`.
 
 If the laptop already has a current Falcon checkout, you can also run from
 that checkout's repository root:
 
 ```bash
+# Laptop terminal 1
 sudo bash scripts/dual_fr1/connect_ue1.sh
+# Laptop terminal 2, after UE1 PASS
 sudo bash scripts/dual_fr1/connect_ue2.sh
 ```
 
@@ -128,11 +149,52 @@ sudo apt install modemmanager iproute2 iputils-ping python3 minicom
 sudo systemctl enable --now ModemManager
 ```
 
-Complete UE1 first and then UE2. Concurrent launches of the one-shot scripts are
-rejected by a shared lock. Existing manual modem/network operations and network
+Complete UE1 startup first, leave it waiting, then start UE2 in another terminal.
+Each role has one owner: a second launcher or watcher for the **same UE** is
+rejected. The shared network lock serializes setup and shutdown; idle holders
+release it. Existing manual modem/network operations and network
 managers are outside that lock; finish those operations before running a script.
-You do not need to disconnect a healthy existing PDU. Repeated runs reuse an
-already correct bearer and host path, then repeat verification.
+A run can reuse an already correct PDU and host path when no other script owns
+that role. Ctrl+C on a current holder/watcher first shuts that role down; a later
+launcher enables/reconnects it. No cell-lock configuration is sent automatically.
+
+## Ctrl+C shutdown and optional immediate exit
+
+Ctrl+C (SIGINT) or SIGTERM cancels the current work/wait and invokes the existing
+[`reset_ue_network.py --shutdown`](../scripts/dual_fr1/reset_ue_network.py) logic
+for **only this UE** before exit:
+
+1. Re-discover the current modem by the role's IMEI, so a changed object number
+   is not reused accidentally.
+2. Install/retain its independent destination block against Wi-Fi fallback.
+3. Disconnect the selected PDU, clear its IPv4 addresses/routes/policy rules,
+   and return the WWAN to DOWN / MTU 1500.
+4. Delete all of the selected modem's listed bearers and disable that modem.
+5. Verify shutdown, write the outcome to `summary.json`, then exit 130 for Ctrl+C
+   or 143 for SIGTERM. Management Wi-Fi and the other UE remain available.
+
+Shutdown takes the shared network lock; it can wait for an ongoing operation on
+the other UE. Repeated Ctrl+C/SIGTERM does not interrupt this cleanup, and cleanup
+children are isolated from subsequent terminal stop signals. A failed disconnect,
+bearer deletion or disable prints `shutdown [FAIL]` and records the error; it
+never prints successful shutdown without the final checks.
+
+This applies to **both** one-shot entry points and the reconnect watchers,
+including Ctrl+C during startup or `--check-only`. A normally completed
+`--check-only` remains read-only and exits 0 immediately. **Interrupting a
+`--check-only` run explicitly shuts down its selected UE.**
+
+For the previous batch behavior (verify then exit, leaving the UE connected),
+use the optional flag:
+
+```bash
+sudo bash ~/falcon-ue-connect/connect_ue1.sh --exit-on-success
+sudo bash ~/falcon-ue-connect/connect_ue2.sh --exit-on-success
+```
+
+The default is the low-resource wait. `--exit-on-success` changes only successful
+completion; Ctrl+C before that exit still invokes shutdown. A non-signal failure
+exits 1 with evidence for diagnosis; it does not claim shutdown completed.
 
 ## Expected roles
 
@@ -162,7 +224,7 @@ numbers, `wwan` names and UE addresses are not reused.
    Select exactly one modem by the role's IMEI and verify the active SIM IMSI
    and current device identifier. Recheck identity before modem changes and
    host reset.
-2. Enable that modem if disabled and wait up to 45 seconds for registration.
+2. Enable that modem if disabled and poll registration with a 45-second wait budget.
    Read the **actual serving** 5GNR cell with
    `mmcli -m <current-path> --get-cell-info -K`. Require exactly one serving NR
    record with the role's PCI and NCI, plus registered PLMN `00101` and NR
@@ -210,6 +272,45 @@ two Spark service IPs. The independent `20151` / `20152` blocks survive the
 existing role reset and shutdown helper. They are runtime rules: a laptop
 reboot clears them, and the next successful script preflight installs them
 again. This does not change a NetworkManager profile or install a boot service.
+
+## Waiting at modem registration
+
+Step 2 waits for ModemManager state `registered`, `connecting` or `connected`,
+then verifies PLMN `00101` and NR SA access. `enabled` means powered on but not
+registered, while `searching` means searching for a network; neither passes this
+step. See the [ModemManager state definitions](https://www.freedesktop.org/software/ModemManager/doc/1.18.0/ModemManager/ModemManager-Flags-and-Enumerations.html#MMModemState).
+
+With `--verbose`, a wait can look like this (illustrative):
+
+```text
+Registration: querying current modem / active SIM status (wait budget 45s; command timeout 75s)
+Registration: state=enabled 3gpp=idle packet=detached PLMN=-- access=--; elapsed=0s
+Registration: waiting 2s before the next modem / SIM query
+```
+
+The script waits at most two seconds between completed status polls. The wait
+budget is checked between queries; an individual external command can take up
+to 75 seconds, so it is not a hard wall-clock limit for the whole step. On
+timeout, the error includes the last reported registration state. On Ctrl+C,
+the step prints `[CANCELLED]`, the summary records `interrupted`, and the launcher
+runs selected-UE shutdown before exiting 130. Cancellation does not establish that network registration failed.
+
+For a bounded read-only diagnosis, use the current modem path/index printed by
+the IMEI check; indices can change after USB reconnect:
+
+```bash
+read -r -p 'Current UE1 modem path/index from the IMEI check: ' MODEM
+sudo timeout 12s mmcli --timeout=10 -m "$MODEM" -K
+sudo timeout 12s mmcli --timeout=10 -m "$MODEM" --get-cell-info -K
+printf 'cell-info exit=%s\n' "$?"
+```
+
+`enabled / idle / detached`, no reported PLMN/access technology and
+`NoNetworkFound` from GetCellInfo indicate the modem has no usable serving-network
+evidence at that time. Verify Spark DU1/CU/core availability and the selected
+UE's radio mode, cell lock and signal before PDU/IP troubleshooting. The script
+does not automatically change the cell lock to overcome this condition. Follow
+the serving-cell procedure below when manual serial checks are required.
 
 ## Serving-cell mismatch or unavailable GetCellInfo
 
@@ -302,7 +403,8 @@ retained experiment evidence, see
 
 ## Recheck, logs and failure handling
 
-Read-only modem/PDU/host checks, without enable, connect, route changes or ping:
+Normally completed modem/PDU/host checks, without enable, connect, route changes
+or ping (Ctrl+C/SIGTERM still invokes selected-UE shutdown):
 
 ```bash
 sudo bash ~/falcon-ue-connect/connect_ue1.sh --check-only
@@ -321,13 +423,19 @@ Every normal invocation prints a private directory such as
 `summary.json`. Read these with sudo or copy them with appropriate ownership
 before sharing. The summary records UTC start/end times, role, modem identity,
 APN, serving-cell evidence, current bearer/interface/IP/prefix/MTU, both ping
-outputs and final status. `run.log` retains full printed command/details/ping
+outputs and final status, plus the latest registration snapshot when available.
+A connected `summary.json` is saved before the idle wait. On interrupt it is
+updated with the stop signal, lifecycle and nested `shutdown` completion/error.
+`run.log` retains full printed command/details/ping
 output even when `--verbose` is absent. Dependency/root/lock failures occur before a run
 directory is allocated. It does not record modem authentication properties.
 
-Exit status is `0` for `connected`, or for `checked` with `--check-only`.
+Normal startup stays in the idle wait after `connected`. Exit status is `0` for
+`connected` with `--exit-on-success`, or `checked` with `--check-only`.
 Failure exits `1`, with the failed stage and reason. A serving-cell failure is
-marked `serial_check_required`. Foreign policy resources and non-role addresses
+marked `serial_check_required`; Ctrl+C exits `130` with status `interrupted`
+after selected-UE shutdown, with an explicit cancellation reason and cleanup
+outcome; SIGTERM exits `143`. Foreign policy resources and non-role addresses
 are preserved and require manual inspection. If the script's host rebuild
 fails midway, it attempts to clear only this role's partial host path while
 retaining the independent block; it reports any incomplete cleanup. A failed
@@ -335,7 +443,8 @@ PDU attempt or a later cell/ping check can leave the selected modem enabled and
 the PDU connected for inspection. Ping failure keeps a fully built path for
 diagnosis and does not print a final success. Rerun after resolving the cause.
 
-For normal reset or end-of-experiment shutdown after using these scripts:
+Ctrl+C already performs shutdown for an active holder/watcher. After the process
+has exited, these remain available for manual reset or cleanup:
 
 ```bash
 sudo python3 ~/falcon-ue-connect/reset_ue_network.py --ue 1

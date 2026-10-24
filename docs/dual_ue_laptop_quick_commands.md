@@ -35,8 +35,9 @@ For automated preparation through ping, use the new
 [one-shot startup and self-check](dual_ue_automation.md) on the laptop:
 
 ```bash
-# Run from a current Falcon checkout on the laptop, UE1 first.
+# Laptop terminal 1: leave it waiting after PASS.
 sudo bash scripts/dual_fr1/connect_ue1.sh
+# Laptop terminal 2: start after UE1 PASS; leave it waiting too.
 sudo bash scripts/dual_fr1/connect_ue2.sh
 ```
 
@@ -44,7 +45,13 @@ The default terminal output shows self-check steps and completion markers.
 Add `--verbose` to either command to display full commands, connection details
 and ping output. Full logs are saved in both modes; failures and required
 manual serial instructions remain visible. Use `--check-only` for checks
-without connection/network changes or ping; it can also take `--verbose`.
+without startup connection/network changes or ping; it can also take `--verbose`.
+After normal startup succeeds, the launcher blocks until Ctrl+C without further
+queries, ping or CPU polling. The other UE can be started in a second terminal.
+**Ctrl+C/SIGTERM runs selected-UE shutdown** (disconnect, clear role host path,
+delete bearers and disable), including an interrupted `--check-only`. A completed
+`--check-only` exits immediately; optional `--exit-on-success` gives verify-and-exit
+behavior for batch startup. See Automation for shutdown outcomes and logs.
 
 These cover sections 1.1–1.6 and 2.1–2.6: modem/SIM identification,
 enable/registration, actual serving-cell checks, PDU connection, current bearer
@@ -74,8 +81,10 @@ full details. The default interval is a one-second wait after each completed
 check/attempt; attempts do not overlap. Both watchers may run together. They
 recover suspended PDUs and use a threshold/cooldown for connected-but-unreachable
 PDUs, refresh changed bearer IPs and preserve Wi-Fi fallback guards. Stop the
-affected watcher with Ctrl+C before manual reset/shutdown/configuration. Stopping
-the watcher leaves the current connection in place. New hardware validation is
+affected launcher/watcher with Ctrl+C before manual configuration. Ctrl+C now
+disconnects that UE, deletes its bearers, clears its host path and disables its
+modem; wait for the shutdown result. The other UE and management Wi-Fi remain
+available. New hardware validation is
 pending; see the reconnect Quick Start for redial controls, logs and bounded retries.
 
 The October 21 Laptop truth identified UE1 as IMSI `001010000000101`, APN `internet`,

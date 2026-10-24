@@ -9,6 +9,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from unittest.mock import patch
 
@@ -346,7 +347,7 @@ class ReconnectTest(unittest.TestCase):
                 WATCH.probe(CONNECT.Connection(1))
         self.assertEqual(len(self.network.pings), 1)  # Ordinary ping is not sent over Wi-Fi.
 
-    def test_signal_handler_finishes_current_transaction_and_does_not_restart(self):
+    def test_signal_during_pdu_attempt_runs_shutdown_and_does_not_restart(self):
         real_open, change = open, self.network.change
 
         def local_open(path, *args, **kwargs):
@@ -368,8 +369,10 @@ class ReconnectTest(unittest.TestCase):
         summary = json.loads(next(self.root.glob("falcon-*/summary.json")).read_text())
         self.assertEqual((summary["attempts"], summary["signal"]), (1, signal.SIGINT))
         record = json.loads(next(self.root.glob("falcon-*/attempts.jsonl")).read_text())
-        self.assertTrue(CONNECT.Connection(1).configured(record))
-        self.assertEqual(self.disconnects(), [])
+        self.assertEqual(record["status"], "interrupted")
+        self.assertEqual(summary["shutdown"]["status"], "completed")
+        self.assertEqual(self.network.modems[next(iter(self.network.modems))][2], "disabled")
+        self.assertEqual(len(self.disconnects()), 1)
 
     def test_busy_shared_lock_waits_without_counting_attempt_or_mutating(self):
         path = str(self.root / "network.lock")
@@ -385,14 +388,90 @@ class ReconnectTest(unittest.TestCase):
             watcher.args.once = True
             self.assertEqual(watcher.run(), 0)
 
-    def test_stop_during_wait_leaves_configuration_and_returns_signal_status(self):
+    def test_stop_during_wait_shuts_down_and_returns_signal_status(self):
         stop = Stop(after=1)
         watcher = self.watcher(stop=stop)
         watcher.exit_signal = signal.SIGTERM
         with patch.object(WATCH, "SHARED_LOCK", str(self.root / "network.lock")):
             self.assertEqual(watcher.run(), 143)
-        self.assertEqual(self.disconnects(), [])
-        self.assertTrue(CONNECT.Connection(1).configured(json.loads((watcher.directory / "attempts.jsonl").read_text())))
+        self.assertEqual(len(self.disconnects()), 1)
+        self.assertEqual(self.network.modems[next(iter(self.network.modems))][2], "disabled")
+        summary = json.loads((watcher.directory / "summary.json").read_text())
+        self.assertEqual(summary["shutdown"]["status"], "completed")
+        self.assertIn("UE1 shutdown: SUCCESS", self.console.getvalue())
+
+    def test_idle_sigint_shuts_down_either_role_without_reconnecting_or_touching_peer(self):
+        for ue in (1, 2):
+            with self.subTest(ue=ue):
+                self.network.__dict__.update(Network().__dict__)
+                self.connect(3 - ue)
+                before = self.network.survivor(ue)
+
+                def stop(index):
+                    raise CONNECT.StopRequested(signal.SIGINT)
+
+                watcher = self.watcher(ue, stop=Stop(after=5, on_wait=stop))
+                with patch.object(WATCH, "SHARED_LOCK", str(self.root / "network.lock")):
+                    self.assertEqual(watcher.run(), 130)
+                self.assertEqual(watcher.attempts, 1)
+                modem = next(path for path, data in self.network.modems.items() if data[0] == CONNECT.ROLES[ue]["imei"])
+                self.assertEqual((self.network.modems[modem][2], self.network.bearers[modem]), ("disabled", {}))
+                self.assertEqual(self.network.survivor(ue), before)
+
+    def test_shutdown_failure_is_visible_even_at_minimal_verbosity(self):
+        def stop(index):
+            self.network.fail = ("mmcli", "-m", next(iter(self.network.modems)), "--simple-disconnect")
+            raise CONNECT.StopRequested(signal.SIGINT)
+
+        watcher = self.watcher(stop=Stop(after=5, on_wait=stop))
+        with patch.object(WATCH, "SHARED_LOCK", str(self.root / "network.lock")):
+            self.assertEqual(watcher.run(), 130)
+        summary = json.loads((watcher.directory / "summary.json").read_text())
+        self.assertEqual(summary["shutdown"]["status"], "failed")
+        self.assertIn("UE1 shutdown: FAIL", self.console.getvalue())
+        self.assertIn("Cleanup incomplete:", self.console.getvalue())
+
+    def test_shutdown_waits_for_shared_lock_when_interrupted_before_first_attempt(self):
+        self.connect()
+        path = str(self.root / "network.lock")
+        ready = threading.Event()
+        status = CONNECT.status
+        change = self.network.change
+
+        def announce(message, **kwargs):
+            if "shared network lock before UE shutdown" in message:
+                ready.set()
+            return status(message, **kwargs)
+
+        def stop(index):
+            raise CONNECT.StopRequested(signal.SIGINT)
+
+        def check_lock(*command):
+            with open(path, "a") as contender:
+                with self.assertRaises(BlockingIOError):
+                    WATCH.fcntl.flock(contender, WATCH.fcntl.LOCK_EX | WATCH.fcntl.LOCK_NB)
+            change(*command)
+
+        watcher = self.watcher(stop=Stop(after=5, on_wait=stop))
+        with open(path, "a") as held:
+            WATCH.fcntl.flock(held, WATCH.fcntl.LOCK_EX | WATCH.fcntl.LOCK_NB)
+
+            def release():
+                ready.wait(timeout=2)
+                WATCH.fcntl.flock(held, WATCH.fcntl.LOCK_UN)
+
+            worker = threading.Thread(target=release)
+            worker.start()
+            try:
+                with patch.object(WATCH, "SHARED_LOCK", path), patch.object(CONNECT, "status", announce), \
+                        patch.object(CONNECT, "change", check_lock):
+                    self.assertEqual(watcher.run(), 130)
+            finally:
+                worker.join(timeout=3)
+        self.assertTrue(ready.is_set())
+        self.assertFalse(worker.is_alive())
+        self.assertEqual(watcher.attempts, 0)
+        self.assertEqual(self.network.modems[next(iter(self.network.modems))][2], "disabled")
 
     def test_main_duplicate_watch_rejected_and_role_locks_are_independent(self):
         real_open = open
@@ -406,7 +485,7 @@ class ReconnectTest(unittest.TestCase):
                 patch.object(WATCH.shutil, "which", return_value="installed"):
             with open("/run/lock/falcon-ue1-reconnect.lock", "a") as lock:
                 WATCH.fcntl.flock(lock, WATCH.fcntl.LOCK_EX | WATCH.fcntl.LOCK_NB)
-                with self.assertRaisesRegex(ValueError, "already has a reconnect watcher"):
+                with self.assertRaisesRegex(ValueError, "already has an active connection or reconnect script"):
                     WATCH.main(["--ue", "1", "--once", "--output-root", str(self.root)])
                 self.assertEqual(WATCH.main(["--ue", "2", "--once", "--output-root", str(self.root)]), 0)
 

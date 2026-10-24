@@ -221,6 +221,14 @@ class Watcher:
                 self.healthy = True
                 self.ping_failures = 0
                 self.failed_bearer = None
+            except KeyboardInterrupt as error:
+                self.healthy = False
+                signum, reason = connect.interruption(error)
+                session.result.update(status="interrupted", stage=session.stage, error=reason, signal=signum)
+                line = "CANCELLED" if self.args.verbose == 1 else f"{prefix}: CANCELLED"
+                print(line, file=self.terminal, flush=True)
+                self.log.write(f"{prefix}: CANCELLED ({reason})\n")
+                raise
             except ERRORS as error:
                 self.healthy = False
                 ping_error = (session.stage == "ping" and isinstance(error, subprocess.SubprocessError)
@@ -247,9 +255,9 @@ class Watcher:
         self.log.flush()
 
     def run(self):
-        self.say(f"Watching UE{self.args.ue}; interval={self.args.interval:g}s, evidence={self.directory}; Ctrl+C to stop")
         waiting = False
         try:
+            self.say(f"Watching UE{self.args.ue}; interval={self.args.interval:g}s, evidence={self.directory}; Ctrl+C to shut down this UE")
             while not self.stop.is_set():
                 with shared_lock() as acquired:
                     if not acquired:
@@ -279,12 +287,30 @@ class Watcher:
                 # create another attempt, and the other UE may work during this wait.
                 self.stop.wait(self.args.interval)
             return 128 + self.exit_signal if self.exit_signal else 0
+        except KeyboardInterrupt as error:
+            self.exit_signal, reason = connect.interruption(error)
+            self.stop.set()
+            self.say(reason)
+            return 128 + self.exit_signal
         finally:
+            verified_before_stop = self.healthy
+            shutdown = None
+            if self.exit_signal is not None:
+                with capture(self.log, self.args.verbose):
+                    shutdown = connect.shutdown_on_interrupt(self.args.ue, lock_path=SHARED_LOCK)
+                self.healthy = False
+                outcome = "SUCCESS" if shutdown["status"] == "completed" else "FAIL"
+                message = f"UE{self.args.ue} shutdown: {outcome}"
+                # A stop result must remain visible even at minimal verbosity.
+                print(message, file=self.terminal, flush=True)
+                self.log.write(message + "\n")
+                if shutdown["status"] != "completed":
+                    print("Cleanup incomplete: " + shutdown["error"], file=self.terminal, flush=True)
             summary = dict(ue=self.args.ue, path=connect.ROLES[self.args.ue]["label"],
                            started_at=self.started_at, ended_at=now(), attempts=self.attempts,
-                           last_connection_verified=self.healthy, interval_seconds=self.args.interval,
-                           verbose=self.args.verbose, signal=self.exit_signal,
-                           note="Stopping the watcher leaves modem/PDU/host configuration in place")
+                           last_connection_verified=verified_before_stop, interval_seconds=self.args.interval,
+                           verbose=self.args.verbose, signal=self.exit_signal, shutdown=shutdown,
+                           note="SIGINT/SIGTERM runs selected-role shutdown; normal --once success leaves the UE connected")
             (self.directory / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
             self.say(f"Stopped; evidence saved: {self.directory}")
 
@@ -337,27 +363,13 @@ def main(argv=None):
     connect.require(os.geteuid() == 0, "Run the watcher with sudo on the UE laptop")
     for command in ("mmcli", "ip", "ping"):
         connect.require(shutil.which(command), f"Missing required command: {command}")
-    with open(f"/run/lock/falcon-ue{args.ue}-reconnect.lock", "a") as role_lock:
-        try:
-            fcntl.flock(role_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            raise ValueError(f"UE{args.ue} already has a reconnect watcher; stop it before starting another") from None
+    with connect.role_lock(args.ue):
         directory = Path(tempfile.mkdtemp(prefix=f"falcon-ue{args.ue}-reconnect-", dir=args.output_root))
         with (directory / "run.log").open("w") as log:
             watcher = Watcher(args, directory, log)
 
-            def request_stop(signum, frame):
-                # Finish the current transaction rather than abandoning partial
-                # routing mutations; wake immediately if waiting for the interval.
-                watcher.exit_signal = signum
-                watcher.stop.set()
-
-            originals = {sig: signal.signal(sig, request_stop) for sig in (signal.SIGINT, signal.SIGTERM)}
-            try:
+            with connect.StopSignals():
                 return watcher.run()
-            finally:
-                for sig, handler in originals.items():
-                    signal.signal(sig, handler)
 
 
 if __name__ == "__main__":

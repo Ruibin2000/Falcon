@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import select
+import signal
 import subprocess
 import sys
 import tempfile
@@ -129,6 +130,8 @@ class Network(ResetKernel):
         if self.fail and tuple(command[:len(self.fail)]) == self.fail:
             self.changes.append(command)
             raise subprocess.CalledProcessError(1, command)
+        if command[0] == "mmcli" and (command[-1] == "--disable" or command[-1].startswith("--delete-bearer=")):
+            return super().change(*command)
         if command[0] == "mmcli":
             self.changes.append(command)
             path = command[2]
@@ -192,19 +195,21 @@ class ConnectTest(unittest.TestCase):
     def no_connect(self):
         self.assertFalse(any(c[0] == "mmcli" and "--simple-connect=" in c[-1] for c in self.network.changes))
 
-    def invoke_main(self, ue=1, verbose=False, check_only=False):
+    def invoke_main(self, ue=1, verbose=False, check_only=False, exit_on_success=True):
         real_open = open
         stdout, stderr = io.StringIO(), io.StringIO()
         with tempfile.TemporaryDirectory() as temporary:
             def open_local_lock(path, *args, **kwargs):
-                if path == "/run/lock/falcon-ue-connect.lock":
-                    path = str(Path(temporary) / "connect.lock")
+                if str(path).startswith("/run/lock/falcon-"):
+                    path = str(Path(temporary) / Path(path).name)
                 return real_open(path, *args, **kwargs)
             argv = ["connect_ue.py", "--ue", str(ue), "--output-root", temporary]
             if verbose:
                 argv.append("--verbose")
             if check_only:
                 argv.append("--check-only")
+            if exit_on_success:
+                argv.append("--exit-on-success")
             with patch("builtins.open", open_local_lock), patch.object(CONNECT.os, "geteuid", return_value=0), \
                     patch.object(CONNECT.shutil, "which", return_value="installed"), patch.object(sys, "argv", argv), \
                     contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
@@ -280,6 +285,223 @@ class ConnectTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "identity changed"):
             session.registered(True)
         self.assertEqual(self.network.changes, [])
+
+    def test_registration_wait_reports_states_and_later_succeeds(self):
+        session = self.session(registration_timeout=6)
+        session.discover()
+        modem = next(iter(self.network.modems))
+        imei, interface, _ = self.network.modems[modem]
+        self.network.modems[modem] = (imei, interface, "enabled")
+        clock = [0.0]
+        waits = []
+
+        def advance(seconds):
+            waits.append(seconds)
+            clock[0] += seconds
+            if clock[0] >= 4:
+                self.network.modems[modem] = (imei, interface, "registered")
+
+        with patch.object(CONNECT.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(CONNECT.time, "sleep", advance):
+            info = session.registered(True)
+        self.assertEqual(info["modem.generic.state"], "registered")
+        self.assertEqual(waits, [2, 2])
+        self.assertIn("state=enabled", self.output.getvalue())
+        self.assertIn("state=registered", self.output.getvalue())
+        self.assertEqual(session.result["registration"]["elapsed_seconds"], 4)
+        self.assertEqual(self.network.changes, [])
+
+    def test_registration_timeout_retains_last_state_and_does_not_oversleep(self):
+        session = self.session(registration_timeout=3)
+        session.discover()
+        modem = next(iter(self.network.modems))
+        self.network.modems[modem] = (*self.network.modems[modem][:2], "enabled")
+        clock, waits = [0.0], []
+
+        def advance(seconds):
+            waits.append(seconds)
+            clock[0] += seconds
+
+        with patch.object(CONNECT.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(CONNECT.time, "sleep", advance):
+            with self.assertRaisesRegex(CONNECT.CellError, "after 3s: state=enabled"):
+                session.registered(True)
+        self.assertEqual(waits, [2, 1])
+        self.assertEqual(session.result["registration"]["state"], "enabled")
+        self.assertEqual(session.result["registration"]["plmn"], "00101")
+        self.assertEqual(self.network.changes, [])
+
+    def test_registration_query_is_announced_before_a_blocked_read(self):
+        session = self.session()
+        session.discover()
+        with patch.object(session, "checked_modem", side_effect=subprocess.TimeoutExpired(["mmcli", "-m"], 75)):
+            with self.assertRaises(subprocess.TimeoutExpired):
+                session.registered(True)
+        self.assertIn("Registration: querying current modem", self.output.getvalue())
+        self.assertEqual(self.network.changes, [])
+
+    def test_ctrl_c_is_reported_as_cancelled_with_exit_130(self):
+        other = self.network.survivor(1)
+        with patch.object(CONNECT.Connection, "registered", side_effect=KeyboardInterrupt):
+            code, stdout, stderr, summary, log = self.invoke_main(verbose=True)
+        self.assertEqual(code, 130)
+        self.assertEqual(summary["status"], "interrupted")
+        self.assertEqual(summary["stage"], "registration")
+        self.assertIn("[2/9] Modem registration [CANCELLED]", stdout)
+        self.assertIn("Interrupted by user (Ctrl+C)", stderr)
+        self.assertIn("Interrupted by user", summary["error"])
+        self.assertEqual(summary["shutdown"]["status"], "completed")
+        self.assert_shutdown(1)
+        self.assertEqual(self.network.survivor(1), other)
+
+    def assert_shutdown(self, ue):
+        modem = next(path for path, data in self.network.modems.items() if data[0] == CONNECT.ROLES[ue]["imei"])
+        self.assertEqual(self.network.modems[modem][2], "disabled")
+        self.assertEqual(self.network.bearers[modem], {})
+        self.assertEqual(self.network.links[self.network.modems[modem][1]], (1500, "DOWN"))
+        self.assertFalse(any(r.get("table") == CONNECT.ROLES[ue]["table"] for r in self.network.routes))
+        self.assertTrue(any(r["priority"] == CONNECT.ROLES[ue]["block"] for r in self.network.rules))
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.network.lookup(("ip", "-N", "-j", "-4", "route", "get", CONNECT.ROLES[ue]["server"]))
+
+    def test_default_success_holds_without_probes_and_releases_global_lock(self):
+        before = self.network.survivor(1)
+        observed = []
+
+        def pause():
+            observed.append((len(self.network.reads), len(self.network.pings)))
+            with open("/run/lock/falcon-ue-connect.lock", "a") as lock:
+                CONNECT.fcntl.flock(lock, CONNECT.fcntl.LOCK_EX | CONNECT.fcntl.LOCK_NB)
+            with self.assertRaisesRegex(ValueError, "already has an active"):
+                with CONNECT.role_lock(1):
+                    self.fail("Idle holder must still own this UE")
+            with CONNECT.role_lock(2):
+                pass
+            self.assertEqual(observed[-1], (len(self.network.reads), len(self.network.pings)))
+            signal.getsignal(signal.SIGINT)(signal.SIGINT, None)
+
+        with patch.object(CONNECT.signal, "pause", side_effect=pause) as waiting:
+            code, stdout, _, summary, _ = self.invoke_main(exit_on_success=False)
+        self.assertEqual(waiting.call_count, 1)
+        self.assertEqual(code, 130)
+        self.assertIn("waiting for Ctrl+C", stdout)
+        self.assertEqual(len(self.network.pings), 2)  # Only the two initial verification commands.
+        self.assertEqual(summary["lifecycle"], "stopped")
+        self.assertEqual(summary["shutdown"]["status"], "completed")
+        self.assert_shutdown(1)
+        self.assertEqual(self.network.survivor(1), before)
+
+    def test_check_only_success_exits_without_idle_wait(self):
+        self.session().run()
+        self.network.changes.clear()
+        with patch.object(CONNECT, "wait_for_stop") as waiting:
+            code, _, _, summary, _ = self.invoke_main(check_only=True, exit_on_success=False)
+        waiting.assert_not_called()
+        self.assertEqual((code, summary["status"]), (0, "checked"))
+        self.assertEqual(self.network.changes, [])
+
+    def test_interrupt_during_pdu_host_rebuild_and_ping_shuts_down_only_selected_role(self):
+        for ue in (1, 2):
+            for phase in ("pdu", "host", "ping"):
+                with self.subTest(ue=ue, phase=phase):
+                    self.network.__dict__.update(Network().__dict__)
+                    survivor = self.network.survivor(ue)
+                    other_modem = list(self.network.modems)[2 - ue]
+                    other_radio = copy.deepcopy((self.network.modems[other_modem], self.network.bearers[other_modem]))
+                    read, change = self.network.read, self.network.change
+
+                    def mutate(*command):
+                        change(*command)
+                        if ((phase == "pdu" and command[-1].startswith("--simple-connect="))
+                                or (phase == "host" and command[:4] == ("ip", "-4", "addr", "add"))):
+                            raise CONNECT.StopRequested(signal.SIGINT)
+
+                    def query(*command):
+                        output = read(*command)
+                        if phase == "ping" and command[0] == "ping":
+                            raise CONNECT.StopRequested(signal.SIGINT)
+                        return output
+
+                    with patch.object(CONNECT, "change", mutate), patch.object(CONNECT, "read", query):
+                        code, _, _, summary, _ = self.invoke_main(ue)
+                    self.assertEqual(code, 130)
+                    self.assertEqual(summary["shutdown"]["status"], "completed")
+                    self.assert_shutdown(ue)
+                    self.assertEqual(self.network.survivor(ue), survivor)
+                    self.assertEqual((self.network.modems[other_modem], self.network.bearers[other_modem]), other_radio)
+
+    def test_sigterm_uses_same_shutdown_and_restores_signal_handlers(self):
+        previous = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+
+        def terminate(session, enable):
+            signal.getsignal(signal.SIGTERM)(signal.SIGTERM, None)
+
+        with patch.object(CONNECT.Connection, "registered", terminate):
+            code, _, _, summary, _ = self.invoke_main()
+        self.assertEqual(code, 143)
+        self.assertEqual(summary["signal"], signal.SIGTERM)
+        self.assert_shutdown(1)
+        self.assertEqual({sig: signal.getsignal(sig) for sig in previous}, previous)
+
+    def test_repeat_stop_signals_cannot_interrupt_disconnect_delete_disable(self):
+        self.session().run()
+        change = self.network.change
+        signals_seen = []
+
+        def repeat(*command):
+            if command[0] == "mmcli":
+                for sig in (signal.SIGINT, signal.SIGTERM):
+                    self.assertIs(signal.getsignal(sig), signal.SIG_IGN)
+                    os.kill(os.getpid(), sig)
+                    signals_seen.append(sig)
+            change(*command)
+
+        with patch.object(CONNECT.Connection, "registered", side_effect=KeyboardInterrupt), \
+                patch.object(CONNECT, "change", repeat):
+            code, _, _, summary, _ = self.invoke_main()
+        self.assertEqual(code, 130)
+        self.assertGreaterEqual(len(signals_seen), 6)
+        self.assertEqual(summary["shutdown"]["status"], "completed")
+        self.assert_shutdown(1)
+
+    def test_shutdown_failure_is_reported_and_does_not_print_success(self):
+        self.session().run()
+        self.network.fail = ("mmcli", "-m", next(iter(self.network.modems)), "--simple-disconnect")
+        with patch.object(CONNECT.Connection, "registered", side_effect=KeyboardInterrupt):
+            code, stdout, stderr, summary, _ = self.invoke_main()
+        self.assertEqual(code, 130)
+        self.assertEqual(summary["shutdown"]["status"], "failed")
+        self.assertIn("cleanup is incomplete", stderr)
+        self.assertNotIn("shutdown [OK]", stdout)
+        self.assertTrue(any(r["priority"] == 20151 for r in self.network.rules))
+
+    def test_check_only_ctrl_c_also_runs_requested_shutdown(self):
+        self.session().run()
+        with patch.object(CONNECT.Connection, "registered", side_effect=KeyboardInterrupt):
+            code, _, _, summary, _ = self.invoke_main(check_only=True)
+        self.assertEqual(code, 130)
+        self.assertEqual(summary["shutdown"]["status"], "completed")
+        self.assert_shutdown(1)
+
+    def test_shutdown_rediscovers_renumbered_modem_instead_of_reusing_old_path(self):
+        old = next(iter(self.network.modems))
+        new = "/org/freedesktop/ModemManager1/Modem/999"
+        read = self.network.read
+
+        def renumber(*command):
+            output = read(*command)
+            if command[0] == "ping":
+                self.network.modems = {new: self.network.modems[old], **{p: d for p, d in self.network.modems.items() if p != old}}
+                self.network.bearers[new] = self.network.bearers.pop(old)
+                raise CONNECT.StopRequested(signal.SIGINT)
+            return output
+
+        with patch.object(CONNECT, "read", renumber):
+            code, _, _, summary, _ = self.invoke_main()
+        self.assertEqual((code, summary["shutdown"]["status"]), (130, "completed"))
+        self.assert_shutdown(1)
+        self.assertIn(("mmcli", "-m", new, "--disable"), self.network.changes)
+        self.assertNotIn(("mmcli", "-m", old, "--disable"), self.network.changes)
 
     def test_cell_drift_after_pdu_stops_before_wwan_configuration(self):
         self.network.drift_on_connect = True
@@ -530,8 +752,8 @@ class ConnectTest(unittest.TestCase):
         real_open = open
         with tempfile.TemporaryDirectory() as temporary:
             def open_local_lock(path, *args, **kwargs):
-                if path == "/run/lock/falcon-ue-connect.lock":
-                    path = str(Path(temporary) / "connect.lock")
+                if str(path).startswith("/run/lock/falcon-"):
+                    path = str(Path(temporary) / Path(path).name)
                 return real_open(path, *args, **kwargs)
             for wrong in (False, True):
                 with self.subTest(wrong_cell=wrong):
@@ -540,7 +762,7 @@ class ConnectTest(unittest.TestCase):
                     self.network.settings[1]["cell"] = cell_text(2 if wrong else 1)
                     with patch("builtins.open", open_local_lock), patch.object(CONNECT.os, "geteuid", return_value=0), \
                             patch.object(CONNECT.shutil, "which", return_value="installed"), \
-                            patch.object(sys, "argv", ["connect_ue.py", "--ue", "1", "--output-root", str(root)]):
+                            patch.object(sys, "argv", ["connect_ue.py", "--ue", "1", "--exit-on-success", "--output-root", str(root)]):
                         status = CONNECT.main()
                     summary_path = next(root.glob("*/summary.json"))
                     summary = json.loads(summary_path.read_text())
@@ -729,6 +951,30 @@ class SerialQueryTest(unittest.TestCase):
                 patch.object(Path, "glob", return_value=[process]):
             with self.assertRaisesRegex(CONNECT.CellError, "busy"):
                 CONNECT.verify_at_port("/dev/ttyUSB987", {"wwan0"})
+
+
+class StopSignalTest(unittest.TestCase):
+    def test_cleanup_children_survive_repeated_foreground_group_stop_signals(self):
+        # The harness owns a separate session, so this test never signals the
+        # test runner or any real modem process. Its child deliberately resets
+        # SIGINT/SIGTERM to defaults, as an external executable might do.
+        child = """import os, signal
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+signal.signal(signal.SIGTERM, signal.SIG_DFL)
+parent_group = os.getpgid(os.getppid())
+os.killpg(parent_group, signal.SIGINT)
+os.killpg(parent_group, signal.SIGTERM)
+print('cleanup child survived')
+"""
+        harness = (f"import sys\nsys.path.insert(0, {str(REPO / 'scripts/dual_fr1')!r})\n"
+                   "import connect_ue as c\n"
+                   "with c.ignore_stop_signals():\n"
+                   f"    print(c.read(sys.executable, '-c', {child!r}))\n"
+                   f"    c.change(sys.executable, '-c', {child!r})\n")
+        result = subprocess.run([sys.executable, "-B", "-c", harness], capture_output=True, text=True,
+                                timeout=10, start_new_session=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertGreaterEqual(result.stdout.count("cleanup child survived"), 2)
 
 
 if __name__ == "__main__":
