@@ -85,34 +85,37 @@ check/restore the selected role's lock through its AT port.
 
 ### Restore the lock when needed
 
-#### Open the AT port (UE1 or UE2)
+#### AT port mapping and preparation
 
 Open the AT port in the **same laptop terminal** where this UE's `$MODEM` was
 selected above. If its launcher/watcher is running, stop it with Ctrl+C, wait for
 the shutdown result, then repeat modem selection before opening the serial port.
 Keep ModemManager running.
 
-Read the selected modem's physical USB device/ports, match them to the serial
-links, and enter its AT-port path below. Prefer `/dev/serial/by-path/` links;
-`ttyUSB` numbers can change after reconnecting a modem.
+The laptop's **2026-10-24 operator-provided serial listing** gives these ports
+for the recorded UE1 USB `4-4` / UE2 USB `4-3` wiring:
+
+| Role | `AT_PORT` (preferred by-path) | Current tty device |
+| --- | --- | --- |
+| UE1 / FR1 | `/dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0` | `/dev/ttyUSB2` |
+| UE2 / FR3 | `/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0` | `/dev/ttyUSB6` |
+
+The by-path values follow the physical USB sockets. If the wiring changes,
+match the selected modem's physical device to `ls -l /dev/serial/by-path/` again.
+The `ttyUSB` numbers can change even when the sockets stay the same.
+
+#### UE1 / FR1
+
+Open **UE1's AT port** in the laptop terminal where its `$MODEM` was selected:
 
 ```bash
 mmcli -m "$MODEM"
-ls -l /dev/serial/by-path/
-read -r -p 'AT port for this UE (/dev/serial/by-path/...): ' AT_PORT
-sudo minicom -D "$AT_PORT" -b 115200
+AT_PORT=/dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0
+ls -l "$AT_PORT" && sudo minicom -D "$AT_PORT" -b 115200
 ```
 
-#### Confirm the port and send the lock commands
-
-Inside minicom, send `AT+CGSN` first and confirm IMEI `863305041978437` for
-UE1 / FR1 or `863305041980706` for UE2 / FR3. Stop on a mismatch and select the
-correct port. Then send one command at a time, using **only this role's block**
-below. Further port-selection examples are in the manual for
-[UE1](dual_ue_laptop_quick_commands.md#12-verify-the-at-port-and-restore-the-du1-lock)
-and [UE2](dual_ue_laptop_quick_commands.md#22-verify-the-at-port-and-restore-the-du2-lock).
-
-**UE1 / FR1:**
+In **this minicom session**, send `AT+CGSN` first and require IMEI
+`863305041978437`. Stop on a mismatch. Then send UE1's commands one at a time:
 
 ```text
 AT+QNWPREFCFG="mode_pref",NR5G
@@ -126,7 +129,21 @@ AT+QENG="servingcell"
 AT+C5GREG?
 ```
 
-**UE2 / FR3:**
+Read back UE1's lock tuple and actual serving cell. Exit this minicom session
+with **Ctrl+A, then X** before starting UE1's automation.
+
+#### UE2 / FR3
+
+Open **UE2's AT port** in the laptop terminal where its `$MODEM` was selected:
+
+```bash
+mmcli -m "$MODEM"
+AT_PORT=/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
+ls -l "$AT_PORT" && sudo minicom -D "$AT_PORT" -b 115200
+```
+
+In **this minicom session**, send `AT+CGSN` first and require IMEI
+`863305041980706`. Stop on a mismatch. Then send UE2's commands one at a time:
 
 ```text
 AT+QNWPREFCFG="mode_pref",NR5G
@@ -140,10 +157,15 @@ AT+QENG="servingcell"
 AT+C5GREG?
 ```
 
-Read back the role's lock tuple and actual serving cell. Exit minicom with
-**Ctrl+A, then X**, then run the automation below for the remaining self-checks
-and connection setup. If the modem is disabled after the previous Ctrl+C
-shutdown, the automation handles enabling it and waiting for registration.
+Read back UE2's lock tuple and actual serving cell. Exit this minicom session
+with **Ctrl+A, then X** before starting UE2's automation.
+
+Port-selection details remain in the full manual for
+[UE1](dual_ue_laptop_quick_commands.md#12-verify-the-at-port-and-restore-the-du1-lock)
+and [UE2](dual_ue_laptop_quick_commands.md#22-verify-the-at-port-and-restore-the-du2-lock).
+After completing the selected role's block, continue to section 2. If the modem
+is disabled after the previous Ctrl+C shutdown, the automation handles enabling
+it and waiting for registration.
 
 ## 2. Automation scripts
 
@@ -389,7 +411,7 @@ verified AT port:
 
 ```bash
 sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --verbose 2 \
-  --at-port /dev/serial/by-path/REPLACE_WITH_UE2_AT_PORT
+  --at-port /dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
 ```
 
 Stop the affected watcher before opening minicom or changing serial settings;

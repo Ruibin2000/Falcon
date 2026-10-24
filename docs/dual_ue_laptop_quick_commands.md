@@ -355,6 +355,17 @@ reports incomplete; address-removal failures retain the existing guards.
 | AT port / USB device | `/dev/ttyUSB6` / `4-4` | `/dev/ttyUSB2` / `4-3` |
 | Bearer gateway / MTU | `10.45.0.1` / `1400` | `10.46.0.1` / `1400` |
 
+The **2026-10-24 operator serial listing** now resolves the AT ports as follows.
+The older observation table above retains its original port numbering.
+
+| Role | `AT_PORT` (preferred by-path) | Current tty device |
+| --- | --- | --- |
+| UE1 / FR1, USB `4-4` | `/dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0` | `/dev/ttyUSB2` |
+| UE2 / FR3, USB `4-3` | `/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0` | `/dev/ttyUSB6` |
+
+Sections 1.2 / 2.2 use these by-path values. If USB sockets change, rediscover
+the paths; verify the selected role's serial identity before lock writes.
+
 Rediscover these dynamic values after modem restart/reconnection. Both cells use
 PLMN `00101`, TAC 7 and SST 1. DNN selects the UE pool; cell lock selects the DU.
 The table above and earlier modem 9/10 or 13/14, bearer 7/8 or 9/10 and
@@ -506,7 +517,7 @@ AT port numbers change on reconnect; confirm `AT+CIMI` before any write.
 ```bash
 mmcli -m "$MODEM"
 ls -l /dev/serial/by-path/
-read -r -p 'Selected UE1 AT device, for example /dev/ttyUSB6: ' AT_PORT
+AT_PORT=/dev/serial/by-path/pci-0000:00:14.0-usb-0:4:1.2-port0
 sudo minicom -D "$AT_PORT" -b 115200
 ```
 
@@ -925,7 +936,7 @@ AT port numbers change on reconnect; confirm `AT+CIMI` before any write.
 ```bash
 mmcli -m "$MODEM"
 ls -l /dev/serial/by-path/
-read -r -p 'Selected UE2 AT device, for example /dev/ttyUSB2: ' AT_PORT
+AT_PORT=/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0
 sudo minicom -D "$AT_PORT" -b 115200
 ```
 
