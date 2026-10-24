@@ -10,6 +10,126 @@ IPv4 PDU connection, WWAN/policy routing and ping. After success the launcher
 queries or ping during that wait. For ongoing monitoring/recovery use the
 [laptop automatic reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md).
 
+## 1. Before every start: check the cell lock
+
+On the laptop, manually check each UE's serving cell and restore its cell lock
+if needed. **Modem/SIM verification, enable/registration, PDU setup, network
+configuration and ping are handled by the automation in section 2.**
+
+### Check the serving cell
+
+Use a separate terminal for each UE. `$MODEM` is this UE's current modem
+path/index. In a fresh terminal, run `mmcli -L` first, then enter the current
+path/index with `read -r -p 'Current modem for this UE: ' MODEM`. Use the
+`equipment id` shown by `mmcli -m` to confirm the role; modem indices can change.
+
+**UE1 / FR1:**
+
+```bash
+# UE1: $MODEM belongs to IMEI 863305041978437.
+mmcli -L
+mmcli -m "$MODEM"
+sudo mmcli -m "$MODEM" --get-cell-info
+```
+
+**UE2 / FR3:**
+
+```bash
+# UE2: $MODEM belongs to IMEI 863305041980706.
+mmcli -L
+mmcli -m "$MODEM"
+sudo mmcli -m "$MODEM" --get-cell-info
+```
+
+Check the NR record marked `serving: yes` against these targets:
+
+| Role | PCI | NCI (hex) | SSB NR-ARFCN / SCS / band |
+| --- | --- | --- | --- |
+| UE1 / FR1 | `1` | `66C000` | `643680` / 30 kHz / n78 |
+| UE2 / FR3 | `2` | `66C001` | `639648` / 30 kHz / n78 |
+
+Both radios use n78. A matching serving cell lets you continue to section 2.
+GetCellInfo shows the current serving cell; the stored lock is read back with
+`AT+QNWLOCK="common/5g"` below. If cell evidence is missing or mismatching,
+check/restore the selected role's lock through its AT port.
+
+### Restore the lock when needed
+
+Open this UE's AT port in minicom; the full manual shows port selection for
+[UE1](dual_ue_laptop_quick_commands.md#12-verify-the-at-port-and-restore-the-du1-lock)
+and [UE2](dual_ue_laptop_quick_commands.md#22-verify-the-at-port-and-restore-the-du2-lock).
+Send one command at a time, using **only this role's block**.
+
+**UE1 / FR1:**
+
+```text
+AT+QNWPREFCFG="mode_pref",NR5G
+AT+QNWPREFCFG="mode_pref"
+AT+QNWPREFCFG="nr5g_disable_mode",2
+AT+QNWPREFCFG="nr5g_disable_mode"
+AT+QNWPREFCFG="nr5g_band"
+AT+QNWLOCK="common/5g",1,643680,30,78
+AT+QNWLOCK="common/5g"
+AT+QENG="servingcell"
+AT+C5GREG?
+```
+
+**UE2 / FR3:**
+
+```text
+AT+QNWPREFCFG="mode_pref",NR5G
+AT+QNWPREFCFG="mode_pref"
+AT+QNWPREFCFG="nr5g_disable_mode",2
+AT+QNWPREFCFG="nr5g_disable_mode"
+AT+QNWPREFCFG="nr5g_band"
+AT+QNWLOCK="common/5g",2,639648,30,78
+AT+QNWLOCK="common/5g"
+AT+QENG="servingcell"
+AT+C5GREG?
+```
+
+Read back the role's lock tuple and actual serving cell. Exit minicom with
+**Ctrl+A, then X**, then run the automation below for the remaining self-checks
+and connection setup. If the modem is disabled after the previous Ctrl+C
+shutdown, the automation handles enabling it and waiting for registration.
+
+## 2. Automation scripts
+
+The script performs the modem/SIM, enable/registration, serving-cell, PDU,
+interface/routing and ping self-checks. Start Spark's core, CU and both DUs first
+using [Spark quick commands](dual_ue_spark_quick_commands.md). Keep ModemManager
+running and close minicom before launching the script.
+
+### Laptop dependencies (install once)
+
+```bash
+sudo apt install modemmanager iproute2 iputils-ping python3 minicom
+sudo systemctl enable --now ModemManager
+```
+
+### Expected roles
+
+| Item | UE1 / FR1 | UE2 / FR3 |
+| --- | --- | --- |
+| Modem IMEI | `863305041978437` | `863305041980706` |
+| Active SIM IMSI | `001010000000101` | `001010000000102` |
+| APN | `internet` | `internet2` |
+| UE pool | `10.45.0.0/16` | `10.46.0.0/16` |
+| Spark service IP | `10.45.0.1` on `ogstun_1` | `10.46.0.1` on `ogstun_2` |
+| Video preference | Backup | Primary |
+| Policy table | `151` | `152` |
+| Serving PCI | `1` | `2` |
+| Serving NCI, hex | `66C000` | `66C001` |
+| SSB NR-ARFCN / SCS | `643680` / 30 kHz | `639648` / 30 kHz |
+| Carrier NR-ARFCN | `644000` | `640000` |
+| Independent reset block | priority `20151` | priority `20152` |
+
+FR1 and FR3 are the existing demo path labels; **both current DUs use n78**.
+The common PLMN is `00101`, TAC is `7`, and access must be NR SA. The scripts
+discover current modem/SIM/bearer object paths and the actual IPv4 address,
+prefix, MTU and interface on each run. Historical modem indices, `ttyUSB`
+numbers, `wwan` names and UE addresses are not reused.
+
 The entry points are [`connect_ue1.sh`](../scripts/dual_fr1/connect_ue1.sh) and
 [`connect_ue2.sh`](../scripts/dual_fr1/connect_ue2.sh). Both use
 [`connect_ue.py`](../scripts/dual_fr1/connect_ue.py) and
@@ -21,7 +141,7 @@ configuration. **Ctrl+C now shuts down that UE**, including bearer deletion and
 modem disable. Stop both roles before updating their shared helper files, then
 restart them to load the new version.
 
-## Transfer the four scripts from Spark
+### Transfer the four scripts from Spark
 
 Run this block in **Bash on the UE laptop**. It transfers all four files from
 Spark into `~/falcon-ue-connect` through **one SSH connection**:
@@ -61,7 +181,7 @@ If the management addresses change, run `ip -4 route get 10.20.73.246` on
 Spark, substituting the laptop's current IP if needed, and use the reported
 `src` address in the `ssh` command.
 
-## Run
+### Run
 
 After the transfer, use **two laptop terminals**. Start UE1 first:
 
@@ -142,13 +262,6 @@ sudo bash scripts/dual_fr1/connect_ue2.sh
 
 The remaining examples use the copied files under `~/falcon-ue-connect`.
 
-Required laptop packages:
-
-```bash
-sudo apt install modemmanager iproute2 iputils-ping python3 minicom
-sudo systemctl enable --now ModemManager
-```
-
 Complete UE1 startup first, leave it waiting, then start UE2 in another terminal.
 Each role has one owner: a second launcher or watcher for the **same UE** is
 rejected. The shared network lock serializes setup and shutdown; idle holders
@@ -158,7 +271,7 @@ A run can reuse an already correct PDU and host path when no other script owns
 that role. Ctrl+C on a current holder/watcher first shuts that role down; a later
 launcher enables/reconnects it. No cell-lock configuration is sent automatically.
 
-## Ctrl+C shutdown and optional immediate exit
+### Ctrl+C shutdown and optional immediate exit
 
 Ctrl+C (SIGINT) or SIGTERM cancels the current work/wait and invokes the existing
 [`reset_ue_network.py --shutdown`](../scripts/dual_fr1/reset_ue_network.py) logic
@@ -196,29 +309,7 @@ The default is the low-resource wait. `--exit-on-success` changes only successfu
 completion; Ctrl+C before that exit still invokes shutdown. A non-signal failure
 exits 1 with evidence for diagnosis; it does not claim shutdown completed.
 
-## Expected roles
-
-| Item | UE1 / FR1 | UE2 / FR3 |
-| --- | --- | --- |
-| Modem IMEI | `863305041978437` | `863305041980706` |
-| Active SIM IMSI | `001010000000101` | `001010000000102` |
-| APN | `internet` | `internet2` |
-| UE pool | `10.45.0.0/16` | `10.46.0.0/16` |
-| Spark service IP | `10.45.0.1` on `ogstun_1` | `10.46.0.1` on `ogstun_2` |
-| Policy table | `151` | `152` |
-| Serving PCI | `1` | `2` |
-| Serving NCI, hex | `66C000` | `66C001` |
-| SSB NR-ARFCN / SCS | `643680` / 30 kHz | `639648` / 30 kHz |
-| Carrier NR-ARFCN | `644000` | `640000` |
-| Independent reset block | priority `20151` | priority `20152` |
-
-FR1 and FR3 are the existing demo path labels; **both current DUs use n78**.
-The common PLMN is `00101`, TAC is `7`, and access must be NR SA. The scripts
-discover current modem/SIM/bearer object paths and the actual IPv4 address,
-prefix, MTU and interface on each run. Historical modem indices, `ttyUSB`
-numbers, `wwan` names and UE addresses are not reused.
-
-## What each run does
+### What each run does
 
 1. Reject execution on a host with either Spark service IP locally assigned.
    Select exactly one modem by the role's IMEI and verify the active SIM IMSI
@@ -273,7 +364,7 @@ existing role reset and shutdown helper. They are runtime rules: a laptop
 reboot clears them, and the next successful script preflight installs them
 again. This does not change a NetworkManager profile or install a boot service.
 
-## Waiting at modem registration
+### Waiting at modem registration
 
 Step 2 waits for ModemManager state `registered`, `connecting` or `connected`,
 then verifies PLMN `00101` and NR SA access. `enabled` means powered on but not
@@ -312,7 +403,7 @@ UE's radio mode, cell lock and signal before PDU/IP troubleshooting. The script
 does not automatically change the cell lock to overcome this condition. Follow
 the serving-cell procedure below when manual serial checks are required.
 
-## Serving-cell mismatch or unavailable GetCellInfo
+### Serving-cell mismatch or unavailable GetCellInfo
 
 Follow the script's expected identifiers and the manual's
 [UE1 serving-cell steps](dual_ue_laptop_quick_commands.md#12-verify-the-at-port-and-restore-the-du1-lock)
@@ -343,7 +434,7 @@ before accepting a matching NR SA cell. Serial termios settings are restored
 when the query ends. No lock, band, mode or CFUN command is sent automatically.
 Keep ModemManager running; do not interrupt the other UE to obtain an AT port.
 
-## Recover a dropped or stuck UE PDU
+### Recover a dropped or stuck UE PDU
 
 The [laptop automatic reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md) covers
 continuous recovery, including guarded suspended-PDU and repeated-ping-failure
@@ -392,7 +483,7 @@ either role, failed ping followed by recovery with the same IP, failed
 disconnect, preservation of the other UE, and retention of the independent
 Wi-Fi fallback block.
 
-## Which IP bindings change, and how MPX follows them
+### Which IP bindings change, and how MPX follows them
 
 The launcher reads the current bearer allocation and refreshes the WWAN address,
 role-table source route and source/destination policy rules. Refresh shell
@@ -401,7 +492,7 @@ For MPX subnet matching, automatic address tracking, subflow recovery and the
 retained experiment evidence, see
 [IP changes and MPX in the laptop reconnect guide](dual_ue_laptop_reconnect_quick_start.md#which-ip-bindings-change-and-how-mpx-follows-them).
 
-## Recheck, logs and failure handling
+### Recheck, logs and failure handling
 
 Normally completed modem/PDU/host checks, without enable, connect, route changes
 or ping (Ctrl+C/SIGTERM still invokes selected-UE shutdown):

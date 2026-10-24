@@ -7,41 +7,135 @@ its selected UE, verifies connectivity, then keeps monitoring and recovering tha
 UE until Ctrl+C shuts it down. For one startup/self-check followed by a passive,
 low-resource wait until Ctrl+C (no ongoing probes), use [laptop one-shot startup and self-check](dual_ue_automation.md).
 
-The entry points are [`reconnect_ue1.sh`](../scripts/dual_fr1/reconnect_ue1.sh)
-(**UE1 / FR1**) and [`reconnect_ue2.sh`](../scripts/dual_fr1/reconnect_ue2.sh)
-(**UE2 / FR3**). They use [`reconnect_ue.py`](../scripts/dual_fr1/reconnect_ue.py),
-[`connect_ue.py`](../scripts/dual_fr1/connect_ue.py) and
-[`reset_ue_network.py`](../scripts/dual_fr1/reset_ue_network.py): **five files**.
+<a id="before-starting"></a>
 
-## Before starting
+## 1. Before every start: check the cell lock
 
-- **Spark:** start the core, CU and both DUs using
-  [Spark quick commands](dual_ue_spark_quick_commands.md). Start the Spark video
-  demo server separately when needed; these laptop scripts do not start it.
-- **Laptop:** attach both modems, keep ModemManager running, and verify the SIMs
-  and expected serving-cell settings. The scripts identify modems by IMEI/SIM;
-  see [expected roles](dual_ue_automation.md#expected-roles) for the full values.
-- A matching cell skips serial configuration. Missing registration/cell evidence
-  or a mismatch fails that attempt; manually correct serial settings if needed.
-  The watcher does not send cell-lock, band, mode or CFUN configuration commands.
+On the laptop, manually check each UE's serving cell and restore its cell lock
+if needed. **Modem/SIM verification, enable/registration, PDU setup, network
+configuration and ping are handled by the automation in section 2.**
 
-Required laptop packages, if not already installed:
+### Check the serving cell
+
+Use a separate terminal for each UE. `$MODEM` is this UE's current modem
+path/index. In a fresh terminal, run `mmcli -L` first, then enter the current
+path/index with `read -r -p 'Current modem for this UE: ' MODEM`. Use the
+`equipment id` shown by `mmcli -m` to confirm the role; modem indices can change.
+
+**UE1 / FR1:**
+
+```bash
+# UE1: $MODEM belongs to IMEI 863305041978437.
+mmcli -L
+mmcli -m "$MODEM"
+sudo mmcli -m "$MODEM" --get-cell-info
+```
+
+**UE2 / FR3:**
+
+```bash
+# UE2: $MODEM belongs to IMEI 863305041980706.
+mmcli -L
+mmcli -m "$MODEM"
+sudo mmcli -m "$MODEM" --get-cell-info
+```
+
+Check the NR record marked `serving: yes` against these targets:
+
+| Role | PCI | NCI (hex) | SSB NR-ARFCN / SCS / band |
+| --- | --- | --- | --- |
+| UE1 / FR1 | `1` | `66C000` | `643680` / 30 kHz / n78 |
+| UE2 / FR3 | `2` | `66C001` | `639648` / 30 kHz / n78 |
+
+Both radios use n78. A matching serving cell lets you continue to section 2.
+GetCellInfo shows the current serving cell; the stored lock is read back with
+`AT+QNWLOCK="common/5g"` below. If cell evidence is missing or mismatching,
+check/restore the selected role's lock through its AT port.
+
+### Restore the lock when needed
+
+Open this UE's AT port in minicom; the full manual shows port selection for
+[UE1](dual_ue_laptop_quick_commands.md#12-verify-the-at-port-and-restore-the-du1-lock)
+and [UE2](dual_ue_laptop_quick_commands.md#22-verify-the-at-port-and-restore-the-du2-lock).
+Send one command at a time, using **only this role's block**.
+
+**UE1 / FR1:**
+
+```text
+AT+QNWPREFCFG="mode_pref",NR5G
+AT+QNWPREFCFG="mode_pref"
+AT+QNWPREFCFG="nr5g_disable_mode",2
+AT+QNWPREFCFG="nr5g_disable_mode"
+AT+QNWPREFCFG="nr5g_band"
+AT+QNWLOCK="common/5g",1,643680,30,78
+AT+QNWLOCK="common/5g"
+AT+QENG="servingcell"
+AT+C5GREG?
+```
+
+**UE2 / FR3:**
+
+```text
+AT+QNWPREFCFG="mode_pref",NR5G
+AT+QNWPREFCFG="mode_pref"
+AT+QNWPREFCFG="nr5g_disable_mode",2
+AT+QNWPREFCFG="nr5g_disable_mode"
+AT+QNWPREFCFG="nr5g_band"
+AT+QNWLOCK="common/5g",2,639648,30,78
+AT+QNWLOCK="common/5g"
+AT+QENG="servingcell"
+AT+C5GREG?
+```
+
+Read back the role's lock tuple and actual serving cell. Exit minicom with
+**Ctrl+A, then X**, then run the automation below for the remaining self-checks
+and connection setup. If the modem is disabled after the previous Ctrl+C
+shutdown, the automation handles enabling it and waiting for registration.
+
+## 2. Automation scripts
+
+The script performs the modem/SIM, enable/registration, serving-cell, PDU,
+interface/routing and ping self-checks. Start Spark's core, CU and both DUs first
+using [Spark quick commands](dual_ue_spark_quick_commands.md). Keep ModemManager
+running and close minicom before launching the script.
+
+### Laptop dependencies (install once)
 
 ```bash
 sudo apt install modemmanager iproute2 iputils-ping python3 minicom
 sudo systemctl enable --now ModemManager
 ```
 
-| Role | APN / UE pool | Spark service | Video preference |
-| --- | --- | --- | --- |
-| UE1 / FR1 | `internet` / `10.45.0.0/16` | `10.45.0.1` on `ogstun_1` | Backup |
-| UE2 / FR3 | `internet2` / `10.46.0.0/16` | `10.46.0.1` on `ogstun_2` | Primary |
+### Expected roles
 
-FR1/FR3 are demo labels; both current radios use n78. The `.1` service addresses
-stay on Spark. Current UE IPs, interface names and modem indices are discovered
-automatically on the laptop.
+| Item | UE1 / FR1 | UE2 / FR3 |
+| --- | --- | --- |
+| Modem IMEI | `863305041978437` | `863305041980706` |
+| Active SIM IMSI | `001010000000101` | `001010000000102` |
+| APN | `internet` | `internet2` |
+| UE pool | `10.45.0.0/16` | `10.46.0.0/16` |
+| Spark service IP | `10.45.0.1` on `ogstun_1` | `10.46.0.1` on `ogstun_2` |
+| Video preference | Backup | Primary |
+| Policy table | `151` | `152` |
+| Serving PCI | `1` | `2` |
+| Serving NCI, hex | `66C000` | `66C001` |
+| SSB NR-ARFCN / SCS | `643680` / 30 kHz | `639648` / 30 kHz |
+| Carrier NR-ARFCN | `644000` | `640000` |
+| Independent reset block | priority `20151` | priority `20152` |
 
-## Copy or update the five files
+FR1 and FR3 are the existing demo path labels; **both current DUs use n78**.
+The common PLMN is `00101`, TAC is `7`, and access must be NR SA. The scripts
+discover current modem/SIM/bearer object paths and the actual IPv4 address,
+prefix, MTU and interface on each run. Historical modem indices, `ttyUSB`
+numbers, `wwan` names and UE addresses are not reused.
+
+The entry points are [`reconnect_ue1.sh`](../scripts/dual_fr1/reconnect_ue1.sh)
+(**UE1 / FR1**) and [`reconnect_ue2.sh`](../scripts/dual_fr1/reconnect_ue2.sh)
+(**UE2 / FR3**). They use [`reconnect_ue.py`](../scripts/dual_fr1/reconnect_ue.py),
+[`connect_ue.py`](../scripts/dual_fr1/connect_ue.py) and
+[`reset_ue_network.py`](../scripts/dual_fr1/reset_ue_network.py): **five files**.
+
+### Copy or update the five files
 
 Run in **Bash on the laptop**. Stop active launchers/watchers before updating the shared
 Python helpers, then repeat this block whenever the Spark scripts change:
@@ -72,7 +166,7 @@ require an SSH server on the laptop. If the address changes, confirm Spark's
 current management IP before transferring. A later `[sudo] password for david:`
 prompt authorizes local laptop operations; it is separate from Spark SSH login.
 
-## Start the watchers
+### Start the watchers
 
 Run **on the laptop**, one terminal for each role. Each watcher connects/verifies
 its UE on startup, monitors the working path, and retries when a later check fails.
@@ -89,7 +183,7 @@ sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 1 --verbose 1
 sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 1 --verbose 1
 ```
 
-## Retry and health-check interval
+### Retry and health-check interval
 
 `--interval` defaults to **1 second** and accepts positive fractional seconds.
 It is the wait **after a check or completed connection attempt**, before the next
@@ -105,7 +199,7 @@ retries share this same interval; there is no separate health-check timer.**
 Each healthy round sends one source-bound and one ordinary ping per UE to its
 Spark service. A failed earlier check ends the round before those pings complete.
 
-## Output levels
+### Output levels
 
 | Watcher option | Terminal output |
 | --- | --- |
@@ -140,7 +234,7 @@ sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 2 --verbose 2
 sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 0.5 --verbose 3
 ```
 
-## Stop or switch to manual operations
+### Stop or switch to manual operations
 
 Run only **one launcher or watcher per role**; duplicate ownership is rejected.
 UE1 and UE2 can run together: a shared lock serializes each check/recovery and
@@ -166,7 +260,7 @@ faults until Ctrl+C. Optional `--once`/`--max-attempts` retain their bounded nor
 exit behavior; a normal `--once` success leaves the UE connected. No service,
 boot job or background daemon is installed automatically.
 
-## Automatic recovery
+### Automatic recovery
 
 Recovery proceeds as follows:
 
@@ -196,7 +290,7 @@ Recovery proceeds as follows:
    into host reset/reconnect in that attempt. Resume healthy monitoring only after
    complete verification. The scripts do not restart ModemManager or the other UE.
 
-## Optional parameters
+### Optional parameters
 
 `--at-port` uses the same owned-port, read-only serving-cell fallback described in
 [the one-shot guide](dual_ue_automation.md#serving-cell-mismatch-or-unavailable-getcellinfo).
@@ -223,7 +317,7 @@ after later outages. Healthy checks do not increment it. `--max-attempts` bounds
 connection attempts, not monitoring duration. Normal operation has no attempt
 limit. Only the initial `sudo` authorization is needed for a running watcher.
 
-## Logs and exit status
+### Logs and exit status
 
 Evidence goes into a private `/tmp/falcon-ueN-reconnect-<unique-suffix>` directory,
 or under `--output-root /existing/directory`. Level 1 omits the directory from the
@@ -250,7 +344,7 @@ They do not start MPX or restart applications bound explicitly to an old IP.
 Offline simulated checks pass; **physical obstruction/recovery and MPTCP traffic
 acceptance with these new watchers remain pending**.
 
-## Video during monitoring and recovery
+### Video during monitoring and recovery
 
 Healthy monitoring reads state and sends the two small ping probes; it does not
 change the PDU, IP, routes or MPTCP configuration. Its video-performance overhead
@@ -265,7 +359,7 @@ redial.** Consecutive ping failures can therefore cause a redial even while an
 application remains usable. Use the threshold and cooldown above when assessing
 an experiment; no video-aware redial protection is claimed.
 
-## Which IP bindings change, and how MPX follows them
+### Which IP bindings change, and how MPX follows them
 
 A running **laptop MPX client** with the testbed configuration and
 `mptcp.pm: userspace` follows IP changes within the configured pools:

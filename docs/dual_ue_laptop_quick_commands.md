@@ -25,11 +25,23 @@ Run all commands in this file on the UE laptop. Use Bash, one terminal per UE
 for modem/bearer/path variables, and stop at failed checks. Spark startup, servers
 and KPM capture are in [Dual UE Spark Quick Commands](dual_ue_spark_quick_commands.md).
 
-Follow the complete **UE1 sequence first**, then the complete **UE2 sequence**
-in another fresh Bash terminal. Both DUs and both Spark servers must already be
-running; Spark startup is in the paired booklet. Keep UE1's verified PDU/path
-active while preparing UE2. After a power/reconnection event, repeat the affected
-role's identity, lock/cell, bearer, complete host IPv4 reset and new-path verification.
+## Before every start: check the cell lock
+
+Manually check only the selected UE's serving cell/cell lock before startup.
+Use the three `mmcli` queries and, when needed, the role-specific NR SA/lock AT
+commands in [the cell-lock check](dual_ue_automation.md#1-before-every-start-check-the-cell-lock).
+UE1 / FR1 targets PCI `1`, NCI `66C000`, SSB `643680`; UE2 / FR3 targets PCI `2`,
+NCI `66C001`, SSB `639648`. Both use n78. Exit minicom before running a script.
+
+The automation below handles modem/SIM verification, enable/registration, PDU,
+interface/routing configuration and ping.
+
+## Automation scripts
+
+After the cell-lock check, run UE1's automation first, then UE2's in another
+terminal. Both DUs and the required Spark servers must already be running;
+Spark startup is in the paired booklet. The full manual sequences later in this
+file remain available for diagnosis.
 
 For automated preparation through ping, use the new
 [one-shot startup and self-check](dual_ue_automation.md) on the laptop:
