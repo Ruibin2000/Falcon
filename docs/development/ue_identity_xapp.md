@@ -476,6 +476,11 @@ with many context changes may therefore need a controlled restart.
 
 ## Six-minute bidirectional idle/resume test
 
+This remains a separate manual idle/resume experiment. The current
+[Spark section 7b](../dual_ue_spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul)
+uses reconnect watchers and alternating/concurrent traffic for stability; it
+does not require idle transitions.
+
 Developer: Ruibin Chen. This operator-run procedure checks both
 UE1 idle / UE2 active and UE2 idle / UE1 active in
 one 360-second xApp instance. Existing Core, RIC, CU, DUs, and PDU sessions stay
@@ -770,3 +775,116 @@ Rollback for a later deployed trial: stop the independent app, restore the
 previous CU binary/config and remove the candidate overlay, then run the
 accepted DU-only monitor. The installed FlexRIC plugin and Core policies were
 not replaced by this build. Preserve the accepted timestamp and RF fixes.
+
+## Expanded 27-metric capture inspection
+
+After the capture finishes, use the completed directory in a Spark diagnostics
+terminal. This prints a summary and one matched TXT record per DU:
+
+```bash
+read -r -p 'Paste the completed Spark capture directory: ' IDENTITY_CHECK_RUN
+cat "$IDENTITY_CHECK_RUN/exit.txt"
+grep -E 'Registered E2 Nodes|identity collector:|DELETE RESPONSE|Sucessfully stopped' \
+  "$IDENTITY_CHECK_RUN/xapp.log"
+python3 - "$IDENTITY_CHECK_RUN" <<'PY_CHECK' | tee "$IDENTITY_CHECK_RUN/summary.txt"
+from collections import Counter
+import json
+from pathlib import Path
+import statistics
+import sys
+
+root = Path(sys.argv[1])
+rows = [json.loads(line) for line in (root / 'rows.ndjson').open()]
+sys.path.insert(0, '/home/nyu/Desktop/Falcon_repo/Falcon/scripts/ue_identity')
+from metrics import EXPANDED
+expected_metrics = set(EXPANDED)
+expected_roles = {'1': ('imsi-001010000000101', 'internet'),
+                  '2': ('imsi-001010000000102', 'internet2')}
+print('Records:', len(rows), dict(Counter(r['binding_status'] for r in rows)))
+problems = 0
+reports = []
+with (root / 'inputs.ndjson').open() as source:
+    for line in source:
+        event = json.loads(line)
+        if event['kind'] == 'kpm_report':
+            reports.append(event)
+        problems += (event['kind'] not in ('core_snapshot', 'kpm_report')
+                     or int(event.get('ingress_dropped_total', 0)) != 0)
+print('Core/input errors or loss events:', problems)
+def intervals(label, timestamps):
+    gaps = [(b - a) / 1000 for a, b in zip(timestamps, timestamps[1:])]
+    if gaps:
+        ordered = sorted(gaps)
+        p95 = ordered[min(len(ordered) - 1, (95 * len(ordered) - 1) // 100)]
+        print(label, 'count=', len(timestamps), 'interval ms min/median/p95/max=',
+              tuple(round(v, 3) for v in (min(gaps), statistics.median(gaps), p95, max(gaps))))
+    else:
+        print(label, 'insufficient reports for cadence inspection')
+cu_reports = [e for e in reports if e['node']['node_type'] != 'ngran_gNB_DU']
+intervals('CU receive', [int(e['received_at_mono_us']) for e in cu_reports])
+blocks = (root / 'bindings.txt').read_text().split('\n\n')
+for du, expected in expected_roles.items():
+    selected = [r for r in rows if str(r['node'].get('du_id')) == du]
+    matched = [r for r in selected if r['binding_status'] == 'matched']
+    print('\nDU' + du, dict(Counter(r['binding_status'] for r in selected)))
+    print('Unmatched reasons:', dict(Counter(r['reason'] for r in selected
+                                            if r['binding_status'] != 'matched')))
+    print('SUPI / DNN / IP / F1 / AMF / RAN:', sorted({
+        (r['binding']['supi'], r['binding']['dnn'], r['ue_ipv4'],
+         r['row']['ue']['gnb_cu_ue_f1ap_id'], r['binding']['amf_ue_ngap_id'],
+         r['binding']['ran_ue_ngap_id']) for r in matched}))
+    print('Unexpected SUPI/DNN on matched rows:', sum(
+        (r['binding']['supi'], r['binding']['dnn']) != expected for r in matched))
+    print('Rows with exactly 27 expected E2 metrics:', sum(
+        set(r['row']['metrics']) == expected_metrics for r in selected), '/', len(selected))
+    print('Granularity ms:', dict(Counter(r['row'].get('granularity_ms') for r in selected)))
+    du_reports = [e for e in reports if str(e['node'].get('du_id')) == du
+                  and e['node']['node_type'] == 'ngran_gNB_DU']
+    intervals('DU' + du + ' header', [int(e['header_time_us']) for e in du_reports])
+    intervals('DU' + du + ' receive', [int(e['received_at_mono_us']) for e in du_reports])
+    for metric in EXPANDED:
+        print(metric, dict(Counter(r['row']['metrics'].get(metric, {}).get('type', 'absent')
+                                   for r in selected)))
+    print('xApp-derived failure ratios (not raw E2 fields):', dict(Counter(
+        name for r in selected for name in r.get('derived_metrics', {}))))
+    print('Positive-UL rows:', sum(
+        (r['row']['metrics'].get('DRB.UEThpUl', {}).get('value') or 0) > 0 for r in selected))
+    example = next((b for b in blocks if b.startswith('record=') and ' status=matched ' in b
+                    and f' DU_ID={du} ' in b), None)
+    print('Matched TXT example:\n' + (example or 'No matched record'))
+PY_CHECK
+```
+
+Check the actual results against both Laptop role summaries:
+
+| Check | Expected result for this run |
+| --- | --- |
+| UE1 / logical FR1 | DU ID 1, SUPI `imsi-001010000000101`, DNN `internet`, current Laptop UE1 IP in `10.45.0.0/16` |
+| UE2 / logical FR3 | DU ID 2, SUPI `imsi-001010000000102`, DNN `internet2`, current Laptop UE2 IP in `10.46.0.0/16` |
+| Current association | Both roles have repeated `status=matched` records with actual F1/NGAP/GUAMI/PDU identifiers; no cross-UE binding. `--fresh-only` produces no cached bindings. |
+| DU measurements | Both DUs carry all 27 raw names with units/types from the expansion contract; original seven names remain present. CQI/MCS are rounded INTEGER means; signed PHR is REAL. `PRB.UsageDl.Percent` / `PRB.UsageUl.Percent` preserve fractional percentages as REAL; `RRU.PrbTotDl/Ul` remain INTEGER. |
+| Sample validity and age | CQI/MCS have sample counts; no observations produce noValue. PHR/BSR/buffer include age in ms and stay noValue until observed. Their latest values can persist across windows. |
+| Derived values | HARQ/CRC failure ratios are separately labelled xApp calculations; zero denominator gives noValue. They are not IP packet loss or first-transmission BLER. |
+| Rate and granularity | DU `granularity_ms=100`; measured header and receive interval medians near 100 ms for each DU; CU receive intervals near 1000 ms. Inspect p95/max and any gaps rather than assuming a hard deadline. |
+| RF availability | Both paths produce REAL RF values during UL traffic; negative RSRP is valid. A period without usable PUSCH can report `no_value`, which must remain distinct from measured zero. |
+| Delivery and cleanup | No Core/input errors or ingress loss; three subscription delete responses and xApp exit 0. |
+
+`summary.txt` is an inspection aid, not an automatic acceptance verdict.
+The 120-second window should produce roughly 1200 reports per continuously
+reporting DU, less startup/cleanup and periods without any eligible UE. Actual
+counts and intervals determine the result; the earlier 1-second captures are
+baseline evidence, not evidence for the new 100 ms rate. This is not a guarantee
+of 100 ms end-to-end latency: CU/Core identity refresh still has a 1-second cadence.
+Compare the current Laptop IP and identity evidence with the actual CU/Core
+inputs and output records. A correct DU RF value with `CU identity missing`
+does not verify the combined identity join: check the CU identity overlay,
+CU subscription and fresh CU input records. A missing RF name or rejected DU
+subscription needs the RF-capable DU binary/configuration; `--du-metrics 5`
+can diagnose legacy compatibility but does not complete this expanded test.
+The accepted seven-measurement regression uses `--du-metrics 7` or
+`configs/flexric/xapp_ue_identity.conf`; it does not exercise the new names.
+
+These are new live results to be collected; the merged offline tests and
+earlier DU-only RF capture do not replace this two-UE combined run. Cold-start
+repeatability, bidirectional disturbance and protocol-explicit lifecycle/reuse
+work retain their separate supplemental or development scope.

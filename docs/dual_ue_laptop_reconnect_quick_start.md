@@ -24,13 +24,13 @@ sudo systemctl enable --now ModemManager
   set -euo pipefail
   mkdir -p ~/falcon-ue-connect
   ssh -T nyu@10.20.44.26 \
-    'tar -C /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1 -czf - reconnect_ue1.sh reconnect_ue2.sh reconnect_ue.py connect_ue.py reset_ue_network.py run_dual_ul.py' |
+    'tar -C /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1 -czf - reconnect_ue1.sh reconnect_ue2.sh reconnect_ue.py connect_ue.py reset_ue_network.py run_dual_ul.py run_dual_stability.py' |
     tar -xzf - -C ~/falcon-ue-connect
-  ls -l ~/falcon-ue-connect/{reconnect_ue1.sh,reconnect_ue2.sh,reconnect_ue.py,connect_ue.py,reset_ue_network.py,run_dual_ul.py}
+  ls -l ~/falcon-ue-connect/{reconnect_ue1.sh,reconnect_ue2.sh,reconnect_ue.py,connect_ue.py,reset_ue_network.py,run_dual_ul.py,run_dual_stability.py}
 )
 ```
 
-**Expected:** six files listed; one SSH login; no intermediate archive file.
+**Expected:** seven files listed; one SSH login; no intermediate archive file.
 
 ## 3. Check USB wiring — Laptop terminal
 
@@ -126,8 +126,10 @@ tail -n 12 "$LAPTOP_UL_RUN/ue1.log" "$LAPTOP_UL_RUN/ue2.log"
 **Expected:** `status` is `completed`; both links have `exit_code: 0`; current
 IP, IMSI and APN are recorded for each role. Retain `summary.json` and both logs.
 
-**Spark terminal:** after the 120-second capture exits, run
-[section 7c](dual_ue_spark_quick_commands.md#7c-inspect-both-ue-bindings-and-the-seven-e2sm-measurements).
+**Spark terminal:** after the 120-second capture exits, retain the
+[section 7a capture](dual_ue_spark_quick_commands.md#7a-start-the-xapp-and-write-a-120-second-txt-capture)
+and compare `bindings.txt` with the current Laptop summary. Detailed analysis
+commands are in the [development reference](development/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
 
 | Expected Spark result | UE1 / FR1 | UE2 / FR3 |
 | --- | --- | --- |
@@ -141,11 +143,68 @@ IP, IMSI and APN are recorded for each role. Retain `summary.json` and both logs
 
 **Expected capture completion:** xApp exit 0, three subscription delete
 responses, and no Core/input errors or ingress loss. Retain Spark's
-`bindings.txt`, `rows.ndjson`, `inputs.ndjson`, `summary.txt`, `xapp.log`,
+`bindings.txt`, `rows.ndjson`, `inputs.ndjson`, `xapp.log`,
 configuration snapshots and `exit.txt`, with the Laptop evidence. Copy both
 printed capture directories to persistent experiment storage before reboot.
 CU identity reports remain at 1000 ms and Core polling at 1 second. Laptop
 watcher commands, their `--interval 3`, and the 60-second upload stay the same.
+
+## 7a. Six-minute stability test — both reconnect watchers stay running
+
+**Spark preparation:** for this diagnostic trial, select the optional temporary
+stack-capture commands for [both DUs](dual_ue_spark_quick_commands.md#5a-spark-du1-terminal).
+Keep both DU debug directories with the Spark capture; the Laptop commands
+below are unchanged.
+
+**Laptop terminal 3 — after the previous traffic/capture has finished:**
+
+```bash
+python3 ~/falcon-ue-connect/run_dual_stability.py
+```
+
+**Expected:** both current UE addresses, then `READY`. Leave this prompt open.
+If the file is missing, use [Spark 7b's two-file transfer](dual_ue_spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul).
+
+**Spark terminal:** start
+[section 7b's full 360-second xApp command](dual_ue_spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul).
+
+**Expected:** three subscriptions and
+`identity collector: 3 KPM subscriptions, duration=360`.
+
+**Laptop terminal 3 — within ten seconds of subscriptions:**
+
+```text
+START
+```
+
+| Phase | Duration | iperf upload |
+| --- | --- | --- |
+| 1 | 50 s | FR1 |
+| 2 | 50 s | FR3 |
+| 3 | 50 s | FR1 + FR3 |
+| 4 | 50 s | FR1 |
+| 5 | 50 s | FR3 |
+| 6 | 50 s | FR1 + FR3 |
+
+**Expected:** six completed phases, eight successful receivers,
+`STATUS: completed`, and a `/tmp/falcon-dual-stability-*` evidence directory.
+Watchers keep checking/recovering; do not stop them or alter gains.
+
+**Laptop terminal 3 — paste the printed traffic directory:**
+
+```bash
+read -r -p 'Paste the Laptop stability directory: ' LAPTOP_STABILITY_RUN
+cat "$LAPTOP_STABILITY_RUN/summary.json"
+```
+
+**Expected:** `status: completed`, six phases, no allocation changes and
+all eight client exits 0. Keep `events.ndjson`, `truth.json`, the eight client
+JSON files, and both watchers' evidence directories. Let the Spark xApp finish
+its full 360 seconds and require exit 0. Interpret reconnect events, identity
+continuity, 27 metrics, cadence, gaps and radio warnings with the
+[full stability reference](runbooks/dual_ue_laptop_reconnect_reference.md#six-minute-reconnect-stability-test).
+The traffic summary alone does not certify the xApp or the absence of brief
+reconnect events between traffic snapshots.
 
 ## 8. Stop after iperf and the xApp have finished
 

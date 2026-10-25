@@ -112,10 +112,11 @@ The entry points are [`reconnect_ue1.sh`](../../scripts/dual_fr1/reconnect_ue1.s
 (**UE2 / FR3**). They use [`reconnect_ue.py`](../../scripts/dual_fr1/reconnect_ue.py),
 [`connect_ue.py`](../../scripts/dual_fr1/connect_ue.py) and
 [`reset_ue_network.py`](../../scripts/dual_fr1/reset_ue_network.py): **five reconnect files**.
-Add [`run_dual_ul.py`](../../scripts/dual_fr1/run_dual_ul.py) for the concurrent
-iperf test: **six files** in this guide's transfer.
+Add [`run_dual_ul.py`](../../scripts/dual_fr1/run_dual_ul.py) and
+[`run_dual_stability.py`](../../scripts/dual_fr1/run_dual_stability.py) for the
+finite traffic tests: **seven files** in this guide's transfer.
 
-### Copy or update the six files
+### Copy or update the seven files
 
 Run in **Bash on the laptop**. Stop active launchers/watchers before updating the shared
 Python helpers, then repeat this block whenever the Spark scripts change:
@@ -126,20 +127,20 @@ Python helpers, then repeat this block whenever the Spark scripts change:
   mkdir -p ~/falcon-ue-connect
 
   ssh -T nyu@10.20.44.26 \
-    'tar -C /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1 -czf - reconnect_ue1.sh reconnect_ue2.sh reconnect_ue.py connect_ue.py reset_ue_network.py run_dual_ul.py' |
+    'tar -C /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1 -czf - reconnect_ue1.sh reconnect_ue2.sh reconnect_ue.py connect_ue.py reset_ue_network.py run_dual_ul.py run_dual_stability.py' |
     tar -xzf - -C ~/falcon-ue-connect
 
-  ls -l ~/falcon-ue-connect/{reconnect_ue1.sh,reconnect_ue2.sh,reconnect_ue.py,connect_ue.py,reset_ue_network.py,run_dual_ul.py}
+  ls -l ~/falcon-ue-connect/{reconnect_ue1.sh,reconnect_ue2.sh,reconnect_ue.py,connect_ue.py,reset_ue_network.py,run_dual_ul.py,run_dual_stability.py}
 )
 ```
 
 This uses **one SSH connection** to Spark, normally with one `nyu` password prompt.
 The archive is streamed directly; there is no intermediate archive or temporary
-extraction directory to delete. Repeating the transfer overwrites the six named
+extraction directory to delete. Repeating the transfer overwrites the seven named
 files; it does not delete other files already in `~/falcon-ue-connect`. The
 one-shot guide uses the same directory and shared helpers, but copies its own
 four-file set. Both entry-point sets together comprise seven distinct files; adding the
-traffic helper makes eight.
+two traffic helpers makes nine.
 
 Spark's recorded management address is `10.20.44.26`; the laptop's is
 `10.20.73.246`. Pulling from the laptop uses Spark's SSH listener and does not
@@ -199,8 +200,9 @@ DU subscription periods; CU identity remains **1000 ms** and Core polling
 [default startup procedure](../dual_ue_spark_quick_commands.md).
 Laptop watcher intervals and the 60-second traffic command below are unchanged.
 Verify `granularity_ms=100` and actual per-DU receive/header intervals in
-Spark section 7c; the period is not a bound on identity recovery or forwarding
-latency. The earlier 1-second captures remain baseline evidence only.
+the [capture inspection reference](../development/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
+The period is not a bound on identity recovery or forwarding latency.
+The earlier 1-second captures remain baseline evidence only.
 
 Keep both reconnect terminals running after their connection `SUCCESS`. In a
 third Laptop terminal, run the copied helper's read-only preflight:
@@ -243,7 +245,7 @@ printed `/tmp/falcon-dual-ul-*` directory:
 
 Require `UE1 exit=0`, `UE2 exit=0`, both receiver summaries and
 `STATUS: completed`. Compare the exact current Laptop IP/IMSI/APN values with
-Spark section 7c's matched CU/DU/Core records. Both DUs must report the seven
+the Spark capture's matched CU/DU/Core records. Both DUs must report the seven
 metrics including `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB`; UL periods should supply
 REAL RF samples. Periods without usable PUSCH may report `no_value`. Subscription
 success or iperf success alone does not prove the combined identity join.
@@ -256,16 +258,128 @@ both paths to pass verification, then rerun the helper in a fresh xApp capture
 window. Retain the interrupted/failed trial separately.
 
 After both clients finish, leave the watchers and Spark services running until
-the 120-second xApp capture deletes its subscriptions and exits. Inspect Spark
-section 7c, then Ctrl+C UE1 and UE2 separately and require each shutdown success
-marker before stopping DU/CU/RIC. Copy the printed Laptop and Spark capture
-directories to persistent experiment storage; `/tmp` is not permanent storage.
+the 120-second xApp capture deletes its subscriptions and exits. Compare the
+captured bindings with the current Laptop summary, then Ctrl+C UE1 and UE2
+separately and require each shutdown success marker before stopping DU/CU/RIC.
+Copy the printed Laptop and Spark capture directories to persistent experiment
+storage; `/tmp` is not permanent storage.
 
-The optional Spark section 7b idle/resume test requires the separate manual
-Laptop procedure. Reconnect watchers send periodic ping probes even when their
-terminal output is silent, so they do not provide the intended idle intervals.
-Ctrl+C also shuts down their UE; prepare the manual connection again for that
-optional test rather than assuming it remains connected.
+### Six-minute reconnect stability test
+
+[Spark section 7b](../dual_ue_spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul)
+is a **360-second expanded xApp capture with both reconnect watchers active**.
+It replaces the previous quick-guide idle/resume exercise. Watcher pings are
+part of this test; no RRC/Core idle transition is required. The earlier
+[manual idle/resume procedure](../development/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test)
+remains a separate optional experiment with its own traffic/capture commands.
+
+The finite [`run_dual_stability.py`](../../scripts/dual_fr1/run_dual_stability.py)
+reuses `run_dual_ul.py` for current IMEI/SIM/PLMN/NR/bearer/IP/route discovery.
+It waits at `READY`, then runs six 50-second phases after `START`:
+FR1 → FR3 → both → FR1 → FR3 → both. This gives 300 scheduled traffic seconds
+and eight source-bound TCP clients. Both Spark servers must already be listening.
+Use the current single-flight watcher commands (`--interval 3 --verbose 2`)
+throughout the test; no second connection owner or new recovery policy is added.
+
+The traffic runner only reads modem/host state and owns its iperf children.
+It checks both current paths before/after every phase, rather than adding a
+second high-frequency health loop. Its queries are bounded to five seconds
+per command, client overrun to five seconds, and total post-START execution
+to 335 seconds. The default prompt is intended for preparation before Spark
+starts. Start traffic within ten seconds of the three xApp subscriptions so
+all phases fit within the 360-second capture. Actual timestamps, rather than
+nominal phase offsets, determine coverage. A timeout produces a failed trial;
+it does not shorten the traffic phase and call it successful.
+
+| Laptop artifact | Contents |
+| --- | --- |
+| `truth.json` | Both roles' baseline IMEI/SIM/bearer/current allocation and policy path |
+| `events.ndjson` | UTC/monotonic phase and client start/end events, plus both paths' snapshots before/after every phase |
+| `phaseN-ueM.json` | Eight iperf JSON outputs, including per-second intervals, end summaries and requested server output |
+| `summary.json` | Actual run/phase times, current per-client IP/context, exit/receiver results, allocation changes and overall traffic status |
+
+A new IP/context is recorded and used for the next phase. An existing source-
+bound client cannot change its IP, and the runner does not silently restart it.
+A client failure stays failed even if the watcher later recovers. Changed
+modem/bearer/IP/interface metadata makes the traffic result `failed`; failed
+preflight/spawn/timeouts abort with evidence. Ctrl+C/SIGTERM cancels/reaps only
+this runner's clients and retains evidence. Reconnect watchers continue until
+the operator separately stops each one. No UE network reset or radio command
+is issued by the traffic runner.
+
+Retain both reconnect directories printed when the watchers started. Their
+`run.log` and `attempts.jsonl` cover failures/recovery that may occur between
+traffic snapshots. After the xApp stops, retain current watcher logs before
+shutdown; final shutdown events are outside the test window. Do not restart
+or stop a watcher solely to obtain its `summary.json`. If a watcher records
+recovery during the run, report the outage/recovery and any IP change even if
+all traffic phases subsequently complete; this is recovery evidence, not a
+continuous-stability pass.
+
+For analysis, align `events.ndjson` with the Spark source/receive timestamps.
+Check `chronyc -n tracking` on both hosts before the run when comparing clocks;
+retain each reference time and correction, and explain a material offset.
+Laptop monotonic elapsed times preserve phase durations if wall clocks change.
+Preserve the full Spark `inputs.ndjson`, `rows.ndjson`, `bindings.txt`, configs,
+`xapp.log`, `exit.txt` and corresponding DU/CU/RIC log intervals.
+For the diagnostic trial, select the optional stack-capture launchers for both
+DUs in Spark sections 5a/5b and retain both `/tmp/falcon-duN-crash.*` directories.
+They run the existing binary under GDB and save thread stacks/status on a fatal
+signal. Record that GDB is enabled on both DUs when assessing timing. See the
+[dual-DU capture instructions](../troubleshooting/du2_crash_capture.md).
+
+Evaluate this trial across the following dimensions:
+
+1. **Traffic and connection:** require all six phases/eight receivers with real
+   exits 0, full transfer duration and positive received bytes. Inspect one-
+   second zero-throughput/retransmission intervals; exit 0 alone does not prove
+   stall-free video or traffic. Compare watcher events and before/after path
+   snapshots with the capture window. Normal watcher pings are allowed on the
+   role without iperf; label it "no iperf", not "radio idle".
+2. **Identity:** compare current Laptop IMSI/APN/IP against Core snapshots and
+   joined CU/DU records for each role. Count/explain subscription startup
+   unresolved/ambiguous rows separately. After warmup, require own current
+   matches with no cross-UE assignment or cached fallback; enumerate any later
+   gap, context change, unmatched interval or recovery. Reused F1 IDs must stay
+   scoped by the correct DU metadata.
+3. **Cadence and transport:** both DU source granularity and subscriptions are
+   100 ms; CU is 1000 ms and Core polling 1 second. Measure header and receive
+   intervals for each node through all six actual phases and the post-traffic
+   interval. Report median/p95/p99/max, missing/duplicate/backward headers,
+   gaps over 150/200 ms, callback/coordinator delays and ingress-drop counters.
+   Expect near-100 ms DU cadence rather than repeated 200 ms batches. Counts
+   should be consistent with actual eligible-UE coverage (about 3600 reports
+   per continuously reporting DU less startup/cleanup). A configured period or
+   a mean interval alone does not certify delivery stability.
+4. **Metric contract and arithmetic:** each DU row contains the exact 27 raw
+   names with the specified units/types. Check finite values, sample-count /
+   noValue agreement for CQI/MCS, valid negative REAL PHR and nonnegative ages.
+   Latest PHR/BSR/buffer values and their ages are not necessarily new samples
+   every 100 ms. Check REAL PRB percentages against preserved INTEGER PRB and
+   HARQ/CRC derived ratios against raw counters; missing/zero-denominator data
+   stays noValue. The two xApp failure ratios remain outside the 27 E2 fields.
+5. **Response to actual traffic:** compare each UE's UL rate, PRB, BSR, MCS,
+   PUSCH sample availability and radio error counters with its own solo/dual
+   client timestamps. Both simultaneous phases should deliver positive bytes
+   on both paths. Do not force MAC/RLC throughput to equal iperf application
+   goodput. A role without iperf still sends watcher probes; RF noValue when
+   no usable PUSCH exists remains valid. Investigate isolated outliers, such
+   as an unexpected 0 dBFS RSRP, against the corresponding DU data. A single
+   100 ms KPM value cannot be compared directly with a differently timed or
+   one-second DU console average. Type/range checks do not establish calibrated
+   physical RF accuracy.
+6. **Runtime and end:** check DU/CU/RIC/xApp crashes and retained RF underflow,
+   late, busy, task-queue and HARQ timeout warnings during the same interval.
+   E2 queue drops and RF timing failures are different findings; a stable E2
+   cadence does not erase radio warnings. Require three subscription delete
+   responses and real xApp exit 0. An unreproduced crash remains unresolved
+   until its cause is identified or bounded by the intended development scope.
+
+The [expanded capture inspection](../development/ue_identity_xapp.md#expanded-27-metric-capture-inspection)
+provides the raw-row summary commands. `STATUS: completed` from the Laptop
+runner certifies only its traffic/path checks. Connection continuity and
+xApp stability/correctness need the combined watcher/Core/CU/DU/capture review
+above. These are test expectations, not a new measured result or experiment report.
 
 ### Initial serial cell lock and registration
 
@@ -529,7 +643,7 @@ Recovery proceeds as follows:
 
 The entry scripts used by the [startup commands above](#start-the-watchers)
 enable `--auto-cell-lock` for each UE using its built-in by-path AT port.
-Copy the complete updated six-file set
+Copy the complete updated seven-file set
 before starting; stop old watchers before updating shared helpers. The first
 attempt immediately performs the guarded serial lock/registration preparation
 described [above](#initial-serial-cell-lock-and-registration). Later persistent
@@ -678,7 +792,7 @@ The current flow first inspects the saved lock/preferences and live AT state:
 matching settings preserve the active PDU while radio recovers; only a proven
 configuration mismatch can enter that radio-repair disconnect branch. Restored
 radio service is followed by current bearer/IP and traffic verification, with
-suspended/ping-failure recovery handled separately. Copy the updated six files and restart the
+suspended/ping-failure recovery handled separately. Copy the updated seven files and restart the
 watcher using the commands above. These cases pass offline regression tests;
 the modem's precise reason for 902 and which recovery branch resolves it on the
 testbed remain unverified. If 902 persists and the lock still reads `0`, retain `run.log` and

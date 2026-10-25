@@ -386,6 +386,8 @@ DU, so gain replies can be correlated with DU/CU events; see
 
 ### 5a. Spark DU1 terminal
 
+**Normal startup:**
+
 ```bash
 cd /home/nyu/ocudu
 DU1_RUN=$(mktemp -d /tmp/falcon-du1-3660.XXXXXXXX)
@@ -397,11 +399,23 @@ bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
   log --filename "$DU1_RUN/du.log"
 ```
 
+**Optional temporary stack capture — use this instead of the normal block:**
+
+```bash
+bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/debug_du1.sh
+```
+
+Expected: `DU1 debug directory: /tmp/falcon-du1-crash.XXXXXXXX`. This uses the
+same integrated DU binary and DU1 config under GDB, retaining console input
+and gain timestamps. Start only one launcher for this DU.
+
 Require radio `3271233` / USB 3, PCI 1 / carrier `644000` / SSB `643680`,
 F1/E2 completed, `==== DU started ===`, and RIC accepted gNB 411 / DU ID 1.
 Leave this terminal running.
 
 ### 5b. Spark DU2 terminal
+
+**Normal startup:**
 
 ```bash
 cd /home/nyu/ocudu
@@ -414,9 +428,28 @@ bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
   log --filename "$DU2_RUN/du.log"
 ```
 
+**Optional temporary stack capture — use this instead of the normal block:**
+
+```bash
+bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/debug_du2.sh
+```
+
+Expected: `DU2 debug directory: /tmp/falcon-du2-crash.XXXXXXXX`. This uses the
+same integrated DU binary, DU2 config and DU2 E2 overlay under GDB.
+Start only one launcher for this DU.
+
 Require radio `328B021` / USB 3, PCI 2 / carrier `640000` / SSB `639648`,
 F1/E2 completed, `==== DU started ===`, and RIC accepted gNB 411 / DU ID 2.
 Leave this terminal running.
+
+For the diagnostic stability trial, choose the optional capture launcher for
+**both DUs** when starting the testbed. Reuse an already-debugged DU; an existing
+normal DU needs to exit before its replacement is started. Neither launcher
+attaches to or stops an existing DU. On a fatal signal, each debugger saves
+that DU's all-thread stacks and status in its own directory; keep both paths.
+See [capture details and output files](troubleshooting/du2_crash_capture.md).
+No DU rebuild or system core-dump configuration change is needed. Mark the
+trial as running under GDB, which can change execution timing.
 
 ### 5c. Confirm the two-DU startup before UE setup
 
@@ -631,140 +664,146 @@ UL traffic gives both DUs PUSCH samples for the RF check. Brief initial
 unresolved rows can occur while fresh CU/Core/DU inputs arrive; inspect their
 reasons instead of treating subscription success alone as a successful join.
 
-### 7b. Six-minute bidirectional idle/resume and independent matching
+Expected: both roles repeatedly show `status=matched` with their current
+Laptop IP, SUPI and DNN; both DUs carry 27 raw metrics with `granularity_ms=100`.
+Allow startup rows to remain unresolved until fresh CU/Core inputs arrive.
+For detailed metric, timing and input-loss analysis, use the
+[development reference](development/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
 
-This is an **optional follow-up**, not a prerequisite for the initial
-expanded integration test. After 7a completes, prepare the Laptop's
-[idle/resume command](dual_ue_laptop_quick_commands.md#binding-idle) and leave
-it at `READY`. In the Spark xApp terminal, repeat the 7a capture command with
-a fresh `mktemp` directory and **`--duration 360`** instead of 120. After
-confirming three subscriptions, return to Laptop within ten seconds, enter
-`START`, and let both clients and the xApp finish naturally.
+### 7b. Six-minute reconnect stability with alternating and concurrent UL
 
-The Laptop command runs UE1 15 s UL → 150 s quiet → 170 s UL, and UE2 175 s UL
-→ 150 s quiet → 10 s UL. For this optional test, periodic ping/reconnect
-probes and other WWAN traffic must not prevent the intended idle intervals.
-Verify actual Core connected → idle → connected transitions, peer continuity,
-and fresh resumed matches using the
-[full six-minute procedure and inspection](development/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test).
-The quick summary below alone does not establish idle transitions.
+Keep **both reconnect watchers running** throughout this test. Run this after
+7a completes; finish the previous xApp and all previous iperf clients first.
+Keep Spark's two servers, both DUs, CU, RIC and Core running. Use fixed gains
+and leave other applications off the WWAN paths. The test uses the expanded
+27-metric DU profile at **100 ms**, CU identity at **1 second**, and a fresh
+**360-second** xApp capture.
 
-### 7c. Inspect both UE bindings and the expanded E2SM measurements
+For this diagnostic run, use **both** optional stack-capture launchers from
+[DU1 startup](#5a-spark-du1-terminal) and [DU2 startup](#5b-spark-du2-terminal)
+when preparing the testbed. Keep the two printed `/tmp/falcon-duN-crash.*`
+directories with the xApp capture. A fresh trial is required after replacing
+a running DU; repeat UE connection verification before traffic.
 
-<a id="7c-inspect-both-ue-bindings-and-the-seven-e2sm-measurements"></a>
-
-<a id="7c-inspect-bindings-core-transitions-and-two-example-records"></a>
-
-After the capture finishes, use the completed directory in a Spark diagnostics
-terminal. This prints a summary and one matched TXT record per DU:
+**Laptop terminal 1 — UE1 / FR1, if its watcher is not already running:**
 
 ```bash
-read -r -p 'Paste the completed Spark capture directory: ' IDENTITY_CHECK_RUN
-cat "$IDENTITY_CHECK_RUN/exit.txt"
-grep -E 'Registered E2 Nodes|identity collector:|DELETE RESPONSE|Sucessfully stopped' \
-  "$IDENTITY_CHECK_RUN/xapp.log"
-python3 - "$IDENTITY_CHECK_RUN" <<'PY_CHECK' | tee "$IDENTITY_CHECK_RUN/summary.txt"
-from collections import Counter
-import json
-from pathlib import Path
-import statistics
-import sys
-
-root = Path(sys.argv[1])
-rows = [json.loads(line) for line in (root / 'rows.ndjson').open()]
-sys.path.insert(0, '/home/nyu/Desktop/Falcon_repo/Falcon/scripts/ue_identity')
-from metrics import EXPANDED
-expected_metrics = set(EXPANDED)
-expected_roles = {'1': ('imsi-001010000000101', 'internet'),
-                  '2': ('imsi-001010000000102', 'internet2')}
-print('Records:', len(rows), dict(Counter(r['binding_status'] for r in rows)))
-problems = 0
-reports = []
-with (root / 'inputs.ndjson').open() as source:
-    for line in source:
-        event = json.loads(line)
-        if event['kind'] == 'kpm_report':
-            reports.append(event)
-        problems += (event['kind'] not in ('core_snapshot', 'kpm_report')
-                     or int(event.get('ingress_dropped_total', 0)) != 0)
-print('Core/input errors or loss events:', problems)
-def intervals(label, timestamps):
-    gaps = [(b - a) / 1000 for a, b in zip(timestamps, timestamps[1:])]
-    if gaps:
-        ordered = sorted(gaps)
-        p95 = ordered[min(len(ordered) - 1, (95 * len(ordered) - 1) // 100)]
-        print(label, 'count=', len(timestamps), 'interval ms min/median/p95/max=',
-              tuple(round(v, 3) for v in (min(gaps), statistics.median(gaps), p95, max(gaps))))
-    else:
-        print(label, 'insufficient reports for cadence inspection')
-cu_reports = [e for e in reports if e['node']['node_type'] != 'ngran_gNB_DU']
-intervals('CU receive', [int(e['received_at_mono_us']) for e in cu_reports])
-blocks = (root / 'bindings.txt').read_text().split('\n\n')
-for du, expected in expected_roles.items():
-    selected = [r for r in rows if str(r['node'].get('du_id')) == du]
-    matched = [r for r in selected if r['binding_status'] == 'matched']
-    print('\nDU' + du, dict(Counter(r['binding_status'] for r in selected)))
-    print('Unmatched reasons:', dict(Counter(r['reason'] for r in selected
-                                            if r['binding_status'] != 'matched')))
-    print('SUPI / DNN / IP / F1 / AMF / RAN:', sorted({
-        (r['binding']['supi'], r['binding']['dnn'], r['ue_ipv4'],
-         r['row']['ue']['gnb_cu_ue_f1ap_id'], r['binding']['amf_ue_ngap_id'],
-         r['binding']['ran_ue_ngap_id']) for r in matched}))
-    print('Unexpected SUPI/DNN on matched rows:', sum(
-        (r['binding']['supi'], r['binding']['dnn']) != expected for r in matched))
-    print('Rows with exactly 27 expected E2 metrics:', sum(
-        set(r['row']['metrics']) == expected_metrics for r in selected), '/', len(selected))
-    print('Granularity ms:', dict(Counter(r['row'].get('granularity_ms') for r in selected)))
-    du_reports = [e for e in reports if str(e['node'].get('du_id')) == du
-                  and e['node']['node_type'] == 'ngran_gNB_DU']
-    intervals('DU' + du + ' header', [int(e['header_time_us']) for e in du_reports])
-    intervals('DU' + du + ' receive', [int(e['received_at_mono_us']) for e in du_reports])
-    for metric in EXPANDED:
-        print(metric, dict(Counter(r['row']['metrics'].get(metric, {}).get('type', 'absent')
-                                   for r in selected)))
-    print('xApp-derived failure ratios (not raw E2 fields):', dict(Counter(
-        name for r in selected for name in r.get('derived_metrics', {}))))
-    print('Positive-UL rows:', sum(
-        (r['row']['metrics'].get('DRB.UEThpUl', {}).get('value') or 0) > 0 for r in selected))
-    example = next((b for b in blocks if b.startswith('record=') and ' status=matched ' in b
-                    and f' DU_ID={du} ' in b), None)
-    print('Matched TXT example:\n' + (example or 'No matched record'))
-PY_CHECK
+sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 3 --verbose 2
 ```
 
-Check the actual results against both Laptop role summaries:
+**Laptop terminal 2 — UE2 / FR3, if its watcher is not already running:**
 
-| Check | Expected result for this run |
+```bash
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 3 --verbose 2
+```
+
+Expected before traffic: both watchers report `SUCCESS`. Reuse already-running
+watchers; do not start another owner for the same UE. Keep each watcher's
+printed evidence directory for its `run.log` and `attempts.jsonl`. Their normal
+health pings remain enabled; a role without iperf traffic can still have
+low-rate traffic and RF samples. This test does not require RRC/Core idle.
+
+**Laptop traffic terminal — copy/update only the two traffic helpers:**
+
+```bash
+(
+  set -euo pipefail
+  mkdir -p ~/falcon-ue-connect
+  ssh -T nyu@10.20.44.26 \
+    'tar -C /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1 -czf - run_dual_ul.py run_dual_stability.py' |
+    tar -xzf - -C ~/falcon-ue-connect
+)
+python3 ~/falcon-ue-connect/run_dual_stability.py
+```
+
+Expected: the script prints both current source IPs and `READY`, then waits for
+`START`. This two-file update does not replace running reconnect code. Do not
+run another traffic helper during the copy/test.
+
+**Spark xApp terminal — start the complete six-minute capture:**
+
+```bash
+cd /home/nyu/Desktop/Falcon_repo/Falcon
+IDENTITY_DUAL_RUN=$(mktemp -d /tmp/falcon-identity-dual.XXXXXXXX)
+printf 'Spark capture directory: %s\n' "$IDENTITY_DUAL_RUN"
+cp configs/ue_identity/local.json "$IDENTITY_DUAL_RUN/local.json"
+cp configs/flexric/xapp_ue_identity_expanded.conf "$IDENTITY_DUAL_RUN/xapp.conf"
+python3 scripts/ue_identity/xapp_ue_identity.py \
+  --config "$IDENTITY_DUAL_RUN/local.json" \
+  --e2-config "$IDENTITY_DUAL_RUN/xapp.conf" \
+  --observed-unique --fresh-only --duration 360 \
+  --text-output "$IDENTITY_DUAL_RUN/bindings.txt" \
+  --capture-events "$IDENTITY_DUAL_RUN/inputs.ndjson" \
+  > "$IDENTITY_DUAL_RUN/rows.ndjson" \
+  2> "$IDENTITY_DUAL_RUN/xapp.log"
+IDENTITY_DUAL_RC=$?
+printf 'xApp exit=%s\n' "$IDENTITY_DUAL_RC" | tee "$IDENTITY_DUAL_RUN/exit.txt"
+```
+
+**Separate Spark diagnostics terminal — paste the printed capture directory:**
+
+```bash
+read -r -p 'Paste the current Spark capture directory: ' IDENTITY_WATCH_RUN
+tail -n 40 "$IDENTITY_WATCH_RUN/xapp.log"
+```
+
+Expected: three successful subscriptions and
+`identity collector: 3 KPM subscriptions, duration=360`. Return to the prepared
+Laptop traffic terminal within ten seconds of subscriptions and enter:
+
+```text
+START
+```
+
+The traffic runner executes two rounds, with fresh IMEI/SIM/bearer/IP and
+source-bound/ordinary-route checks before and after every phase:
+
+| Nominal Laptop seconds after START | Phase | FR1 iperf | FR3 iperf |
+| --- | --- | --- | --- |
+| 0–50 | 1 | UL | No iperf |
+| 50–100 | 2 | No iperf | UL |
+| 100–150 | 3 | UL | UL |
+| 150–200 | 4 | UL | No iperf |
+| 200–250 | 5 | No iperf | UL |
+| 250–300 | 6 | UL | UL |
+
+These are **300 seconds of scheduled traffic inside a 360-second capture**.
+Actual phase timestamps include preflight and connection/transfer overhead;
+use `events.ndjson`, not the nominal boundaries, for correlation. The runner
+has a 335-second overall budget and bounds each client's overrun to five
+seconds. The remaining capture time provides startup and post-traffic evidence.
+Let the xApp finish even after Laptop traffic completes; keep both watchers
+running until capture cleanup finishes.
+
+Expected Laptop output: six completed phases, eight successful client
+transfers and `STATUS: completed`. It prints a
+`/tmp/falcon-dual-stability-*` directory containing `truth.json`,
+`events.ndjson`, `summary.json`, and eight `phaseN-ueM.json` iperf records.
+A changed allocation is recorded and the next phase uses the current IP;
+it does not convert a disrupted run into a stable run. An already-running
+`iperf3 -B` client stays bound to its original IP. A failed preflight, client,
+time budget or interruption is retained as a failure. The runner's Ctrl+C
+stops only its own clients; the reconnect watchers and UEs remain running.
+
+| Check after this run | Expected observation |
 | --- | --- |
-| UE1 / logical FR1 | DU ID 1, SUPI `imsi-001010000000101`, DNN `internet`, current Laptop UE1 IP in `10.45.0.0/16` |
-| UE2 / logical FR3 | DU ID 2, SUPI `imsi-001010000000102`, DNN `internet2`, current Laptop UE2 IP in `10.46.0.0/16` |
-| Current association | Both roles have repeated `status=matched` records with actual F1/NGAP/GUAMI/PDU identifiers; no cross-UE binding. `--fresh-only` produces no cached bindings. |
-| DU measurements | Both DUs carry all 27 raw names with units/types from the expansion contract; original seven names remain present. CQI/MCS are rounded INTEGER means; signed PHR is REAL. `PRB.UsageDl.Percent` / `PRB.UsageUl.Percent` preserve fractional percentages as REAL; `RRU.PrbTotDl/Ul` remain INTEGER. |
-| Sample validity and age | CQI/MCS have sample counts; no observations produce noValue. PHR/BSR/buffer include age in ms and stay noValue until observed. Their latest values can persist across windows. |
-| Derived values | HARQ/CRC failure ratios are separately labelled xApp calculations; zero denominator gives noValue. They are not IP packet loss or first-transmission BLER. |
-| Rate and granularity | DU `granularity_ms=100`; measured header and receive interval medians near 100 ms for each DU; CU receive intervals near 1000 ms. Inspect p95/max and any gaps rather than assuming a hard deadline. |
-| RF availability | Both paths produce REAL RF values during UL traffic; negative RSRP is valid. A period without usable PUSCH can report `no_value`, which must remain distinct from measured zero. |
-| Delivery and cleanup | No Core/input errors or ingress loss; three subscription delete responses and xApp exit 0. |
+| Connection continuity | Both watcher logs have no recovery/failed health episode inside the test window; no bearer/IP/interface change in traffic snapshots. Keep any actual recovery for separate analysis. |
+| Traffic | Six phases and all eight receivers complete with exit 0 and positive payload; inspect each one-second interval for stalls and retransmissions. |
+| Identity | After subscription warmup, both roles remain currently matched to their own SUPI/DNN/current IP; no cross-UE assignment or cached fallback. Count any later unresolved/ambiguous interval. |
+| Delivery | Both DUs retain 100 ms granularity and receive/header intervals near 100 ms through solo, concurrent and low-traffic periods. Record p95/p99/max, gaps and ingress drops; CU stays near 1000 ms. |
+| Measurements | All 27 raw names retain the contract's types/units; CQI/MCS sample validity, signed PHR, ages, REAL/INTEGER PRB and derived failure ratios remain consistent. Low-traffic RF `no_value` is allowed. |
+| Traffic response | Each role's UL metrics follow its own iperf phases. The other role retains identity continuity; watcher probes can produce nonzero standby traffic. MAC/RLC rates need not equal application goodput. |
+| Runtime and cleanup | No process crash; inspect RF underflow/late/busy and other DU warnings separately. Three subscription deletions and xApp exit 0 alone do not prove radio stability or physical RF accuracy. |
 
-`summary.txt` is an inspection aid, not an automatic acceptance verdict.
-The 120-second window should produce roughly 1200 reports per continuously
-reporting DU, less startup/cleanup and periods without any eligible UE. Actual
-counts and intervals determine the result; the earlier 1-second captures are
-baseline evidence, not evidence for the new 100 ms rate. This is not a guarantee
-of 100 ms end-to-end latency: CU/Core identity refresh still has a 1-second cadence.
-Compare the current Laptop IP and identity evidence with the actual CU/Core
-inputs and output records. A correct DU RF value with `CU identity missing`
-does not verify the combined identity join: check the CU identity overlay,
-CU subscription and fresh CU input records. A missing RF name or rejected DU
-subscription needs the RF-capable DU binary/configuration; `--du-metrics 5`
-can diagnose legacy compatibility but does not complete this expanded test.
-The accepted seven-measurement regression uses `--du-metrics 7` or
-`configs/flexric/xapp_ue_identity.conf`; it does not exercise the new names.
-
-These are new live results to be collected; the merged offline tests and
-earlier DU-only RF capture do not replace this two-UE combined run. Cold-start
-repeatability, bidirectional disturbance and protocol-explicit lifecycle/reuse
-work retain their separate supplemental or development scope.
+Keep the printed Spark capture, Laptop traffic evidence and **both reconnect
+evidence directories**, together with DU/CU/RIC logs and **both DU debug
+directories** when using stack capture. `status.json` / `backtrace.txt` are
+written only after that debugger stops/exits, so they need not exist while a
+healthy DU is still running. Timestamp/source checks
+and metric correctness criteria are in the
+[stability analysis reference](runbooks/dual_ue_laptop_reconnect_reference.md#six-minute-reconnect-stability-test).
+The detailed raw capture inspection remains in the
+[development reference](development/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
 
 ## 8. Shutdown and retained evidence
 
@@ -792,7 +831,7 @@ sudo docker stop open5gs-mongo
 ```
 
 Retain each capture's `local.json`, `xapp.conf`, `exit.txt`, `inputs.ndjson`,
-`rows.ndjson`, `bindings.txt`, `summary.txt` and `xapp.log`, together with the
+`rows.ndjson`, `bindings.txt` and `xapp.log`, together with the
 RIC/CU/DU startup logs, actual source revisions and Laptop truth/events/client
 logs/summary. `/tmp` may be cleared on reboot: copy the printed evidence
 directories to a persistent experiment directory before shutdown. Keep raw

@@ -61,7 +61,7 @@ output with Laptop truth and actual captured source events independently.
 
 Daily sequence: complete sections 1 and 2 → install/reuse the section 3 helper
 and run `--check-only` → Spark 7a plus Laptop's 60-second concurrent upload →
-[section 3.1](#binding-idle) plus Spark 7b for the six-minute idle/resume test →
+[section 3.1](#binding-idle) with its separate six-minute idle/resume capture →
 retain evidence → shutdown. All test launches are explicit operator commands.
 The idle test is a pasted command using the existing helper; it requires no
 file transfer or additional installed script. UDP and path-loss tests in 3.2
@@ -1521,8 +1521,8 @@ client. A partial launch failure or Ctrl+C stops its started clients and records
 an aborted/interrupted run. No Bash PID variables are needed.
 
 Retain the printed directory, both logs and `summary.json`. Require both exit
-codes 0 and two completed receiver summaries. In Spark 7c, compare each
-`summary.json` role's IMSI/APN/current IP with the captured CU/Core/DU events
+codes 0 and two completed receiver summaries. In the Spark section 7 capture,
+compare each `summary.json` role's IMSI/APN/current IP with the captured CU/Core/DU events
 and the `bindings.txt` records followed by KPM. Successful subscriptions alone
 do not prove identity or metric delivery. After this short test passes, run
 3.1 to reproduce both idle/resume cases in one xApp instance.
@@ -1557,8 +1557,10 @@ may shift these nominal boundaries. The full traffic run must finish within
 
 Paste this command directly; it reuses `~/falcon-dual-ul.py`, creates logs and
 runs no traffic until `START`. No additional script file or transfer is needed.
-Leave it at `READY`, start [Spark 7b](dual_ue_spark_quick_commands.md#7b-six-minute-bidirectional-idleresume-and-independent-matching)'s
-360-second xApp, then return here within ten seconds and enter `START`.
+Leave it at `READY`, start the separate 360-second xApp from the
+[idle/resume reference](development/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test),
+then return here within ten seconds and enter `START`. This manual idle test
+is separate from Spark 7b's reconnect stability test.
 
 ```bash
 python3 - <<'PY'
@@ -1694,14 +1696,15 @@ print(json.dumps({key: s[key] for key in ('status', 'error', 'elapsed_seconds', 
 PY_SUMMARY
 ```
 
-In [Spark 7c](dual_ue_spark_quick_commands.md#7c-inspect-bindings-core-transitions-and-two-example-records),
+Using the [full idle/resume analysis](development/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test),
 verify each UE actually enters Core idle then reconnects. During each silent-DU
 window, its active peer must continue current `matched` bindings using its own
 fresh CU/Core data; this `--fresh-only` test must have zero cached rows. On
 resume, use the actual new F1/NGAP contexts and the Laptop's current IP; IDs
 need not equal the October 21 report or remain constant. Count/explain startup/resume
 unresolved rows, and check for cross-UE assignments. All detailed criteria are
-in Spark 7c; a completed iperf script alone does not pass binding acceptance.
+in that development reference; a completed iperf script alone does not pass
+binding acceptance.
 
 Keep Laptop `truth.json`, `events.ndjson`, the four client logs and
 `summary.json`, plus Spark's inputs/rows/TXT/config/logs. Copy evidence out of
