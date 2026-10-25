@@ -34,9 +34,9 @@ the measurement. A disappeared subscribed UE produces `no_value`. The provider
 expires its identity snapshot after three seconds. A filtered list is not a
 complete lifecycle snapshot.
 
-The October 25 capture exposed two simultaneous F1 ID 1 contexts on different
-DUs. CU at 1 s was current; the original wire identity lacked their serving-DU
-distinction. Increasing the CU rate cannot remove that collision.
+F1 ID numbers can coincide across independent DU connections. The identity
+join must retain the serving-DU distinction; increasing the CU reporting rate
+does not remove a cross-DU number collision.
 
 The updated CU allocates the existing optional eight-octet `ran-UEID` in
 `UEID-GNB` as **`du36-cuue28-v1`**: big-endian unsigned
@@ -100,9 +100,9 @@ at **1000 ms**, Core polls at **1 second**, and source freshness remains
 New registration/IP association still waits for those independently timed
 identity sources; 100 ms reports do not imply 100 ms end-to-end recovery.
 
-The E2 SCTP connector now enables `SCTP_NODELAY`. In the captured deployment it
-was unset, allowing Nagle buffering to interact with the 200 ms delayed-SACK
-timer. An isolated 100 ms loopback sender reproduced gaps up to 208.09 ms with
+The E2 SCTP connector now enables `SCTP_NODELAY`. Leaving it unset allows
+Nagle buffering to interact with the 200 ms delayed-SACK timer. An isolated
+100 ms loopback sender reproduced gaps up to 208.09 ms with
 NODELAY off, versus 99.85–100.19 ms with it on. This verifies that buffering
 mechanism, not the repaired live pipeline. Recheck actual receive spacing and
 ordering after restarting CU/DUs and xApp. RIC already enables NODELAY; its
@@ -130,11 +130,7 @@ above. A mixed deployment with a legacy DU can use the five-metric profile
 for a common supported subscription. Custom `--e2-config PATH` remains
 supported and cannot be combined explicitly with `--du-metrics`.
 
-The [October 25 100 ms capture](../reports/du_100ms_mixed_rate_experiment_report_2026-10-25.md)
-verified approximately 10 reports/s per DU, but exposed burst delivery,
-cross-DU identity collisions and a separate PRB-index defect after context
-replacement. Original outputs are retained unchanged. Validate the NODELAY
-and explicit-scope fixes in a new capture using
+Validate the NODELAY and explicit-scope fixes in a new capture using
 [the Spark procedure](../dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
 A live legacy-DU subscription remains separate from this new-rate verification.
 

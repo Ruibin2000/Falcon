@@ -1,5 +1,5 @@
 {
-  "scope": "Offline/native corrective validation; not a new live radio experiment. Original 100 ms capture remains unchanged.",
+  "scope": "Offline/native corrective validation; not a live radio experiment.",
   "native": {
     "provider": {
       "tests": 9,
@@ -61,7 +61,7 @@
   },
   "default_collector_sha256": "1da04c0a79ece296291bbb4ad26f15e9396b017f30f02fba3d09feaa684b6904",
   "live_socket_inspection": {
-    "scope": "read-only ss -Sinap after the original capture; no socket options were changed",
+    "scope": "Read-only ss -Sinap; no socket options were changed.",
     "e2_senders": "NODELAY not enabled",
     "ric_listeners": "NODELAY enabled"
   }

@@ -10,7 +10,7 @@ UE-IP-to-radio associations. Integrate with Plan 2 only in a later task.
 | Task | `cu-ue-ip-e2-binding` |
 | Status | Live observational association passed; explicit CU DU scope and E2 NODELAY correction implemented/offline tested; corrective live rerun and shared lifecycle-generation proof pending |
 | Created at | 23 : 08: 51 Oct 20, 2026 EDT |
-| Last updated at | Oct 25, 2026 EDT, after the 100 ms capture and corrective offline validation |
+| Last updated at | Oct 25, 2026 EDT, after serving-DU corrective offline validation |
 | Time zone | `America/New_York` |
 | Developer | Ruibin Chen |
 | Reviewer | To be assigned |
@@ -42,9 +42,9 @@ design remains applicable beyond this first milestone.
 
 ### October 25 serving-DU collision correction
 
-The 100 ms capture contains simultaneous F1 ID 1 contexts on both DUs. The
-1 s CU reports are current; the missing serving-DU distinction caused the
-ambiguity. The CU now uses the optional eight-octet RAN UE identity with the
+F1 ID numbers can coincide across independent DU connections. The identity
+join therefore needs an explicit serving-DU distinction. The CU now uses the
+optional eight-octet RAN UE identity with the
 explicitly admitted local `du36-cuue28-v1` allocation. The collector preserves
 the octets; xApp matches `(PLMN, gNB, DU ID, F1AP ID)` before joining Core.
 Strict mode can establish this explicit scope; old CU traces retain the

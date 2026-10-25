@@ -1,7 +1,0 @@
-2026-10-25T20:23:23.092835 [GNB     ] [I] Built in Release mode using commit c38911c394 on branch falcon-dev
-2026-10-25T20:23:23.093238 [CONFIG  ] [I] Input configuration (only non-default values): 
-    enable_sched: true
-    enable_rlc: true
-    du_report_period: 100
-  tx_gain: 70
-  rx_gain: 35
