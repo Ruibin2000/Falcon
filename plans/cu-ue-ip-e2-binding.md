@@ -8,9 +8,9 @@ UE-IP-to-radio associations. Integrate with Plan 2 only in a later task.
 | --- | --- |
 | Plan | 4 |
 | Task | `cu-ue-ip-e2-binding` |
-| Status | Implemented; live single/dual-UE UL and bidirectional independent idle/resume passed; strict DU/lifecycle and remaining recovery gates pending |
+| Status | Live observational association passed; explicit CU DU scope and E2 NODELAY correction implemented/offline tested; corrective live rerun and shared lifecycle-generation proof pending |
 | Created at | 23 : 08: 51 Oct 20, 2026 EDT |
-| Last updated at | Oct 21, 2026 EDT, after bidirectional live idle/resume validation |
+| Last updated at | Oct 25, 2026 EDT, after the 100 ms capture and corrective offline validation |
 | Time zone | `America/New_York` |
 | Developer | Ruibin Chen |
 | Reviewer | To be assigned |
@@ -39,6 +39,25 @@ and [dual-UE live report](../docs/reports/ue_identity_dual_ue_live_2026-10-21.md
 Checked items below record local implementation evidence only. Compound/live
 gates remain pending when any required evidence is missing. The detailed target
 design remains applicable beyond this first milestone.
+
+### October 25 serving-DU collision correction
+
+The 100 ms capture contains simultaneous F1 ID 1 contexts on both DUs. The
+1 s CU reports are current; the missing serving-DU distinction caused the
+ambiguity. The CU now uses the optional eight-octet RAN UE identity with the
+explicitly admitted local `du36-cuue28-v1` allocation. The collector preserves
+the octets; xApp matches `(PLMN, gNB, DU ID, F1AP ID)` before joining Core.
+Strict mode can establish this explicit scope; old CU traces retain the
+previous strict/experimental behavior. Native APER and independent FlexRIC
+decoding tests cover equal F1 IDs on two DUs and real 40-bit AMF IDs.
+
+The CU index in that allocation is not a shared generation token. Same-DU
+F1 reuse, stale/retired relations and ingress loss still fail closed; the
+historical lifecycle-proof requirements below remain. Cross-DU equality alone
+no longer taints a verified scope. E2 SCTP now enables NODELAY to remove the
+verified small-message buffering mechanism; source periods remain DU 100 ms,
+CU 1000 ms and Core 1 s. Rebuilt binaries/collector await a new live capture.
+The October 21 decisions and results below are historical checkpoints.
 
 ### October 21 implementation decision
 

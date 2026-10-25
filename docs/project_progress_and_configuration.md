@@ -6,10 +6,27 @@ identity stays at **1000 ms**, Core polling at **1 second**, and freshness at
 **3 seconds**. Sub-second RLC throughput retains REAL precision. Snapshot
 concurrency work remains deferred by operator request; the existing cache,
 cleanup and executor behavior is preserved. The DU binary is rebuilt and native/offline checks
-pass. Live 100 ms cadence, loss and radio-load behavior remain to be measured
-using the [default Spark startup and section 7 inspection](dual_ue_spark_quick_commands.md). The earlier 1000 ms dual-UE run verified current IP association
-and RF delivery; it does not establish 100 ms performance. Laptop connection
-commands and recovery policy are unchanged.
+pass. The [October 25 live 100 ms experiment](reports/du_100ms_mixed_rate_experiment_report_2026-10-25.md)
+received 2,355 DU rows at approximately 10 reports/s per DU with CU at 1 s and
+no reported collector ingress overflow. Delivery was bursty (approximately
+209 ms between batches), FR1 remained ambiguous after a cross-DU F1 ID
+collision, and FR3's PRB fields became unavailable after context replacement.
+This demonstrates reporting rate, rather than regular 100 ms delivery or
+complete dual-UE IP binding in that run. Follow the
+[default Spark startup and section 7 inspection](dual_ue_spark_quick_commands.md)
+for subsequent measurements. Laptop connection commands and recovery policy
+are unchanged.
+
+**Follow-up fixes prepared, 2026-10-25:** the CU now carries an admitted
+serving-DU scope through the standard optional RAN UE identity, and xApp
+matching distinguishes equal F1 IDs on different DUs. Genuine reuse within
+one DU remains conservative. E2 now enables `SCTP_NODELAY`; an isolated SCTP
+comparison reproduced approximately 208 ms gaps with it off and approximately
+100 ms spacing with it on. CU/DU binaries and the collector are rebuilt;
+76 Python and 29 native checks pass. Restart CU, both DUs and xApp, then
+repeat section 7 for live validation. The original capture/report is unchanged;
+the separate PRB-index defect and snapshot-concurrency deferral remain.
+See [implementation details](development/ue_identity_xapp.md).
 
 **Acceptance scope, 2026-10-24:** cold-start reproduction, full
 repeatability/comparative testing and bidirectional link-loss/recovery with

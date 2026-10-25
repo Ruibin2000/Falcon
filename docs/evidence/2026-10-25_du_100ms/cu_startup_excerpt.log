@@ -1,0 +1,3 @@
+2026-10-25T20:23:08.244663 [CU      ] [I] Built in Release mode using commit c38911c394 on branch falcon-dev
+2026-10-25T20:23:08.245220 [CONFIG  ] [I] Input configuration (only non-default values): 
+    cu_cp_report_period: 1000

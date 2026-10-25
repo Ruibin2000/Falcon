@@ -20,11 +20,21 @@ These defaults apply throughout configuration, build checks, startup and
 result inspection below. Actual 100 ms operation is verified from the new
 capture; configuration values alone do not establish live timing.
 
+The current E2 binaries enable `SCTP_NODELAY` to avoid holding small KPM
+messages behind delayed acknowledgments. After deploying this update,
+restart CU, both DUs and the identity xApp; RIC and Core may keep running.
+DU sampling stays at 100 ms and CU identity at 1 s. Verify actual receive
+spacing and ordering from the new capture.
+
 The standalone xApp combines DU KPM, CU identity-bearing E2 reports and existing
 read-only AMF/SMF infoAPIs. Its `bindings.txt` contains only xApp records:
 gNB/DU/F1 UE ID, SUPI, NGAP IDs/GUAMI, PDU session/DNN/IP, then KPM. The commands
-below use `--observed-unique`; strict serving-DU/context-generation proof and
-remaining restart/reuse/performance gates are still open in
+below retain `--observed-unique` for legacy CU compatibility. The updated CU
+carries serving-DU scope in its optional RAN UE identity; the captured
+`local.json` admits `du36-cuue28-v1`. Updated records should show
+`assurance=cu_reported_du_scope` and a `CU scope:` line. Equal F1 IDs on the two
+DUs are supported. Shared context-generation and remaining restart/reuse/
+performance gates are still open in
 [Plan 4](../plans/cu-ue-ip-e2-binding.md). Core source/IP allocation and Plan 2
 broker/MPX integration are outside this change. The
 [October 13 DU-only UL/KPM results](evidence/2026-10-13_dual_kpm_reports/manifest.json)

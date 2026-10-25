@@ -1,0 +1,12 @@
+2026-10-25T20:24:22.090347 [CU-UEMNG] [I] ue=0 du_index=1 gnb_du_id=2 pci=2 rnti=0x4601 pcell_index=0: Created new CU-CP UE
+2026-10-25T20:24:22.090424 [CU-CP-F1] [I] ue=0 du_ue=0 cu_ue=0: Added UE context
+2026-10-25T20:24:24.082537 [CU-UEMNG] [I] ue=1 du_index=0 gnb_du_id=1 pci=1 rnti=0x4601 pcell_index=0: Created new CU-CP UE
+2026-10-25T20:24:24.082607 [CU-CP-F1] [I] ue=1 du_ue=0 cu_ue=0: Added UE context
+2026-10-25T20:24:55.822070 [CU-UEMNG] [I] ue=2 du_index=0 gnb_du_id=1 pci=1 rnti=0x4602 pcell_index=0: Created new CU-CP UE
+2026-10-25T20:24:55.822121 [CU-CP-F1] [I] ue=2 du_ue=1 cu_ue=1: Added UE context
+2026-10-25T20:25:12.299208 [CU-UEMNG] [I] ue=3 du_index=1 gnb_du_id=2 pci=2 rnti=0x4602 pcell_index=0: Created new CU-CP UE
+2026-10-25T20:25:12.299278 [CU-CP-F1] [I] ue=3 du_ue=1 cu_ue=1: Added UE context
+2026-10-25T20:26:01.129163 [CU-UEMNG] [I] ue=4 du_index=1 gnb_du_id=2 pci=2 rnti=0x460a pcell_index=0: Created new CU-CP UE
+2026-10-25T20:26:01.129231 [CU-CP-F1] [I] ue=4 du_ue=2 cu_ue=2: Added UE context
+2026-10-25T20:26:01.129237 [RRC     ] [I] ue=4 c-rnti=0x460a: "RRC Reestablishment Procedure" for old c-rnti=0x4602, pci=2 started...
+2026-10-25T20:26:01.258669 [RRC     ] [I] ue=4 c-rnti=0x460a: "RRC Reestablishment Procedure" for old_ue=3 finished successfully

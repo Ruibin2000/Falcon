@@ -3,7 +3,8 @@
 Developer: Ruibin Chen. Implementation started on October 21, 2026 on both
 repositories' `Dual-UE` branches. This is the first implementation milestone of
 [Plan 4](../../plans/cu-ue-ip-e2-binding.md). Real single/dual-UE observational
-association and uplink passed; strict DU/lifecycle and recovery gates remain open.
+association and uplink passed. Explicit CU serving-DU scope is implemented for
+the admitted local profile; shared lifecycle-generation and recovery gates remain open.
 
 The application combines CU-CP identity-bearing KPM, DU KPM with seven
 measurements by default, and read-only Open5GS AMF/SMF queries. It emits
@@ -33,15 +34,29 @@ the measurement. A disappeared subscribed UE produces `no_value`. The provider
 expires its identity snapshot after three seconds. A filtered list is not a
 complete lifecycle snapshot.
 
-**Standard `UEID-GNB` does not transport the explicit serving DU ID or a shared
-CU/DU context generation. F1 IDs are allocated in per-DU contexts in this build.**
-The local getter's DU field alone therefore does not prove the E2 join. The
-current modes make this limitation visible:
+The October 25 capture exposed two simultaneous F1 ID 1 contexts on different
+DUs. CU at 1 s was current; the original wire identity lacked their serving-DU
+distinction. Increasing the CU rate cannot remove that collision.
+
+The updated CU allocates the existing optional eight-octet `ran-UEID` in
+`UEID-GNB` as **`du36-cuue28-v1`**: big-endian unsigned
+`(serving_du_id << 28) | cu_ue_index`. All 36 DU bits are preserved; CU indices
+outside `[0, 2^28)` are withheld rather than truncated. This is a local opaque
+RAN UE identity allocation, not a new ASN.1 field or measurement. The collector
+retains the original octets as `ue.ran_ue_id_hex`. Only a CU explicitly admitted
+with `ran_ue_id_format: du36-cuue28-v1` is interpreted this way; arbitrary
+third-party RAN UE IDs remain opaque.
+
+The mapper joins `(PLMN, gNB, DU ID, F1AP ID)` to CU AMF/GUAMI, then to Core.
+Equal F1 numbers on different DUs are independent, and explicit scope does not
+require the other DU to be reporting. Existing AMF/GUAMI/F1 fields, RRC state,
+source freshness, measurement values and legacy profiles are preserved.
 
 | Mode | IP publication |
 | --- | --- |
-| Default `strict` | Keeps `ue_ipv4: null`; never claims a complete serving-DU binding from standard UEID alone |
-| Explicit `--observed-unique` | May publish a unique association among currently observed admitted CU/DU/Core contexts, with `assurance: observed_unique_current_context` |
+| Admitted explicit CU scope, either CLI mode | Unique current bindings use `assurance: cu_reported_du_scope`, with `serving_du_id` and `cu_ue_index` |
+| Legacy CU, default `strict` | Keeps `ue_ipv4: null`; generic UEID alone does not establish serving DU |
+| Legacy CU, explicit `--observed-unique` | Retains experimental `observed_unique_current_context` matching and conservative conflict handling |
 
 The October 21 user preference adds a separate binding policy:
 `binding_policy: last_known` in `local.json`, or explicit `--last-known`.
@@ -49,8 +64,8 @@ After a link has a verified association, missing inputs for that UE can reuse it
 history with `binding_status: cached`, `assurance: last_known_observed_context`,
 the last verification time and its monotonic age. A cached IP is historical,
 not a new claim of current verification. `--fresh-only` restores the original
-withhold-on-missing-input behavior. Strict scope still cannot establish an
-initial binding; `--last-known` does not bypass it.
+withhold-on-missing-input behavior. Historical fallback cannot establish an
+initial binding or bypass scope/conflict checks.
 
 The dual local config also enables `independent_links: true`. Once the DU/F1
 association is established, each UE's current CU/Core relation is checked
@@ -59,13 +74,13 @@ inputs remain `matched` with `assurance: established_du_scope_current_context`
 when the established DU scope is needed. This applies with `--fresh-only` too:
 radio association retention is separate from historical IP fallback.
 
-Experimental matches are evidence for stable lab contexts. They cannot establish
-historical correctness across unobserved exact-key reuse, filtered-away
-conflicts or source restarts. Known conflicts/reuse and ingress loss latch
-uncertainty until an operator establishes a source boundary and restarts the
-app. A timer or an app restart alone does not prove that boundary. Full strict
-acceptance still requires explicit DU/lifecycle evidence on the wire, with its
-transport design reviewed under Plan 4.
+The CU index is **not a shared CU/DU context-generation token**. Reuse of the
+same DU/F1 key with a different CU identity/index remains quarantined. New F1
+contexts can establish their own relations while the peer continues; release
+withdraws the corresponding relation, and older headers cannot inherit a later
+relation. Exact unobserved full-key reuse and source-restart generation proof
+remain under Plan 4. Timers alone do not clear uncertainty. Ingress loss remains
+latched. Cross-DU equality no longer permanently taints the peer's bare F1 ID.
 
 ## DU measurement profiles
 
@@ -84,6 +99,14 @@ at **1000 ms**, Core polls at **1 second**, and source freshness remains
 **3 seconds**. Fresh CU/Core context can serve multiple fast DU reports.
 New registration/IP association still waits for those independently timed
 identity sources; 100 ms reports do not imply 100 ms end-to-end recovery.
+
+The E2 SCTP connector now enables `SCTP_NODELAY`. In the captured deployment it
+was unset, allowing Nagle buffering to interact with the 200 ms delayed-SACK
+timer. An isolated 100 ms loopback sender reproduced gaps up to 208.09 ms with
+NODELAY off, versus 99.85–100.19 ms with it on. This verifies that buffering
+mechanism, not the repaired live pipeline. Recheck actual receive spacing and
+ordering after restarting CU/DUs and xApp. RIC already enables NODELAY; its
+source/plugin ABI is unchanged.
 
 DU snapshot synchronization remains deferred by operator request. The 100 ms
 change preserves existing cache publication, E2 receive execution and cleanup
@@ -107,14 +130,21 @@ above. A mixed deployment with a legacy DU can use the five-metric profile
 for a common supported subscription. Custom `--e2-config PATH` remains
 supported and cannot be combined explicitly with `--du-metrics`.
 
-The 1000 ms dual-UE capture inspected on October 25 verified current CU/Core
-IP association and seven RF-inclusive DU measurements under concurrent UL.
-That is baseline evidence. Live cadence, queue loss and radio-health behavior
-at **100 ms** require a new capture using
+The [October 25 100 ms capture](../reports/du_100ms_mixed_rate_experiment_report_2026-10-25.md)
+verified approximately 10 reports/s per DU, but exposed burst delivery,
+cross-DU identity collisions and a separate PRB-index defect after context
+replacement. Original outputs are retained unchanged. Validate the NODELAY
+and explicit-scope fixes in a new capture using
 [the Spark procedure](../dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
 A live legacy-DU subscription remains separate from this new-rate verification.
 
 ## Build and offline verification
+
+The October 25 scope/NODELAY correction passes 76 Python and 29 native checks,
+including independent APER decoding with duplicate per-DU F1 IDs. Retained
+[verification metadata](../evidence/2026-10-25_cu_du_scope_fix/verification.json)
+and [SCTP comparison](../evidence/2026-10-25_cu_du_scope_fix/sctp_cadence.json)
+are offline evidence; the repaired live capture remains pending.
 
 From Falcon:
 
@@ -730,7 +760,7 @@ records three subscriptions, 223 DU samples, 221 correct observed matches and
 two initial unresolved samples. Both concurrent iperf clients exit 0, receiver
 13.2/11.9 Mbit/s. An independent raw-input audit checks all matched Core/CU/DU
 chains and lab NCIs, all original metric payloads and the live TXT.
-Strict serving-DU/lifecycle transport, transitions/recovery, clock alignment
+Corrective live serving-DU verification, shared lifecycle transport, transitions/recovery, clock alignment
 and repeated comparative performance acceptance remain pending.
 
 Rollback for a later deployed trial: stop the independent app, restore the

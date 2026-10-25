@@ -91,7 +91,14 @@ static void json_ue(FILE* out, const ue_id_e2sm_t* ue)
       if (i) fputc(',', out);
       fprintf(out, "\"%u\"", id->gnb_cu_ue_f1ap_lst[i]);
     }
-    fputs("]}", out);
+    fputc(']', out);
+    if (id->ran_ue_id) {
+      const uint8_t* bytes = (const uint8_t*)id->ran_ue_id;
+      fputs(",\"ran_ue_id_hex\":\"", out);
+      for (size_t i = 0; i < 8; ++i) fprintf(out, "%02x", bytes[i]);
+      fputc('"', out);
+    }
+    fputc('}', out);
   } else fputs("{\"id_type\":\"unsupported\"}", out);
 }
 

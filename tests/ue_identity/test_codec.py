@@ -18,6 +18,31 @@ PLUGIN = Path(os.environ.get("FALCON_IDENTITY_PLUGIN", "/tmp/falcon-ue-identity-
 
 @unittest.skipUnless(COLLECTOR.is_file() and PLUGIN.is_file(), "build the standalone collector/plugin first")
 class CodecTests(unittest.TestCase):
+    def test_scoped_cu_codec_preserves_duplicate_f1_and_explicit_du_scope(self):
+        fixture = json.loads((FIXTURES / "cu_scope_codec.json").read_text())
+        with tempfile.TemporaryDirectory() as temporary:
+            header, message = (Path(temporary) / name for name in ("header.asn", "message.asn"))
+            header.write_bytes(bytes.fromhex(fixture["header_hex"]))
+            message.write_bytes(bytes.fromhex(fixture["message_hex"]))
+            run = subprocess.run([str(COLLECTOR), "--decode-fixture", str(header), str(message), str(PLUGIN)],
+                                 check=True, capture_output=True, text=True, timeout=10)
+        event = json.loads(run.stdout)
+        mapper = Mapper(dict(config(), du_scope_mode="strict"))
+        core = core_event()
+        core["received_at_us"] = 100_000_000
+        for i, ue in enumerate(core["amf"]):
+            ue["gnb"]["amf_ue_ngap_id"] = str((1 << 39) + i)
+        ingest(mapper, core)
+        event["received_at_us"] = 100_100_000
+        ingest(mapper, event)
+        for i, row in enumerate(event["rows"]):
+            self.assertEqual(row["ue"]["f1ap_ids"], ["1"])
+            self.assertEqual(row["ue"]["ran_ue_id_hex"], f"{((i+1) << 28) | (42+i):016x}")
+        for du in (1, 2):
+            row = ingest(mapper, du_event(du, f1=1, stamp=101_000_000))[0]
+            self.assertEqual(row["ue_ipv4"], f"10.{44+du}.0.10")
+            self.assertEqual(row["binding"]["assurance"], "cu_reported_du_scope")
+
     def test_real_sdk_config_and_plugin_directory_load_without_network(self):
         for name in ("xapp_ue_identity.conf", "ric_ue_identity.conf"):
             subprocess.run([str(COLLECTOR), "--check-config", str(ROOT / "configs/flexric" / name)],

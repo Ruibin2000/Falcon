@@ -65,6 +65,9 @@ def format_record(record):
     if record.get("binding_status") == "cached":
         lines.insert(7, f"  History: last_verified={utc_time(binding.get('last_verified_at_us'))} "
                      f"age_ms={display(binding.get('age_ms'))} validity=last_known_unverified")
+    if "serving_du_id" in binding:
+        lines.insert(7, f"  CU scope: serving_DU_ID={display(binding['serving_du_id'])} "
+                     f"CU_UE_index={display(binding.get('cu_ue_index'))}")
     for name, metric in row.get("metrics", {}).items():
         kind = metric.get("type")
         value = kind if kind == "no_value" else display(metric.get("value"))

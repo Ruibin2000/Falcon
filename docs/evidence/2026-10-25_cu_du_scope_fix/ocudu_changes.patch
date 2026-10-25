@@ -1,0 +1,241 @@
+diff --git a/include/ocudu/e2/e2ap_config_translators.h b/include/ocudu/e2/e2ap_config_translators.h
+index 6b057ffd4c..8f84f0f701 100644
+--- a/include/ocudu/e2/e2ap_config_translators.h
++++ b/include/ocudu/e2/e2ap_config_translators.h
+@@ -23,6 +23,9 @@ inline e2_sctp_gateway_config generate_e2_client_gateway_config(const e2_config&
+   e2ap_sctp.connect_port      = e2_cfg.port;
+   e2ap_sctp.ppid              = ppid;
+   e2ap_sctp.bind_addresses    = e2_cfg.bind_addrs;
++  // Periodic KPM indications are small messages. Do not hold a later 100 ms
++  // indication behind an unacknowledged message and the peer's delayed SACK.
++  e2ap_sctp.nodelay           = true;
+ 
+   const std::string logger_id = (ppid == E2_DU_PPID)   ? "E2-DU"
+                                 : (ppid == E2_UP_PPID) ? "E2-CU-UP"
+diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp
+index 9c1f8412c7..c911b6cd28 100644
+--- a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp
++++ b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp
+@@ -58,6 +58,12 @@ e2sm_kpm_cu_cp_meas_provider_impl::e2sm_kpm_cu_cp_meas_provider_impl() : e2sm_kp
+ 
+ namespace {
+ 
++bool has_usable_identity(const cu_cp_metrics_report::ue_info& ue)
++{
++  return ue.identity && ue.identity->du_id != gnb_du_id_t::invalid &&
++         ue.ue_index != ocucp::ue_index_t::invalid && static_cast<uint64_t>(ue.ue_index) < (uint64_t{1} << 28);
++}
++
+ ue_id_c make_identity(const cu_cp_metrics_report::ue_info& ue)
+ {
+   ue_id_c result;
+@@ -70,6 +76,14 @@ ue_id_c make_identity(const cu_cp_metrics_report::ue_info& ue)
+   id.guami.amf_pointer.from_number(identity.ngap.guami.amf_pointer);
+   id.gnb_cu_ue_f1ap_id_list.resize(1);
+   id.gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id = identity.f1.cu_ue_f1ap_id;
++  // Locally allocated RAN UE identity, using the existing optional 8-octet IE.
++  // du36-cuue28-v1: full 36-bit serving DU ID followed by the CU UE index.
++  // This is an opaque RAN UE ID on the wire, not an extra measurement. Only
++  // consumers explicitly configured for this allocation may interpret it.
++  // The CU index distinguishes simultaneously active contexts; it is NOT a
++  // lifecycle generation counter. Reuse still requires conservative handling.
++  id.ran_ue_id_present = true;
++  id.ran_ue_id.from_number((gnb_du_id_to_int(identity.du_id) << 28) | static_cast<uint64_t>(ue.ue_index));
+   return result;
+ }
+ 
+@@ -93,7 +107,7 @@ bool e2sm_kpm_cu_cp_meas_provider_impl::is_ue_supported(const ue_id_c& id)
+     return false;
+   }
+   return std::any_of(cu_cp_metrics->ues.begin(), cu_cp_metrics->ues.end(), [&](const auto& ue) {
+-    return ue.identity && make_identity(ue) == id;
++    return has_usable_identity(ue) && make_identity(ue) == id;
+   });
+ }
+ 
+@@ -111,7 +125,7 @@ bool e2sm_kpm_cu_cp_meas_provider_impl::get_ues_matching_test_conditions(
+     return true;
+   }
+   for (const auto& ue : cu_cp_metrics->ues) {
+-    if (!ue.identity || ue.rrc_connection_state != ocucp::rrc_state::connected) {
++    if (!has_usable_identity(ue) || ue.rrc_connection_state != ocucp::rrc_state::connected) {
+       continue;
+     }
+     bool matches = std::all_of(conditions.begin(), conditions.end(), [&](const auto& condition) {
+@@ -133,7 +147,7 @@ bool e2sm_kpm_cu_cp_meas_provider_impl::get_ues_matching_test_conditions(
+     return true;
+   }
+   for (const auto& ue : cu_cp_metrics->ues) {
+-    if (!ue.identity || ue.rrc_connection_state != ocucp::rrc_state::connected) {
++    if (!has_usable_identity(ue) || ue.rrc_connection_state != ocucp::rrc_state::connected) {
+       continue;
+     }
+     bool matches = std::all_of(conditions.begin(), conditions.end(), [&](const auto& condition) {
+@@ -166,7 +180,7 @@ bool e2sm_kpm_cu_meas_provider_impl::get_ue_rrc_state(const label_info_list_l la
+     item.set_no_value();
+     if (identity_snapshot_is_fresh()) {
+       for (const auto& ue : cu_cp_metrics->ues) {
+-        if (ue.identity && make_identity(ue) == id) {
++        if (has_usable_identity(ue) && make_identity(ue) == id) {
+           item.set_integer() = static_cast<unsigned>(ue.rrc_connection_state);
+           break;
+         }
+diff --git a/tests/unittests/e2/e2ap_network_adapter_test.cpp b/tests/unittests/e2/e2ap_network_adapter_test.cpp
+index 928c4c1bdf..57846426c3 100644
+--- a/tests/unittests/e2/e2ap_network_adapter_test.cpp
++++ b/tests/unittests/e2/e2ap_network_adapter_test.cpp
+@@ -8,6 +8,7 @@
+ #include "tests/unittests/e2/common/e2_test_helpers.h"
+ #include "ocudu/e2/e2_node_component_config_collector.h"
+ #include "ocudu/e2/e2ap_configuration_helpers.h"
++#include "ocudu/e2/e2ap_config_translators.h"
+ #include "ocudu/e2/e2sm/e2sm_manager.h"
+ #include "ocudu/e2/gateways/e2_connection_client.h"
+ #include "ocudu/e2/gateways/e2_network_client_factory.h"
+@@ -63,20 +64,18 @@ protected:
+     ASSERT_NE(ric_gw_port.value(), 0);
+ 
+     // create E2 agent
+-    sctp_network_connector_config e2agent_config;
+-    e2agent_config.dest_name         = "NearRT-RIC";
+-    e2agent_config.if_name           = "E2";
+-    e2agent_config.connect_addresses = {"127.0.0.1"};
+-    e2agent_config.connect_port      = ric_gw_port.value();
+-    e2agent_config.bind_addresses    = {"127.0.0.101"};
+-    e2agent_config.bind_port         = 0;
++    e2_config network_config;
++    network_config.ip_addrs   = {"127.0.0.1"};
++    network_config.port       = ric_gw_port.value();
++    network_config.bind_addrs = {"127.0.0.101"};
+ 
+     cfg                  = config_helpers::make_default_e2ap_config();
+     cfg.e2sm_kpm_enabled = true;
+ 
+     pcap      = std::make_unique<dummy_e2ap_pcap>();
+-    e2_client = create_e2_gateway_client(
+-        e2_sctp_gateway_config{e2agent_config, *agent_broker, rx_executor, *pcap, ocudulog::fetch_basic_logger("E2")});
++    auto client_config = generate_e2_client_gateway_config(network_config, *agent_broker, rx_executor, *pcap, NGAP_PPID);
++    ASSERT_EQ(client_config.sctp.nodelay, std::optional<bool>{true});
++    e2_client = create_e2_gateway_client(client_config);
+     e2_client_wrapper = std::make_unique<e2_connection_client_wrapper>(*e2_client);
+     du_metrics        = std::make_unique<dummy_e2_du_metrics>();
+     du_meas_provider  = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
+diff --git a/tests/unittests/e2/e2sm_kpm_meas_provider_test.cpp b/tests/unittests/e2/e2sm_kpm_meas_provider_test.cpp
+index f02934d844..3b7ed22ea7 100644
+--- a/tests/unittests/e2/e2sm_kpm_meas_provider_test.cpp
++++ b/tests/unittests/e2/e2sm_kpm_meas_provider_test.cpp
+@@ -649,6 +649,9 @@ TEST(cu_identity, standard_ueid_contains_amf_and_f1_and_real_state)
+   ASSERT_EQ(ids.size(), 2U);
+   ASSERT_EQ(ids[0].gnb_ue_id().amf_ue_ngap_id, 1ULL << 39);
+   ASSERT_EQ(ids[0].gnb_ue_id().gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id, 1007U);
++  ASSERT_TRUE(ids[0].gnb_ue_id().ran_ue_id_present);
++  ASSERT_EQ(ids[0].gnb_ue_id().ran_ue_id.to_number(), (uint64_t{1} << 28) | 42U);
++  ASSERT_EQ(ids[1].gnb_ue_id().ran_ue_id.to_number(), (uint64_t{2} << 28) | 43U);
+   ASSERT_TRUE(provider.is_ue_supported(ids[0]));
+ 
+   asn1::e2sm::label_info_list_l labels;
+@@ -721,6 +724,7 @@ TEST(cu_identity, style4_subscription_repeated_collection_preserves_ue_identity)
+   cu_cp_metrics_report report;
+   cu_cp_metrics_report::ue_info ue{};
+   ue.rrc_connection_state = ocucp::rrc_state::connected;
++  ue.ue_index = static_cast<ocucp::ue_index_t>(7);
+   guami_t guami{};
+   guami.plmn = plmn_identity::parse("00101").value();
+   ue.identity = ocucp::cu_ue_identity{{0, 301, guami}, {1007, 9}, int_to_gnb_du_id(2)};
+@@ -765,6 +769,66 @@ TEST(cu_identity, style4_subscription_repeated_collection_preserves_ue_identity)
+   EXPECT_EQ(rows[0].meas_report.meas_data[1].meas_record[0].integer(), 1U);
+ }
+ 
++TEST(cu_identity, duplicate_per_du_f1_ids_have_distinct_scoped_ran_identities)
++{
++  e2sm_kpm_cu_cp_meas_provider_impl provider;
++  cu_cp_metrics_report report;
++  for (unsigned i = 0; i < 2; ++i) {
++    cu_cp_metrics_report::ue_info ue{};
++    ue.ue_index = static_cast<ocucp::ue_index_t>(42 + i);
++    ue.rrc_connection_state = ocucp::rrc_state::connected;
++    guami_t guami{};
++    guami.plmn = plmn_identity::parse("00101").value();
++    guami.amf_region_id = 2;
++    guami.amf_set_id = 1;
++    guami.amf_pointer = 0;
++    ue.identity = ocucp::cu_ue_identity{{(1ULL << 39) + i, 301 + i, guami}, {1, 1}, int_to_gnb_du_id(i + 1)};
++    ue.slice_ssts = {1};
++    report.ues.push_back(ue);
++  }
++  provider.report_metrics(report);
++  std::vector<asn1::e2sm::ue_id_c> ids;
++  asn1::e2sm::matching_ue_cond_per_sub_list_l conditions;
++  ASSERT_TRUE(provider.get_ues_matching_test_conditions(conditions, ids));
++  ASSERT_EQ(ids.size(), 2U);
++  EXPECT_EQ(ids[0].gnb_ue_id().gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id, 1U);
++  EXPECT_EQ(ids[1].gnb_ue_id().gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id, 1U);
++  EXPECT_NE(ids[0].gnb_ue_id().ran_ue_id.to_number(), ids[1].gnb_ue_id().ran_ue_id.to_number());
++  asn1::e2sm::e2sm_kpm_ind_msg_s message;
++  auto& rows = message.ind_msg_formats.set_ind_msg_format3().ue_meas_report_list;
++  rows.resize(2);
++  for (unsigned i = 0; i < 2; ++i) {
++    rows[i].ue_id = ids[i];
++    auto& measurement = rows[i].meas_report;
++    measurement.meas_info_list.resize(1);
++    measurement.meas_info_list[0].meas_type.set_meas_name().from_string("FALCON.UE.RRCState");
++    measurement.meas_info_list[0].label_info_list.resize(1);
++    measurement.meas_info_list[0].label_info_list[0].meas_label.no_label_present = true;
++    measurement.meas_info_list[0].label_info_list[0].meas_label.no_label =
++        asn1::e2sm::meas_label_s::no_label_e_::true_value;
++    measurement.meas_data.resize(1);
++    asn1::e2sm::meas_record_item_c state;
++    state.set_integer() = 1;
++    measurement.meas_data[0].meas_record.push_back(state);
++    measurement.granul_period_present = true;
++    measurement.granul_period = 1000;
++  }
++  byte_buffer bytes;
++  asn1::bit_ref writer(bytes);
++  ASSERT_EQ(message.pack(writer), asn1::OCUDUASN_SUCCESS);
++  asn1::e2sm::e2sm_kpm_ind_msg_s decoded;
++  asn1::cbit_ref reader(bytes);
++  ASSERT_EQ(decoded.unpack(reader), asn1::OCUDUASN_SUCCESS);
++  const auto& result = decoded.ind_msg_formats.ind_msg_format3().ue_meas_report_list;
++  EXPECT_EQ(result[0].ue_id.gnb_ue_id().ran_ue_id.to_number(), (uint64_t{1} << 28) | 42U);
++  EXPECT_EQ(result[1].ue_id.gnb_ue_id().ran_ue_id.to_number(), (uint64_t{2} << 28) | 43U);
++  if (const char* directory = std::getenv("FALCON_IDENTITY_FIXTURE_DIR")) {
++    std::ofstream file(std::string(directory) + "/cu_scope_message.asn", std::ios::binary);
++    for (auto byte : bytes) file.put(static_cast<char>(byte));
++    ASSERT_TRUE(file.good());
++  }
++}
++
+ TEST(cu_identity, incomplete_context_is_never_published)
+ {
+   e2sm_kpm_cu_cp_meas_provider_impl provider;
+@@ -778,6 +842,29 @@ TEST(cu_identity, incomplete_context_is_never_published)
+   EXPECT_TRUE(ids.empty());
+ }
+ 
++TEST(cu_identity, scoped_ran_identity_preserves_bounds_without_truncation)
++{
++  e2sm_kpm_cu_cp_meas_provider_impl provider;
++  cu_cp_metrics_report report;
++  cu_cp_metrics_report::ue_info ue{};
++  ue.ue_index = static_cast<ocucp::ue_index_t>((uint64_t{1} << 28) - 1);
++  ue.rrc_connection_state = ocucp::rrc_state::connected;
++  guami_t guami{};
++  guami.plmn = plmn_identity::parse("00101").value();
++  ue.identity = ocucp::cu_ue_identity{{1, 2, guami}, {1, 1}, gnb_du_id_t::max};
++  report.ues.push_back(ue);
++  provider.report_metrics(report);
++  std::vector<asn1::e2sm::ue_id_c> ids;
++  asn1::e2sm::matching_ue_cond_per_sub_list_l conditions;
++  ASSERT_TRUE(provider.get_ues_matching_test_conditions(conditions, ids));
++  ASSERT_EQ(ids.size(), 1U);
++  EXPECT_EQ(ids[0].gnb_ue_id().ran_ue_id.to_number(), std::numeric_limits<uint64_t>::max());
++  report.ues[0].ue_index = static_cast<ocucp::ue_index_t>(uint64_t{1} << 28);
++  provider.report_metrics(report);
++  ASSERT_TRUE(provider.get_ues_matching_test_conditions(conditions, ids));
++  EXPECT_TRUE(ids.empty());
++}
++
+ INSTANTIATE_TEST_SUITE_P(e2sm_kpm_du_meas_provider_test, e2_entity_test_with_pcap, testing::Values(g_pcap));
+ INSTANTIATE_TEST_SUITE_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_du_meas_provider_test, testing::Values(g_pcap));
+ 

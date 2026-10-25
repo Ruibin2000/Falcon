@@ -2,6 +2,7 @@
 
 import copy
 import json
+import re
 import uuid
 
 from core import guami_key, integer, normalize, supi
@@ -40,6 +41,9 @@ class Mapper:
         if len(self.allowed) != len(config["du_nodes"]) or not self.allowed:
             raise ValueError("invalid/duplicate admitted DU nodes")
         self.cu = config["cu"]
+        self.ran_ue_id_format = self.cu.get("ran_ue_id_format")
+        if self.ran_ue_id_format not in (None, "du36-cuue28-v1"):
+            raise ValueError("unsupported CU RAN UE identity allocation")
         self.core = {}
         self.core_seen = {}
         self.core_received = None
@@ -47,6 +51,9 @@ class Mapper:
         self.identities = {}
         self.history = {}
         self.tainted_keys = set()
+        self.scoped_identities = {}
+        self.scoped_history = {}
+        self.scoped_tainted_keys = set()
         self.du_seen = {}
         self.du_keys = {}
         self.dropped = 0
@@ -63,7 +70,7 @@ class Mapper:
 
     def retire_f1(self, f1):
         for key in list(self.radio_scopes):
-            if key[1] == f1:
+            if key[1] == f1 and key not in self.scoped_identities:
                 self.retire_link(key)
 
     def ingest(self, event, now_us, monotonic_us=None):
@@ -144,6 +151,10 @@ class Mapper:
                 active_ids = {integer(f1, 32) for f1 in ids}
                 connected = (not row.get("incomplete") and state.get("type") == "integer"
                              and type(state.get("value")) is int and state["value"] == 1)
+                scope = self.cu_scope(ue)
+                if scope is not None:
+                    self.update_scoped_identity(scope, active_ids, identity, connected, now_us, mono)
+                    continue
                 # A current per-UE F1 list supersedes this identity's old
                 # entries; retaining those until TTL could resurrect a scope.
                 for previous_f1, candidates in self.identities.items():
@@ -239,7 +250,8 @@ class Mapper:
             "not all admitted DU sources are current", "CU identity stale", "Core snapshot stale",
             "incomplete DU measurement") or bool(self.core_error))
         if (cached is None or not allowed_reason or self.ingress_loss or
-                result["binding_status"] == "ambiguous" or key[1] in self.tainted_keys or
+                result["binding_status"] == "ambiguous" or
+                (key in self.scoped_tainted_keys if key in self.scoped_identities else key[1] in self.tainted_keys) or
                 now - header >= self.ttl or header < cached["first_header_us"]):
             return {}
         binding = copy.deepcopy(cached["binding"])
@@ -260,6 +272,9 @@ class Mapper:
             return failure("incomplete DU measurement")
         if now - header >= self.ttl:
             return failure("DU report header is stale", "stale")
+        scoped_key = (node, f1)
+        if scoped_key in self.scoped_identities:
+            return self.resolve_scoped(scoped_key, header, now, mono)
         if f1 in self.tainted_keys:
             return failure("F1AP ID conflict/reuse; DU context generation cannot be proved", "ambiguous")
         all_du_current = all(mono - self.du_seen.get(key, -self.ttl) < self.ttl for key in self.allowed)
@@ -309,3 +324,87 @@ class Mapper:
                             "amf_ue_ngap_id": identity[1], "guami": list(identity[0]),
                             "supi": sessions[0]["supi"], "ran_ue_ngap_id": sessions[0]["ran_ue_ngap_id"],
                             "pdu_session_id": sessions[0]["pdu_session_id"], "dnn": sessions[0]["dnn"]}}
+
+    def cu_scope(self, ue):
+        """Interpret only the explicitly admitted CU's local RAN UE allocation.
+
+        Standard RAN UE IDs are opaque. No prefix guessing, role/subnet mapping
+        or interpretation of a third-party CU's arbitrary RAN UE ID is allowed.
+        The low 28 bits are a CU index, not a lifecycle generation proof.
+        """
+        if self.ran_ue_id_format is None or "ran_ue_id_hex" not in ue:
+            return None
+        raw = ue["ran_ue_id_hex"]
+        if not isinstance(raw, str) or re.fullmatch(r"[0-9a-fA-F]{16}", raw) is None:
+            raise ValueError("invalid CU RAN UE identity octets")
+        value = int(raw, 16)
+        du = str(value >> 28)
+        nodes = [node for node in self.allowed if node[4] == du]
+        if len(nodes) != 1:
+            raise ValueError("CU RAN UE identity refers to an unconfigured DU")
+        return nodes[0], str(value & ((1 << 28) - 1))
+
+    def update_scoped_identity(self, scope, active_ids, identity, connected, now, mono):
+        node, context = scope
+        # Current per-UE CU state supersedes its previous DU/F1 relation. An
+        # absent filtered row alone does not prove a release, as in legacy mode.
+        for key, candidates in self.scoped_identities.items():
+            if not connected or key[0] != node or key[1] not in active_ids:
+                if identity in candidates:
+                    del candidates[identity]
+                    self.retire_link(key)
+        for f1 in active_ids:
+            key = (node, f1)
+            if key not in self.scoped_identities and len(self.scoped_identities) >= 256:
+                self.ingress_loss = True
+                return
+            candidates = self.scoped_identities.setdefault(key, {})
+            if not connected:
+                candidates.pop(identity, None)
+                self.retire_link(key)
+                continue
+            history = self.scoped_history.setdefault(key, set())
+            # Cross-DU equality is allowed. Genuine reuse of the SAME scoped
+            # F1 key remains quarantined: a CU index is not a shared DU/CU
+            # generation token and must not justify relabelling delayed data.
+            if (identity, context) not in history and history:
+                self.scoped_tainted_keys.add(key)
+                self.retire_link(key)
+            if len(history) >= 4 and (identity, context) not in history:
+                self.ingress_loss = True
+                return
+            history.add((identity, context))
+            valid_after = candidates.get(identity, (now, mono, context))[0]
+            candidates[identity] = (valid_after, mono, context)
+
+    def resolve_scoped(self, key, header, now, mono):
+        def failure(reason, status="unresolved"):
+            return {"binding_status": status, "reason": reason, "ue_ipv4": None}
+        if key in self.scoped_tainted_keys:
+            return failure("scoped F1AP ID reused; shared DU/CU context generation cannot be proved", "ambiguous")
+        all_candidates = self.scoped_identities[key]
+        candidates = [(identity, times) for identity, times in all_candidates.items()
+                      if mono - times[1] < self.ttl]
+        if not candidates:
+            return failure("CU identity stale" if all_candidates else "CU identity withdrawn",
+                           "stale" if all_candidates else "unresolved")
+        if len(candidates) != 1:
+            return failure("multiple CU identities for scoped DU/F1AP ID", "ambiguous")
+        identity, (cu_start, _, context) = candidates[0]
+        core_key = (identity[0], key[0][2], identity[1])
+        if self.core_error or self.core_received is None or mono - self.core_received >= self.ttl:
+            return failure(self.core_error or "Core snapshot stale", "stale")
+        sessions = self.core.get(core_key, [])
+        if len(sessions) != 1:
+            return failure("multiple eligible Core sessions" if sessions else "no matching Core session",
+                           "ambiguous" if sessions else "unresolved")
+        if header < max(cu_start, self.core_seen[core_key]):
+            return failure("report predates independently observed identity relation")
+        current = sessions[0]
+        return {"binding_status": "matched", "reason": "serving DU explicitly identified by admitted CU RAN UE allocation",
+                "ue_ipv4": current["ue_ipv4"],
+                "binding": {"method": "core_infoapi_cu_e2", "assurance": "cu_reported_du_scope",
+                            "serving_du_id": key[0][4], "cu_ue_index": context,
+                            "amf_ue_ngap_id": identity[1], "guami": list(identity[0]),
+                            "supi": current["supi"], "ran_ue_ngap_id": current["ran_ue_ngap_id"],
+                            "pdu_session_id": current["pdu_session_id"], "dnn": current["dnn"]}}
