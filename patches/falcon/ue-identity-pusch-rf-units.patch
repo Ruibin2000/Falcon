@@ -1,0 +1,18 @@
+Optional unit metadata for Falcon main's generic UE identity xApp.
+Baseline: ee95cadb6b9d58abb501bbd0ed21d317b58f198a.
+Use with the renamed PUSCH RF subscription in configs/flexric/xapp_du_rf_metrics.conf.
+Adds units only; decoded metric names and values pass through unchanged.
+The identity application remains on main; this patch does not merge branches.
+
+--- a/scripts/ue_identity/mapping.py
++++ b/scripts/ue_identity/mapping.py
+@@ -8,7 +8,8 @@
+
+ UNITS = {"DRB.RlcSduDelayDl": "0.1 ms", "DRB.UEThpDl": "kbit/s",
+          "DRB.UEThpUl": "kbit/s", "RRU.PrbTotDl": "%", "RRU.PrbTotUl": "%",
+-         "FALCON.UE.RRCState": "enum"}
++         "FALCON.UE.RRCState": "enum",
++         "PUSCH.RSRP.dBFS": "dBFS", "PUSCH.SNR.dB": "dB"}
+
+
+ def node_key(node):

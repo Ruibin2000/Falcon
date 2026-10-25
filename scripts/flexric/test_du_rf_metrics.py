@@ -219,8 +219,8 @@ def validate_callback_output(stdout, stderr):
         raise RuntimeError("Decoded RF fixture frame must contain exactly six trace rows")
     expected = {}
     for metric, unit, values in (
-        ("FALCON.PUSCH.RSRP.dBFS", "dBFS", ("-13.125", "0", "n/a")),
-        ("FALCON.PUSCH.SNR.dB", "dB", ("21.75", "0", "n/a")),
+        ("PUSCH.RSRP.dBFS", "dBFS", ("-13.125", "0", "n/a")),
+        ("PUSCH.SNR.dB", "dB", ("21.75", "0", "n/a")),
     ):
         for ue, value in zip(("1007", "2091", "3199"), values):
             expected[(ue, metric)] = {"record_type": "noValue" if ue == "3199" else "REAL",
@@ -251,13 +251,13 @@ def validate_callback_output(stdout, stderr):
         raise RuntimeError("Decoded RF traces do not preserve all six per-UE fixture values/types/units")
     combined = stdout + stderr
     required = (
-        "FALCON.PUSCH.RSRP.dBFS = -13.12 dBFS", "FALCON.PUSCH.RSRP.dBFS = 0.00 dBFS",
-        "FALCON.PUSCH.RSRP.dBFS = n/a dBFS", "FALCON.PUSCH.SNR.dB = 21.75 dB",
-        "FALCON.PUSCH.SNR.dB = 0.00 dB", "FALCON.PUSCH.SNR.dB = n/a dB",
+        "PUSCH.RSRP.dBFS = -13.12 dBFS", "PUSCH.RSRP.dBFS = 0.00 dBFS",
+        "PUSCH.RSRP.dBFS = n/a dBFS", "PUSCH.SNR.dB = 21.75 dB",
+        "PUSCH.SNR.dB = 0.00 dB", "PUSCH.SNR.dB = n/a dB",
         "RSRQ = n/a source=xapp-capability-status reason=unavailable_in_du",
-        "FALCON.PUSCH.RSRP.dBFS = n/a dBFS (expected REAL)",
-        "FALCON.PUSCH.SNR.dB = n/a dB (expected REAL)",
-        "FALCON.PUSCH.SNR.dB = n/a dB (non-finite REAL)", "incomplete=true", "cu_du_id=2",
+        "PUSCH.RSRP.dBFS = n/a dBFS (expected REAL)",
+        "PUSCH.SNR.dB = n/a dB (expected REAL)",
+        "PUSCH.SNR.dB = n/a dB (non-finite REAL)", "incomplete=true", "cu_du_id=2",
         "mismatched name/value counts", "ignoring unexpected KPM callback type",
     )
     missing = [fragment for fragment in required if fragment not in combined]

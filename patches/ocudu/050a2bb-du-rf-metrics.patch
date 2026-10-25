@@ -40,9 +40,9 @@ diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.cpp b/lib/e2/e2
 +
 +// Vendor metric: scheduler-window PUSCH DM-RS received power in the DU's software dBFS scale.
 +// This is not a UE-reported downlink measurement or the standard UL SRS RSRP measurement.
-+constexpr char pusch_rsrp_metric_name[] = "FALCON.PUSCH.RSRP.dBFS";
++constexpr char pusch_rsrp_metric_name[] = "PUSCH.RSRP.dBFS";
 +// SNR is the wire/display name for the configured PHY estimator's selected value (ul_sinr_dB).
-+constexpr char pusch_snr_metric_name[] = "FALCON.PUSCH.SNR.dB";
++constexpr char pusch_snr_metric_name[] = "PUSCH.SNR.dB";
 +
 +bool has_only_no_label(const meas_label_s& label)
 +{
@@ -216,7 +216,7 @@ diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.cpp b/lib/e2/e2sm/e2sm_kpm/e2sm_
      std::string meas_name = meas_info_list[i].meas_type.meas_name().to_string();
 +
 +    // The vendor PUSCH RF metrics have one unfiltered record per UE, with no label expansion.
-+    if ((meas_name == "FALCON.PUSCH.RSRP.dBFS" || meas_name == "FALCON.PUSCH.SNR.dB") &&
++    if ((meas_name == "PUSCH.RSRP.dBFS" || meas_name == "PUSCH.SNR.dB") &&
 +        meas_info_list[i].label_info_list.size() != 1) {
 +      logger.debug("Metric {} requires exactly one NO_LABEL entry.", meas_name);
 +      return false;
@@ -228,8 +228,8 @@ diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.cpp b/lib/e2/e2sm/e2sm_kpm/e2sm_
    for (uint32_t i = 0; i < action_definition.meas_cond_list.size(); ++i) {
      const meas_type_c& meas_type = action_definition.meas_cond_list[i].meas_type;
 +    const bool is_pusch_rf = meas_type.type() == meas_type_c::types_opts::meas_name &&
-+                             (meas_type.meas_name().to_string() == "FALCON.PUSCH.RSRP.dBFS" ||
-+                              meas_type.meas_name().to_string() == "FALCON.PUSCH.SNR.dB");
++                             (meas_type.meas_name().to_string() == "PUSCH.RSRP.dBFS" ||
++                              meas_type.meas_name().to_string() == "PUSCH.SNR.dB");
 +    if (is_pusch_rf) {
 +      // UE-selection test conditions do not count as measurement labels.
 +      unsigned nof_labels = 0;

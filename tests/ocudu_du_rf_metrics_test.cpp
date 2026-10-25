@@ -25,8 +25,8 @@ using namespace asn1::e2sm;
 
 namespace {
 
-constexpr const char* metric_name = "FALCON.PUSCH.RSRP.dBFS";
-constexpr const char* snr_metric_name = "FALCON.PUSCH.SNR.dB";
+constexpr const char* metric_name = "PUSCH.RSRP.dBFS";
+constexpr const char* snr_metric_name = "PUSCH.SNR.dB";
 
 // F1AP identifiers deliberately differ from sparse DU indices. An identity mapper
 // would hide a regression that indexes the metrics vector with the requested ID.
@@ -168,7 +168,8 @@ TEST_F(du_rf_metrics_kpm_test, advertises_both_rf_metrics_at_ue_level_and_reject
     ASSERT_EQ(output.size(), 1U);
     EXPECT_EQ(output[0].type(), meas_record_item_c::types::no_value);
   }
-  for (const char* unsupported : {"RSRP", "RSRQ", "SNR", "SINR", "FALCON.PUSCH.SINR.dB"}) {
+  for (const char* unsupported :
+       {"RSRP", "RSRQ", "SNR", "SINR", "FALCON.PUSCH.SINR.dB", "FALCON.PUSCH.RSRP.dBFS", "FALCON.PUSCH.SNR.dB"}) {
     meas_type_c selected;
     selected.set_meas_name().from_string(unsupported);
     EXPECT_EQ(std::find(ue_names.begin(), ue_names.end(), unsupported), ue_names.end());
@@ -371,7 +372,8 @@ TEST_F(du_rf_metrics_kpm_test, actual_style4_admission_rejects_missing_duplicate
     EXPECT_FALSE(iface.action_supported(make_ric_action(make_style4_action(duplicate, name))));
     EXPECT_FALSE(iface.action_supported(make_ric_action(make_style4_action(mixed, name))));
   }
-  for (const char* name : {"RSRQ", "SNR", "FALCON.PUSCH.SINR.dB"}) {
+  for (const char* name :
+       {"RSRQ", "SNR", "FALCON.PUSCH.SINR.dB", "FALCON.PUSCH.RSRP.dBFS", "FALCON.PUSCH.SNR.dB"}) {
     EXPECT_FALSE(iface.action_supported(make_ric_action(make_style4_action(make_no_label(), name))));
   }
 
@@ -618,7 +620,8 @@ TEST_F(du_rf_metrics_kpm_test, production_ran_function_description_advertises_rf
     for (const char* name : {metric_name, snr_metric_name}) {
       EXPECT_EQ(std::count(names.begin(), names.end(), name), style.ric_report_style_type == 1 ? 0 : 1);
     }
-    for (const char* name : {"RSRP", "RSRQ", "SNR", "SINR", "FALCON.PUSCH.SINR.dB"}) {
+    for (const char* name :
+         {"RSRP", "RSRQ", "SNR", "SINR", "FALCON.PUSCH.SINR.dB", "FALCON.PUSCH.RSRP.dBFS", "FALCON.PUSCH.SNR.dB"}) {
       EXPECT_EQ(std::count(names.begin(), names.end(), name), 0);
     }
     for (const char* name : {"DRB.RlcSduDelayDl", "DRB.UEThpDl", "DRB.UEThpUl", "RRU.PrbTotDl", "RRU.PrbTotUl"}) {

@@ -158,7 +158,7 @@ static void check_subscription_capacity(void)
 
 static void check_trace_contract(sm_ag_if_rd_t* rd, global_e2_node_id_t* node)
 {
-  static const char* names[] = {"FALCON.PUSCH.RSRP.dBFS", "FALCON.PUSCH.SNR.dB"};
+  static const char* names[] = {"PUSCH.RSRP.dBFS", "PUSCH.SNR.dB"};
   static const char* units[] = {"dBFS", "dB"};
   const char* previous = getenv("FALCON_KPM_RF_TRACE");
   char* saved_environment = previous != NULL ? strdup(previous) : NULL;
@@ -170,8 +170,8 @@ static void check_trace_contract(sm_ag_if_rd_t* rd, global_e2_node_id_t* node)
             "set disabled trace mode");
     callback_output_t captured = capture_callback(rd, node);
     require(strstr(captured.output, "RF_TRACE ") == NULL, "trace requires the exact opt-in value 1");
-    require(strstr(captured.output, "FALCON.PUSCH.RSRP.dBFS = -13.12 dBFS") != NULL &&
-            strstr(captured.output, "FALCON.PUSCH.SNR.dB = 21.75 dB") != NULL,
+    require(strstr(captured.output, "PUSCH.RSRP.dBFS = -13.12 dBFS") != NULL &&
+            strstr(captured.output, "PUSCH.SNR.dB = 21.75 dB") != NULL,
             "default human-readable RF output retains two-decimal formatting");
     free_callback_output(&captured);
   }
@@ -384,7 +384,7 @@ static void check_malformed_callbacks(sm_ag_if_rd_t* rd, global_e2_node_id_t* no
   name->name.len = 151;
   require_diagnostic(rd, node, "skipping invalid KPM measurement name");
   *name = saved_name;
-  uint8_t embedded_nul[] = "FALCON.PUSCH.SNR.dB\0suffix";
+  uint8_t embedded_nul[] = "PUSCH.SNR.dB\0suffix";
   name->name.buf = embedded_nul;
   name->name.len = sizeof(embedded_nul) - 1;
   meas_record_lst_t* record = &row->meas_record_lst[0];
@@ -393,7 +393,7 @@ static void check_malformed_callbacks(sm_ag_if_rd_t* rd, global_e2_node_id_t* no
   record->int_val = 23;
   callback_output_t captured = capture_callback(rd, node);
   require(strstr(captured.errors, "skipping invalid KPM measurement name") != NULL &&
-            strstr(captured.output, "FALCON.PUSCH.SNR.dB = 23") == NULL,
+            strstr(captured.output, "PUSCH.SNR.dB = 23") == NULL,
           "embedded NUL cannot disguise a numeric INTEGER as a known RF metric");
   free_callback_output(&captured);
   *name = saved_name;
@@ -477,8 +477,8 @@ int main(int argc, char** argv)
   require(strcmp(subscription.ran_type, "ngran_gNB_DU") == 0, "DU subscription type");
   require(subscription.time == 1000 && subscription.format == 4, "1000 ms Format 4");
   require(subscription.act_len == 7, "existing five metrics plus RSRP and SNR");
-  require(strcmp(subscription.actions[5].name, "FALCON.PUSCH.RSRP.dBFS") == 0, "RSRP is subscribed");
-  require(strcmp(subscription.actions[6].name, "FALCON.PUSCH.SNR.dB") == 0, "SNR is subscribed");
+  require(strcmp(subscription.actions[5].name, "PUSCH.RSRP.dBFS") == 0, "RSRP is subscribed");
+  require(strcmp(subscription.actions[6].name, "PUSCH.SNR.dB") == 0, "SNR is subscribed");
   for (int32_t i = 0; i < subscription.act_len; ++i) {
     require(strcmp(subscription.actions[i].name, "RSRQ") != 0 &&
             strcmp(subscription.actions[i].name, "SINR") != 0 &&
@@ -520,7 +520,7 @@ int main(int argc, char** argv)
 
   static const uint32_t expected_ids[] = {1007, 2091, 3199};
   static const double expected_values[2][2] = {{-13.125, 21.75}, {0.0, 0.0}};
-  static const char* expected_names[] = {"FALCON.PUSCH.RSRP.dBFS", "FALCON.PUSCH.SNR.dB"};
+  static const char* expected_names[] = {"PUSCH.RSRP.dBFS", "PUSCH.SNR.dB"};
   for (size_t i = 0; i < 3; ++i) {
     meas_report_per_ue_t* ue = &msg->meas_report_per_ue[i];
     require(ue->ue_meas_report_lst.type == GNB_DU_UE_ID_E2SM, "gNB-DU UE ID");

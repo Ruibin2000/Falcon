@@ -20,8 +20,8 @@ The PHY-to-FAPI-to-MAC tests call both production translators and use literal ex
  }
 +
 +namespace {
-+constexpr const char* falcon_rsrp_name = "FALCON.PUSCH.RSRP.dBFS";
-+constexpr const char* falcon_snr_name = "FALCON.PUSCH.SNR.dB";
++constexpr const char* falcon_rsrp_name = "PUSCH.RSRP.dBFS";
++constexpr const char* falcon_snr_name = "PUSCH.SNR.dB";
 +
 +class falcon_sparse_ue_id_translator : public odu::f1ap_ue_id_translator
 +{

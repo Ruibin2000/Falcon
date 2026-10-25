@@ -105,9 +105,9 @@ def main():
     (output / "callback.log").write_text(result.stdout + result.stderr)
     required = [
         "ue_f1ap_id=1007", "ue_f1ap_id=2091", "ue_f1ap_id=3199",
-        "FALCON.PUSCH.RSRP.dBFS = -13.12 dBFS",
-        "FALCON.PUSCH.RSRP.dBFS = 0.00 dBFS",
-        "FALCON.PUSCH.RSRP.dBFS = n/a dBFS",
+        "PUSCH.RSRP.dBFS = -13.12 dBFS",
+        "PUSCH.RSRP.dBFS = 0.00 dBFS",
+        "PUSCH.RSRP.dBFS = n/a dBFS",
         "expected REAL", "non-finite REAL", "incomplete=true", "cu_du_id=2",
         "mismatched name/value counts", "ignoring unexpected KPM callback type",
         "PASS: OCUDU to FlexRIC",

@@ -391,8 +391,8 @@ class FlexricAcceptanceGuardTest(unittest.TestCase):
     def callback_output(self):
         lines = [*FLEXRIC.CALLBACK_PASSES, FLEXRIC.RF_FIXTURE_BEGIN]
         for metric, unit, values, readable in (
-            ("FALCON.PUSCH.RSRP.dBFS", "dBFS", ("-13.125", "0", "n/a"), ("-13.12", "0.00", "n/a")),
-            ("FALCON.PUSCH.SNR.dB", "dB", ("21.75", "0", "n/a"), ("21.75", "0.00", "n/a")),
+            ("PUSCH.RSRP.dBFS", "dBFS", ("-13.125", "0", "n/a"), ("-13.12", "0.00", "n/a")),
+            ("PUSCH.SNR.dB", "dB", ("21.75", "0", "n/a"), ("21.75", "0.00", "n/a")),
         ):
             for ue, value, normal in zip(("1007", "2091", "3199"), values, readable):
                 context = (f"plmn=001-01 mnc_digits=2 node_type=7 node_id=411 node_id_unused=0 cu_du_id=1 "
@@ -403,9 +403,9 @@ class FlexricAcceptanceGuardTest(unittest.TestCase):
         lines.extend((
             "RSRQ = n/a source=xapp-capability-status reason=unavailable_in_du",
             FLEXRIC.RF_FIXTURE_END,
-            "FALCON.PUSCH.RSRP.dBFS = n/a dBFS (expected REAL)",
-            "FALCON.PUSCH.SNR.dB = n/a dB (expected REAL)",
-            "FALCON.PUSCH.SNR.dB = n/a dB (non-finite REAL)",
+            "PUSCH.RSRP.dBFS = n/a dBFS (expected REAL)",
+            "PUSCH.SNR.dB = n/a dB (expected REAL)",
+            "PUSCH.SNR.dB = n/a dB (non-finite REAL)",
             "incomplete=true cu_du_id=2",
         ))
         return "\n".join(lines) + "\n", "mismatched name/value counts\nignoring unexpected KPM callback type\n"
@@ -415,7 +415,7 @@ class FlexricAcceptanceGuardTest(unittest.TestCase):
         lines = []
         # The C harness reuses UE 1007 for eight diagnostic cases per metric.
         # These sixteen rows follow the six original fixture rows in real output.
-        for metric, unit in (("FALCON.PUSCH.RSRP.dBFS", "dBFS"), ("FALCON.PUSCH.SNR.dB", "dB")):
+        for metric, unit in (("PUSCH.RSRP.dBFS", "dBFS"), ("PUSCH.SNR.dB", "dB")):
             context = ("plmn=001-01 mnc_digits=2 node_type=7 node_id=411 node_id_unused=0 cu_du_id=1 "
                        "ue_f1ap_id=1007 header_time_us=123456 sample_idx=0")
             for index, value in enumerate((-13.123456789012345, 0.12345678901234566, -0.0)):
@@ -438,7 +438,7 @@ class FlexricAcceptanceGuardTest(unittest.TestCase):
         stdout, stderr = self.callback_output()
         lines = stdout.splitlines()
         for index, line in enumerate(lines):
-            if line.startswith("RF_TRACE ") and "metric=FALCON.PUSCH.RSRP.dBFS " in line:
+            if line.startswith("RF_TRACE ") and "metric=PUSCH.RSRP.dBFS " in line:
                 if "ue_f1ap_id=1007 " in line:
                     lines[index] = line.replace("value=-13.125 ", "value=0 ")
                 elif "ue_f1ap_id=2091 " in line:

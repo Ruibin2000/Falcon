@@ -5,7 +5,7 @@ Requires the existing timestamp repair; at the effective baseline it is committe
 Preserve that repair; do not re-apply 73650812-kpm-timestamp.patch.
 This cumulative patch REPLACES 73650812-pusch-rsrp.patch; do not apply both.
 Use configs/flexric/xapp_du_rf_metrics.conf for the five baseline metrics plus
-FALCON.PUSCH.RSRP.dBFS and FALCON.PUSCH.SNR.dB in one Style 4 subscription.
+PUSCH.RSRP.dBFS and PUSCH.SNR.dB in one Style 4 subscription.
 RSRQ n/a is local capability status, not an E2 measurement or subscription.
 FALCON_KPM_RF_TRACE=1 adds decoded RF rows with round-trip double precision.
 Header time is not PHY sample time; no DU source-generation correlation is claimed.
@@ -248,8 +248,8 @@ diff --git a/examples/xApp/c/monitor/xapp_oran_moni.c b/examples/xApp/c/monitor/
 +                    continue;
 +                  }
 +                  const char* name = (const char*)msg_frm_1->meas_info_lst[z].meas_type.name.buf;
-+                  const char rsrp_name[] = "FALCON.PUSCH.RSRP.dBFS";
-+                  const char snr_name[] = "FALCON.PUSCH.SNR.dB";
++                  const char rsrp_name[] = "PUSCH.RSRP.dBFS";
++                  const char snr_name[] = "PUSCH.SNR.dB";
 +                  bool is_rsrp = name_len == sizeof(rsrp_name) - 1 &&
 +                                 memcmp(name, rsrp_name, name_len) == 0;
 +                  bool is_snr = name_len == sizeof(snr_name) - 1 &&
