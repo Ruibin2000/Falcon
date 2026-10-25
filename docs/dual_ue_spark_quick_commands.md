@@ -1,20 +1,24 @@
-# Dual UE Spark Quick Commands — UE IP Binding and UL
+# Dual UE Spark Quick Commands — 100 ms DU / 1 s CU
 
-Updated: 2026-10-25. Developer: Ruibin Chen. This is the Spark half of the
-operator-run reproduction of the October 21 CU/DU/Core UE IP binding. The
-[live report](reports/ue_identity_dual_ue_live_2026-10-21.md) describes the final
-implementation and six-minute bidirectional idle/resume capture
-(645 matched / 648 records, zero cached). During each UE's
-actual Core idle interval, its active peer had 30 consecutive matched UL rows.
-Small startup/resume boundary gaps were retained and explained. New runs must
-verify their actual identities and inputs; these counts and numeric IDs are
-historical results, not expected allocations.
+Updated: 2026-10-25. Developer: Ruibin Chen.
 
-Current seven-metric profile: **DU scheduler/RLC source windows and DU KPM
-subscriptions are 100 ms**. CU identity production/subscriptions remain
-**1000 ms**, Core polling **1 second**, and identity freshness **3 seconds**.
-For a running testbed, use [the rate-switch sequence](#1b-switch-a-running-testbed-to-100-ms)
-before section 7. Configuration/build checks do not establish live 100 ms timing.
+This is the complete Spark startup and experiment procedure for two UEs,
+using the default seven-metric DU profile at **100 ms** and CU identity
+reports at **1 second**. Follow sections 1–6 to prepare/start the testbed,
+then section 7 for a 120-second xApp capture overlapping a 60-second dual
+uplink. Inspect the actual report cadence and both UE/IP bindings.
+
+| Source | Default period |
+| --- | --- |
+| DU1 and DU2 scheduler/RLC statistics | **100 ms** |
+| DU1 and DU2 KPM reporting and granularity | **100 ms** |
+| CU identity statistics and KPM reporting | **1000 ms** |
+| Core AMF/SMF polling | **1 second** |
+| Identity source freshness limit | **3 seconds** |
+
+These defaults apply throughout configuration, build checks, startup and
+result inspection below. Actual 100 ms operation is verified from the new
+capture; configuration values alone do not establish live timing.
 
 The standalone xApp combines DU KPM, CU identity-bearing E2 reports and existing
 read-only AMF/SMF infoAPIs. Its `bindings.txt` contains only xApp records:
@@ -32,7 +36,7 @@ terminals for CU, RIC, each DU, each iperf server and xApp. Use the
 automatic UE connection/recovery and the section 7 concurrent iperf test;
 manual modem/AT/routing/client commands remain in
 [Dual UE Laptop Quick Commands](dual_ue_laptop_quick_commands.md).
-Cold-start order: prepare candidate artifacts → Core → identity-configured RIC
+Startup order: prepare artifacts → Core → identity-configured RIC
 → identity-enabled CU → both DUs → both servers → complete Laptop UE1 sequence
 → complete Laptop UE2 sequence → section 7 dual UE identity/RF capture.
 Every service/client is started manually in the foreground. Reuse healthy infrastructure during
@@ -133,7 +137,9 @@ python3 "$FALCON_REPO/scripts/dual_fr1/check_config.py" \
   --du2-e2 /home/nyu/ocudu/configs/du2_flexric.yml
 ```
 
-Require `PASS`. Keep the actual recorded RF conditions from Plan 3. The current
+Require `PASS`: both deployed DU configs must enable scheduler/RLC metrics
+with `metrics.periodicity.du_report_period: 100`. Keep the actual recorded RF
+conditions from Plan 3. The current
 configs use TX 70 / RX 35 and 23.04 MS/s; these gains are not calibrated dBm.
 Host performance restoration, when needed after reboot, is in
 [step 2](#2-restore-performance-settings-after-reboot).
@@ -144,8 +150,8 @@ Run before starting CU/RIC/xApp. Use Falcon `main` and the integrated OCUDU
 `falcon-dev`, which now contains both CU identity and DU RF reporting. Build
 CU and DU from that same source revision in `build-integrated`; the original
 `build` executables remain available as the previous baseline. The commands
-below prepare the RAN binaries and isolated xApp/plugin, then check the CU
-configuration. They start no services or radios:
+below prepare the RAN binaries and isolated xApp/plugin, then check CU and
+both DU configurations. They start no services or radios:
 
 ```bash
 git -C /home/nyu/Desktop/Falcon_repo/Falcon branch --show-current
@@ -162,8 +168,21 @@ bash scripts/ue_identity/build.sh &&
 /tmp/falcon-xapp-ue-identity --check-config configs/flexric/xapp_ue_identity.conf &&
 /home/nyu/ocudu/build-integrated/apps/cu/ocu \
   -c /home/nyu/ocudu/configs/cu.yml \
-  -c configs/ocudu/cu_identity_e2.yml --dryrun
+  -c configs/ocudu/cu_identity_e2.yml --dryrun &&
+/home/nyu/ocudu/build-integrated/apps/du_split_8/odu \
+  -c /home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml --dryrun &&
+/home/nyu/ocudu/build-integrated/apps/du_split_8/odu \
+  -c /home/nyu/ocudu/configs/du2_b210_n78_20mhz.yml \
+  -c /home/nyu/ocudu/configs/du2_flexric.yml --dryrun
 ```
+
+Expected subscription parsing: DU `Time: 100`; CU `Time: 1000`. The CU overlay
+keeps `cu_cp_report_period: 1000`; the two deployed DU configs use
+`du_report_period: 100`. Keep these producer and subscription settings together.
+
+DU snapshot concurrency work remains deferred by operator request. This
+procedure tests the stated reporting rates, current identity/IP matching and
+delivery; it does not claim synchronized source snapshots.
 
 Stop on any build/config error. Require `/tmp/falcon-xapp-ue-identity` and
 `/tmp/falcon-ue-identity-sm/libkpm_sm.so`. Rebuild after `/tmp` is cleared/rebooted.
@@ -178,34 +197,6 @@ validate the RF extension.
 See the [identity implementation guide](development/ue_identity_xapp.md#build-and-offline-verification)
 for dependency/build troubleshooting. A successful build is preparation, not
 live binding acceptance.
-
-### 1b. Switch a running testbed to 100 ms
-
-1. Finish the current iperf clients and xApp capture. Stop both Laptop reconnect
-   watchers with Ctrl+C and wait for each UE's shutdown `SUCCESS`. Stop DU1 and
-   DU2 with Ctrl+C in their own terminals. Leave healthy Core, CU, RIC and both
-   iperf listeners running.
-2. Run section 1's config-copy/check block. Require `PASS`; it now requires
-   `du_report_period: 100` on both DUs. Build the updated DU and parse the xApp
-   subscription without starting a radio:
-
-   ```bash
-   cd /home/nyu/Desktop/Falcon_repo/Falcon
-   cmake --build /home/nyu/ocudu/build-integrated --target odu_split_8 -j4 &&
-   /tmp/falcon-xapp-ue-identity --check-config configs/flexric/xapp_ue_identity.conf
-   ```
-
-   Require DU `Time: 100` and CU `Time: 1000` in the parsed subscription profile.
-   If `/tmp` artifacts are missing, prepare them with section 1a first.
-3. Restart DU1 and DU2 using sections 5a/5b, then restart both Laptop watchers
-   and pass their dual-upload preflight. Run a fresh section 7 capture/upload.
-   Restarting the DUs applies the statistics period and throughput-precision
-   fix; restarting the xApp applies the subscription period. CU/RIC/Core do
-   not need a restart for this change.
-
-DU snapshot concurrency changes remain deferred by operator request. This
-rate change preserves the existing cache, cleanup and executor behavior; it
-does not establish synchronized source snapshots or physical sampling boundaries.
 
 ## 2. Restore performance settings after reboot
 
@@ -349,6 +340,8 @@ Require N2 connection to `127.0.0.5:38412`, E2 connection to RIC, F1 listener
 `127.0.10.1:38472`, and `==== CU started ===`. RIC must accept the CU/gNB 411
 node and KPM function 2. The overlay enables CU-CP E2/identity metrics; using
 only `configs/cu.yml` will omit the identity source required by this test.
+The identity overlay produces CU snapshots every **1000 ms**; section 7 uses
+the matching 1000 ms CU subscription.
 The base CU file and the versioned identity overlay set
 `cu_cp.request_pdu_session_timeout: 10` seconds. This allows the laptop to finish
 its registration/cell checks before requesting a PDU; the earlier 3-second
@@ -363,7 +356,9 @@ assumed.
 
 Complete the shared MongoDB/core/CU/RIC startup first. Start each DU in its own
 foreground terminal before beginning either laptop UE sequence. Both DUs stay
-running while UE1 and UE2 are prepared and measured.
+running while UE1 and UE2 are prepared and measured. Each DU produces
+scheduler/RLC statistics every **100 ms** using the section 1 configs; the
+section 7 xApp subscribes at the same 100 ms period.
 
 The [console launcher](../scripts/dual_fr1/run_du_console.sh) uses util-linux
 `script` to give sudo and the DU terminal-backed stdin/stdout/stderr while
@@ -551,7 +546,7 @@ are `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB`. CU identity subscriptions, including
 `FALCON.UE.RRCState`, remain enabled. `--observed-unique` allows the existing
 experimental CU/DU/Core association; `--fresh-only` disables historical IP
 fallback for this test, so an old cached IP cannot hide a missing current join.
-Both DU subscriptions now use **100 ms** reporting/granularity and require the
+Both DU subscriptions use **100 ms** reporting/granularity and require the
 100 ms source configs. CU identity remains at 1000 ms. Expect roughly ten
 reports per second per active DU, twenty DU rows per second across the two
 single-UE paths. An idle 100 ms window may have no usable PUSCH sample.

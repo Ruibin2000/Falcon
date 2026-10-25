@@ -44,7 +44,7 @@ guarantee is claimed.
 Live 100 ms timing, queue/radio health and operator restart verification are
 still pending. The earlier 1-second live capture is a baseline, not a new-rate
 result. Source-generation trace/header correlation remains unimplemented.
-Use [the Spark rate-switch and inspection commands](../docs/dual_ue_spark_quick_commands.md#1b-switch-a-running-testbed-to-100-ms).
+Use [the default Spark startup and 100 ms inspection commands](../docs/dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
 
 The operator requested more DL/UL measurements before any frequency increase.
 This decision extends the original two-RF-metric scope and supersedes its

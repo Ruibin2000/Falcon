@@ -7,9 +7,7 @@ identity stays at **1000 ms**, Core polling at **1 second**, and freshness at
 concurrency work remains deferred by operator request; the existing cache,
 cleanup and executor behavior is preserved. The DU binary is rebuilt and native/offline checks
 pass. Live 100 ms cadence, loss and radio-load behavior remain to be measured
-after operator restart using
-[Spark section 1b](dual_ue_spark_quick_commands.md#1b-switch-a-running-testbed-to-100-ms)
-and section 7. The earlier 1000 ms dual-UE run verified current IP association
+using the [default Spark startup and section 7 inspection](dual_ue_spark_quick_commands.md). The earlier 1000 ms dual-UE run verified current IP association
 and RF delivery; it does not establish 100 ms performance. Laptop connection
 commands and recovery policy are unchanged.
 

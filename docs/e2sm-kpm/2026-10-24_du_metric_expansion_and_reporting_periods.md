@@ -118,7 +118,7 @@ The operator explicitly retains the existing cache-synchronization deferral:
 no provider mutex, collection guard, E2 receive confinement or cleanup
 relocation is included. Source generation tracing and live capacity/order
 verification remain open. See the
-[current Spark procedure](../dual_ue_spark_quick_commands.md#1b-switch-a-running-testbed-to-100-ms).
+[current Spark procedure](../dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
 
 The first expanded-profile acceptance remains at 1000 ms. Only after its
 source correctness, codec, identity, live values and lifecycle checks pass,

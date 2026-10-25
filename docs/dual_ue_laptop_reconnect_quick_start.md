@@ -2,6 +2,8 @@
 
 Updated: 2026-10-25. Developer: Ruibin.
 
+**Spark target:** DU1/DU2 statistics and KPM **100 ms**; CU identity **1 second**.
+
 [Full reference and troubleshooting](runbooks/dual_ue_laptop_reconnect_reference.md) ·
 [Spark startup and servers, sections 1–6](dual_ue_spark_quick_commands.md#1-check-radios-and-deploy-configuration-before-a-cold-start) ·
 [Spark xApp capture and inspection, section 7](dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)

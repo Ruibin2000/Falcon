@@ -111,7 +111,7 @@ The 1000 ms dual-UE capture inspected on October 25 verified current CU/Core
 IP association and seven RF-inclusive DU measurements under concurrent UL.
 That is baseline evidence. Live cadence, queue loss and radio-health behavior
 at **100 ms** require a new capture using
-[the Spark procedure](../dual_ue_spark_quick_commands.md#1b-switch-a-running-testbed-to-100-ms).
+[the Spark procedure](../dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
 A live legacy-DU subscription remains separate from this new-rate verification.
 
 ## Build and offline verification
