@@ -12,8 +12,10 @@ and a passive wait. Both modes share a per-UE lock, so only one can own a given
 UE at a time.
 
 **2026-10-24 checkpoint:** the current script optimization stage is complete.
-Keep the recovery policy and defaults below. A new recovery test will use fresh
-logs after host clock synchronization, followed by an English experiment report.
+Keep the recovery policy and defaults below. The new
+[English UE2 / FR3 recovery report](reports/ue2_fr3_recovery_experiment_report_2026-10-24.md)
+records two completed recovery cycles with new IP allocations after host NTP
+synchronization; the final operator-directed closing stage is excluded.
 
 <a id="before-starting"></a>
 

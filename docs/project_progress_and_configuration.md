@@ -2,10 +2,14 @@
 
 Automation checkpoint, **2026-10-24**: the current UE automatic-reconnect script
 optimization stage is complete by operator decision. Retain the current recovery
-policy and parameters. The next recovery test will use fresh logs after Spark
-and laptop NTP synchronization; its experiment report will be written in
-**English** after the new measurements are available. The dated architecture
-and phase table below remain historical records.
+policy and parameters. The new
+[English UE2 / FR3 recovery report](reports/ue2_fr3_recovery_experiment_report_2026-10-24.md)
+records two completed TX-gain disturbance/recovery cycles after host NTP
+synchronization, with automatic IPv4 adaptation from `.44` to `.45` to `.46`.
+Gain restoration to detected PRACH took **22.223 s / 21.076 s** on Spark;
+restoration to watcher verification took approximately **24.621 s / 23.141 s**
+across the synchronized hosts. The operator-directed closing stage is excluded.
+The dated architecture and phase table below remain historical records.
 
 Network update, **2026-10-23**: the applied [Spark TUN split](networking/dual_ue_tun_split.md)
 places UE1 `10.45.0.1/16` on `ogstun_1` and UE2 `10.46.0.1/16` on `ogstun_2`,
