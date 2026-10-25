@@ -1,6 +1,6 @@
 # Dual UE Spark Quick Commands — UE IP Binding and UL
 
-Updated: 2026-10-24. Developer: Ruibin Chen. This is the Spark half of the
+Updated: 2026-10-25. Developer: Ruibin Chen. This is the Spark half of the
 operator-run reproduction of the October 21 CU/DU/Core UE IP binding. The
 [live report](reports/ue_identity_dual_ue_live_2026-10-21.md) describes the final
 implementation and six-minute bidirectional idle/resume capture
@@ -25,8 +25,8 @@ terminals for CU, RIC, each DU, each iperf server and xApp. Modem/AT/routing/cli
 commands are in [Dual UE Laptop Quick Commands](dual_ue_laptop_quick_commands.md).
 Cold-start order: prepare candidate artifacts → Core → identity-configured RIC
 → identity-enabled CU → both DUs → both servers → complete Laptop UE1 sequence
-→ complete Laptop UE2 sequence → section 7 binding tests. Every service/client
-is started manually in the foreground. Reuse healthy infrastructure during
+→ complete Laptop UE2 sequence → section 7 dual UE identity/RF capture.
+Every service/client is started manually in the foreground. Reuse healthy infrastructure during
 modem recovery; steps 1–5 cover a stopped testbed.
 After a modem power cycle, repeat the affected role's complete laptop sequence
 ([UE1](dual_ue_laptop_quick_commands.md#ue1-start) / [UE2](dual_ue_laptop_quick_commands.md#ue2-start)) before traffic. The operator reported
@@ -131,24 +131,41 @@ Host performance restoration, when needed after reboot, is in
 
 ### 1a. Prepare the CU identity binary and isolated FlexRIC plugin
 
-Run before starting CU/RIC/xApp. These are local builds; they start no services.
-Both repositories must be on `Dual-UE` with the October 21 identity implementation present:
+Run before starting CU/RIC/xApp. Use Falcon `main` and the integrated OCUDU
+`falcon-dev`, which now contains both CU identity and DU RF reporting. Build
+CU and DU from that same source revision in `build-integrated`; the original
+`build` executables remain available as the previous baseline. The commands
+below prepare the RAN binaries and isolated xApp/plugin, then check the CU
+configuration. They start no services or radios:
 
 ```bash
 git -C /home/nyu/Desktop/Falcon_repo/Falcon branch --show-current
 git -C /home/nyu/ocudu branch --show-current
 cd /home/nyu/Desktop/Falcon_repo/Falcon
-cmake --build /home/nyu/ocudu/build --target ocu -j4 &&
+cmake -S /home/nyu/ocudu -B /home/nyu/ocudu/build-integrated \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=/usr/bin/clang-18 \
+  -DCMAKE_CXX_COMPILER=/usr/bin/clang++-18 \
+  -DENABLE_UHD=ON -DBUILD_TESTING=ON &&
+cmake --build /home/nyu/ocudu/build-integrated --target ocu odu_split_8 -j4 &&
 bash scripts/ue_identity/build.sh &&
 /tmp/falcon-xapp-ue-identity --check-config configs/flexric/ric_ue_identity.conf &&
-/tmp/falcon-xapp-ue-identity --check-config configs/flexric/xapp_ue_identity.conf
+/tmp/falcon-xapp-ue-identity --check-config configs/flexric/xapp_ue_identity.conf &&
+/home/nyu/ocudu/build-integrated/apps/cu/ocu \
+  -c /home/nyu/ocudu/configs/cu.yml \
+  -c configs/ocudu/cu_identity_e2.yml --dryrun
 ```
 
 Stop on any build/config error. Require `/tmp/falcon-xapp-ue-identity` and
 `/tmp/falcon-ue-identity-sm/libkpm_sm.so`. Rebuild after `/tmp` is cleared/rebooted.
 The isolated KPM plugin includes the 40-bit AMF ID decoder fix; both RIC and
 xApp configs select it. Installed FlexRIC files and its source tree are left
-unchanged. Build only `ocu` here; retain the accepted DU executable/configs.
+unchanged. Sections 4–5 launch the integrated executables; retain the accepted
+DU configs. Require CU and DU startup banners to identify the intended merged
+revision. The dry run checks configuration support; live CU identity delivery
+and both DU RF subscriptions are verified in section 7. Both DUs must
+advertise `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB`; a five-metric fallback does not
+validate the RF extension.
 See the [identity implementation guide](development/ue_identity_xapp.md#build-and-offline-verification)
 for dependency/build troubleshooting. A successful build is preparation, not
 live binding acceptance.
@@ -284,7 +301,7 @@ cd /home/nyu/ocudu
 IDENTITY_CU_RUN=$(mktemp -d /tmp/falcon-identity-cu.XXXXXXXX)
 printf 'CU log directory: %s\n' "$IDENTITY_CU_RUN"
 set -o pipefail
-sudo stdbuf -oL -eL build/apps/cu/ocu \
+sudo stdbuf -oL -eL build-integrated/apps/cu/ocu \
   -c configs/cu.yml \
   -c /home/nyu/Desktop/Falcon_repo/Falcon/configs/ocudu/cu_identity_e2.yml \
   log --filename "$IDENTITY_CU_RUN/cu.log" \
@@ -329,7 +346,7 @@ DU1_RUN=$(mktemp -d /tmp/falcon-du1-3660.XXXXXXXX)
 printf 'DU1 run directory: %s\n' "$DU1_RUN"
 bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
   "$DU1_RUN/startup.log" \
-  sudo stdbuf -oL -eL build/apps/du_split_8/odu \
+  sudo stdbuf -oL -eL build-integrated/apps/du_split_8/odu \
   -c configs/du1_b210_n78_3660mhz.yml \
   log --filename "$DU1_RUN/du.log"
 ```
@@ -346,7 +363,7 @@ DU2_RUN=$(mktemp -d /tmp/falcon-du2-3600.XXXXXXXX)
 printf 'DU2 run directory: %s\n' "$DU2_RUN"
 bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
   "$DU2_RUN/startup.log" \
-  sudo stdbuf -oL -eL build/apps/du_split_8/odu \
+  sudo stdbuf -oL -eL build-integrated/apps/du_split_8/odu \
   -c configs/du2_b210_n78_20mhz.yml -c configs/du2_flexric.yml \
   log --filename "$DU2_RUN/du.log"
 ```
@@ -474,41 +491,38 @@ in another terminal. Each sequence includes identity/cell/PDU, complete role res
 its own table/rules, private ping and individual UL with the other UE's test
 traffic idle. Keep both PDU paths active for the concurrent test in step 7.
 
-## 7. Reproduce UE IP binding with the new CU/DU xApp
+## 7. Start the dual UE identity/RF xApp and save TXT results
 
-Complete both Laptop UE sequences, including current IMEI/IMSI/cell/bearer/IP
-and route checks. Install or reuse `~/falcon-dual-ul.py` from
-[Laptop section 3](dual_ue_laptop_quick_commands.md#dual-ul), then run its
-`--check-only` preflight. Keep the two verified PDU paths and both foreground
-iperf servers. Finish any other finite xApp before starting this one.
+Use this section for the merged RIC/xApp/E2SM integration test. Finish steps
+1–6 and connect both Laptop UEs first. Keep Core, the identity-configured RIC,
+the identity-enabled CU, both DUs and both iperf listeners running. Finish any
+other xApp before starting this capture.
 
-RIC must have accepted **three** intended nodes: CU/gNB 411, DU1 and DU2.
-The xApp discovers nodes at startup; start it only after all three register.
-The old DU-only monitor subscribes twice and cannot perform this IP join.
-These tests use `--observed-unique --fresh-only`: current observations may
-establish experimental bindings; historical IP fallback is disabled so a
-`cached` record cannot conceal a failed current match. Normal `local.json`
-retains its last-known policy outside these explicit tests.
+Require the RIC to have accepted the three intended E2 nodes: CU/gNB 411,
+gNB 411 / DU ID 1, and gNB 411 / DU ID 2. The xApp discovers nodes at startup;
+if one is missing, fix its E2 connection before launching the xApp.
 
-### 7a. First verify both IP bindings during a 60-second dual upload
+This command uses the maintained identity coordinator, the **dual UE**
+`local.json`, and the default **seven-metric** subscription. The two RF names
+are `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB`. CU identity subscriptions, including
+`FALCON.UE.RRCState`, remain enabled. `--observed-unique` allows the existing
+experimental CU/DU/Core association; `--fresh-only` disables historical IP
+fallback for this test, so an old cached IP cannot hide a missing current join.
 
-In the Spark xApp terminal:
+### 7a. Start the xApp and write a 120-second TXT capture
+
+<a id="7a-first-verify-both-ip-bindings-during-a-60-second-dual-upload"></a>
+
+In a dedicated **Spark xApp terminal**:
 
 ```bash
 cd /home/nyu/Desktop/Falcon_repo/Falcon
 IDENTITY_DUAL_RUN=$(mktemp -d /tmp/falcon-identity-dual.XXXXXXXX)
 printf 'Spark capture directory: %s\n' "$IDENTITY_DUAL_RUN"
 cp configs/ue_identity/local.json "$IDENTITY_DUAL_RUN/local.json"
-sha256sum scripts/ue_identity/*.py scripts/ue_identity/e2_collector.c \
-  configs/ue_identity/local.json configs/flexric/*ue_identity.conf \
-  configs/ocudu/cu_identity_e2.yml /tmp/falcon-xapp-ue-identity \
-  /tmp/falcon-ue-identity-sm/libkpm_sm.so \
-  /home/nyu/ocudu/build/apps/cu/ocu /home/nyu/ocudu/build/apps/du_split_8/odu \
-  > "$IDENTITY_DUAL_RUN/source-sha256.txt"
-printf '%s\n' '--observed-unique --fresh-only --duration 120' \
-  > "$IDENTITY_DUAL_RUN/cli-overrides.txt"
+cp configs/flexric/xapp_ue_identity.conf "$IDENTITY_DUAL_RUN/xapp.conf"
 python3 scripts/ue_identity/xapp_ue_identity.py \
-  --config configs/ue_identity/local.json \
+  --config "$IDENTITY_DUAL_RUN/local.json" \
   --observed-unique --fresh-only --duration 120 \
   --text-output "$IDENTITY_DUAL_RUN/bindings.txt" \
   --capture-events "$IDENTITY_DUAL_RUN/inputs.ndjson" \
@@ -518,176 +532,143 @@ IDENTITY_DUAL_RC=$?
 printf 'xApp exit=%s\n' "$IDENTITY_DUAL_RC" | tee "$IDENTITY_DUAL_RUN/exit.txt"
 ```
 
-While this command is running, in a separate Spark diagnostics terminal use the
-printed directory (shell variables do not cross terminals):
+The xApp runs in the foreground for 120 seconds, then deletes its subscriptions
+and exits. To run a longer session, change only `--duration` (maximum 3600
+seconds). Ctrl+C in this terminal ends the xApp and requests subscription
+cleanup; it does not stop the UEs, DUs, CU or RIC. Keep those components running
+until the xApp has finished cleanup.
+
+| File in the printed directory | Contents |
+| --- | --- |
+| `bindings.txt` | Readable xApp output: UE/DU identity, SUPI, NGAP/GUAMI, PDU/DNN/current IP, and seven KPM measurements with types and units |
+| `rows.ndjson` | The same correlated records in machine-readable form |
+| `inputs.ndjson` | Decoded CU/DU reports and read-only Core snapshots used by the association |
+| `xapp.log` | SDK registration, subscription, cleanup and error messages |
+| `local.json`, `xapp.conf`, `exit.txt` | Configuration snapshots and the real process exit status |
+
+In a **separate Spark diagnostics terminal**, paste the printed directory.
+Shell variables do not cross terminals:
 
 ```bash
 read -r -p 'Paste the current Spark capture directory: ' IDENTITY_WATCH_RUN
-tail -n 25 "$IDENTITY_WATCH_RUN/xapp.log"
+tail -n 40 "$IDENTITY_WATCH_RUN/xapp.log"
+tail -n 45 -f "$IDENTITY_WATCH_RUN/bindings.txt"
 ```
 
-Require `Registered E2 Nodes = 3`, three successful subscription responses and
-`identity collector: 3 KPM subscriptions, duration=120`. Then run
-`python3 ~/falcon-dual-ul.py` on Laptop as instructed in its section 3.
-Let both clients and the xApp finish naturally. Use 7c to inspect this capture.
-Both roles must have matched positive-UL rows with their independently observed
-current IPs, expected SUPIs/DNNs and actual DU/F1/NGAP identities. Require at
-least 30 complete active samples per role; explain startup gaps individually.
-The actual IPs/IDs/counts need not equal the October 21 report.
+Require `Registered E2 Nodes = 3`, three successful subscriptions and
+`identity collector: 3 KPM subscriptions, duration=120` in `xapp.log`.
+`bindings.txt` should contain records for both `DU_ID=1` and `DU_ID=2`.
+Ctrl+C in this diagnostics terminal stops only `tail`.
+
+Once subscriptions are ready, run the Laptop's
+[60-second dual upload](dual_ue_laptop_quick_commands.md#dual-ul). Its
+`--check-only` preflight must pass first. Keep both clients' actual current
+IP/SUPI/DNN and completion summaries for comparison; do not substitute old
+`.2` addresses. The 120-second capture leaves time for startup and the upload.
+UL traffic gives both DUs PUSCH samples for the RF check. Brief initial
+unresolved rows can occur while fresh CU/Core/DU inputs arrive; inspect their
+reasons instead of treating subscription success alone as a successful join.
 
 ### 7b. Six-minute bidirectional idle/resume and independent matching
 
-After the short test passes, leave Core/RIC/CU/DUs/servers and both PDU sessions
-running. Close other clients and periodic ping/WWAN traffic. Keep CU's current
-120-second inactivity timer; each role's 150-second quiet phase must produce
-an actual Core idle observation. Do not disconnect either bearer or power-cycle
-modems during this test.
+This is an **optional follow-up**, not a prerequisite for the initial
+seven-metric integration test. After 7a completes, prepare the Laptop's
+[idle/resume command](dual_ue_laptop_quick_commands.md#binding-idle) and leave
+it at `READY`. In the Spark xApp terminal, repeat the 7a capture command with
+a fresh `mktemp` directory and **`--duration 360`** instead of 120. After
+confirming three subscriptions, return to Laptop within ten seconds, enter
+`START`, and let both clients and the xApp finish naturally.
 
-1. On Laptop, prepare the inline command in
-   [section 3.1](dual_ue_laptop_quick_commands.md#binding-idle). Leave it at `READY`.
-2. On Spark, start this new foreground capture:
+The Laptop command runs UE1 15 s UL → 150 s quiet → 170 s UL, and UE2 175 s UL
+→ 150 s quiet → 10 s UL. For this optional test, periodic ping/reconnect
+probes and other WWAN traffic must not prevent the intended idle intervals.
+Verify actual Core connected → idle → connected transitions, peer continuity,
+and fresh resumed matches using the
+[full six-minute procedure and inspection](development/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test).
+The quick summary below alone does not establish idle transitions.
 
-   ```bash
-   cd /home/nyu/Desktop/Falcon_repo/Falcon
-   IDENTITY_BIDIR_RUN=$(mktemp -d /tmp/falcon-identity-bidir.XXXXXXXX)
-   printf 'Spark capture directory: %s\n' "$IDENTITY_BIDIR_RUN"
-   cp configs/ue_identity/local.json "$IDENTITY_BIDIR_RUN/local.json"
-   sha256sum scripts/ue_identity/*.py scripts/ue_identity/e2_collector.c \
-     configs/ue_identity/local.json configs/flexric/*ue_identity.conf \
-     configs/ocudu/cu_identity_e2.yml /tmp/falcon-xapp-ue-identity \
-     /tmp/falcon-ue-identity-sm/libkpm_sm.so \
-     /home/nyu/ocudu/build/apps/cu/ocu /home/nyu/ocudu/build/apps/du_split_8/odu \
-     > "$IDENTITY_BIDIR_RUN/source-sha256.txt"
-   printf '%s\n' '--observed-unique --fresh-only --duration 360' \
-     > "$IDENTITY_BIDIR_RUN/cli-overrides.txt"
-   python3 scripts/ue_identity/xapp_ue_identity.py \
-     --config configs/ue_identity/local.json \
-     --observed-unique --fresh-only --duration 360 \
-     --text-output "$IDENTITY_BIDIR_RUN/bindings.txt" \
-     --capture-events "$IDENTITY_BIDIR_RUN/inputs.ndjson" \
-     > "$IDENTITY_BIDIR_RUN/rows.ndjson" \
-     2> "$IDENTITY_BIDIR_RUN/xapp.log"
-   IDENTITY_BIDIR_RC=$?
-   printf 'xApp exit=%s\n' "$IDENTITY_BIDIR_RC" | tee "$IDENTITY_BIDIR_RUN/exit.txt"
-   ```
+### 7c. Inspect both UE bindings and the seven E2SM measurements
 
-3. Within ten seconds of starting xApp, return to Laptop, enter `START` and
-   press Enter. The command runs UE1 15 s UL → 150 s quiet → 170 s UL, and UE2
-   175 s UL → 150 s quiet → 10 s UL. Let all four clients and the full capture
-   finish. No assistant-launched background program is needed.
-4. Inspect this new directory using 7c and retain the Laptop summary/logs too.
+<a id="7c-inspect-bindings-core-transitions-and-two-example-records"></a>
 
-### 7c. Inspect bindings, Core transitions and two example records
-
-Run after either capture finishes. Paste that capture's printed directory:
+After the capture finishes, use the completed directory in a Spark diagnostics
+terminal. This prints a summary and one matched TXT record per DU:
 
 ```bash
 read -r -p 'Paste the completed Spark capture directory: ' IDENTITY_CHECK_RUN
 cat "$IDENTITY_CHECK_RUN/exit.txt"
 grep -E 'Registered E2 Nodes|identity collector:|DELETE RESPONSE|Sucessfully stopped' \
   "$IDENTITY_CHECK_RUN/xapp.log"
-python3 - "$IDENTITY_CHECK_RUN" <<'PY_CHECK'
+python3 - "$IDENTITY_CHECK_RUN" <<'PY_CHECK' | tee "$IDENTITY_CHECK_RUN/summary.txt"
 from collections import Counter
-from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sys
-from zoneinfo import ZoneInfo
 
 root = Path(sys.argv[1])
 rows = [json.loads(line) for line in (root / 'rows.ndjson').open()]
-events = [json.loads(line) for line in (root / 'inputs.ndjson').open()]
+expected_metrics = {'DRB.RlcSduDelayDl', 'DRB.UEThpDl', 'DRB.UEThpUl',
+                    'RRU.PrbTotDl', 'RRU.PrbTotUl',
+                    'PUSCH.RSRP.dBFS', 'PUSCH.SNR.dB'}
+expected_roles = {'1': ('imsi-001010000000101', 'internet'),
+                  '2': ('imsi-001010000000102', 'internet2')}
 print('Records:', len(rows), dict(Counter(r['binding_status'] for r in rows)))
-print('App instances:', sorted({r['app_instance'] for r in rows}))
-problems = [e for e in events if e['kind'] not in ('core_snapshot', 'kpm_report')
-            or int(e.get('ingress_dropped_total', 0)) != 0]
-print('Core/input errors or loss events:', len(problems))
-for event in problems[:5]:
-    print(event)
-for du in ('1', '2'):
-    selected = [r for r in rows if str(r['node'].get('du_id')) == du]
-    print('DU' + du, dict(Counter(r['binding_status'] for r in selected)))
-    signatures = sorted({
-        (r['row']['ue']['gnb_cu_ue_f1ap_id'], r['binding']['supi'],
-         r['binding']['amf_ue_ngap_id'], r['binding']['ran_ue_ngap_id'],
-         r['binding']['dnn'], r['ue_ipv4'])
-        for r in selected if r['binding_status'] == 'matched'})
-    print('F1 / SUPI / AMF / RAN / DNN / IP:', signatures)
-    print('Assurance:', dict(Counter(r.get('binding', {}).get('assurance', 'none') for r in selected)))
-    print('Unmatched reasons:', dict(Counter(r['reason'] for r in selected if r['binding_status'] != 'matched')))
-previous, idle_start, episodes = {}, {}, []
-for event in events:
-    if event['kind'] != 'core_snapshot':
-        continue
-    for ue in event['amf']:
-        state = (ue['cm_state'], ue['gnb'].get('amf_ue_ngap_id'), ue['gnb'].get('ran_ue_ngap_id'))
-        before = previous.get(ue['supi'])
-        if before and before[0] == 'connected' and state[0] == 'idle':
-            idle_start[ue['supi']] = int(event['received_at_us'])
-        if state[0] == 'connected' and ue['supi'] in idle_start:
-            episodes.append((ue['supi'], idle_start.pop(ue['supi']), int(event['received_at_us'])))
-        if previous.get(ue['supi']) != state:
-            stamp = datetime.fromtimestamp(int(event['received_at_us']) / 1e6, timezone.utc).astimezone(ZoneInfo('America/New_York'))
-            print('Core transition:', stamp.isoformat(), ue['supi'], state)
-            previous[ue['supi']] = state
-peer_du = {'imsi-001010000000101': '2', 'imsi-001010000000102': '1'}
-print('Completed connected -> idle -> connected intervals:', len(episodes))
-for supi, begin, end in episodes:
-    peer = peer_du.get(supi)
-    selected = [r for r in rows if peer and str(r['node'].get('du_id')) == peer
-                and begin <= int(r['received_at_us']) < end]
-    print('Idle:', supi, 'seconds:', round((end - begin) / 1e6, 3),
-          'peer DU:', peer, 'statuses:', dict(Counter(r['binding_status'] for r in selected)))
-    print('Peer established-scope current matches:', sum(
-        r['binding_status'] == 'matched' and
-        r['binding']['assurance'] == 'established_du_scope_current_context' for r in selected))
-    print('Peer positive-UL rows:', sum(
-        (r['row']['metrics'].get('DRB.UEThpUl', {}).get('value') or 0) > 0 for r in selected))
-if idle_start:
-    print('Incomplete idle intervals at capture end:', sorted(idle_start))
+problems = 0
+with (root / 'inputs.ndjson').open() as source:
+    for line in source:
+        event = json.loads(line)
+        problems += (event['kind'] not in ('core_snapshot', 'kpm_report')
+                     or int(event.get('ingress_dropped_total', 0)) != 0)
+print('Core/input errors or loss events:', problems)
 blocks = (root / 'bindings.txt').read_text().split('\n\n')
-for du in ('1', '2'):
+for du, expected in expected_roles.items():
+    selected = [r for r in rows if str(r['node'].get('du_id')) == du]
+    matched = [r for r in selected if r['binding_status'] == 'matched']
+    print('\nDU' + du, dict(Counter(r['binding_status'] for r in selected)))
+    print('Unmatched reasons:', dict(Counter(r['reason'] for r in selected
+                                            if r['binding_status'] != 'matched')))
+    print('SUPI / DNN / IP / F1 / AMF / RAN:', sorted({
+        (r['binding']['supi'], r['binding']['dnn'], r['ue_ipv4'],
+         r['row']['ue']['gnb_cu_ue_f1ap_id'], r['binding']['amf_ue_ngap_id'],
+         r['binding']['ran_ue_ngap_id']) for r in matched}))
+    print('Unexpected SUPI/DNN on matched rows:', sum(
+        (r['binding']['supi'], r['binding']['dnn']) != expected for r in matched))
+    print('Rows with exactly seven expected metrics:', sum(
+        set(r['row']['metrics']) == expected_metrics for r in selected), '/', len(selected))
+    for metric in ('PUSCH.RSRP.dBFS', 'PUSCH.SNR.dB'):
+        print(metric, dict(Counter(r['row']['metrics'].get(metric, {}).get('type', 'absent')
+                                   for r in selected)))
+    print('Positive-UL rows:', sum(
+        (r['row']['metrics'].get('DRB.UEThpUl', {}).get('value') or 0) > 0 for r in selected))
     example = next((b for b in blocks if b.startswith('record=') and ' status=matched ' in b
                     and f' DU_ID={du} ' in b), None)
-    print('\nDU' + du + ' example:\n' + (example or 'No matched record'))
+    print('Matched TXT example:\n' + (example or 'No matched record'))
 PY_CHECK
 ```
 
-This is an inspection summary, not an independent proof of every join. Compare
-Laptop `summary.json`/`truth.json` IMEI/IMSI/APN/current IP with the actual
-AMF/SMF and CU/DU events in `inputs.ndjson`, then the output rows/TXT. The
-[matching topology and provider fields](reports/ue_identity_dual_ue_live_2026-10-21.md#matching-topology-and-information-supplied-by-each-component)
-explain the chain. `bindings.txt` contains only xApp output; SDK messages are
-in `xapp.log`, and inputs are separate. NGAP and F1 numbers are typed identifiers;
-matching them does not rely on numeric equality.
+Check the actual results against both Laptop role summaries:
 
-For the **six-minute test**, require all of the following:
+| Check | Expected result for this run |
+| --- | --- |
+| UE1 / logical FR1 | DU ID 1, SUPI `imsi-001010000000101`, DNN `internet`, current Laptop UE1 IP in `10.45.0.0/16` |
+| UE2 / logical FR3 | DU ID 2, SUPI `imsi-001010000000102`, DNN `internet2`, current Laptop UE2 IP in `10.46.0.0/16` |
+| Current association | Both roles have repeated `status=matched` records with actual F1/NGAP/GUAMI/PDU identifiers; no cross-UE binding. `--fresh-only` produces no cached bindings. |
+| DU measurements | Both DUs carry all seven expected names; throughput uses kbit/s, delay 0.1 ms, PRB %, RSRP dBFS and SNR dB. |
+| RF availability | Both paths produce REAL RF values during UL traffic; negative RSRP is valid. A period without usable PUSCH can report `no_value`, which must remain distinct from measured zero. |
+| Delivery and cleanup | No Core/input errors or ingress loss; three subscription delete responses and xApp exit 0. |
 
-- One 360-second xApp instance, three intended subscriptions, all three delete
-  responses, xApp exit 0 and no Core/input errors or ingress loss.
-- Both UEs establish at least five consecutive matched samples, then each
-  actually moves Core connected → idle → connected. Each observed idle interval
-  should last at least ten seconds; quiet traffic alone does not prove idle.
-- During each idle interval, the other UE keeps at least ten consecutive
-  current `matched` records after the silent DU is outside the three-second
-  TTL. Its own fresh CU/Core inputs and IP/DU/F1/NGAP/SUPI must agree. Silence
-  on the other DU alone must not cause `cached` or missing IP.
-- Each resumed UE gets at least five consecutive fresh matches for its actual
-  new context, with no cross-UE binding. Check convergence within three reporting
-  periods from the later matching fresh CU/Core prerequisite. Explain all
-  startup/resume unresolved rows; never fill them with another context's IP.
-- Both sessions retain their IP during ordinary idle. Investigate any change.
-  All four Laptop clients exit 0 with receiver summaries and `STATUS: completed`.
-  Keep/report any zero-throughput intervals; exit 0 does not prove stall-free UL.
+`summary.txt` is an inspection aid, not an automatic acceptance verdict.
+Compare the current Laptop IP and identity evidence with the actual CU/Core
+inputs and output records. A correct DU RF value with `CU identity missing`
+does not verify the combined identity join: check the CU identity overlay,
+CU subscription and fresh CU input records. A missing RF name or rejected DU
+subscription needs the RF-capable DU binary/configuration; `--du-metrics 5`
+can diagnose legacy compatibility but does not complete this seven-metric test.
 
-`--fresh-only` requires zero cached records. Normal last-known mode may label
-missing own verification inputs as `cached`; it is separate from this test.
-Compare times within Spark's Core/CU/DU capture. Laptop wall-clock alignment
-is uncalibrated; do not reuse the old approximate 199-second clock correction.
-A completed cold-start run adds a separate reproduction result. Cold-start,
-full repeatability and bidirectional disturbance experiments are follow-up work,
-excluded from current Dual UE acceptance and merging. Protocol-explicit identity
-lifecycle/reuse work retains its separate scope.
+These are new live results to be collected; the merged offline tests and
+earlier DU-only RF capture do not replace this two-UE combined run. Cold-start
+repeatability, bidirectional disturbance and protocol-explicit lifecycle/reuse
+work retain their separate supplemental or development scope.
 
 ## 8. Shutdown and retained evidence
 
@@ -711,8 +692,8 @@ Optional MongoDB shutdown preserves its container/data:
 sudo docker stop open5gs-mongo
 ```
 
-Retain each capture's `local.json`, `cli-overrides.txt`, `source-sha256.txt`, `exit.txt`,
-`inputs.ndjson`, `rows.ndjson`, `bindings.txt` and `xapp.log`, together with the
+Retain each capture's `local.json`, `xapp.conf`, `exit.txt`, `inputs.ndjson`,
+`rows.ndjson`, `bindings.txt`, `summary.txt` and `xapp.log`, together with the
 RIC/CU/DU startup logs, actual source revisions and Laptop truth/events/client
 logs/summary. `/tmp` may be cleared on reboot: copy the printed evidence
 directories to a persistent experiment directory before shutdown. Keep raw
