@@ -11,6 +11,7 @@ from unittest import mock
 
 from test_identity import ROOT
 import xapp_ue_identity as app
+from metrics import EXPANDED
 
 
 COLLECTOR = Path(os.environ.get('FALCON_IDENTITY_COLLECTOR', '/tmp/falcon-xapp-ue-identity'))
@@ -39,6 +40,10 @@ class ProfileSelectionTests(unittest.TestCase):
         self.assertEqual(self.selected('--du-metrics', '5'),
                          ROOT / 'configs/flexric/xapp_ue_identity_five.conf')
 
+    def test_expanded_profile_requires_explicit_selection(self):
+        self.assertEqual(self.selected('--du-metrics', '27'),
+                         ROOT / 'configs/flexric/xapp_ue_identity_expanded.conf')
+
     def test_custom_e2_configuration_keeps_its_existing_override(self):
         self.assertEqual(self.selected('--e2-config', '/tmp/custom-e2.conf'), Path('/tmp/custom-e2.conf'))
 
@@ -55,6 +60,20 @@ class ProfileSelectionTests(unittest.TestCase):
 
 @unittest.skipUnless(COLLECTOR.is_file(), 'build the standalone collector first')
 class ProfileCodecTests(unittest.TestCase):
+    def test_sdk_parses_all_27_expanded_names_with_100ms_du_and_1s_cu(self):
+        result = subprocess.run([str(COLLECTOR), '--check-config',
+                                 str(ROOT / 'configs/flexric/xapp_ue_identity_expanded.conf')],
+                                capture_output=True, text=True, check=True, timeout=10)
+        actions = {ran: names.split() for ran, names in
+                   re.findall(r'RAN type (\S+), actions = ([^\n]+)', result.stdout)}
+        self.assertEqual(actions['ngran_gNB_DU'], list(EXPANDED))
+        periods = {ran: int(period) for period, ran in re.findall(
+            r'Sub_ORAN_SM Name: KPM, Time: (\d+)\s+[^\n]*RAN type (\w+),', result.stdout)}
+        self.assertEqual(periods['ngran_gNB_DU'], 100)
+        for ran in ['ngran_gNB', 'ngran_gNB_CU', 'ngran_gNB_CUCP']:
+            self.assertEqual(actions[ran], ['FALCON.UE.RRCState'])
+            self.assertEqual(periods[ran], 1000)
+
     def test_real_sdk_parses_seven_default_and_five_backup_with_identical_cu_identity(self):
         profiles = []
         periods = []

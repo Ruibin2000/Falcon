@@ -1,0 +1,2 @@
+Synthetic two-UE KPM payload bytes: 1211
+Synthetic full E2AP indication bytes: 1271

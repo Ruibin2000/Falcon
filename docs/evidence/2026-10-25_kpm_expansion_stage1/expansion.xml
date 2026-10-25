@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="7" failures="0" disabled="0" errors="0" time="0.014" timestamp="2026-10-25T17:47:10.745" name="AllTests">
+  <testsuite name="du_kpm_expansion_test" tests="7" failures="0" disabled="0" skipped="0" errors="0" time="0.009" timestamp="2026-10-25T17:47:10.751">
+    <testcase name="sparse_ue_order_counts_signed_power_and_fractional_rates" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_du_expansion_test.cpp" line="123" status="run" result="completed" time="0." timestamp="2026-10-25T17:47:10.751" classname="du_kpm_expansion_test" />
+    <testcase name="absence_zero_reset_and_nonfinite_are_distinct" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_du_expansion_test.cpp" line="158" status="run" result="completed" time="0." timestamp="2026-10-25T17:47:10.752" classname="du_kpm_expansion_test" />
+    <testcase name="prb_sparse_indices_multiply_before_division_and_guard_zero_capacity" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_du_expansion_test.cpp" line="189" status="run" result="completed" time="0." timestamp="2026-10-25T17:47:10.752" classname="du_kpm_expansion_test" />
+    <testcase name="real_prb_usage_preserves_fractional_sub_percent_and_valid_zero" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_du_expansion_test.cpp" line="202" status="run" result="completed" time="0." timestamp="2026-10-25T17:47:10.752" classname="du_kpm_expansion_test" />
+    <testcase name="real_prb_usage_zero_denominator_or_missing_source_is_no_value" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_du_expansion_test.cpp" line="229" status="run" result="completed" time="0." timestamp="2026-10-25T17:47:10.752" classname="du_kpm_expansion_test" />
+    <testcase name="capability_scope_labels_and_aper_advertisement" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_du_expansion_test.cpp" line="243" status="run" result="completed" time="0.008" timestamp="2026-10-25T17:47:10.752" classname="du_kpm_expansion_test" />
+    <testcase name="expanded_100ms_aper_fixture_preserves_types_and_sparse_ues" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_du_expansion_test.cpp" line="274" status="run" result="completed" time="0." timestamp="2026-10-25T17:47:10.760" classname="du_kpm_expansion_test" />
+  </testsuite>
+</testsuites>

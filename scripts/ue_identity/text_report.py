@@ -72,4 +72,10 @@ def format_record(record):
         kind = metric.get("type")
         value = kind if kind == "no_value" else display(metric.get("value"))
         lines.append(f"    {display(name)} = {value} [{display(metric.get('unit'))}] ({display(kind)})")
+    if record.get("derived_metrics"):
+        lines.append("  xApp-derived values (separate from E2 measurements):")
+        for name, metric in record["derived_metrics"].items():
+            kind = metric["type"]
+            value = kind if kind == "no_value" else display(metric["value"])
+            lines.append(f"    {display(name)} = {value} [{display(metric['unit'])}] ({display(kind)})")
     return "\n".join(lines) + "\n\n"

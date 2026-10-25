@@ -6,11 +6,7 @@ import re
 import uuid
 
 from core import guami_key, integer, normalize, supi
-
-UNITS = {"DRB.RlcSduDelayDl": "0.1 ms", "DRB.UEThpDl": "kbit/s",
-         "DRB.UEThpUl": "kbit/s", "RRU.PrbTotDl": "%", "RRU.PrbTotUl": "%",
-         "FALCON.UE.RRCState": "enum",
-         "PUSCH.RSRP.dBFS": "dBFS", "PUSCH.SNR.dB": "dB"}
+from metrics import UNITS, derive_failure_ratios
 
 
 def node_key(node):
@@ -223,6 +219,9 @@ class Mapper:
             result["node"]["gnb_id_bits"] = self.allowed[key]["gnb_id_bits"]
             for name, metric in result["row"].get("metrics", {}).items():
                 metric["unit"] = UNITS.get(name)
+            derived = derive_failure_ratios(result["row"].get("metrics", {}))
+            if derived:
+                result["derived_metrics"] = derived
             result.update(self.resolve(key, row, header, now_us, mono))
             result.update(self.remember_or_reuse(key, row, header, now_us, mono, result))
             output.append(result)

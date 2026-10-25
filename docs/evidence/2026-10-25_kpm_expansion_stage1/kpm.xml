@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="6" failures="0" disabled="0" errors="0" time="0.01" timestamp="2026-10-25T17:47:10.758" name="AllTests">
+  <testsuite name="e2sm_kpm_tests/e2_entity_test_with_pcap" tests="1" failures="0" disabled="0" skipped="0" errors="0" time="0.009" timestamp="2026-10-25T17:47:10.758">
+    <testcase name="e2sm_kpm_generates_ran_func_desc/0" value_param="NULL" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_test.cpp" line="165" status="run" result="completed" time="0.009" timestamp="2026-10-25T17:47:10.758" classname="e2sm_kpm_tests/e2_entity_test_with_pcap" />
+  </testsuite>
+  <testsuite name="e2sm_kpm_tests/e2sm_kpm_indication" tests="5" failures="0" disabled="0" skipped="0" errors="0" time="0.001" timestamp="2026-10-25T17:47:10.767">
+    <testcase name="e2sm_kpm_generates_ric_indication_style1/0" value_param="NULL" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_test.cpp" line="187" status="run" result="completed" time="0." timestamp="2026-10-25T17:47:10.767" classname="e2sm_kpm_tests/e2sm_kpm_indication" />
+    <testcase name="e2sm_kpm_generates_ric_indication_style2/0" value_param="NULL" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_test.cpp" line="270" status="run" result="completed" time="0." timestamp="2026-10-25T17:47:10.768" classname="e2sm_kpm_tests/e2sm_kpm_indication" />
+    <testcase name="e2sm_kpm_generates_ric_indication_style3/0" value_param="NULL" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_test.cpp" line="371" status="run" result="completed" time="0." timestamp="2026-10-25T17:47:10.768" classname="e2sm_kpm_tests/e2sm_kpm_indication" />
+    <testcase name="e2sm_kpm_generates_ric_indication_style4/0" value_param="NULL" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_test.cpp" line="529" status="run" result="completed" time="0." timestamp="2026-10-25T17:47:10.768" classname="e2sm_kpm_tests/e2sm_kpm_indication" />
+    <testcase name="e2sm_kpm_generates_ric_indication_style5/0" value_param="NULL" file="/home/nyu/ocudu/tests/unittests/e2/e2sm_kpm_test.cpp" line="674" status="run" result="completed" time="0." timestamp="2026-10-25T17:47:10.768" classname="e2sm_kpm_tests/e2sm_kpm_indication" />
+  </testsuite>
+</testsuites>

@@ -162,7 +162,7 @@ static char* serialize_report(const kpm_ind_data_t* kpm, const global_e2_node_id
         else fprintf(out, "\"metric_id_%u\"", type->id);
         const meas_record_lst_t* value = &rows->meas_data_lst[j].meas_record_lst[z];
         if (value->value == INTEGER_MEAS_VALUE)
-          fprintf(out, ":{\"type\":\"integer\",\"value\":%d}", value->int_val);
+          fprintf(out, ":{\"type\":\"integer\",\"value\":%u}", value->int_val);
         else if (value->value == REAL_MEAS_VALUE && isfinite(value->real_val))
           fprintf(out, ":{\"type\":\"real\",\"value\":%.17g}", value->real_val);
         else fputs(":{\"type\":\"no_value\",\"value\":null}", out);

@@ -1,5 +1,14 @@
 # DU Metric Expansion and Reporting Periods
 
+**October 25 implementation update:** the accepted seven-measurement baseline
+now runs at 100 ms. The operator then authorized the
+[first expanded 27-measurement profile](du_kpm_expansion_stage1.md), also at
+100 ms, with CU identity kept at 1 s. It is implemented and offline-verified;
+expanded real-radio validation is pending. CQI retains the console's rounded
+INTEGER mean and new custom names have no FALCON prefix. This supersedes the
+older rate order and proposed naming below for this first batch. The earlier
+branch inspection and broader inventory are retained as historical planning.
+
 ## Decision and sequence
 
 On October 24, 2026, the operator requested broader DU DL/UL telemetry before

@@ -135,7 +135,7 @@ IP, IMSI and APN are recorded for each role. Retain `summary.json` and both logs
 | SUPI | `imsi-001010000000101` | `imsi-001010000000102` |
 | DNN | `internet` | `internet2` |
 | UE IPv4 | Matches current Laptop UE1 summary | Matches current Laptop UE2 summary |
-| KPM | Seven metrics, including `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB` | Same seven metrics |
+| KPM | 27 raw measurements from Spark's expanded profile, including `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB` | Same 27 measurements |
 | DU cadence | `granularity_ms=100`, about 10 reports/s | `granularity_ms=100`, about 10 reports/s |
 | RF during UL | REAL samples; periods without usable PUSCH can be `no_value` | Same |
 

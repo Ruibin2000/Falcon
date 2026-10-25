@@ -12,7 +12,7 @@ capability advertisement, codec and xApp.
 | --- | --- |
 | Plan | 1 |
 | Task | `e2sm-kpm-du-rf-metrics` |
-| Status | Current seven-metric 100 ms DU / 1 s CU stage complete and accepted by the operator on October 25; snapshot synchronization, the context-replacement PRB-index defect and expanded coverage remain follow-up work outside current acceptance |
+| Status | Seven-metric stage accepted; first expanded 27-measurement profile implemented with offline verification; expanded dual-UE live validation pending. Snapshot synchronization and later metric families remain separate. |
 | Created at | 13 : 23: 41 Oct 11, 2026 EDT |
 | Last updated at | Oct 25, 2026 EDT |
 | Time zone | `America/New_York` |
@@ -28,7 +28,28 @@ capability advertisement, codec and xApp.
 Maintain this file as the single plan for this task. Mark steps complete only
 after their exit criteria pass and their evidence has been retained.
 
-## October 24 Metric Coverage and Frequency Decision
+## October 25 First Expansion
+
+The operator authorized the first expansion after accepting the seven-metric
+100 ms baseline. The [stage-one contract](../docs/e2sm-kpm/du_kpm_expansion_stage1.md)
+defines 27 raw E2 measurements: the original seven, 14 added UE measurements
+and six sample-count/age fields. The added `PRB.UsageDl.Percent` and
+`PRB.UsageUl.Percent` retain fractional percentages as REAL alongside the
+existing INTEGER PRB percentages. CQI and MCS retain rounded INTEGER means.
+PHR is signed REAL; BSR and DL buffer retain explicit last-indication validity
+and age. HARQ/CRC failure ratios are separate xApp-derived fields.
+
+This implementation corrects CQI UE attribution, PRB sparse-index lookup and
+premature percentage truncation. The expanded profile is explicit; the
+seven-metric launcher default and five-metric legacy backup remain available.
+DU periods stay 100 ms, CU identity 1000 ms and Core polling 1 s. This
+supersedes the earlier 1000 -> 200 -> 100 ms sequence for this first batch.
+The [Spark procedure](../docs/dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)
+now targets expanded live validation. Offline results do not close that live
+step. RI/OLLA/TA, additional RLC, cell and RU-health metrics remain later work.
+The source-snapshot concurrency deferral is unchanged.
+
+## October 24 Metric Coverage and Frequency Decision (Historical)
 
 **October 25 update:** the operator subsequently requested a 100 ms period for
 the current seven-metric dual-UE profile. That request supersedes the earlier
@@ -78,7 +99,10 @@ Do not change running periods as part of a getter patch. The original
 operation begins only in Steps 15–16. The previous concurrency deferral is
 not evidence of synchronized snapshots and is not silently marked resolved.
 
-## RF Baseline and Current Implementation State
+## RF Baseline and Implementation State at the Original Inspection
+
+The following records the earlier branch inspection. The current integrated
+and accepted baseline, followed by first-expansion status, is recorded above.
 
 At the original inspection baseline, KPM `get_rsrp` and `get_rsrq` both returned
 an integer cast of the first UE snapshot's `pusch_snr_db`, without correct

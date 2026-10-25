@@ -1,0 +1,86 @@
+{
+  "expansion.xml": {
+    "bytes": 2289,
+    "sha256": "c7a0a8fc62bd997b1e3675d372cd6faf636eb2680d965a76c9a71d25efa91421"
+  },
+  "expanded-config.log": {
+    "bytes": 1131,
+    "sha256": "46c133acafaef04d72f12a365ade9964ca5acd4b4cbcf3548f402f05975c60ac"
+  },
+  "verification.json": {
+    "bytes": 6536,
+    "sha256": "e5e41115d7d09de2836beb5a8a14ab5bab4e5678ae36cbb9d81dbee608f08b86"
+  },
+  "expansion-test-build.log": {
+    "bytes": 10389,
+    "sha256": "dde9882bed963add52790180c6b445f9a30dd26befd4a18e26cc4dd17472bdf6"
+  },
+  "ocudu-expansion-test.cpp": {
+    "bytes": 14041,
+    "sha256": "715e382d27d18a158abd4c7db9f59335e691b02ad9c3dba739b2a6c0474a54a6"
+  },
+  "du1-dryrun.log": {
+    "bytes": 41,
+    "sha256": "ca8fefc27d7a7e8ef67107870b14a37fc5b8926864e892156a78c9d847be3f98"
+  },
+  "provider.log": {
+    "bytes": 6857,
+    "sha256": "58ef4c215578408340cf80364f8bf08137f76619a16ae3407cf6263f3e82fd2d"
+  },
+  "metrics.xml": {
+    "bytes": 4517,
+    "sha256": "e7557706684a70a3245af4b3249a99f4b22af28e2c77d24b3205a861b5476385"
+  },
+  "scheduler.xml": {
+    "bytes": 4013,
+    "sha256": "5d6312ce7485e8f45d9c387f25d66e170c4517234439e36444508e31242a625a"
+  },
+  "kpm.log": {
+    "bytes": 2467,
+    "sha256": "e9637f2c1a5256f7d52c5f8d9c3fc702b39dc0aaa0b03a0bd92ff824ba4a88ff"
+  },
+  "metrics.log": {
+    "bytes": 1313,
+    "sha256": "78a8d833dfa283a7071b9f9f1ea05b688f70de15800239b57cf4cc794086e650"
+  },
+  "ocudu.patch": {
+    "bytes": 39656,
+    "sha256": "228332b8a30cb344a227cd5aac3ae670f61fa5662beaf5cd4768ecb4448fc669"
+  },
+  "expansion.log": {
+    "bytes": 282,
+    "sha256": "f31fbb929f027e6af881336249791382d6b32b7e9275cda65f604a9475d95937"
+  },
+  "kpm.xml": {
+    "bytes": 2232,
+    "sha256": "27d55355112a8f416d7c211ee81e1d7a3351b2663326dcdeb2c7aa26b9120823"
+  },
+  "scheduler.log": {
+    "bytes": 173,
+    "sha256": "942d0ad4585ef09580c7ce3972dedcc0c1b20bffb173802ac5b0994f2d40f7ed"
+  },
+  "du-build.log": {
+    "bytes": 10389,
+    "sha256": "dde9882bed963add52790180c6b445f9a30dd26befd4a18e26cc4dd17472bdf6"
+  },
+  "python.log": {
+    "bytes": 12807,
+    "sha256": "b947c02fea3c71e6132566917644e645253067741c4a9d8932410a13accfb0bf"
+  },
+  "synthetic-pdu-size.txt": {
+    "bytes": 84,
+    "sha256": "7303b223c39e14917bbd534cc3cc120b2cb6665838db12bcf0930fecba629e5c"
+  },
+  "provider.xml": {
+    "bytes": 3324,
+    "sha256": "2abb5f5f0c1aa7f2a8f4b1b1fc54b9c51015e35985ad2502aa1cb2d15eafa5dd"
+  },
+  "collector-build.log": {
+    "bytes": 470,
+    "sha256": "82cc9d62e46fbdf7a7de033b55c6b63f392913f4078a87bdd81786caa58f0db4"
+  },
+  "du2-dryrun.log": {
+    "bytes": 41,
+    "sha256": "ca8fefc27d7a7e8ef67107870b14a37fc5b8926864e892156a78c9d847be3f98"
+  }
+}

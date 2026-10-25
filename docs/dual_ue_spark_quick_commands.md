@@ -3,7 +3,7 @@
 Updated: 2026-10-25. Developer: Ruibin Chen.
 
 This is the complete Spark startup and experiment procedure for two UEs,
-using the default seven-metric DU profile at **100 ms** and CU identity
+using the first expanded **27-measurement** DU profile at **100 ms** and CU identity
 reports at **1 second**. Follow sections 1–6 to prepare/start the testbed,
 then section 7 for a 120-second xApp capture overlapping a 60-second dual
 uplink. Inspect the actual report cadence and both UE/IP bindings.
@@ -17,14 +17,17 @@ uplink. Inspect the actual report cadence and both UE/IP bindings.
 | Identity source freshness limit | **3 seconds** |
 
 These defaults apply throughout configuration, build checks, startup and
-result inspection below. Actual 100 ms operation is verified from the new
-capture; configuration values alone do not establish live timing.
+result inspection below. Actual expanded 100 ms operation must be verified from the new
+capture; configuration values alone do not establish live timing. See the
+[first-expansion contract](e2sm-kpm/du_kpm_expansion_stage1.md) for units,
+sample counts, latest-value ages and missing-data rules. The accepted seven
+and legacy five profiles remain available; the launcher's default stays seven.
+For this expansion rebuild/restart both DUs and the xApp. Healthy CU, RIC
+and Core may keep running.
 
-The current E2 binaries enable `SCTP_NODELAY` to avoid holding small KPM
-messages behind delayed acknowledgments. After deploying this update,
-restart CU, both DUs and the identity xApp; RIC and Core may keep running.
-DU sampling stays at 100 ms and CU identity at 1 s. Verify actual receive
-spacing and ordering from the new capture.
+The accepted E2 binaries already enable `SCTP_NODELAY` to avoid holding small
+KPM messages behind delayed acknowledgments. This behavior is retained.
+Verify actual receive spacing and ordering again with the expanded capture.
 
 The standalone xApp combines DU KPM, CU identity-bearing E2 reports and existing
 read-only AMF/SMF infoAPIs. Its `bindings.txt` contains only xApp records:
@@ -176,6 +179,7 @@ cmake --build /home/nyu/ocudu/build-integrated --target ocu odu_split_8 -j4 &&
 bash scripts/ue_identity/build.sh &&
 /tmp/falcon-xapp-ue-identity --check-config configs/flexric/ric_ue_identity.conf &&
 /tmp/falcon-xapp-ue-identity --check-config configs/flexric/xapp_ue_identity.conf &&
+/tmp/falcon-xapp-ue-identity --check-config configs/flexric/xapp_ue_identity_expanded.conf &&
 /home/nyu/ocudu/build-integrated/apps/cu/ocu \
   -c /home/nyu/ocudu/configs/cu.yml \
   -c configs/ocudu/cu_identity_e2.yml --dryrun &&
@@ -551,7 +555,7 @@ gNB 411 / DU ID 1, and gNB 411 / DU ID 2. The xApp discovers nodes at startup;
 if one is missing, fix its E2 connection before launching the xApp.
 
 This command uses the maintained identity coordinator, the **dual UE**
-`local.json`, and the default **seven-metric** subscription. The two RF names
+`local.json`, and the explicit **27-measurement expanded** subscription. The two RF names
 are `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB`. CU identity subscriptions, including
 `FALCON.UE.RRCState`, remain enabled. `--observed-unique` allows the existing
 experimental CU/DU/Core association; `--fresh-only` disables historical IP
@@ -572,7 +576,7 @@ cd /home/nyu/Desktop/Falcon_repo/Falcon
 IDENTITY_DUAL_RUN=$(mktemp -d /tmp/falcon-identity-dual.XXXXXXXX)
 printf 'Spark capture directory: %s\n' "$IDENTITY_DUAL_RUN"
 cp configs/ue_identity/local.json "$IDENTITY_DUAL_RUN/local.json"
-cp configs/flexric/xapp_ue_identity.conf "$IDENTITY_DUAL_RUN/xapp.conf"
+cp configs/flexric/xapp_ue_identity_expanded.conf "$IDENTITY_DUAL_RUN/xapp.conf"
 python3 scripts/ue_identity/xapp_ue_identity.py \
   --config "$IDENTITY_DUAL_RUN/local.json" \
   --e2-config "$IDENTITY_DUAL_RUN/xapp.conf" \
@@ -593,7 +597,7 @@ until the xApp has finished cleanup.
 
 | File in the printed directory | Contents |
 | --- | --- |
-| `bindings.txt` | Readable xApp output: UE/DU identity, SUPI, NGAP/GUAMI, PDU/DNN/current IP, and seven KPM measurements with types and units |
+| `bindings.txt` | Readable UE/DU/Core/session/current-IP association, 27 raw KPM measurements, and separately labelled xApp-derived failure ratios |
 | `rows.ndjson` | The same correlated records in machine-readable form |
 | `inputs.ndjson` | Decoded CU/DU reports and read-only Core snapshots used by the association |
 | `xapp.log` | SDK registration, subscription, cleanup and error messages |
@@ -630,7 +634,7 @@ reasons instead of treating subscription success alone as a successful join.
 ### 7b. Six-minute bidirectional idle/resume and independent matching
 
 This is an **optional follow-up**, not a prerequisite for the initial
-seven-metric integration test. After 7a completes, prepare the Laptop's
+expanded integration test. After 7a completes, prepare the Laptop's
 [idle/resume command](dual_ue_laptop_quick_commands.md#binding-idle) and leave
 it at `READY`. In the Spark xApp terminal, repeat the 7a capture command with
 a fresh `mktemp` directory and **`--duration 360`** instead of 120. After
@@ -645,7 +649,9 @@ and fresh resumed matches using the
 [full six-minute procedure and inspection](development/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test).
 The quick summary below alone does not establish idle transitions.
 
-### 7c. Inspect both UE bindings and the seven E2SM measurements
+### 7c. Inspect both UE bindings and the expanded E2SM measurements
+
+<a id="7c-inspect-both-ue-bindings-and-the-seven-e2sm-measurements"></a>
 
 <a id="7c-inspect-bindings-core-transitions-and-two-example-records"></a>
 
@@ -666,9 +672,9 @@ import sys
 
 root = Path(sys.argv[1])
 rows = [json.loads(line) for line in (root / 'rows.ndjson').open()]
-expected_metrics = {'DRB.RlcSduDelayDl', 'DRB.UEThpDl', 'DRB.UEThpUl',
-                    'RRU.PrbTotDl', 'RRU.PrbTotUl',
-                    'PUSCH.RSRP.dBFS', 'PUSCH.SNR.dB'}
+sys.path.insert(0, '/home/nyu/Desktop/Falcon_repo/Falcon/scripts/ue_identity')
+from metrics import EXPANDED
+expected_metrics = set(EXPANDED)
 expected_roles = {'1': ('imsi-001010000000101', 'internet'),
                   '2': ('imsi-001010000000102', 'internet2')}
 print('Records:', len(rows), dict(Counter(r['binding_status'] for r in rows)))
@@ -706,16 +712,18 @@ for du, expected in expected_roles.items():
          r['binding']['ran_ue_ngap_id']) for r in matched}))
     print('Unexpected SUPI/DNN on matched rows:', sum(
         (r['binding']['supi'], r['binding']['dnn']) != expected for r in matched))
-    print('Rows with exactly seven expected metrics:', sum(
+    print('Rows with exactly 27 expected E2 metrics:', sum(
         set(r['row']['metrics']) == expected_metrics for r in selected), '/', len(selected))
     print('Granularity ms:', dict(Counter(r['row'].get('granularity_ms') for r in selected)))
     du_reports = [e for e in reports if str(e['node'].get('du_id')) == du
                   and e['node']['node_type'] == 'ngran_gNB_DU']
     intervals('DU' + du + ' header', [int(e['header_time_us']) for e in du_reports])
     intervals('DU' + du + ' receive', [int(e['received_at_mono_us']) for e in du_reports])
-    for metric in ('PUSCH.RSRP.dBFS', 'PUSCH.SNR.dB'):
+    for metric in EXPANDED:
         print(metric, dict(Counter(r['row']['metrics'].get(metric, {}).get('type', 'absent')
                                    for r in selected)))
+    print('xApp-derived failure ratios (not raw E2 fields):', dict(Counter(
+        name for r in selected for name in r.get('derived_metrics', {}))))
     print('Positive-UL rows:', sum(
         (r['row']['metrics'].get('DRB.UEThpUl', {}).get('value') or 0) > 0 for r in selected))
     example = next((b for b in blocks if b.startswith('record=') and ' status=matched ' in b
@@ -731,7 +739,9 @@ Check the actual results against both Laptop role summaries:
 | UE1 / logical FR1 | DU ID 1, SUPI `imsi-001010000000101`, DNN `internet`, current Laptop UE1 IP in `10.45.0.0/16` |
 | UE2 / logical FR3 | DU ID 2, SUPI `imsi-001010000000102`, DNN `internet2`, current Laptop UE2 IP in `10.46.0.0/16` |
 | Current association | Both roles have repeated `status=matched` records with actual F1/NGAP/GUAMI/PDU identifiers; no cross-UE binding. `--fresh-only` produces no cached bindings. |
-| DU measurements | Both DUs carry all seven expected names; throughput uses kbit/s, delay 0.1 ms, PRB %, RSRP dBFS and SNR dB. |
+| DU measurements | Both DUs carry all 27 raw names with units/types from the expansion contract; original seven names remain present. CQI/MCS are rounded INTEGER means; signed PHR is REAL. `PRB.UsageDl.Percent` / `PRB.UsageUl.Percent` preserve fractional percentages as REAL; `RRU.PrbTotDl/Ul` remain INTEGER. |
+| Sample validity and age | CQI/MCS have sample counts; no observations produce noValue. PHR/BSR/buffer include age in ms and stay noValue until observed. Their latest values can persist across windows. |
+| Derived values | HARQ/CRC failure ratios are separately labelled xApp calculations; zero denominator gives noValue. They are not IP packet loss or first-transmission BLER. |
 | Rate and granularity | DU `granularity_ms=100`; measured header and receive interval medians near 100 ms for each DU; CU receive intervals near 1000 ms. Inspect p95/max and any gaps rather than assuming a hard deadline. |
 | RF availability | Both paths produce REAL RF values during UL traffic; negative RSRP is valid. A period without usable PUSCH can report `no_value`, which must remain distinct from measured zero. |
 | Delivery and cleanup | No Core/input errors or ingress loss; three subscription delete responses and xApp exit 0. |
@@ -747,7 +757,9 @@ inputs and output records. A correct DU RF value with `CU identity missing`
 does not verify the combined identity join: check the CU identity overlay,
 CU subscription and fresh CU input records. A missing RF name or rejected DU
 subscription needs the RF-capable DU binary/configuration; `--du-metrics 5`
-can diagnose legacy compatibility but does not complete this seven-metric test.
+can diagnose legacy compatibility but does not complete this expanded test.
+The accepted seven-measurement regression uses `--du-metrics 7` or
+`configs/flexric/xapp_ue_identity.conf`; it does not exercise the new names.
 
 These are new live results to be collected; the merged offline tests and
 earlier DU-only RF capture do not replace this two-UE combined run. Cold-start

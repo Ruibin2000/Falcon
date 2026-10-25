@@ -1,5 +1,17 @@
 # Project Progress and System Configuration
 
+**First KPM expansion, 2026-10-25:** the operator authorized the next stage.
+The [27-measurement UE profile](e2sm-kpm/du_kpm_expansion_stage1.md) adds CQI,
+PHR, DL/UL MCS, HARQ/CRC outcomes, BSR, DL buffer and MAC rates, with sample
+counts and latest-indication ages, plus separate REAL DL/UL PRB percentages.
+CQI and PRB getters now resolve sparse UE
+indices correctly; PRB percentages retain precision until final division.
+Offline/native and independent codec checks cover the extension; a new
+dual-UE live capture is pending. The Spark quick commands target this test.
+The accepted seven-measurement profile remains the launcher default and its
+October 25 acceptance below is preserved. Snapshot-concurrency work stays
+deferred; expanded coverage is not represented as already radio-validated.
+
 **Operator acceptance, 2026-10-25:** the current Dual UE integration and
 seven-metric reporting stage is **complete, accepted and operating normally**.
 The accepted scope includes both UE paths, PUSCH RSRP/SNR reporting, 100 ms DU
