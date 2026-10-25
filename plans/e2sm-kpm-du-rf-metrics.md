@@ -12,7 +12,7 @@ capability advertisement, codec and xApp.
 | --- | --- |
 | Plan | 1 |
 | Task | `e2sm-kpm-du-rf-metrics` |
-| Status | Seven-metric 100 ms DU cadence and delivery live-verified under UL load with CU at 1 s; snapshot synchronization deferred; context-replacement PRB checks and expanded coverage remain separate work |
+| Status | Current seven-metric 100 ms DU / 1 s CU stage complete and accepted by the operator on October 25; snapshot synchronization, the context-replacement PRB-index defect and expanded coverage remain follow-up work outside current acceptance |
 | Created at | 13 : 23: 41 Oct 11, 2026 EDT |
 | Last updated at | Oct 25, 2026 EDT |
 | Time zone | `America/New_York` |

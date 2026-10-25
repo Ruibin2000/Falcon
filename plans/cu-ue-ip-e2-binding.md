@@ -8,9 +8,9 @@ UE-IP-to-radio associations. Integrate with Plan 2 only in a later task.
 | --- | --- |
 | Plan | 4 |
 | Task | `cu-ue-ip-e2-binding` |
-| Status | Explicit CU DU scope and regular 100 ms DU delivery live-verified with CU at 1 s; shared lifecycle-generation proof and remaining recovery scope stay open |
+| Status | Current dual-UE scoped IP association and 100 ms DU / 1 s CU integration stage complete and accepted by the operator on October 25; shared lifecycle-generation proof and expanded recovery validation remain follow-up work outside current acceptance |
 | Created at | 23 : 08: 51 Oct 20, 2026 EDT |
-| Last updated at | Oct 25, 2026 EDT, after serving-DU live validation |
+| Last updated at | Oct 25, 2026 EDT, after operator acceptance of the current integration stage |
 | Time zone | `America/New_York` |
 | Developer | Ruibin Chen |
 | Reviewer | To be assigned |

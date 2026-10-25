@@ -1,5 +1,15 @@
 # Project Progress and System Configuration
 
+**Operator acceptance, 2026-10-25:** the current Dual UE integration and
+seven-metric reporting stage is **complete, accepted and operating normally**.
+The accepted scope includes both UE paths, PUSCH RSRP/SNR reporting, 100 ms DU
+delivery with 1000 ms CU identity, and current UE-IP association with explicit
+serving-DU scope. The [live validation report](reports/dual_ue_100ms_validation_report_2026-10-25.md)
+retains the supporting observations. Deferred snapshot synchronization,
+the PRB-index defect after context replacement, shared lifecycle-generation
+proof and expanded experiment/metric coverage remain follow-up work; they are
+not current acceptance gates or recorded as repaired by this decision.
+
 **Reporting update, 2026-10-25:** the current default seven-metric profile now
 uses **100 ms** DU scheduler/RLC statistics and DU KPM subscriptions. CU
 identity stays at **1000 ms**, Core polling at **1 second**, and freshness at

@@ -4,7 +4,10 @@ Developer: Ruibin Chen. Implementation started on October 21, 2026 on both
 repositories' `Dual-UE` branches. This is the first implementation milestone of
 [Plan 4](../../plans/cu-ue-ip-e2-binding.md). Real single/dual-UE observational
 association and uplink passed. Explicit CU serving-DU scope is implemented for
-the admitted local profile; shared lifecycle-generation and recovery gates remain open.
+the admitted local profile. On October 25, the operator accepted the current
+dual-UE integration and 100 ms DU / 1000 ms CU reporting stage as complete and
+operating normally. Shared lifecycle-generation proof and expanded recovery
+validation remain follow-up work outside this acceptance.
 
 The application combines CU-CP identity-bearing KPM, DU KPM with seven
 measurements by default, and read-only Open5GS AMF/SMF queries. It emits

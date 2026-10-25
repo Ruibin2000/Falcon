@@ -21,6 +21,11 @@ This result covers the sustained connected scenario in this approximately
 two-minute run. Shared snapshot concurrency, exact context-generation reuse
 and PRB behavior after context replacement retain their separate scope.
 
+**Operator acceptance, October 25, 2026:** the current Dual UE integration and
+seven-metric reporting stage is accepted as complete and operating normally.
+The follow-up items above are outside current acceptance; this decision does
+not change the captured measurements or claim those deferred items were fixed.
+
 ## Capture and experiment configuration
 
 The source is `/tmp/falcon-identity-dual.augMIYJM`, app instance
