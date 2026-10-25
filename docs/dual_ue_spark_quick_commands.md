@@ -21,8 +21,11 @@ broker/MPX integration are outside this change. The
 remain historical [Plan 3](../plans/dual-ue-du-fr1-channels.md) evidence.
 
 Run all commands in this file on Spark. Use Bash and separate foreground
-terminals for CU, RIC, each DU, each iperf server and xApp. Modem/AT/routing/client
-commands are in [Dual UE Laptop Quick Commands](dual_ue_laptop_quick_commands.md).
+terminals for CU, RIC, each DU, each iperf server and xApp. Use the
+[Laptop reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md) for
+automatic UE connection/recovery and the section 7 concurrent iperf test;
+manual modem/AT/routing/client commands remain in
+[Dual UE Laptop Quick Commands](dual_ue_laptop_quick_commands.md).
 Cold-start order: prepare candidate artifacts → Core → identity-configured RIC
 → identity-enabled CU → both DUs → both servers → complete Laptop UE1 sequence
 → complete Laptop UE2 sequence → section 7 dual UE identity/RF capture.
@@ -485,7 +488,13 @@ iperf3 -s -B 10.46.0.1 -p 5202
 
 Require `Server listening` on both ports. Reuse existing listeners rather than
 starting duplicate servers. Keep both listeners, both DUs, CU and RIC running.
-The laptop then follows the [complete UE1 sequence](dual_ue_laptop_quick_commands.md#ue1-start)
+For the automatic workflow, follow the
+[Laptop reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md): start
+one watcher per UE, wait for both connection `SUCCESS` markers and pass the
+dual-upload helper's `--check-only` preflight. Leave both watchers running,
+then continue with section 7 below.
+
+For manual operation, the laptop follows the [complete UE1 sequence](dual_ue_laptop_quick_commands.md#ue1-start)
 in its own terminal, followed by the [complete UE2 sequence](dual_ue_laptop_quick_commands.md#ue2-start)
 in another terminal. Each sequence includes identity/cell/PDU, complete role reset,
 its own table/rules, private ping and individual UL with the other UE's test
@@ -560,9 +569,12 @@ Require `Registered E2 Nodes = 3`, three successful subscriptions and
 `bindings.txt` should contain records for both `DU_ID=1` and `DU_ID=2`.
 Ctrl+C in this diagnostics terminal stops only `tail`.
 
-Once subscriptions are ready, run the Laptop's
-[60-second dual upload](dual_ue_laptop_quick_commands.md#dual-ul). Its
-`--check-only` preflight must pass first. Keep both clients' actual current
+Once subscriptions are ready, immediately run the Laptop's
+[60-second concurrent iperf command](dual_ue_laptop_reconnect_quick_start.md#6-start-spark-section-7a-then-upload-for-60-seconds).
+The [preceding current-IP/route preflight](dual_ue_laptop_reconnect_quick_start.md#5-check-both-current-ips-and-routes--laptop-terminal-3)
+must pass first; keep both reconnect watchers running through this capture.
+The [manual dual-upload procedure](dual_ue_laptop_quick_commands.md#dual-ul)
+is available when using manual UE setup instead. Keep both clients' actual current
 IP/SUPI/DNN and completion summaries for comparison; do not substitute old
 `.2` addresses. The 120-second capture leaves time for startup and the upload.
 UL traffic gives both DUs PUSCH samples for the RF check. Brief initial
@@ -673,7 +685,10 @@ work retain their separate supplemental or development scope.
 ## 8. Shutdown and retained evidence
 
 Finish laptop traffic and allow the finite xApp to receive all three subscription
-delete responses and stop naturally. Then follow [separate laptop shutdown](dual_ue_laptop_quick_commands.md#cleanup):
+delete responses and stop naturally. If using reconnect watchers, press Ctrl+C
+in each Laptop watcher terminal and require that role's shutdown `SUCCESS`, as
+shown in the [Laptop reconnect shutdown commands](dual_ue_laptop_reconnect_quick_start.md#8-stop-after-iperf-and-the-xapp-have-finished).
+For manually connected UEs, follow [separate laptop shutdown](dual_ue_laptop_quick_commands.md#cleanup):
 UE1 first, then UE2, using the updated helper's `--shutdown` to disconnect the PDU,
 clear host IPv4 configuration, delete each modem's bearers and disable it.
 After both laptop shutdown success markers, stop both iperf

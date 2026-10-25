@@ -563,7 +563,7 @@ Keep ModemManager running; do not interrupt the other UE to obtain an AT port.
 
 For automatic lock restoration and a PLMN registration request after radio
 failure, use the separate reconnect watcher, whose role entry scripts include the
-[`--auto-cell-lock --at-port ...` option](dual_ue_laptop_reconnect_quick_start.md#automatic-cell-lock-and-registration-after-radio-failure).
+[`--auto-cell-lock --at-port ...` option](runbooks/dual_ue_laptop_reconnect_reference.md#automatic-cell-lock-and-registration-after-radio-failure).
 This one-shot launcher keeps its read-only AT fallback.
 With those built-in options, the watcher immediately verifies/restores the serial cell lock
 and checks/requests registration on startup. Later radio failures get a 10-second
@@ -632,7 +632,7 @@ role-table source route and source/destination policy rules. Refresh shell
 variables and restart ordinary traffic commands explicitly bound to an old UE IP.
 For MPX subnet matching, automatic address tracking, subflow recovery and the
 retained experiment evidence, see
-[IP changes and MPX in the laptop reconnect guide](dual_ue_laptop_reconnect_quick_start.md#which-ip-bindings-change-and-how-mpx-follows-them).
+[IP changes and MPX in the laptop reconnect reference](runbooks/dual_ue_laptop_reconnect_reference.md#which-ip-bindings-change-and-how-mpx-follows-them).
 
 ### Recheck, logs and failure handling
 

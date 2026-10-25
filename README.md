@@ -220,7 +220,8 @@ docs/
 │   └── sim_provisioning_and_dual_ue.md
 ├── runbooks/
 │   ├── full_reproduction_runbook.md
-│   └── dual_fr1_runbook.md
+│   ├── dual_fr1_runbook.md
+│   └── dual_ue_laptop_reconnect_reference.md
 ├── networking/
 │   ├── dual_ue_subnets.md
 │   └── dual_ue_tun_split.md
@@ -244,7 +245,8 @@ docs/
 | [Dual UE laptop quick commands](docs/dual_ue_laptop_quick_commands.md) | IMEI/SIM selection, SA locks, actual IPv4 bearers, source/destination policy paths, concurrent UL with automatic current-bearer discovery and complete per-role IPv4 reset without old-session parameters |
 | [Dual UE Spark quick commands](docs/dual_ue_spark_quick_commands.md) | Core/CU/RIC/two-DU startup, two server endpoints, DU-tagged KPM capture and shutdown |
 | [Laptop one-shot startup and self-check](docs/dual_ue_automation.md) | One startup/self-check, then a passive wait until Ctrl+C shuts down the selected UE; optional batch exit and manual recovery |
-| [Laptop automatic reconnect Quick Start](docs/dual_ue_laptop_reconnect_quick_start.md) | Continuous per-UE monitoring/recovery until Ctrl+C shutdown; retry interval, three verbosity levels and MPX IP adaptation |
+| [Laptop automatic reconnect Quick Start](docs/dual_ue_laptop_reconnect_quick_start.md) | Commands and expected results for two reconnect watchers, concurrent iperf and Spark section 7 identity/RF capture |
+| [Laptop automatic reconnect full reference](docs/runbooks/dual_ue_laptop_reconnect_reference.md) | Archived detailed instructions: USB/AT mapping, recovery policy, intervals, output levels, logs, troubleshooting and MPX IP adaptation |
 | [Project Progress and System Configuration](docs/project_progress_and_configuration.md) | Verified architecture, phase status, configuration values and remaining work |
 | [Software Installation, Drivers, and OCUDU Environment](docs/setup/software_installation_and_drivers.md) | Software dependencies, drivers, compiler/build environment and installation issues |
 | [SIM Provisioning and Dual-UE Preparation](docs/setup/sim_provisioning_and_dual_ue.md) | Open Cells card programming, protected credentials, Quectel checks, and remaining dual-subscriber/dual-DU validation |
