@@ -12,7 +12,7 @@ capability advertisement, codec and xApp.
 | --- | --- |
 | Plan | 1 |
 | Task | `e2sm-kpm-du-rf-metrics` |
-| Status | Seven-metric 100 ms DU profile implemented; snapshot synchronization explicitly deferred; native/offline checks passed; live 100 ms cadence/load verification pending; expanded coverage remains future work |
+| Status | Seven-metric 100 ms DU cadence and delivery live-verified under UL load with CU at 1 s; snapshot synchronization deferred; context-replacement PRB checks and expanded coverage remain separate work |
 | Created at | 13 : 23: 41 Oct 11, 2026 EDT |
 | Last updated at | Oct 25, 2026 EDT |
 | Time zone | `America/New_York` |
@@ -41,9 +41,13 @@ Do not include provider locks, collection guards, E2 receive confinement or
 cleanup relocation in this rate change. Native 100 ms APER, throughput
 normalization, and mixed-rate IP mapping checks pass; no concurrent-snapshot
 guarantee is claimed.
-Live 100 ms timing, queue/radio health and operator restart verification are
-still pending. The earlier 1-second live capture is a baseline, not a new-rate
-result. Source-generation trace/header correlation remains unimplemented.
+The [October 25 live report](../docs/reports/dual_ue_100ms_validation_report_2026-10-25.md)
+verifies 1,179 reports per DU with receive-interval medians of 99.988 / 99.999 ms,
+no reversed headers and no reported collector ingress loss. RF and PRB values
+are available in every UL sample above 1 Mbit/s. The run keeps steady F1
+contexts; it does not validate the separate PRB-index defect after replacement,
+full radio health or source-snapshot synchronization. Source-generation
+trace/header correlation remains unimplemented.
 Use [the default Spark startup and 100 ms inspection commands](../docs/dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
 
 The operator requested more DL/UL measurements before any frequency increase.

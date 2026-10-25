@@ -1,0 +1,463 @@
+{
+  "capture": "/tmp/falcon-identity-dual.augMIYJM",
+  "output_rows": 2358,
+  "events": {
+    "core_snapshot": 120,
+    "kpm_report": 2476
+  },
+  "statuses": {
+    "unresolved": 1,
+    "ambiguous": 19,
+    "matched": 2338
+  },
+  "input_payloads_without_equal_output": 0,
+  "output_payloads_without_equal_input": 0,
+  "replay_mismatches": 0,
+  "independent_join_errors": [],
+  "matched_source_age_ms": {
+    "cu": {
+      "n": 2338,
+      "min": 0.247,
+      "median": 499.9815,
+      "p95": 998.198,
+      "p99": 999.424,
+      "max": 999.784,
+      "mean": 510.00904961505563
+    },
+    "core": {
+      "n": 2338,
+      "min": 75.932,
+      "median": 489.044,
+      "p95": 983.847,
+      "p99": 987.655,
+      "max": 990.614,
+      "mean": 532.8449281437125
+    }
+  },
+  "first_matched_sequence": 21,
+  "first_matched_header_utc": "2026-10-25T21:00:40.435384+00:00",
+  "nonmatched_after_first_match": 0,
+  "unverified_published_ips": 0,
+  "incomplete": {
+    "None": 2358
+  },
+  "drop_counters": {
+    "0": 2476
+  },
+  "cu": {
+    "reports": 118,
+    "first_header_utc": "2026-10-25T21:00:40.337424+00:00",
+    "last_header_utc": "2026-10-25T21:02:37.337416+00:00",
+    "header_span_s": 116.999992,
+    "effective_report_hz": 1.000000068376073,
+    "sorted_header_interval_ms": {
+      "n": 117,
+      "min": 999.28,
+      "median": 1000.0,
+      "p95": 1000.058,
+      "p99": 1000.134,
+      "max": 1000.69,
+      "mean": 999.9999316239316
+    },
+    "receive_interval_ms": {
+      "n": 117,
+      "min": 995.175,
+      "median": 1000.012,
+      "p95": 1000.446,
+      "p99": 1001.883,
+      "max": 1004.869,
+      "mean": 1000.0032136752137
+    },
+    "receive_intervals_90_to_110ms": 0,
+    "receive_intervals_above_150ms": 117,
+    "backward_headers": 0,
+    "duplicate_headers": 0,
+    "header_to_callback_ms": {
+      "n": 118,
+      "min": 0.292,
+      "median": 0.518,
+      "p95": 0.853,
+      "p99": 1.116,
+      "max": 1.212,
+      "mean": 0.5456016949152542
+    }
+  },
+  "core_receive_interval_ms": {
+    "n": 119,
+    "min": 998.303,
+    "median": 1000.103,
+    "p95": 1000.537,
+    "p99": 1001.135,
+    "max": 1001.486,
+    "mean": 1000.1014705882353
+  },
+  "du": {
+    "1": {
+      "reports": 1179,
+      "first_header_utc": "2026-10-25T21:00:39.436807+00:00",
+      "last_header_utc": "2026-10-25T21:02:37.238531+00:00",
+      "header_span_s": 117.801724,
+      "effective_report_hz": 9.999853652396462,
+      "sorted_header_interval_ms": {
+        "n": 1178,
+        "min": 97.529,
+        "median": 99.985,
+        "p95": 100.232,
+        "p99": 100.918,
+        "max": 102.426,
+        "mean": 100.00146349745332
+      },
+      "receive_interval_ms": {
+        "n": 1178,
+        "min": 96.214,
+        "median": 99.9875,
+        "p95": 100.452,
+        "p99": 101.253,
+        "max": 103.879,
+        "mean": 100.00133616298811
+      },
+      "receive_intervals_90_to_110ms": 1178,
+      "receive_intervals_above_150ms": 0,
+      "backward_headers": 0,
+      "duplicate_headers": 0,
+      "header_to_callback_ms": {
+        "n": 1179,
+        "min": 0.222,
+        "median": 0.595,
+        "p95": 0.922,
+        "p99": 1.373,
+        "max": 2.111,
+        "mean": 0.6172739609838847
+      },
+      "statuses": {
+        "ambiguous": 10,
+        "matched": 1169
+      },
+      "granularity_ms": {
+        "100": 1179
+      },
+      "f1_ids": {
+        "1": 1179
+      },
+      "bindings": [
+        {
+          "amf_ue_ngap_id": "35",
+          "assurance": "cu_reported_du_scope",
+          "cu_ue_index": "2",
+          "dnn": "internet",
+          "guami": [
+            "001",
+            "01",
+            "2",
+            "1",
+            "0"
+          ],
+          "method": "core_infoapi_cu_e2",
+          "pdu_session_id": "1",
+          "ran_ue_ngap_id": "2",
+          "serving_du_id": "1",
+          "supi": "imsi-001010000000101",
+          "ue_ipv4": "10.45.0.12"
+        }
+      ],
+      "callback_to_output_ms": {
+        "n": 1179,
+        "min": 0.079,
+        "median": 0.421,
+        "p95": 0.958,
+        "p99": 1.944,
+        "max": 8.677,
+        "mean": 0.5011119592875318
+      },
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "types": {
+            "no_value": 550,
+            "real": 629
+          },
+          "raw_values": {
+            "n": 629,
+            "min": 6.599999904632568,
+            "median": 14.399999618530273,
+            "p95": 18.600000381469727,
+            "p99": 21,
+            "max": 23,
+            "mean": 14.569475353616978
+          }
+        },
+        "DRB.UEThpDl": {
+          "types": {
+            "real": 1179
+          },
+          "raw_values": {
+            "n": 1179,
+            "min": 0,
+            "median": 126.47999572753906,
+            "p95": 528.8800048828125,
+            "p99": 662.239990234375,
+            "max": 911.6799926757812,
+            "mean": 189.16749725693663
+          }
+        },
+        "DRB.UEThpUl": {
+          "types": {
+            "real": 1179
+          },
+          "raw_values": {
+            "n": 1179,
+            "min": 0,
+            "median": 9347.919921875,
+            "p95": 25054.080078125,
+            "p99": 25240.80078125,
+            "max": 25332,
+            "mean": 10247.09381646196
+          }
+        },
+        "RRU.PrbTotDl": {
+          "types": {
+            "integer": 1179
+          },
+          "raw_values": {
+            "n": 1179,
+            "min": 0,
+            "median": 0,
+            "p95": 1,
+            "p99": 5,
+            "max": 13,
+            "mean": 0.35877862595419846
+          }
+        },
+        "RRU.PrbTotUl": {
+          "types": {
+            "integer": 1179
+          },
+          "raw_values": {
+            "n": 1179,
+            "min": 0,
+            "median": 82,
+            "p95": 86,
+            "p99": 86,
+            "max": 86,
+            "mean": 43.46225614927905
+          }
+        },
+        "PUSCH.RSRP.dBFS": {
+          "types": {
+            "no_value": 533,
+            "real": 646
+          },
+          "raw_values": {
+            "n": 646,
+            "min": -27.880001068115234,
+            "median": -9.713432312011719,
+            "p95": -6.461666584014893,
+            "p99": -5.318333148956299,
+            "max": -4.599999904632568,
+            "mean": -10.691643079367953
+          }
+        },
+        "PUSCH.SNR.dB": {
+          "types": {
+            "no_value": 533,
+            "real": 646
+          },
+          "raw_values": {
+            "n": 646,
+            "min": 8.486733436584473,
+            "median": 23.6203670501709,
+            "p95": 26.566001892089844,
+            "p99": 26.706701278686523,
+            "max": 34.70800018310547,
+            "mean": 22.849616397645082
+          }
+        }
+      },
+      "ul_over_1mbit_samples": 603,
+      "ul_over_1mbit_numeric_rf_and_prb": 603
+    },
+    "2": {
+      "reports": 1179,
+      "first_header_utc": "2026-10-25T21:00:39.435323+00:00",
+      "last_header_utc": "2026-10-25T21:02:37.238411+00:00",
+      "header_span_s": 117.803088,
+      "effective_report_hz": 9.999737867652502,
+      "sorted_header_interval_ms": {
+        "n": 1178,
+        "min": 97.991,
+        "median": 99.9865,
+        "p95": 100.217,
+        "p99": 100.583,
+        "max": 101.823,
+        "mean": 100.00262139219015
+      },
+      "receive_interval_ms": {
+        "n": 1178,
+        "min": 98.042,
+        "median": 99.999,
+        "p95": 100.383,
+        "p99": 100.867,
+        "max": 101.965,
+        "mean": 100.002460950764
+      },
+      "receive_intervals_90_to_110ms": 1178,
+      "receive_intervals_above_150ms": 0,
+      "backward_headers": 0,
+      "duplicate_headers": 0,
+      "header_to_callback_ms": {
+        "n": 1179,
+        "min": 0.253,
+        "median": 0.653,
+        "p95": 0.938,
+        "p99": 1.165,
+        "max": 1.482,
+        "mean": 0.6658066157760815
+      },
+      "statuses": {
+        "unresolved": 1,
+        "ambiguous": 9,
+        "matched": 1169
+      },
+      "granularity_ms": {
+        "100": 1179
+      },
+      "f1_ids": {
+        "1": 1179
+      },
+      "bindings": [
+        {
+          "amf_ue_ngap_id": "36",
+          "assurance": "cu_reported_du_scope",
+          "cu_ue_index": "3",
+          "dnn": "internet2",
+          "guami": [
+            "001",
+            "01",
+            "2",
+            "1",
+            "0"
+          ],
+          "method": "core_infoapi_cu_e2",
+          "pdu_session_id": "1",
+          "ran_ue_ngap_id": "3",
+          "serving_du_id": "2",
+          "supi": "imsi-001010000000102",
+          "ue_ipv4": "10.46.0.7"
+        }
+      ],
+      "callback_to_output_ms": {
+        "n": 1179,
+        "min": 0.093,
+        "median": 0.47,
+        "p95": 0.904,
+        "p99": 1.333,
+        "max": 10.387,
+        "mean": 0.518626802374894
+      },
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "types": {
+            "no_value": 551,
+            "real": 628
+          },
+          "raw_values": {
+            "n": 628,
+            "min": 6.699999809265137,
+            "median": 14.300000190734863,
+            "p95": 17.899999618530273,
+            "p99": 20.700000762939453,
+            "max": 22,
+            "mean": 14.130095538819672
+          }
+        },
+        "DRB.UEThpDl": {
+          "types": {
+            "real": 1179
+          },
+          "raw_values": {
+            "n": 1179,
+            "min": 0,
+            "median": 56.47999572753906,
+            "p95": 253.75999450683594,
+            "p99": 285.20001220703125,
+            "max": 646.4800415039062,
+            "mean": 90.24284992104774
+          }
+        },
+        "DRB.UEThpUl": {
+          "types": {
+            "real": 1179
+          },
+          "raw_values": {
+            "n": 1179,
+            "min": 0,
+            "median": 5630.64013671875,
+            "p95": 13297.759765625,
+            "p99": 15068.7998046875,
+            "max": 16217.599609375,
+            "mean": 5361.608143923948
+          }
+        },
+        "RRU.PrbTotDl": {
+          "types": {
+            "integer": 1179
+          },
+          "raw_values": {
+            "n": 1179,
+            "min": 0,
+            "median": 0,
+            "p95": 0,
+            "p99": 1,
+            "max": 3,
+            "mean": 0.015267175572519083
+          }
+        },
+        "RRU.PrbTotUl": {
+          "types": {
+            "integer": 1179
+          },
+          "raw_values": {
+            "n": 1179,
+            "min": 0,
+            "median": 82,
+            "p95": 86,
+            "p99": 86,
+            "max": 88,
+            "mean": 43.604749787955896
+          }
+        },
+        "PUSCH.RSRP.dBFS": {
+          "types": {
+            "no_value": 528,
+            "real": 651
+          },
+          "raw_values": {
+            "n": 651,
+            "min": -32.79999923706055,
+            "median": -11.458333969116211,
+            "p95": -7.713333606719971,
+            "p99": -6.948333263397217,
+            "max": -6.543333530426025,
+            "mean": -11.913518425140147
+          }
+        },
+        "PUSCH.SNR.dB": {
+          "types": {
+            "no_value": 528,
+            "real": 651
+          },
+          "raw_values": {
+            "n": 651,
+            "min": 4.440299987792969,
+            "median": 19.227434158325195,
+            "p95": 23.439634323120117,
+            "p99": 24.672000885009766,
+            "max": 26.416000366210938,
+            "mean": 18.661329443004274
+          }
+        }
+      },
+      "ul_over_1mbit_samples": 608,
+      "ul_over_1mbit_numeric_rf_and_prb": 608
+    }
+  }
+}

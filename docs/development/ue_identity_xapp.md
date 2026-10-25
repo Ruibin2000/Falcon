@@ -103,10 +103,11 @@ identity sources; 100 ms reports do not imply 100 ms end-to-end recovery.
 The E2 SCTP connector now enables `SCTP_NODELAY`. Leaving it unset allows
 Nagle buffering to interact with the 200 ms delayed-SACK timer. An isolated
 100 ms loopback sender reproduced gaps up to 208.09 ms with
-NODELAY off, versus 99.85–100.19 ms with it on. This verifies that buffering
-mechanism, not the repaired live pipeline. Recheck actual receive spacing and
-ordering after restarting CU/DUs and xApp. RIC already enables NODELAY; its
-source/plugin ABI is unchanged.
+NODELAY off, versus 99.85–100.19 ms with it on. The subsequent
+[live validation](../reports/dual_ue_100ms_validation_report_2026-10-25.md)
+records receive intervals of 96.214–103.879 ms for FR1 and 98.042–101.965 ms
+for FR3, with no reversed headers or reported collector ingress loss.
+RIC already enables NODELAY; its source/plugin ABI is unchanged.
 
 DU snapshot synchronization remains deferred by operator request. The 100 ms
 change preserves existing cache publication, E2 receive execution and cleanup
@@ -130,7 +131,9 @@ above. A mixed deployment with a legacy DU can use the five-metric profile
 for a common supported subscription. Custom `--e2-config PATH` remains
 supported and cannot be combined explicitly with `--du-metrics`.
 
-Validate the NODELAY and explicit-scope fixes in a new capture using
+The live run verifies both fixes for sustained connections, including equal
+F1 ID 1 on both DUs and 2,338 continuously matched rows after startup.
+For repetition, use
 [the Spark procedure](../dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
 A live legacy-DU subscription remains separate from this new-rate verification.
 
@@ -140,7 +143,8 @@ The October 25 scope/NODELAY correction passes 76 Python and 29 native checks,
 including independent APER decoding with duplicate per-DU F1 IDs. Retained
 [verification metadata](../evidence/2026-10-25_cu_du_scope_fix/verification.json)
 and [SCTP comparison](../evidence/2026-10-25_cu_du_scope_fix/sctp_cadence.json)
-are offline evidence; the repaired live capture remains pending.
+are offline evidence. The linked live report separately verifies receive
+cadence, typed metric delivery and current dual-UE binding.
 
 From Falcon:
 

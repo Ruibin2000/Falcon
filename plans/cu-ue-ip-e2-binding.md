@@ -8,9 +8,9 @@ UE-IP-to-radio associations. Integrate with Plan 2 only in a later task.
 | --- | --- |
 | Plan | 4 |
 | Task | `cu-ue-ip-e2-binding` |
-| Status | Live observational association passed; explicit CU DU scope and E2 NODELAY correction implemented/offline tested; corrective live rerun and shared lifecycle-generation proof pending |
+| Status | Explicit CU DU scope and regular 100 ms DU delivery live-verified with CU at 1 s; shared lifecycle-generation proof and remaining recovery scope stay open |
 | Created at | 23 : 08: 51 Oct 20, 2026 EDT |
-| Last updated at | Oct 25, 2026 EDT, after serving-DU corrective offline validation |
+| Last updated at | Oct 25, 2026 EDT, after serving-DU live validation |
 | Time zone | `America/New_York` |
 | Developer | Ruibin Chen |
 | Reviewer | To be assigned |
@@ -56,7 +56,13 @@ F1 reuse, stale/retired relations and ingress loss still fail closed; the
 historical lifecycle-proof requirements below remain. Cross-DU equality alone
 no longer taints a verified scope. E2 SCTP now enables NODELAY to remove the
 verified small-message buffering mechanism; source periods remain DU 100 ms,
-CU 1000 ms and Core 1 s. Rebuilt binaries/collector await a new live capture.
+CU 1000 ms and Core 1 s. The
+[new live report](../docs/reports/dual_ue_100ms_validation_report_2026-10-25.md)
+retains 2,358 DU rows: after 20 startup rows without a verified IP, all 2,338
+remaining rows match their current CU/AMF/SMF relations. Both DUs keep F1 ID 1;
+receive intervals remain near 100 ms with no reversed headers or reported
+collector ingress loss. This sustained-context result does not close the
+shared-generation or context-replacement requirements.
 The October 21 decisions and results below are historical checkpoints.
 
 ### October 21 implementation decision

@@ -6,21 +6,25 @@ identity stays at **1000 ms**, Core polling at **1 second**, and freshness at
 **3 seconds**. Sub-second RLC throughput retains REAL precision. Snapshot
 concurrency work remains deferred by operator request; the existing cache,
 cleanup and executor behavior is preserved. The DU binary is rebuilt and native/offline checks
-pass. Live 100 ms delivery and current dual-UE IP binding await a new capture.
+pass. The [October 25 live validation report](reports/dual_ue_100ms_validation_report_2026-10-25.md)
+records 1,179 reports per DU, receive-interval medians of 99.988 / 99.999 ms,
+and no reversed headers or reported collector ingress loss. After a roughly
+one-second startup window, all subsequent 2,338 rows match current UE IPs.
 Follow the
 [default Spark startup and section 7 inspection](dual_ue_spark_quick_commands.md)
 for subsequent measurements. Laptop connection commands and recovery policy
 are unchanged.
 
-**Follow-up fixes prepared, 2026-10-25:** the CU now carries an admitted
+**Follow-up fixes validated, 2026-10-25:** the CU now carries an admitted
 serving-DU scope through the standard optional RAN UE identity, and xApp
 matching distinguishes equal F1 IDs on different DUs. Genuine reuse within
 one DU remains conservative. E2 now enables `SCTP_NODELAY`; an isolated SCTP
 comparison reproduced approximately 208 ms gaps with it off and approximately
 100 ms spacing with it on. CU/DU binaries and the collector are rebuilt;
-76 Python and 29 native checks pass. Restart CU, both DUs and xApp, then
-repeat section 7 for live validation. The separate PRB-index defect and
-snapshot-concurrency deferral remain.
+76 Python and 29 native checks pass. The new live run confirms regular 100 ms
+delivery and distinct current IP bindings while both DUs use F1AP ID 1.
+The separate PRB-index defect after context replacement and snapshot-concurrency
+deferral remain outside this sustained-context result.
 See [implementation details](development/ue_identity_xapp.md).
 
 **Acceptance scope, 2026-10-24:** cold-start reproduction, full
