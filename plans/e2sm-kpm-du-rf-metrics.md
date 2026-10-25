@@ -1,17 +1,19 @@
 # E2SM-KPM DU RF Metrics Implementation Plan
 
-Enable FlexRIC to receive the correct per-UE uplink PUSCH RSRP and SNR values
-already produced by the OCUDU DU. Implement the measurement getters, advertise
-their capabilities through E2SM-KPM, preserve their values through the codec,
-and verify them in the FlexRIC xApp during actual uplink traffic.
+Extend FlexRIC reception from the PUSCH RSRP/SNR baseline to the usable DL/UL
+metrics produced by the OCUDU DU. First implement and validate the expanded
+coverage at 1000 ms, including every measurement shown by the DU `t` command
+and the remaining published DU metric families. Then validate 200 ms and
+finally 100 ms reporting. Preserve source semantics and complete UE/cell/DU
+attribution throughout the provider, capability advertisement, codec and xApp.
 
 | Field | Value |
 | --- | --- |
 | Plan | 1 |
 | Task | `e2sm-kpm-du-rf-metrics` |
-| Status | Offline and Step 7 build acceptance passed; live acceptance pending |
+| Status | RF offline and Step 7 build acceptance passed; expanded DL/UL coverage and live acceptance pending; frequency increase follows expanded 1000 ms acceptance |
 | Created at | 13 : 23: 41 Oct 11, 2026 EDT |
-| Last updated at | 15 : 19: 49 Oct 23, 2026 EDT |
+| Last updated at | 23 : 26: 45 Oct 24, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | Ruibin, project lead; decisions communicated by the developer |
@@ -19,38 +21,70 @@ and verify them in the FlexRIC xApp during actual uplink traffic.
 | OCUDU inspection baseline | `69801c7e9a3a72e4f29d98f14f626f156444c3ca` |
 | FlexRIC inspection baseline | `736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8`, with the existing local timestamp repair |
 | Prerequisites | Plan 2 Stage A gate for Plan 1 Steps 7–11 waived by reviewer Ruibin on 2026-10-23; hardware slot confirmed by the developer; preserve the committed FlexRIC timestamp repair |
-| Execution order | Reviewer-authorized Plan 1 deployment and acceptance may proceed after offline acceptance and the explicit approval gates below; [Plan 2](xapp-kpm-app-subscription.md) Stage A is not a blocker for Plan 1, and its own acceptance is not implied; retain coordination for Plan 2 Stage B |
+| Execution order | Inventory and expand DU metrics at 1000 ms; accept expanded source-to-xApp delivery; then 200 ms, then 100 ms. Plan 2 Stage A remains waived as a prerequisite for Plan 1; application forwarding has its own acceptance. |
 | Initial deployment | Existing OCUDU DU and FlexRIC RIC/xApp test environment |
 
 Maintain this file as the single plan for this task. Mark steps complete only
 after their exit criteria pass and their evidence has been retained.
 
-## Current State and Scope
+## October 24 Metric Coverage and Frequency Decision
 
-The current DU scheduler exports `pusch_rsrp_db` and `pusch_snr_db`. The existing
-KPM `get_rsrp` and `get_rsrq` functions both return an integer cast of the first
-UE snapshot's `pusch_snr_db`. They neither return the named measurement nor map
-each requested UE correctly. There is no independent SNR getter in that provider.
-The existing E2 connection and five-metric xApp reception provide a working
-transport baseline; successful transport does not establish RF measurement correctness.
+The operator requested more DL/UL measurements before any frequency increase.
+This decision extends the original two-RF-metric scope and supersedes its
+fixed seven-metric coverage limit. The earlier source reviews, passed tests
+and outstanding RF live checks remain valid records of the narrower baseline.
+Steps 1–11 retain that baseline; Steps 12–17 define the expanded completion
+scope and order. No new implementation or timing result is implied by this revision.
 
-Falcon already contains cumulative OCUDU and FlexRIC RF patches, regression
-sources, and a seven-metric xApp configuration. Both cumulative patches passed
-applicability checks against the inspected host checkouts on October 11.
-The RF changes have not been applied to those checkouts. The historical
-verification document reports offline passes, but its `/tmp` result directories
-are unavailable. Repeat acceptance with fresh retained evidence.
+| Phase | Required outcome | Period |
+| --- | --- | --- |
+| Inventory | Account for every DU console measurement and every published scheduler/RLC/MAC/PHY/RU metric field; record source, scope, validity and inclusion decision | 1000 ms baseline |
+| Expand | Implement reviewed getters, capabilities, profiles and typed xApp handling; repair existing getter defects affecting the selected metrics | 1000 ms |
+| Accept expanded coverage | Offline/native and real source-to-xApp validation of the declared metric set, identities and missing data | 1000 ms |
+| Increase frequency | Verify the same accepted coverage and actual producer periods under controlled load | 200 ms first, then 100 ms |
+| Application forwarding | Plan 2 preserves the expanded typed values and tests its bounded queues at each claimed rate | Separate gate; monitor reception does not establish forwarding |
 
-OCUDU now includes a local configuration commit on top of the original
-`050a2bb72e1d794cd60570d809987c1fcda3e54b` patch base. Its five RF source files
-are unchanged between that base and `69801c7`. However, the current offline
-runner rejects the newer HEAD. Resolve this deliberately in Step 5.
+The [coverage inventory and reporting contract](../docs/e2sm-kpm/2026-10-24_du_metric_expansion_and_reporting_periods.md)
+defines the candidate families and source paths. "All DU metrics" means all
+usable fields in published DU metric reports, with explicit disposition of
+conditional/unavailable fields. It does not mean subscribing to every name
+already registered without reviewing its implementation. Keep UE, cell and
+DU/radio scopes separate; introduce bounded profile groups when necessary.
 
-This task covers DU PUSCH telemetry, the KPM provider, capability advertisement,
-subscription, encoding/decoding, and xApp output. Keep the existing PHY estimator,
-RF configuration, averaging algorithm, timestamp repair, and original five
-metrics. Separate work is required for measured RSRQ, downlink UE measurements,
-calibrated dBm, CU RF telemetry, faster sampling, and unrelated CQI/PRB getter defects.
+Maintain the 1000 ms source/subscription baseline while expanding coverage.
+Do not change running periods as part of a getter patch. The original
+1000 ms instructions in Steps 1–11 apply to baseline acceptance; faster
+operation begins only in Steps 15–16. The previous concurrency deferral is
+not evidence of synchronized snapshots and is not silently marked resolved.
+
+## RF Baseline and Current Implementation State
+
+At the original inspection baseline, KPM `get_rsrp` and `get_rsrq` both returned
+an integer cast of the first UE snapshot's `pusch_snr_db`, without correct
+measurement or UE mapping. The current OCUDU `E2SM-KPM` branch includes the
+corrected RF implementation in `f8964521e8` and native tests in `b587084d0e`.
+They are committed locally and remain unpushed at this revision. The 17-case
+offline and 36-case native/build acceptance passed. Live seven-name
+subscription passed, but the reviewed live snapshot had no RF value rows;
+the advertised Setup names, RF numeric and lifecycle gates remain incomplete.
+
+Falcon contains the cumulative RF/native patches, regressions, seven-metric
+configuration and retained October 23 acceptance records. The FlexRIC RF
+monitor was built outside its checkout; it is not yet integrated into the
+new FlexRIC `E2SM-KPM` branch. Preserve the committed timestamp repair and
+distinguish the staged executable from the unchanged shared monitor.
+
+The original RF targets were identical across the reviewed unmodified bases.
+Step 5 resolved runner compatibility before acceptance. Its staging-only
+runner intentionally refuses already-patched targets; use applied-source
+validation for the current branch rather than weakening those guards.
+
+Keep the existing PHY estimator, RF configuration, PUSCH averaging algorithm,
+timestamp repair and baseline profile semantics. The expanded scope now
+includes DL/UL scheduler/RLC metrics, applicable cell and DU-health reports,
+their required getter corrections, and later reporting-period evaluation.
+Measured downlink UE RSRP/RSRQ/SINR, calibrated dBm and CU-owned telemetry
+require real additional sources; do not fabricate them from the DU RF values.
 
 ## Measurement Contract
 
@@ -884,8 +918,119 @@ slice filter, so this task does not validate slice isolation.
 | Lifecycle | UE reconnect, RIC/DU restart, Ctrl+C/SIGTERM deletion, and normal process exit recorded. |
 | Handoff | Reviewed patches/commits, sanitized evidence, exact launch paths, limits, and rollback retained. |
 
-Close the initial DU1 implementation only when these gates pass. List physical
-multi-UE/multi-DU acceptance as a follow-up when that hardware path is unavailable.
+These gates close the original RF baseline, not the expanded October 24 scope.
+List physical multi-UE/multi-DU acceptance as a follow-up when that hardware
+path is unavailable, without changing the separate Dual-UE functional acceptance.
+
+## Step 12 Freeze the Expanded DU Metric Registry
+
+- [ ] Inventory all measurements in the DU console and all fields in published
+  scheduler, RLC, MAC, PHY and RU reports using the linked coverage inventory.
+  Record included, derived, conditional or unavailable status for every field.
+- [ ] For every selected metric, freeze source/producer, name, unit, wire type,
+  UE/cell/DU scope, window/reset/last-value behavior, validity and source period.
+  Keep PCI/C-RNTI context distinct from the complete F1AP UE identity.
+- [ ] Include the existing seven metrics as a regression profile. Define explicit
+  expanded UE and separate cell/DU-health profiles, without inventing standard
+  KPM names or treating a registered name as a verified getter.
+- [ ] Audit CQI, PRB, throughput, volume, loss and delay getters. Account for
+  sparse/reordered UE indices, bearer aggregation, units, integer truncation,
+  missing samples and zero denominators before advertising expanded support.
+
+**Exit criteria:** every published field has a disposition and every included
+measurement has a reviewable source contract; unavailable data has no fake value.
+
+## Step 13 Implement Expanded Coverage at 1000 ms
+
+- [ ] Implement typed snapshot/getter paths for all included console metrics:
+  CQI, DL/UL RI and MCS, MAC bitrate, OK/NOK counts, derived error percentages,
+  DL buffer, PUSCH RSRP/SNR, BSR, sourced TA statistics and PHR.
+- [ ] Add the remaining included scheduler/RLC metrics and separate cell-level
+  reports. Integrate available MAC/PHY/RU health producers explicitly; preserve
+  their actual producer cadence and optional availability.
+- [ ] Preserve valid zero, negative/fractional REAL values, counters and optional
+  absence. Add validity/sample information when an existing zero/default cannot
+  distinguish absence. Do not apply period-mean semantics to last-known values.
+- [ ] Add capability/admission and xApp decoding/output for each declared profile.
+  Use typed measurements, not parsed terminal strings. Review ownership across
+  producer and E2 executors and retain any deferred consistency limitation.
+- [ ] Keep producers, KPM reporting and granularity at 1000 ms for this phase.
+  Retain source/patch/binary identities and the seven-metric regression profile.
+
+**Exit criteria:** implemented sources, actual advertised/admitted names and
+decoded fields agree with the registry; no unsupported metric is silently omitted.
+
+## Step 14 Accept Expanded Metrics Before Changing Frequency
+
+- [ ] Retain all existing offline/native/runner regressions and add tests for
+  every new getter, derived quantity, scope, validity rule and advertised name.
+  Cover sparse UE indices, two DUs sharing UE numbers, empty windows, counter
+  resets, signed/fractional/zero values and malformed requests.
+- [ ] Verify complete APER encode/decode and xApp preservation for expanded UE
+  and cell/health profiles. Check complete encoded E2AP PDU sizes against the
+  current 9100-byte sender limit and partition into declared bounded groups
+  if needed, without losing metric coverage.
+- [ ] At 1000 ms, retain actual Setup capabilities, subscription admission and
+  populated DL/UL traffic results for the included profiles. Compare source
+  values to xApp values with the registry's units and precision; keep the
+  unresolved original RF comparison gate explicit until it passes.
+- [ ] Verify absent data and normal subscription cleanup/restart. Keep physical
+  coverage explicit. Source scope and identity tests do not reopen the accepted
+  Dual-UE feature's separate supplemental experiment requirements.
+- [ ] Preserve a named accepted 1000 ms metric list and baseline measurements
+  before rate tests. Record broker receipt validation separately under Plan 2;
+  monitor output alone does not prove application forwarding.
+
+**Exit criteria:** expanded source correctness, live delivery and lifecycle at
+1000 ms pass for the declared coverage before any acceleration test begins.
+
+## Step 15 Evaluate 200 ms Reporting
+
+- [ ] Set DU statistics and KPM reporting/granularity to 200 ms together in new
+  candidate configurations. Update independent producers explicitly or retain
+  them in declared slower profiles; do not relabel repeated 1000 ms data.
+- [ ] Freeze the test duration, warm-up, metric list, traffic, identity checks
+  and tolerances for cadence, gaps and processing/queue delay before the run.
+- [ ] Measure full PDU sizes, arrival intervals, processing time, CPU use,
+  queue growth/drops and radio late/underflow/overflow changes relative to the
+  comparable 1000 ms run. Bound trace output and avoid slow callback I/O.
+- [ ] Verify missing-data and lifecycle behavior with the expanded coverage.
+  Preserve known snapshot-consistency limits; identical values alone do not
+  establish replay, and header time is not a PHY/window correlation key.
+- [ ] If forwarding is implemented, run Plan 2's matching client equality,
+  slow-client and queue tests. Otherwise label this monitor-path acceptance
+  only, with forwarding pending.
+
+**Exit criteria:** the declared 200 ms path passes the frozen correctness and
+load checks without sustained queue growth or unexplained loss. A parse-only
+check or a bandwidth estimate does not establish this result.
+
+## Step 16 Evaluate 100 ms Reporting After 200 ms
+
+- [ ] Preserve the accepted 200 ms configurations and evidence before changing
+  both applicable producer and subscription periods to 100 ms.
+- [ ] Repeat Step 15 with the same expanded metric coverage and declared slower
+  producers, measuring the actual higher report rate rather than assuming it.
+- [ ] Test low-traffic/no-sample windows as well as sustained DL/UL traffic.
+  Separate expected noValue from delayed, dropped or stale reports.
+- [ ] Record monitor and application-forwarding results independently. If the
+  100 ms checks fail, keep 200 ms as the supported profile and retain the reason;
+  do not silently reduce metric coverage or weaken checks to claim 100 ms.
+
+**Exit criteria:** 100 ms is supported only for the explicitly tested coverage,
+workload and delivery path; it is not a hard end-to-end latency guarantee.
+
+## Step 17 Close the Expanded Scope
+
+- [ ] Retain the metric registry, source mappings, reviewed code/patches, profile
+  versions, configurations, regression results and complete source/binary IDs.
+- [ ] Record expanded 1000 ms, 200 ms, 100 ms and broker forwarding as separate
+  completion items, with conditional/unavailable source fields disclosed.
+- [ ] Preserve the original RF evidence and the 1000 ms fallback. Record exact
+  supported rates, report size limits, queue behavior, scope and remaining limits.
+
+The expanded task closes only when its declared metric coverage and claimed
+rates have passed; the earlier RF-only completion table is not sufficient.
 
 ## Rollback
 
