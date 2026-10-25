@@ -685,40 +685,12 @@ when preparing the testbed. Keep the two printed `/tmp/falcon-duN-crash.*`
 directories with the xApp capture. A fresh trial is required after replacing
 a running DU; repeat UE connection verification before traffic.
 
-**Laptop terminal 1 — UE1 / FR1, if its watcher is not already running:**
-
-```bash
-sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 3 --verbose 2
-```
-
-**Laptop terminal 2 — UE2 / FR3, if its watcher is not already running:**
-
-```bash
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 3 --verbose 2
-```
-
-Expected before traffic: both watchers report `SUCCESS`. Reuse already-running
-watchers; do not start another owner for the same UE. Keep each watcher's
-printed evidence directory for its `run.log` and `attempts.jsonl`. Their normal
-health pings remain enabled; a role without iperf traffic can still have
-low-rate traffic and RF samples. This test does not require RRC/Core idle.
-
-**Laptop traffic terminal — copy/update only the two traffic helpers:**
-
-```bash
-(
-  set -euo pipefail
-  mkdir -p ~/falcon-ue-connect
-  ssh -T nyu@10.20.44.26 \
-    'tar -C /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1 -czf - run_dual_ul.py run_dual_stability.py' |
-    tar -xzf - -C ~/falcon-ue-connect
-)
-python3 ~/falcon-ue-connect/run_dual_stability.py
-```
-
-Expected: the script prints both current source IPs and `READY`, then waits for
-`START`. This two-file update does not replace running reconnect code. Do not
-run another traffic helper during the copy/test.
+Before starting this capture, complete the preparation in the
+[Laptop reconnect stability commands](dual_ue_laptop_reconnect_quick_start.md#7a-six-minute-stability-test--both-reconnect-watchers-stay-running)
+until the traffic runner shows `READY` and both watchers have reported
+`SUCCESS`. All Laptop transfers, watcher/traffic commands, phase schedules
+and result checks are maintained there. Normal watcher pings stay enabled;
+this test does not require RRC/Core idle.
 
 **Spark xApp terminal — start the complete six-minute capture:**
 
@@ -748,47 +720,14 @@ tail -n 40 "$IDENTITY_WATCH_RUN/xapp.log"
 ```
 
 Expected: three successful subscriptions and
-`identity collector: 3 KPM subscriptions, duration=360`. Return to the prepared
-Laptop traffic terminal within ten seconds of subscriptions and enter:
-
-```text
-START
-```
-
-The traffic runner executes two rounds, with fresh IMEI/SIM/bearer/IP and
-source-bound/ordinary-route checks before and after every phase:
-
-| Nominal Laptop seconds after START | Phase | FR1 iperf | FR3 iperf |
-| --- | --- | --- | --- |
-| 0–50 | 1 | UL | No iperf |
-| 50–100 | 2 | No iperf | UL |
-| 100–150 | 3 | UL | UL |
-| 150–200 | 4 | UL | No iperf |
-| 200–250 | 5 | No iperf | UL |
-| 250–300 | 6 | UL | UL |
-
-These are **300 seconds of scheduled traffic inside a 360-second capture**.
-Actual phase timestamps include preflight and connection/transfer overhead;
-use `events.ndjson`, not the nominal boundaries, for correlation. The runner
-has a 335-second overall budget and bounds each client's overrun to five
-seconds. The remaining capture time provides startup and post-traffic evidence.
-Let the xApp finish even after Laptop traffic completes; keep both watchers
-running until capture cleanup finishes.
-
-Expected Laptop output: six completed phases, eight successful client
-transfers and `STATUS: completed`. It prints a
-`/tmp/falcon-dual-stability-*` directory containing `truth.json`,
-`events.ndjson`, `summary.json`, and eight `phaseN-ueM.json` iperf records.
-A changed allocation is recorded and the next phase uses the current IP;
-it does not convert a disrupted run into a stable run. An already-running
-`iperf3 -B` client stays bound to its original IP. A failed preflight, client,
-time budget or interruption is retained as a failure. The runner's Ctrl+C
-stops only its own clients; the reconnect watchers and UEs remain running.
+`identity collector: 3 KPM subscriptions, duration=360`. Continue the linked
+Laptop procedure within ten seconds of subscriptions. Let the xApp finish its
+full 360 seconds and cleanup even after traffic completes. The 300 seconds of
+scheduled alternating/concurrent traffic leave startup and post-traffic
+coverage; correlate against the Laptop's actual `events.ndjson` timestamps.
 
 | Check after this run | Expected observation |
 | --- | --- |
-| Connection continuity | Both watcher logs have no recovery/failed health episode inside the test window; no bearer/IP/interface change in traffic snapshots. Keep any actual recovery for separate analysis. |
-| Traffic | Six phases and all eight receivers complete with exit 0 and positive payload; inspect each one-second interval for stalls and retransmissions. |
 | Identity | After subscription warmup, both roles remain currently matched to their own SUPI/DNN/current IP; no cross-UE assignment or cached fallback. Count any later unresolved/ambiguous interval. |
 | Delivery | Both DUs retain 100 ms granularity and receive/header intervals near 100 ms through solo, concurrent and low-traffic periods. Record p95/p99/max, gaps and ingress drops; CU stays near 1000 ms. |
 | Measurements | All 27 raw names retain the contract's types/units; CQI/MCS sample validity, signed PHR, ages, REAL/INTEGER PRB and derived failure ratios remain consistent. Low-traffic RF `no_value` is allowed. |

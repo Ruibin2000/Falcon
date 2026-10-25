@@ -156,14 +156,24 @@ stack-capture commands for [both DUs](dual_ue_spark_quick_commands.md#5a-spark-d
 Keep both DU debug directories with the Spark capture; the Laptop commands
 below are unchanged.
 
-**Laptop terminal 3 — after the previous traffic/capture has finished:**
+**Laptop terminal 3 — copy/update the traffic helpers after previous traffic/capture has finished:**
 
 ```bash
-python3 ~/falcon-ue-connect/run_dual_stability.py
+(
+  set -euo pipefail
+  mkdir -p ~/falcon-ue-connect
+  ssh -T nyu@10.20.44.26 \
+    'tar -C /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1 -czf - run_dual_ul.py run_dual_stability.py' |
+    tar -xzf - -C ~/falcon-ue-connect
+  python3 ~/falcon-ue-connect/run_dual_stability.py
+)
 ```
 
 **Expected:** both current UE addresses, then `READY`. Leave this prompt open.
-If the file is missing, use [Spark 7b's two-file transfer](dual_ue_spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul).
+This two-file transfer uses one SSH login and creates no intermediate archive.
+Both reconnect watchers from section 4 stay running; only the traffic helpers
+are updated. Keep each watcher's printed evidence directory. Do not start
+another watcher for a UE that already has one running.
 
 **Spark terminal:** start
 [section 7b's full 360-second xApp command](dual_ue_spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul).
