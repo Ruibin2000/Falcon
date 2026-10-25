@@ -1,30 +1,45 @@
 # KPM xApp Subscription and Publishing Interface Implementation Plan
 
-First implement the broker and an independent dummy application, then validate
-registration and KPM publishing with the five measurements already available
-through FlexRIC. After that baseline passes, extend the same xApp and interface
-with PUSCH RSRP and SNR, producing seven measurements per DU and UE. Keep MPTCP
-integration and traffic routing outside this task.
+Implement the broker and an independent dummy application with typed metric
+profiles. The October 24 priority is expanded DU DL/UL coverage at 1000 ms,
+followed by 200 ms and then 100 ms validation. Preserve the five-metric and
+seven-metric profiles as compatibility regressions; add the expanded profile
+from Plan 1's reviewed registry. Keep MPTCP integration and traffic routing
+outside this task.
 
 | Field | Value |
 | --- | --- |
 | Plan | 2 |
 | Task | `xapp-kpm-app-subscription` |
-| Status | Planned; implementation and acceptance pending |
+| Status | Planned; implementation and acceptance pending; expanded DU coverage at 1000 ms precedes frequency increases |
 | Created at | 14 : 15: 11 Oct 11, 2026 EDT |
-| Last updated at | 14 : 41: 36 Oct 11, 2026 EDT |
+| Last updated at | 23 : 26: 45 Oct 24, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | To be assigned |
 | Falcon inspection baseline | `3f12f627d80cdad14bc9a5ab267f8f65452a2da9` |
 | OCUDU inspection baseline | `69801c7e9a3a72e4f29d98f14f626f156444c3ca` |
 | FlexRIC inspection baseline | `736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8`, with the existing local timestamp repair |
-| Prerequisites | Stage A: existing five-metric KPM path, no RF patch required. Stage B: accepted Stage A and accepted RF implementation from [Plan 1](e2sm-kpm-du-rf-metrics.md) |
-| Execution order | Plan 2 Steps 1–8 (Stage A); then remaining [Plan 1](e2sm-kpm-du-rf-metrics.md) RF work and acceptance; then Plan 2 Steps 9–11 (Stage B) |
+| Prerequisites | Preserve Stage A/B compatibility checks; expanded forwarding requires Plan 1's reviewed metric registry and source correctness at 1000 ms. Plan 2 remains waived as a prerequisite for Plan 1's acquisition work. |
+| Execution order | Prioritize Plan 1's expanded DU metrics at 1000 ms; implement and accept expanded broker delivery at 1000 ms; then validate 200 ms and 100 ms on each implemented path. Keep Stage A/B regressions distinct. |
 | Initial deployment | xApp and dummy clients on the same Spark host |
 
 Maintain one plan for this task. Complete checkboxes only after their exit
 criteria pass and the reviewer can inspect the retained evidence.
+
+## October 24 Scope and Ordering Update
+
+The operator requested additional DL/UL metrics before faster reporting.
+The [metric coverage and period contract](../docs/e2sm-kpm/2026-10-24_du_metric_expansion_and_reporting_periods.md)
+and Plan 1 Steps 12–17 define the source expansion. The fixed five/seven-name
+schemas, commands and tests in Steps 1–11 below remain the compatibility
+profiles; they do not limit the expanded profile or establish full completion.
+Steps 12–14 below add expanded forwarding and rate acceptance.
+
+Plan 1 can validate the DU-to-monitor path independently. Only a running
+broker and independent client can establish forwarding acceptance. Expanding
+metric coverage stays at 1000 ms; no rate result is claimed merely because a
+configuration parses or a monitor prints frequent messages.
 
 ## Scope and Current Implementation
 
@@ -41,17 +56,23 @@ and live five-metric acceptance do not depend on applying that RF patch.
 | Stage | Implement and validate | Required gate |
 | --- | --- | --- |
 | A | Broker, registry, dummy, and the existing five KPM measurements | Fixture/socket tests and real five-metric E2-to-dummy delivery pass in Step 8 |
-| B | Add RSRP and SNR to the accepted interface | Start only after Stage A passes and Plan 1 is accepted; verify seven-metric delivery in Step 10 |
+| B | Add RSRP and SNR to the accepted interface | Accepted Stage A and original Plan 1 RF source acceptance; verify seven-metric delivery in Step 10 |
+| C | Expanded UE, cell and DU-health profiles from Plan 1's registry | Complete declared coverage and typed callback-to-client equality at 1000 ms; Steps 12–13 |
+| D | Faster delivery of the accepted expanded profiles | 200 ms first, then 100 ms; producer cadence, queue/load and client equality checks in Step 14 |
 
-Execute this plan's Steps 1–8 first, then complete any remaining Plan 1 RF work,
-then execute Steps 9–11. If Plan 1 is already accepted, retain its evidence and
-still require Stage A acceptance before adding the RF publisher profile.
+Stages A/B establish and preserve the compatibility interface at 1000 ms.
+They can be developed while Plan 1 expands the sources, without blocking its
+acquisition work. Accept the expanded 1000 ms coverage before either plan
+increases frequency. Stage B's prerequisite refers to the original RF source
+acceptance, not the later acceleration steps, so it creates no dependency cycle.
 
 There are two independent subscriptions:
 
-1. **E2 acquisition:** the xApp subscribes once to each selected DU for the active
-   metric profile at 1000 ms, using Style 4 and Format 3 reports. Start with five;
-   enable seven only after the Stage A gate.
+1. **E2 acquisition:** at 1000 ms, the compatibility profiles use one Style 4
+   subscription per DU. Expanded coverage uses a declared, bounded set of shared
+   subscriptions per DU/scope/metric group, including a separate cell/node path.
+   App registration never adds another copy of those subscriptions. Faster
+   acquisition begins only after expanded 1000 ms acceptance.
 2. **Application delivery:** each external app registers with the xApp's local
    server to receive all links or an exact list of DU and UE associations.
 
@@ -73,10 +94,11 @@ monitor terminal output to construct application data.
 Stage A includes mandatory live validation with the existing five measurements.
 Fixtures alone cannot authorize Stage B. This task verifies decoded-value
 preservation, attribution, registration, and delivery. It does not certify PHY
-calibration or fix the DU measurement getters. In particular, the current OCUDU
-PRB getters use an internal UE index as a snapshot vector offset;
-sparse/reordered multi-UE source correctness
-needs upstream validation or a separate repair. Preserve and disclose that limit.
+calibration. The expanded profile depends on Plan 1's getter audit and repairs;
+the existing OCUDU PRB paths use an internal UE index as a snapshot vector
+offset, and the CQI path does not correctly expose requested UE measurements.
+Receipt equality alone cannot certify those source values. Retain the caveat
+for legacy runs and require source correctness for expanded-profile acceptance.
 
 ## Architecture and Data Ownership
 
@@ -126,15 +148,19 @@ publisher; never replace a missing DU ID with zero. Preserve optional `ran_ue_id
 as metadata when present. UE F1AP IDs may change or be reused after reconnection;
 they are not permanent subscriber identifiers or MPTCP path identifiers.
 
-Select one process-wide profile at startup using `--metric-profile base5` or,
-after Stage A acceptance, `--metric-profile rf7`. Default to `base5`; the profile
-does not change during a process run and apps cannot change E2 acquisition.
-Profile changes require restart and fresh app registration.
+Select a process-wide profile at startup. Preserve `--metric-profile base5`
+and `--metric-profile rf7` with their original exact names, units and counts.
+Add a versioned expanded profile, provisionally `du_full_v1`, whose registry
+declares its UE, cell and DU-health groups. Freeze the final name/schema in
+Step 12. Profiles do not change during a process run and apps cannot change
+E2 acquisition. Changes require restart and fresh app registration.
 
-One outbound KPM message represents one UE row from one indication. Include
-exactly the active profile's five or seven named entries, with explicit absence
-states when the source omits an active metric. In `base5`, omit the two RF keys
-entirely; do not emit placeholder RSRP/SNR values or request them from the DU.
+For the compatibility profiles, one outbound KPM message represents one UE row
+from one indication. Include exactly the profile's five or seven named entries,
+with explicit absence states when the source omits an active metric. In `base5`,
+omit the two RF keys entirely; do not emit placeholder RSRP/SNR values or request
+them from the DU. Expanded rows carry their declared scope and the exact metric
+list for that scope/group; do not fabricate a UE identifier for a cell or DU row.
 Do not merge different DUs, UEs, indication rows, or source windows into one row.
 The active values share a KPM report row; that does not prove identical underlying
 PHY, scheduler, and RLC measurement windows.
@@ -146,8 +172,8 @@ PHY, scheduler, and RLC measurement windows.
 | `DRB.UEThpUl` | `base5` and `rf7` | `REAL` | `kbit/s` |
 | `RRU.PrbTotDl` | `base5` and `rf7` | `INTEGER` | `%` |
 | `RRU.PrbTotUl` | `base5` and `rf7` | `INTEGER` | `%` |
-| `FALCON.PUSCH.RSRP.dBFS` | `rf7` only, Stage B | `REAL` | `dBFS` |
-| `FALCON.PUSCH.SNR.dB` | `rf7` only, Stage B | `REAL` | `dB` |
+| `PUSCH.RSRP.dBFS` | `rf7` only, Stage B | `REAL` | `dBFS` |
+| `PUSCH.SNR.dB` | `rf7` only, Stage B | `REAL` | `dB` |
 
 Keep the raw delay unit; for example, `13.8` in `0.1 ms` means `1.38 ms`.
 RSRP is software uplink PUSCH DM-RS power. The SNR name retains the scheduler's
@@ -717,7 +743,7 @@ and record Stage B as pending. Do not enable RF placeholders to bypass either ga
   Use compatible verification checkouts if its runners reject the newer broker
   revision; preserve revision guards and review any base adaptation explicitly.
 - [ ] Add the `rf7` profile by extending the five-name list with exactly
-  `FALCON.PUSCH.RSRP.dBFS` and `FALCON.PUSCH.SNR.dB`. Use the reviewed seven-metric
+  `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB`. Use the reviewed seven-metric
   config while keeping `base5` as the default and retaining its config.
 - [ ] Add RF type/unit/validity handling: finite REAL values, valid zero,
   noValue, invalid integers, and non-finite values. Preserve full precision and
@@ -822,7 +848,7 @@ live data is unavailable, retain Stage A acceptance and leave Stage B pending.
 | --- | --- |
 | Protocol | Versioned registration/status/push/unregister schema and exact-link contract |
 | Stage A five metrics | Five-metric fixtures/socket cases plus real E2-to-dummy receipts with unchanged values/types/states |
-| Stage B prerequisites | Stage A accepted before RF implementation; Plan 1 accepted before RF integration |
+| Stage B prerequisites | Stage A accepted before rf7 publisher integration; original Plan 1 RF source acceptance retained |
 | Stage B seven metrics | Seven-metric fixtures/socket cases and actual RF-enabled E2-to-dummy receipts pass |
 | Multi-link isolation | Two DUs sharing a UE number and two UEs on one DU pass filtering |
 | Registration | Success precedes data; cutoff excludes prior callbacks; rejected requests do not mutate registry |
@@ -830,12 +856,87 @@ live data is unavailable, retain Stage A acceptance and leave Stage B pending.
 | Demonstration | Actual broker and two dummy clients register, receive, print, and exit successfully |
 | Regression | Accepted five-metric broker/dummy still pass after the extension; monitor and timestamp repair remain usable |
 | Live evidence | Actual five and seven metrics recorded separately; fixture success cannot close either live gate |
+| Stage C expanded coverage | Plan 1 registry/source acceptance and complete typed expanded-profile receipts at 1000 ms |
+| Stage D higher frequency | Expanded coverage accepted before 200 ms and then 100 ms; separate cadence, load, queue and client-equality evidence |
 
 Record `Stage A accepted; Stage B pending` when only the five-metric stage has
-passed. Close the full 5+2 task only after both stages' required fixture/socket,
+passed. Close the compatibility 5+2 scope only after both stages' required fixture/socket,
 demonstration, and live gates pass. Record physical multi-link coverage as pending
 when the second link is unavailable, while preserving successful single-link
 live results and mandatory fixture multi-link coverage. MPTCP remains separate.
+
+The expanded October 24 task additionally requires Steps 12–14; the legacy
+Stage A/B result cannot be reported as expanded or high-frequency acceptance.
+
+## Step 12 Implement Expanded Profiles and Scope Metadata
+
+- [ ] Consume Plan 1's reviewed registry rather than hard-coding a seven-entry
+  limit. Keep the accepted base5/rf7 names, units, counts and tests unchanged.
+- [ ] Define the versioned expanded profile and explicit UE/cell/DU scopes,
+  complete identities, per-group metric lists, source periods and aggregation
+  metadata. Preserve window averages, counters and last-known-value semantics.
+  Version any incompatible schema change and reject unsupported client/profile
+  combinations explicitly; do not send cell rows to a UE-only client.
+- [ ] Keep the existing exact UE-link filter behavior for compatibility clients.
+  Define explicit cell/DU filters for expanded scope, with no invented UE key.
+- [ ] Subscribe once per selected DU/scope/group, not once per application.
+  Track every successful handle for normal cleanup. Reassemble only explicitly
+  related groups; do not claim they share a source window without evidence.
+- [ ] Deep-copy typed callback values into bounded owned rows. Preserve signed
+  REAL values, valid zero, optional absence and full precision; reject numeric
+  range violations instead of truncating or wrapping counters/identifiers.
+- [ ] Keep JSON Lines/TCP as the application protocol, separate from the ASN.1
+  E2/E42 path. Calculate actual serialized frame sizes and revise declared
+  bounds/versioned grouping if necessary before expanded live tests.
+
+**Exit criteria:** expanded fixtures, scope/filter handling and value/type/state
+preservation pass, while base5/rf7 compatibility regressions remain intact.
+
+## Step 13 Accept Expanded Application Delivery at 1000 ms
+
+- [ ] Cover every declared metric group with fresh codec fixtures and independent
+  client receipts, including multiple UEs, duplicate UE numbers across DUs,
+  cell/DU rows, zero/absent data, integer limits, negative REALs and reordered names.
+- [ ] Establish populated DL/UL live delivery after Plan 1's expanded source
+  validation. Compare typed callback records against independent client records
+  by full identity, scope, profile/group and report sequence.
+- [ ] Verify bounded admission, partial I/O, queue saturation, client disconnect,
+  registration ordering and normal subscription cleanup at 1000 ms. Keep slow
+  terminal/file/socket operations outside the KPM callback.
+- [ ] Retain actual PDU and JSON frame sizes, callback/worker processing times,
+  queue depth/drop counters and the complete profile/configuration identities.
+  Freeze the expanded 1000 ms baseline before any rate increase.
+
+**Exit criteria:** the complete declared expanded profile reaches the independent
+application at 1000 ms with its source attribution, values, types and states intact.
+
+## Step 14 Validate 200 ms and Then 100 ms Forwarding
+
+- [ ] After expanded 1000 ms acceptance, coordinate a 200 ms DU producer period,
+  KPM reporting/granularity period and broker profile; then repeat at 100 ms
+  only after the 200 ms result passes. Keep slower producers explicitly labeled
+  or in a separate slower group. Forward on new callbacks, not a timer that
+  retransmits stale data to simulate a faster source.
+- [ ] Freeze coverage, traffic, client count, test duration and cadence/latency
+  tolerances before each comparison. Preserve the metric set rather than
+  reducing it to obtain a throughput pass.
+- [ ] Measure monotonic callback arrival, worker enqueue/publish and client
+  receipt timing separately, together with actual queue growth, CPU and drops.
+  Size the bounded evidence capture for the expected row count; the legacy
+  1000-row default can truncate a dual-DU 60-second run at 100 ms.
+- [ ] Exercise no-client, normal-client and non-reading/slow-client cases.
+  Verify the planned bounded-queue policy: count discarded ingress rows and
+  disconnect only the slow/overflowing subscriber, preserving healthy clients.
+  Include serialization-limit, partial-write and disconnect/reconnect tests.
+- [ ] Preserve low-traffic noValue behavior and exact typed callback-to-receipt
+  equality at each supported rate. Missing traffic samples are not queue loss.
+- [ ] Record monitor acquisition and application-forwarding acceptance separately
+  for 1000, 200 and 100 ms. A monitor-only success does not close this step.
+  If 100 ms fails, retain 200 ms and the failure evidence as the supported result.
+
+**Exit criteria:** each claimed rate passes the frozen cadence, correctness,
+bounded-memory and slow-client isolation checks for its declared coverage and
+workload. Reporting period alone is not a hard end-to-end latency guarantee.
 
 ## Rollback
 

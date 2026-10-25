@@ -1,0 +1,65 @@
+{
+  "offline-provider": [
+    "du_rf_metrics_kpm_test.advertises_both_rf_metrics_at_ue_level_and_rejects_other_scopes",
+    "du_rf_metrics_kpm_test.snr_is_distinct_from_rsrp_and_preserves_sparse_request_order",
+    "du_rf_metrics_kpm_test.snr_zero_is_valid_only_with_a_sample_and_missing_ues_keep_their_positions",
+    "du_rf_metrics_kpm_test.snr_nan_infinity_wrong_ue_and_replaced_snapshot_produce_no_value",
+    "du_rf_metrics_kpm_test.preserves_negative_fractional_power_and_zero_in_request_order",
+    "du_rf_metrics_kpm_test.missing_ue_nan_and_infinity_produce_no_value_without_shifting_records",
+    "du_rf_metrics_kpm_test.empty_or_replaced_snapshot_does_not_reuse_a_previous_power",
+    "du_rf_metrics_kpm_test.incompatible_ue_type_returns_no_value_in_place",
+    "du_rf_metrics_kpm_test.unsupported_labels_are_rejected_by_admission_and_collection",
+    "du_rf_metrics_kpm_test.actual_style4_admission_rejects_missing_duplicate_and_mixed_labels",
+    "du_rf_metrics_kpm_test.actual_scheduler_crc_samples_export_the_count_average_and_reset_each_window",
+    "du_rf_metrics_kpm_test.real_and_no_value_survive_actual_style4_collection_and_kpm_format3_aper_codec",
+    "du_rf_metrics_kpm_test.flexric_seven_metric_subscription_is_accepted",
+    "du_rf_metrics_kpm_test.production_ran_function_description_advertises_rf_only_at_ue_scope",
+    "du_rf_metrics_kpm_test.actual_style3_admission_enforces_complete_rf_label_and_scope_contract",
+    "du_rf_metrics_kpm_test.removed_f1ap_mapping_does_not_reuse_retained_rf_snapshot",
+    "du_rf_metrics_kpm_test.failed_crc_rf_samples_export_count_mean_and_reset_each_window"
+  ],
+  "native-provider": [
+    "e2sm_kpm_cu_cp_meas_provider_metrics_test.e2sm_kpm_cu_cp_returns_expected_rrc_metrics",
+    "e2sm_kpm_cu_cp_meas_provider_metrics_test.e2sm_kpm_cu_cp_returns_zero_without_metrics_report",
+    "e2sm_kpm_cu_cp_meas_provider_metrics_test.e2sm_kpm_cu_cp_supported_metrics_are_present",
+    "e2sm_kpm_meas_provider_metrics_test.e2sm_kpm_return_e2_level_metric_with_no_measurements",
+    "e2sm_kpm_meas_provider_metrics_test.e2sm_kpm_return_e2_level_metric_with_with_measurements",
+    "e2sm_kpm_meas_provider_metrics_test.e2sm_kpm_supported_metrics_are_supported",
+    "falcon_du_rf_native_test.exactly_one_no_label_and_ue_level_are_required",
+    "falcon_du_rf_native_test.nonfinite_values_and_zero_snr_without_samples_are_no_value",
+    "falcon_du_rf_native_test.production_ran_function_advertises_rf_names_without_dummy_rsrp_rsrq",
+    "falcon_du_rf_native_test.replacement_snapshot_and_unsupported_ue_do_not_reuse_first_ue",
+    "falcon_du_rf_native_test.sparse_f1ap_mapping_preserves_request_order_and_real_values"
+  ],
+  "native-scheduler": [
+    "scheduler_metrics_handler_tester.compute_bitrate",
+    "scheduler_metrics_handler_tester.compute_error_indications",
+    "scheduler_metrics_handler_tester.compute_latency_metric",
+    "scheduler_metrics_handler_tester.compute_mcs",
+    "scheduler_metrics_handler_tester.compute_nof_dl_oks_and_noks",
+    "scheduler_metrics_handler_tester.compute_nof_ul_oks_and_noks",
+    "scheduler_metrics_handler_tester.falcon_rf_failed_crc_samples_contribute_independent_db_means",
+    "scheduler_metrics_handler_tester.falcon_rf_missing_optional_values_do_not_increment_snr_count",
+    "scheduler_metrics_handler_tester.falcon_rf_valid_zero_has_a_sample_and_window_reset_clears_it",
+    "scheduler_metrics_handler_tester.metrics_sent_with_defined_periodicity",
+    "scheduler_metrics_handler_tester.when_no_events_took_place_then_metrics_are_zero"
+  ],
+  "native-crc": [
+    "crc_indication_builder.falcon_rf_measured_zero_is_distinct_from_missing_sentinels",
+    "crc_indication_builder.falcon_rf_wire_quantization_truncates_fractional_rsrp_and_signed_sinr",
+    "crc_indication_builder.valid_indication_passes",
+    "crc_indication_builder.valid_indication_with_no_metrics_passes"
+  ],
+  "native-adapter": [
+    "PowerValues/mac_rach_indication_fixture.PowerRelatedValuesWorks/0",
+    "PowerValues/mac_rach_indication_fixture.PowerRelatedValuesWorks/1",
+    "PowerValues/mac_rach_indication_fixture.PowerRelatedValuesWorks/2",
+    "PowerValues/mac_rach_indication_fixture.PowerRelatedValuesWorks/3",
+    "PowerValues/mac_rach_indication_fixture.PowerRelatedValuesWorks/4",
+    "falcon_rf_chain_test.measured_phy_zero_survives_both_translators_with_failed_crc",
+    "falcon_rf_chain_test.missing_phy_values_survive_fapi_sentinels_as_missing_mac_optionals",
+    "falcon_rf_chain_test.production_chain_quantizes_rsrp_and_positive_negative_sinr",
+    "falcon_rf_chain_test.production_phy_clamps_positive_and_negative_saturation_before_quantization",
+    "mac_rach_indication_fixture.CorrectMessageConvertsCorrectly"
+  ]
+}

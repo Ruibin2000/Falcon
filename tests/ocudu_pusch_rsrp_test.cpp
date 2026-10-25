@@ -20,7 +20,7 @@ using namespace asn1::e2sm;
 
 namespace {
 
-constexpr const char* metric_name = "FALCON.PUSCH.RSRP.dBFS";
+constexpr const char* metric_name = "PUSCH.RSRP.dBFS";
 
 // F1AP identifiers deliberately differ from sparse DU indices. An identity mapper
 // would hide a regression that indexes the metrics vector with the requested ID.

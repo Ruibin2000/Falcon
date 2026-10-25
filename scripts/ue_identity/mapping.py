@@ -8,7 +8,8 @@ from core import guami_key, integer, normalize, supi
 
 UNITS = {"DRB.RlcSduDelayDl": "0.1 ms", "DRB.UEThpDl": "kbit/s",
          "DRB.UEThpUl": "kbit/s", "RRU.PrbTotDl": "%", "RRU.PrbTotUl": "%",
-         "FALCON.UE.RRCState": "enum"}
+         "FALCON.UE.RRCState": "enum",
+         "PUSCH.RSRP.dBFS": "dBFS", "PUSCH.SNR.dB": "dB"}
 
 
 def node_key(node):

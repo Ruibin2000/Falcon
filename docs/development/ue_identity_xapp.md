@@ -5,9 +5,10 @@ repositories' `Dual-UE` branches. This is the first implementation milestone of
 [Plan 4](../../plans/cu-ue-ip-e2-binding.md). Real single/dual-UE observational
 association and uplink passed; strict DU/lifecycle and recovery gates remain open.
 
-The new application combines CU-CP identity-bearing KPM, existing DU base5 KPM,
-and read-only Open5GS AMF/SMF queries. It emits diagnostic NDJSON on stdout; SDK
-and error messages go to stderr. It has no Plan 2 broker or MPX dependency.
+The application combines CU-CP identity-bearing KPM, DU KPM with seven
+measurements by default, and read-only Open5GS AMF/SMF queries. It emits
+diagnostic NDJSON on stdout; SDK and error messages go to stderr. It has no
+Plan 2 broker or MPX dependency.
 
 ## Implemented path and current boundary
 
@@ -15,7 +16,7 @@ and error messages go to stderr. It has no Plan 2 broker or MPX dependency.
 SMF SUPI/PDU/IP ---------+
 AMF SUPI/NGAP/gNB -------+--> Python coordinator --> diagnostic NDJSON
 CU NGAP/GUAMI/F1 --> E2 -+
-DU1/DU2 base5 ----> E2 -+
+DU1/DU2 base5+RF -> E2 -+
 ```
 
 CU reads its local NGAP/F1 contexts on the CU-CP executor. Owned snapshots retain
@@ -66,6 +67,36 @@ app. A timer or an app restart alone does not prove that boundary. Full strict
 acceptance still requires explicit DU/lifecycle evidence on the wire, with its
 transport design reviewed under Plan 4.
 
+## DU measurement profiles
+
+The default `configs/flexric/xapp_ue_identity.conf` subscribes to seven DU
+measurements: `DRB.RlcSduDelayDl`, `DRB.UEThpDl`, `DRB.UEThpUl`, `RRU.PrbTotDl`,
+`RRU.PrbTotUl`, `PUSCH.RSRP.dBFS`, and `PUSCH.SNR.dB`. The RF names have no
+project prefix. RSRP uses software dBFS rather than calibrated dBm; SNR uses
+dB. Both retain REAL values or `no_value`, and their DU statistics use the
+reporting-period average rather than an instantaneous console reading.
+
+The default requires DUs that advertise both RF measurements. For legacy DUs,
+`configs/flexric/xapp_ue_identity_five.conf` preserves the original complete
+five-DU-measurement configuration. Select it explicitly with `--du-metrics 5`:
+
+```bash
+python3 scripts/ue_identity/xapp_ue_identity.py \
+  --du-metrics 5 --observed-unique --duration 60
+```
+
+Omitting `--du-metrics`, or passing `--du-metrics 7`, selects the seven-metric
+default. There is no automatic downgrade. Both profiles keep the same CU
+identity subscriptions, including the existing protocol name
+`FALCON.UE.RRCState`, and use the same CU/DU/Core association logic described
+above. A mixed deployment with a legacy DU can use the five-metric profile
+for a common supported subscription. Custom `--e2-config PATH` remains
+supported and cannot be combined explicitly with `--du-metrics`.
+
+The RF extension has synthetic two-DU/IP compatibility tests and recorded RF
+replay evidence. The merged live RF plus CU identity join and a live legacy-DU
+subscription still require deployment verification.
+
 ## Build and offline verification
 
 From Falcon:
@@ -114,6 +145,7 @@ Verify the actual SDK parser and plugin-directory loader without sockets:
 
 ```bash
 /tmp/falcon-xapp-ue-identity --check-config configs/flexric/xapp_ue_identity.conf
+/tmp/falcon-xapp-ue-identity --check-config configs/flexric/xapp_ue_identity_five.conf
 /tmp/falcon-xapp-ue-identity --check-config configs/flexric/ric_ue_identity.conf
 ```
 

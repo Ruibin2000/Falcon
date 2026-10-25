@@ -52,7 +52,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "configs/ue_identity/local.json")
     parser.add_argument("--collector", type=Path, default=Path("/tmp/falcon-xapp-ue-identity"))
-    parser.add_argument("--e2-config", type=Path, default=ROOT / "configs/flexric/xapp_ue_identity.conf")
+    profile = parser.add_mutually_exclusive_group()
+    profile.add_argument("--e2-config", type=Path, help="custom E2 subscription configuration")
+    profile.add_argument("--du-metrics", type=int, choices=(7, 5), default=7,
+                         help="DU metric profile: 7 by default; use 5 for legacy DUs")
     parser.add_argument("--replay", type=Path, help="offline NDJSON input; does not start E2 or HTTP")
     parser.add_argument("--duration", type=int, default=60)
     parser.add_argument("--probe-core", action="store_true", help="read Core interfaces without starting E2")
@@ -68,6 +71,9 @@ def main():
     policy.add_argument("--fresh-only", action="store_true",
                         help="withhold IP when current inputs for this link cannot verify it; disable historical IP reuse")
     args = parser.parse_args()
+    if args.e2_config is None:
+        name = "xapp_ue_identity_five.conf" if args.du_metrics == 5 else "xapp_ue_identity.conf"
+        args.e2_config = ROOT / "configs/flexric" / name
     if not 1 <= args.duration <= 3600:
         parser.error("duration must be 1..3600 seconds")
     config = json.loads(args.config.read_text())

@@ -30,7 +30,7 @@ int main(int argc, char** argv)
   require(strcmp(subscription.ran_type, "ngran_gNB_DU") == 0, "DU subscription type");
   require(subscription.time == 1000 && subscription.format == 4, "1000 ms Format 4");
   require(subscription.act_len == 6, "existing five metrics plus RSRP");
-  require(strcmp(subscription.actions[5].name, "FALCON.PUSCH.RSRP.dBFS") == 0, "new metric is subscribed");
+  require(strcmp(subscription.actions[5].name, "PUSCH.RSRP.dBFS") == 0, "new metric is subscribed");
   require(!config.db_params.enable, "database disabled for NONE_XAPP build");
   kpm_act_def_t action = gen_kpm_act_def(subscription, FORMAT_4_ACTION_DEFINITION, (uint32_t)subscription.time);
   byte_array_t encoded_action = kpm_enc_action_def_asn(&action);
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 
   static const uint32_t expected_ids[] = {1007, 2091, 3199};
   static const double expected_power[] = {-13.125, 0.0};
-  static const char expected_name[] = "FALCON.PUSCH.RSRP.dBFS";
+  static const char expected_name[] = "PUSCH.RSRP.dBFS";
   for (size_t i = 0; i < 3; ++i) {
     meas_report_per_ue_t* ue = &msg->meas_report_per_ue[i];
     require(ue->ue_meas_report_lst.type == GNB_DU_UE_ID_E2SM, "gNB-DU UE ID");

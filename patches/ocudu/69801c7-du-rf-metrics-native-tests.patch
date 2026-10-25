@@ -1,0 +1,509 @@
+OCUDU native RF regression tests for the approved 69801c7 / 4cffc04 baselines.
+Apply separately after the cumulative 050a2bb-du-rf-metrics.patch.
+This artifact modifies tests and one test target only; it adds no synchronization design.
+The PHY-to-FAPI-to-MAC tests call both production translators and use literal expected wire values.
+
+--- a/tests/unittests/e2/e2sm_kpm_meas_provider_metrics_test.cpp
++++ b/tests/unittests/e2/e2sm_kpm_meas_provider_metrics_test.cpp
+@@ -4,6 +4,8 @@
+
+ #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h"
+ #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
++#include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
++#include <limits>
+ #include "tests/unittests/e2/common/e2_test_helpers.h"
+ #include "ocudu/ran/du_types.h"
+ #include <algorithm>
+@@ -465,3 +467,240 @@
+     ASSERT_EQ(meas_records_items[0].integer(), metric.second) << "Unexpected value for metric " << metric.first;
+   }
+ }
++
++namespace {
++constexpr const char* falcon_rsrp_name = "PUSCH.RSRP.dBFS";
++constexpr const char* falcon_snr_name = "PUSCH.SNR.dB";
++
++class falcon_sparse_ue_id_translator : public odu::f1ap_ue_id_translator
++{
++public:
++  void remove_ue(du_ue_index_t index) { ids.erase(index); }
++
++  std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const du_ue_index_t& index) const override
++  {
++    const auto it = ids.find(index);
++    if (it == ids.end()) {
++      return std::nullopt;
++    }
++    return int_to_gnb_cu_ue_f1ap_id(it->second);
++  }
++
++  std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& id) const override
++  {
++    return get_gnb_cu_ue_f1ap_id(to_du_ue_index(gnb_du_ue_f1ap_id_to_uint(id)));
++  }
++
++  gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const du_ue_index_t& index) override
++  {
++    return int_to_gnb_du_ue_f1ap_id(index);
++  }
++
++  gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const gnb_cu_ue_f1ap_id_t& id) override
++  {
++    return int_to_gnb_du_ue_f1ap_id(get_ue_index(id));
++  }
++
++  du_ue_index_t get_ue_index(const gnb_du_ue_f1ap_id_t& id) override
++  {
++    const auto index = to_du_ue_index(gnb_du_ue_f1ap_id_to_uint(id));
++    return ids.count(index) == 0 ? INVALID_DU_UE_INDEX : index;
++  }
++
++  du_ue_index_t get_ue_index(const gnb_cu_ue_f1ap_id_t& id) override
++  {
++    for (const auto& pair : ids) {
++      if (pair.second == gnb_cu_ue_f1ap_id_to_uint(id)) {
++        return pair.first;
++      }
++    }
++    return INVALID_DU_UE_INDEX;
++  }
++
++private:
++  std::map<du_ue_index_t, uint32_t> ids{
++      {to_du_ue_index(7), 1007}, {to_du_ue_index(91), 2091}, {to_du_ue_index(199), 3199}};
++};
++
++ue_id_c make_ue(uint32_t f1ap_id)
++{
++  ue_id_c ue;
++  ue.set_gnb_du_ue_id().gnb_cu_ue_f1ap_id = f1ap_id;
++  return ue;
++}
++
++label_info_list_l make_no_label()
++{
++  label_info_item_s item;
++  item.meas_label.no_label_present = true;
++  item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
++  label_info_list_l result;
++  result.push_back(item);
++  return result;
++}
++
++scheduler_ue_metrics make_measurement(unsigned index, float power, float snr = 23.75F, unsigned samples = 1)
++{
++  scheduler_ue_metrics result{};
++  result.ue_index      = to_du_ue_index(index);
++  result.pci           = 1;
++  result.rnti          = static_cast<rnti_t>(0x4600 + index);
++  result.pusch_rsrp_db = power;
++  result.pusch_snr_db  = snr; // The PHY-selected ul_sinr_dB value is reported using the SNR name.
++  result.nof_pusch_snr_reports = samples;
++  return result;
++}
++
++class falcon_du_rf_native_test : public ::testing::Test
++{
++protected:
++  falcon_du_rf_native_test() : provider(translator)
++  {
++    metric.set_meas_name().from_string(falcon_rsrp_name);
++  }
++
++  static void SetUpTestSuite() { ocudulog::init(); }
++  void TearDown() override { ocudulog::flush(); }
++
++  void report(std::initializer_list<scheduler_ue_metrics> measurements)
++  {
++    scheduler_cell_metrics snapshot{};
++    for (const auto& measurement : measurements) {
++      snapshot.ue_metrics.push_back(measurement);
++    }
++    provider.report_metrics(snapshot);
++  }
++
++  bool collect(const std::vector<ue_id_c>& ues, std::vector<meas_record_item_c>& output)
++  {
++    return provider.get_meas_data(metric, make_no_label(), ues, std::nullopt, output);
++  }
++
++  bool collect_named(const char* name, const std::vector<ue_id_c>& ues, std::vector<meas_record_item_c>& output)
++  {
++    meas_type_c selected;
++    selected.set_meas_name().from_string(name);
++    return provider.get_meas_data(selected, make_no_label(), ues, std::nullopt, output);
++  }
++
++  falcon_sparse_ue_id_translator              translator;
++  e2sm_kpm_du_meas_provider_impl       provider;
++  meas_type_c                         metric;
++};
++
++
++TEST_F(falcon_du_rf_native_test, sparse_f1ap_mapping_preserves_request_order_and_real_values)
++{
++  report({make_measurement(91, 0.F, 0.F), make_measurement(7, -13.125F, 21.75F)});
++  for (const char* name : {falcon_rsrp_name, falcon_snr_name}) {
++    SCOPED_TRACE(name);
++    std::vector<meas_record_item_c> output;
++    ASSERT_TRUE(collect_named(name, {make_ue(1007), make_ue(3199), make_ue(2091), make_ue(9999)}, output));
++    ASSERT_EQ(output.size(), 4U);
++    ASSERT_EQ(output[0].type(), meas_record_item_c::types::real);
++    EXPECT_DOUBLE_EQ(output[0].real().value, name == falcon_rsrp_name ? -13.125 : 21.75);
++    EXPECT_EQ(output[1].type(), meas_record_item_c::types::no_value);
++    ASSERT_EQ(output[2].type(), meas_record_item_c::types::real);
++    EXPECT_DOUBLE_EQ(output[2].real().value, 0.0);
++    EXPECT_EQ(output[3].type(), meas_record_item_c::types::no_value);
++  }
++}
++
++TEST_F(falcon_du_rf_native_test, nonfinite_values_and_zero_snr_without_samples_are_no_value)
++{
++  for (float invalid : {std::numeric_limits<float>::quiet_NaN(),
++                        std::numeric_limits<float>::infinity(),
++                        -std::numeric_limits<float>::infinity()}) {
++    report({make_measurement(7, invalid, invalid)});
++    for (const char* name : {falcon_rsrp_name, falcon_snr_name}) {
++      std::vector<meas_record_item_c> output;
++      ASSERT_TRUE(collect_named(name, {make_ue(1007)}, output));
++      ASSERT_EQ(output.size(), 1U);
++      EXPECT_EQ(output[0].type(), meas_record_item_c::types::no_value);
++    }
++  }
++  report({make_measurement(7, 0.F, 0.F, 0)});
++  std::vector<meas_record_item_c> output;
++  ASSERT_TRUE(collect_named(falcon_snr_name, {make_ue(1007)}, output));
++  ASSERT_EQ(output.size(), 1U);
++  EXPECT_EQ(output[0].type(), meas_record_item_c::types::no_value);
++  output.clear();
++  ASSERT_TRUE(collect_named(falcon_rsrp_name, {make_ue(1007)}, output));
++  ASSERT_EQ(output.size(), 1U);
++  ASSERT_EQ(output[0].type(), meas_record_item_c::types::real);
++  EXPECT_DOUBLE_EQ(output[0].real().value, 0.0);
++}
++
++TEST_F(falcon_du_rf_native_test, replacement_snapshot_and_unsupported_ue_do_not_reuse_first_ue)
++{
++  report({make_measurement(7, -13.125F, 21.75F)});
++  report({make_measurement(91, -3.5F, 7.25F)});
++  ue_id_c wrong_type;
++  wrong_type.set_gnb_ue_id();
++  for (const char* name : {falcon_rsrp_name, falcon_snr_name}) {
++    std::vector<meas_record_item_c> output;
++    ASSERT_TRUE(collect_named(name, {make_ue(1007), wrong_type, make_ue(2091)}, output));
++    ASSERT_EQ(output.size(), 3U);
++    EXPECT_EQ(output[0].type(), meas_record_item_c::types::no_value);
++    EXPECT_EQ(output[1].type(), meas_record_item_c::types::no_value);
++    ASSERT_EQ(output[2].type(), meas_record_item_c::types::real);
++    EXPECT_DOUBLE_EQ(output[2].real().value, name == falcon_rsrp_name ? -3.5 : 7.25);
++  }
++}
++
++TEST_F(falcon_du_rf_native_test, exactly_one_no_label_and_ue_level_are_required)
++{
++  auto mixed = make_no_label();
++  mixed[0].meas_label.five_qi_present = true;
++  mixed[0].meas_label.five_qi = 9;
++  auto duplicate = make_no_label();
++  duplicate.push_back(duplicate[0]);
++  for (const char* name : {falcon_rsrp_name, falcon_snr_name}) {
++    meas_type_c selected;
++    selected.set_meas_name().from_string(name);
++    EXPECT_TRUE(provider.is_metric_supported(selected, make_no_label()[0].meas_label, UE_LEVEL, false));
++    EXPECT_FALSE(provider.is_metric_supported(selected, make_no_label()[0].meas_label, E2_NODE_LEVEL, false));
++    EXPECT_FALSE(provider.is_metric_supported(selected, make_no_label()[0].meas_label, UE_LEVEL, true));
++    EXPECT_FALSE(provider.is_metric_supported(selected, mixed[0].meas_label, UE_LEVEL, false));
++    for (const auto& labels : {label_info_list_l{}, mixed, duplicate}) {
++      std::vector<meas_record_item_c> output;
++      EXPECT_FALSE(provider.get_meas_data(selected, labels, {make_ue(1007), make_ue(2091)}, std::nullopt, output));
++      ASSERT_EQ(output.size(), 2U);
++      EXPECT_EQ(output[0].type(), meas_record_item_c::types::no_value);
++      EXPECT_EQ(output[1].type(), meas_record_item_c::types::no_value);
++    }
++  }
++}
++
++TEST_F(falcon_du_rf_native_test, production_ran_function_advertises_rf_names_without_dummy_rsrp_rsrq)
++{
++  e2sm_kpm_asn1_packer packer(provider);
++  auto encoded = packer.pack_ran_function_description();
++  ASSERT_FALSE(encoded.empty());
++  asn1::cbit_ref reader(encoded);
++  e2sm_kpm_ran_function_description_s decoded;
++  ASSERT_EQ(decoded.unpack(reader), asn1::OCUDUASN_SUCCESS);
++  unsigned ue_styles = 0;
++  for (const auto& style : decoded.ric_report_style_list) {
++    unsigned rsrp_count = 0;
++    unsigned snr_count = 0;
++    for (const auto& info : style.meas_info_action_list) {
++      const auto name = info.meas_name.to_string();
++      rsrp_count += name == falcon_rsrp_name;
++      snr_count += name == falcon_snr_name;
++      EXPECT_NE(name, "RSRP");
++      EXPECT_NE(name, "RSRQ");
++      EXPECT_NE(name, "FALCON.PUSCH.SINR.dB");
++    }
++    const bool ue_level = style.ric_report_style_type >= 2 && style.ric_report_style_type <= 5;
++    EXPECT_EQ(rsrp_count, ue_level ? 1U : 0U);
++    EXPECT_EQ(snr_count, ue_level ? 1U : 0U);
++    ue_styles += ue_level;
++    if (style.ric_report_style_type == 4) {
++      EXPECT_EQ(style.ric_action_format_type, 4);
++      EXPECT_EQ(style.ric_ind_msg_format_type, 3);
++    }
++  }
++  EXPECT_EQ(ue_styles, 4U);
++}
++} // namespace
+--- a/tests/unittests/scheduler/scheduler_metrics_handler_test.cpp
++++ b/tests/unittests/scheduler/scheduler_metrics_handler_test.cpp
+@@ -310,3 +310,64 @@
+   this->get_next_metric();
+   ASSERT_EQ(metrics_notif.last_report.nof_error_indications, 0);
+ }
++
++TEST_F(scheduler_metrics_handler_tester, falcon_rf_failed_crc_samples_contribute_independent_db_means)
++{
++  get_next_metric();
++  ul_crc_pdu_indication crc{};
++  crc.rnti = to_rnti(0x4601);
++  crc.ue_index = test_ue_index;
++  crc.tb_crc_success = false;
++  crc.ul_sinr_dB = 22.F;
++  crc.ul_rsrp_dBFS = -15.F;
++  metrics.handle_crc_indication(next_sl_tx.without_hyper_sfn() - 1, crc, units::bytes{1});
++  crc.tb_crc_success = true;
++  crc.ul_sinr_dB = 20.F;
++  crc.ul_rsrp_dBFS = -12.F;
++  metrics.handle_crc_indication(next_sl_tx.without_hyper_sfn() - 1, crc, units::bytes{1});
++  crc.tb_crc_success = false;
++  crc.ul_sinr_dB.reset();
++  crc.ul_rsrp_dBFS = 0.F;
++  metrics.handle_crc_indication(next_sl_tx.without_hyper_sfn() - 1, crc, units::bytes{1});
++  get_next_metric();
++  const auto& ue = metrics_notif.last_report.ue_metrics[0];
++  EXPECT_EQ(ue.ul_nof_ok, 1U);
++  EXPECT_EQ(ue.ul_nof_nok, 2U);
++  EXPECT_EQ(ue.nof_pusch_snr_reports, 2U);
++  EXPECT_FLOAT_EQ(ue.pusch_snr_db, 21.F);
++  EXPECT_FLOAT_EQ(ue.pusch_rsrp_db, -9.F);
++}
++
++TEST_F(scheduler_metrics_handler_tester, falcon_rf_valid_zero_has_a_sample_and_window_reset_clears_it)
++{
++  get_next_metric();
++  ul_crc_pdu_indication crc{};
++  crc.rnti = to_rnti(0x4601);
++  crc.ue_index = test_ue_index;
++  crc.tb_crc_success = false;
++  crc.ul_sinr_dB = 0.F;
++  crc.ul_rsrp_dBFS = 0.F;
++  metrics.handle_crc_indication(next_sl_tx.without_hyper_sfn() - 1, crc, units::bytes{1});
++  get_next_metric();
++  ASSERT_EQ(metrics_notif.last_report.ue_metrics.size(), 1U);
++  EXPECT_EQ(metrics_notif.last_report.ue_metrics[0].nof_pusch_snr_reports, 1U);
++  EXPECT_FLOAT_EQ(metrics_notif.last_report.ue_metrics[0].pusch_snr_db, 0.F);
++  EXPECT_FLOAT_EQ(metrics_notif.last_report.ue_metrics[0].pusch_rsrp_db, 0.F);
++  get_next_metric();
++  EXPECT_EQ(metrics_notif.last_report.ue_metrics[0].nof_pusch_snr_reports, 0U);
++  EXPECT_FLOAT_EQ(metrics_notif.last_report.ue_metrics[0].pusch_snr_db, 0.F);
++  EXPECT_EQ(metrics_notif.last_report.ue_metrics[0].pusch_rsrp_db, -std::numeric_limits<float>::infinity());
++}
++
++TEST_F(scheduler_metrics_handler_tester, falcon_rf_missing_optional_values_do_not_increment_snr_count)
++{
++  get_next_metric();
++  ul_crc_pdu_indication crc{};
++  crc.rnti = to_rnti(0x4601);
++  crc.ue_index = test_ue_index;
++  crc.tb_crc_success = true;
++  metrics.handle_crc_indication(next_sl_tx.without_hyper_sfn() - 1, crc, units::bytes{1});
++  get_next_metric();
++  EXPECT_EQ(metrics_notif.last_report.ue_metrics[0].nof_pusch_snr_reports, 0U);
++  EXPECT_EQ(metrics_notif.last_report.ue_metrics[0].pusch_rsrp_db, -std::numeric_limits<float>::infinity());
++}
+--- a/tests/unittests/fapi/p7/builders/crc_indication_test.cpp
++++ b/tests/unittests/fapi/p7/builders/crc_indication_test.cpp
+@@ -87,3 +87,27 @@
+   ASSERT_EQ(static_cast<uint16_t>(rssi_dB ? (rssi_dB.value() + 128) * 10.F : 65535), msg.pdu.rssi);
+   ASSERT_EQ(static_cast<uint16_t>(ul_sinr_dB ? ul_sinr_dB.value() * 500.F : 65535), msg.pdu.rsrp);
+ }
++
++TEST(crc_indication_builder, falcon_rf_measured_zero_is_distinct_from_missing_sentinels)
++{
++  crc_indication msg;
++  crc_indication_builder builder(msg);
++  builder.set_pdu(to_rnti(10), to_harq_id(0), false, 0.F, {}, {}, 0.F);
++  EXPECT_EQ(msg.pdu.ul_sinr_metric, 0);
++  EXPECT_EQ(msg.pdu.rsrp, 1280U);
++  builder.set_pdu(to_rnti(10), to_harq_id(0), false, {}, {}, {}, {});
++  EXPECT_EQ(msg.pdu.ul_sinr_metric, std::numeric_limits<int16_t>::min());
++  EXPECT_EQ(msg.pdu.rsrp, std::numeric_limits<uint16_t>::max());
++}
++
++TEST(crc_indication_builder, falcon_rf_wire_quantization_truncates_fractional_rsrp_and_signed_sinr)
++{
++  crc_indication msg;
++  crc_indication_builder builder(msg);
++  builder.set_pdu(to_rnti(10), to_harq_id(0), false, 1.235F, {}, {}, -13.125F);
++  EXPECT_EQ(msg.pdu.rsrp, 1148U);
++  EXPECT_EQ(msg.pdu.ul_sinr_metric, 617);
++  builder.set_pdu(to_rnti(10), to_harq_id(0), false, -1.235F, {}, {}, -13.125F);
++  EXPECT_EQ(msg.pdu.rsrp, 1148U);
++  EXPECT_EQ(msg.pdu.ul_sinr_metric, -617);
++}
+--- a/tests/unittests/fapi_adaptor/mac/p7/fapi_to_mac_indications_fastpath_translator_test.cpp
++++ b/tests/unittests/fapi_adaptor/mac/p7/fapi_to_mac_indications_fastpath_translator_test.cpp
+@@ -3,6 +3,10 @@
+ // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
+
+ #include "fapi_to_mac_indications_fastpath_translator.h"
++#include "phy_to_fapi_results_event_fastpath_translator.h"
++#include "ocudu/fapi/p7/messages/crc_indication.h"
++#include <limits>
++#include <optional>
+ #include "ocudu/fapi/p7/messages/rach_indication.h"
+ #include "ocudu/ocudulog/ocudulog.h"
+ #include <gtest/gtest.h>
+@@ -103,3 +107,124 @@
+ {
+   test_pdu();
+ }
++
++namespace {
++class falcon_mac_crc_capture : public mac_cell_control_information_handler
++{
++public:
++  std::optional<mac_crc_indication_message> last;
++  void handle_crc(const mac_crc_indication_message& message) override { last = message; }
++  void handle_uci(const mac_uci_indication_message&) override {}
++  void handle_srs(const mac_srs_indication_message&) override {}
++};
++
++class falcon_fapi_crc_bridge : public fapi::p7_indications_notifier
++{
++public:
++  explicit falcon_fapi_crc_bridge(fapi_to_mac_indications_fastpath_translator& mac_) : mac(mac_) {}
++  std::optional<fapi::crc_indication> last;
++  void on_crc_indication(const fapi::crc_indication& message) override
++  {
++    last = message;
++    mac.on_crc_indication(message);
++  }
++  void on_rx_data_indication(const fapi::rx_data_indication&) override {}
++  void on_uci_indication(const fapi::uci_indication&) override {}
++  void on_srs_indication(const fapi::srs_indication&) override {}
++  void on_rach_indication(const fapi::rach_indication&) override {}
++
++private:
++  fapi_to_mac_indications_fastpath_translator& mac;
++};
++
++class falcon_rf_chain_test : public ::testing::Test
++{
++protected:
++  falcon_rf_chain_test() :
++    mac(0, ocudulog::fetch_basic_logger("FAPI")),
++    bridge(mac),
++    phy(0, 1.0F, ocudulog::fetch_basic_logger("FAPI"))
++  {
++    mac.set_cell_crc_handler(capture);
++    phy.set_p7_indications_notifier(bridge);
++  }
++
++  void send(std::optional<float> rsrp, std::optional<float> sinr, bool crc_ok = false)
++  {
++    // A full-scale amplitude reference of 1 gives a zero dBFS calibration offset.
++    // Both translators below are production classes; this test does not clamp or
++    // quantize the input itself.
++    auto result = ul_pusch_results_data::create_discarded(to_rnti(0x4601), slot_point(0, 11), 3);
++    result.csi = channel_state_information(channel_state_information::sinr_type::post_equalization);
++    if (rsrp.has_value()) {
++      result.csi.set_rsrp_dB(*rsrp);
++    }
++    if (sinr.has_value()) {
++      result.csi.set_sinr_dB(channel_state_information::sinr_type::post_equalization, *sinr);
++    }
++    result.decoder_result.tb_crc_ok = crc_ok;
++    bridge.last.reset();
++    capture.last.reset();
++    phy.on_new_pusch_results_data(result);
++  }
++
++  void expect_decoded(float rsrp, float sinr, uint16_t encoded_rsrp, int16_t encoded_sinr, bool crc_ok = false)
++  {
++    ASSERT_TRUE(bridge.last.has_value());
++    ASSERT_TRUE(capture.last.has_value());
++    ASSERT_EQ(capture.last->crcs.size(), 1U);
++    const auto& pdu = capture.last->crcs[0];
++    EXPECT_EQ(bridge.last->pdu.rsrp, encoded_rsrp);
++    EXPECT_EQ(bridge.last->pdu.ul_sinr_metric, encoded_sinr);
++    EXPECT_EQ(capture.last->sl_rx, slot_point(0, 11));
++    EXPECT_EQ(pdu.rnti, to_rnti(0x4601));
++    EXPECT_EQ(pdu.harq_id, 3U);
++    EXPECT_EQ(pdu.tb_crc_success, crc_ok);
++    ASSERT_TRUE(pdu.ul_rsrp_dBFS.has_value());
++    ASSERT_TRUE(pdu.ul_sinr_dB.has_value());
++    EXPECT_FLOAT_EQ(*pdu.ul_rsrp_dBFS, rsrp);
++    EXPECT_FLOAT_EQ(*pdu.ul_sinr_dB, sinr);
++  }
++
++  falcon_mac_crc_capture capture;
++  fapi_to_mac_indications_fastpath_translator mac;
++  falcon_fapi_crc_bridge bridge;
++  phy_to_fapi_results_event_fastpath_translator phy;
++};
++
++TEST_F(falcon_rf_chain_test, missing_phy_values_survive_fapi_sentinels_as_missing_mac_optionals)
++{
++  send({}, {});
++  ASSERT_TRUE(bridge.last.has_value());
++  ASSERT_TRUE(capture.last.has_value());
++  EXPECT_EQ(bridge.last->pdu.rsrp, std::numeric_limits<uint16_t>::max());
++  EXPECT_EQ(bridge.last->pdu.ul_sinr_metric, std::numeric_limits<int16_t>::min());
++  ASSERT_EQ(capture.last->crcs.size(), 1U);
++  EXPECT_FALSE(capture.last->crcs[0].ul_rsrp_dBFS.has_value());
++  EXPECT_FALSE(capture.last->crcs[0].ul_sinr_dB.has_value());
++}
++
++TEST_F(falcon_rf_chain_test, measured_phy_zero_survives_both_translators_with_failed_crc)
++{
++  send(0.F, 0.F);
++  expect_decoded(0.F, 0.F, 1280U, 0);
++}
++
++TEST_F(falcon_rf_chain_test, production_chain_quantizes_rsrp_and_positive_negative_sinr)
++{
++  send(-13.125F, 1.235F);
++  expect_decoded(-13.2F, 1.234F, 1148U, 617);
++  send(-13.125F, -1.235F, true);
++  expect_decoded(-13.2F, -1.234F, 1148U, -617, true);
++}
++
++TEST_F(falcon_rf_chain_test, production_phy_clamps_positive_and_negative_saturation_before_quantization)
++{
++  // IEEE single-precision +/-65.534 is quantized by the production builder to
++  // +/-32766 through float multiplication and truncation, then decoded by MAC.
++  send(200.F, 200.F);
++  expect_decoded(0.F, 65.532F, 1280U, 32766);
++  send(-200.F, -200.F);
++  expect_decoded(-128.F, -65.532F, 0U, -32766);
++}
++} // namespace
+--- a/tests/unittests/fapi_adaptor/mac/p7/CMakeLists.txt
++++ b/tests/unittests/fapi_adaptor/mac/p7/CMakeLists.txt
+@@ -8,10 +8,13 @@
+ add_subdirectory(pdu_translators)
+
+ add_executable(fapi_to_mac_indications_fastpath_translator_test fapi_to_mac_indications_fastpath_translator_test.cpp)
+-target_include_directories(fapi_to_mac_indications_fastpath_translator_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/fapi_adaptor/mac/p7)
++target_include_directories(fapi_to_mac_indications_fastpath_translator_test PRIVATE
++        ${CMAKE_SOURCE_DIR}/lib/fapi_adaptor/mac/p7
++        ${CMAKE_SOURCE_DIR}/lib/fapi_adaptor/phy/p7)
+ target_link_libraries(fapi_to_mac_indications_fastpath_translator_test PRIVATE
+         ocudu_support
+         ocudu_fapi_to_mac_p7_fastpath_translator
++        ocudu_phy_to_fapi_p7_fastpath_translator
+         ocudulog
+         ocudu_mac_translator_helpers
+         gtest
