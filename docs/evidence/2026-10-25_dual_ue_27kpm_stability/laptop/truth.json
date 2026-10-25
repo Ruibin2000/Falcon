@@ -1,0 +1,36 @@
+[
+  {
+    "ue": 1,
+    "imei": "863305041978437",
+    "imsi": "001010000000101",
+    "apn": "internet",
+    "modem": "/org/freedesktop/ModemManager1/Modem/35",
+    "device_identifier": "c95d71ed994a787885301fbbe909c79a982cb300",
+    "sim": "/org/freedesktop/ModemManager1/SIM/35",
+    "bearer": "/org/freedesktop/ModemManager1/Bearer/93",
+    "source": "10.45.0.18",
+    "prefix": 30,
+    "interface": "wwan0",
+    "gateway": "10.45.0.17",
+    "server": "10.45.0.1",
+    "port": 5201,
+    "table": 151
+  },
+  {
+    "ue": 2,
+    "imei": "863305041980706",
+    "imsi": "001010000000102",
+    "apn": "internet2",
+    "modem": "/org/freedesktop/ModemManager1/Modem/36",
+    "device_identifier": "efec649d8c66446300e82e83ae508077998a6e92",
+    "sim": "/org/freedesktop/ModemManager1/SIM/36",
+    "bearer": "/org/freedesktop/ModemManager1/Bearer/94",
+    "source": "10.46.0.12",
+    "prefix": 29,
+    "interface": "wwan1",
+    "gateway": "10.46.0.13",
+    "server": "10.46.0.1",
+    "port": 5202,
+    "table": 152
+  }
+]

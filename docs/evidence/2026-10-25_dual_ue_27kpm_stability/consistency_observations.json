@@ -1,0 +1,1511 @@
+{
+  "records": [
+    {
+      "sequence": 6008,
+      "du": "1",
+      "header_time_us": "1792969120440318",
+      "issues": [
+        {
+          "kind": "PRB representation mismatch",
+          "direction": "Dl",
+          "real": 2.1148459911346436,
+          "integer": 1
+        },
+        {
+          "kind": "PRB representation mismatch",
+          "direction": "Ul",
+          "real": 85.32679748535156,
+          "integer": 84
+        }
+      ],
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "type": "real",
+          "value": 14.5,
+          "unit": "0.1 ms"
+        },
+        "DRB.UEThpDl": {
+          "type": "real",
+          "value": 316.4800109863281,
+          "unit": "kbit/s"
+        },
+        "DRB.UEThpUl": {
+          "type": "real",
+          "value": 21979.83984375,
+          "unit": "kbit/s"
+        },
+        "RRU.PrbTotDl": {
+          "type": "integer",
+          "value": 1,
+          "unit": "%"
+        },
+        "RRU.PrbTotUl": {
+          "type": "integer",
+          "value": 84,
+          "unit": "%"
+        },
+        "PUSCH.RSRP.dBFS": {
+          "type": "real",
+          "value": -22.02459144592285,
+          "unit": "dBFS"
+        },
+        "PUSCH.SNR.dB": {
+          "type": "real",
+          "value": 14.667967796325684,
+          "unit": "dB"
+        },
+        "CQI": {
+          "type": "integer",
+          "value": 12,
+          "unit": "index"
+        },
+        "CQI.Samples": {
+          "type": "integer",
+          "value": 4,
+          "unit": "samples"
+        },
+        "DL.MCS": {
+          "type": "integer",
+          "value": 14,
+          "unit": "index"
+        },
+        "UL.MCS": {
+          "type": "integer",
+          "value": 24,
+          "unit": "index"
+        },
+        "DL.MCS.Samples": {
+          "type": "integer",
+          "value": 35,
+          "unit": "samples"
+        },
+        "UL.MCS.Samples": {
+          "type": "integer",
+          "value": 59,
+          "unit": "samples"
+        },
+        "UL.PHR.dB": {
+          "type": "real",
+          "value": -3,
+          "unit": "dB"
+        },
+        "UL.PHR.AgeMs": {
+          "type": "real",
+          "value": 2.1809160709381104,
+          "unit": "ms"
+        },
+        "UL.BSR.Bytes": {
+          "type": "integer",
+          "value": 700000,
+          "unit": "bytes"
+        },
+        "UL.BSR.AgeMs": {
+          "type": "real",
+          "value": 1.6190539598464966,
+          "unit": "ms"
+        },
+        "DL.Buffer.Bytes": {
+          "type": "integer",
+          "value": 232,
+          "unit": "bytes"
+        },
+        "DL.Buffer.AgeMs": {
+          "type": "real",
+          "value": 0.0061599998734891415,
+          "unit": "ms"
+        },
+        "DL.MAC.Throughput": {
+          "type": "real",
+          "value": 616.719970703125,
+          "unit": "kbit/s"
+        },
+        "UL.MAC.Throughput": {
+          "type": "real",
+          "value": 22171.759765625,
+          "unit": "kbit/s"
+        },
+        "DL.HARQ.Ok": {
+          "type": "integer",
+          "value": 43,
+          "unit": "count"
+        },
+        "DL.HARQ.Nok": {
+          "type": "integer",
+          "value": 7,
+          "unit": "count"
+        },
+        "UL.CRC.Ok": {
+          "type": "integer",
+          "value": 56,
+          "unit": "count"
+        },
+        "UL.CRC.Nok": {
+          "type": "integer",
+          "value": 4,
+          "unit": "count"
+        },
+        "PRB.UsageDl.Percent": {
+          "type": "real",
+          "value": 2.1148459911346436,
+          "unit": "%"
+        },
+        "PRB.UsageUl.Percent": {
+          "type": "real",
+          "value": 85.32679748535156,
+          "unit": "%"
+        }
+      }
+    },
+    {
+      "sequence": 6052,
+      "du": "1",
+      "header_time_us": "1792969122641817",
+      "issues": [
+        {
+          "kind": "PRB representation mismatch",
+          "direction": "Ul",
+          "real": 87.81045532226562,
+          "integer": 86
+        }
+      ],
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "type": "real",
+          "value": 13.699999809265137,
+          "unit": "0.1 ms"
+        },
+        "DRB.UEThpDl": {
+          "type": "real",
+          "value": 225.91998291015625,
+          "unit": "kbit/s"
+        },
+        "DRB.UEThpUl": {
+          "type": "real",
+          "value": 22604.560546875,
+          "unit": "kbit/s"
+        },
+        "RRU.PrbTotDl": {
+          "type": "integer",
+          "value": 1,
+          "unit": "%"
+        },
+        "RRU.PrbTotUl": {
+          "type": "integer",
+          "value": 86,
+          "unit": "%"
+        },
+        "PUSCH.RSRP.dBFS": {
+          "type": "real",
+          "value": -11.510000228881836,
+          "unit": "dBFS"
+        },
+        "PUSCH.SNR.dB": {
+          "type": "real",
+          "value": 22.444534301757812,
+          "unit": "dB"
+        },
+        "CQI": {
+          "type": "integer",
+          "value": 13,
+          "unit": "index"
+        },
+        "CQI.Samples": {
+          "type": "integer",
+          "value": 5,
+          "unit": "samples"
+        },
+        "DL.MCS": {
+          "type": "integer",
+          "value": 15,
+          "unit": "index"
+        },
+        "UL.MCS": {
+          "type": "integer",
+          "value": 25,
+          "unit": "index"
+        },
+        "DL.MCS.Samples": {
+          "type": "integer",
+          "value": 35,
+          "unit": "samples"
+        },
+        "UL.MCS.Samples": {
+          "type": "integer",
+          "value": 60,
+          "unit": "samples"
+        },
+        "UL.PHR.dB": {
+          "type": "real",
+          "value": 0,
+          "unit": "dB"
+        },
+        "UL.PHR.AgeMs": {
+          "type": "real",
+          "value": 5.51763391494751,
+          "unit": "ms"
+        },
+        "UL.BSR.Bytes": {
+          "type": "integer",
+          "value": 700000,
+          "unit": "bytes"
+        },
+        "UL.BSR.AgeMs": {
+          "type": "real",
+          "value": 6.44209098815918,
+          "unit": "ms"
+        },
+        "DL.Buffer.Bytes": {
+          "type": "integer",
+          "value": 174,
+          "unit": "bytes"
+        },
+        "DL.Buffer.AgeMs": {
+          "type": "real",
+          "value": 0.0069599999114871025,
+          "unit": "ms"
+        },
+        "DL.MAC.Throughput": {
+          "type": "real",
+          "value": 410.32000732421875,
+          "unit": "kbit/s"
+        },
+        "UL.MAC.Throughput": {
+          "type": "real",
+          "value": 19695.439453125,
+          "unit": "kbit/s"
+        },
+        "DL.HARQ.Ok": {
+          "type": "integer",
+          "value": 27,
+          "unit": "count"
+        },
+        "DL.HARQ.Nok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "UL.CRC.Ok": {
+          "type": "integer",
+          "value": 53,
+          "unit": "count"
+        },
+        "UL.CRC.Nok": {
+          "type": "integer",
+          "value": 7,
+          "unit": "count"
+        },
+        "PRB.UsageDl.Percent": {
+          "type": "real",
+          "value": 1.0644258260726929,
+          "unit": "%"
+        },
+        "PRB.UsageUl.Percent": {
+          "type": "real",
+          "value": 87.81045532226562,
+          "unit": "%"
+        }
+      }
+    },
+    {
+      "sequence": 6090,
+      "du": "1",
+      "header_time_us": "1792969124540355",
+      "issues": [
+        {
+          "kind": "value valid but age unavailable",
+          "metric": "UL.PHR",
+          "value": 0
+        }
+      ],
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "type": "real",
+          "value": 15.5,
+          "unit": "0.1 ms"
+        },
+        "DRB.UEThpDl": {
+          "type": "real",
+          "value": 241.83999633789062,
+          "unit": "kbit/s"
+        },
+        "DRB.UEThpUl": {
+          "type": "real",
+          "value": 18211.83984375,
+          "unit": "kbit/s"
+        },
+        "RRU.PrbTotDl": {
+          "type": "integer",
+          "value": 1,
+          "unit": "%"
+        },
+        "RRU.PrbTotUl": {
+          "type": "integer",
+          "value": 86,
+          "unit": "%"
+        },
+        "PUSCH.RSRP.dBFS": {
+          "type": "real",
+          "value": -11.835000038146973,
+          "unit": "dBFS"
+        },
+        "PUSCH.SNR.dB": {
+          "type": "real",
+          "value": 22.594966888427734,
+          "unit": "dB"
+        },
+        "CQI": {
+          "type": "integer",
+          "value": 13,
+          "unit": "index"
+        },
+        "CQI.Samples": {
+          "type": "integer",
+          "value": 5,
+          "unit": "samples"
+        },
+        "DL.MCS": {
+          "type": "integer",
+          "value": 15,
+          "unit": "index"
+        },
+        "UL.MCS": {
+          "type": "integer",
+          "value": 26,
+          "unit": "index"
+        },
+        "DL.MCS.Samples": {
+          "type": "integer",
+          "value": 41,
+          "unit": "samples"
+        },
+        "UL.MCS.Samples": {
+          "type": "integer",
+          "value": 60,
+          "unit": "samples"
+        },
+        "UL.PHR.dB": {
+          "type": "real",
+          "value": 0,
+          "unit": "dB"
+        },
+        "UL.PHR.AgeMs": {
+          "type": "no_value",
+          "value": null,
+          "unit": "ms"
+        },
+        "UL.BSR.Bytes": {
+          "type": "integer",
+          "value": 700000,
+          "unit": "bytes"
+        },
+        "UL.BSR.AgeMs": {
+          "type": "real",
+          "value": 6.509291172027588,
+          "unit": "ms"
+        },
+        "DL.Buffer.Bytes": {
+          "type": "integer",
+          "value": 232,
+          "unit": "bytes"
+        },
+        "DL.Buffer.AgeMs": {
+          "type": "real",
+          "value": 0.43813198804855347,
+          "unit": "ms"
+        },
+        "DL.MAC.Throughput": {
+          "type": "real",
+          "value": 340.7200012207031,
+          "unit": "kbit/s"
+        },
+        "UL.MAC.Throughput": {
+          "type": "real",
+          "value": 17416.400390625,
+          "unit": "kbit/s"
+        },
+        "DL.HARQ.Ok": {
+          "type": "integer",
+          "value": 28,
+          "unit": "count"
+        },
+        "DL.HARQ.Nok": {
+          "type": "integer",
+          "value": 6,
+          "unit": "count"
+        },
+        "UL.CRC.Ok": {
+          "type": "integer",
+          "value": 48,
+          "unit": "count"
+        },
+        "UL.CRC.Nok": {
+          "type": "integer",
+          "value": 12,
+          "unit": "count"
+        },
+        "PRB.UsageDl.Percent": {
+          "type": "real",
+          "value": 1.372549057006836,
+          "unit": "%"
+        },
+        "PRB.UsageUl.Percent": {
+          "type": "real",
+          "value": 86.01306915283203,
+          "unit": "%"
+        }
+      }
+    },
+    {
+      "sequence": 6124,
+      "du": "1",
+      "header_time_us": "1792969126240358",
+      "issues": [
+        {
+          "kind": "value valid but sample count unavailable",
+          "metric": "UL.MCS",
+          "value": 26
+        }
+      ],
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "type": "real",
+          "value": 13.800000190734863,
+          "unit": "0.1 ms"
+        },
+        "DRB.UEThpDl": {
+          "type": "real",
+          "value": 286.6399841308594,
+          "unit": "kbit/s"
+        },
+        "DRB.UEThpUl": {
+          "type": "real",
+          "value": 20652.3203125,
+          "unit": "kbit/s"
+        },
+        "RRU.PrbTotDl": {
+          "type": "integer",
+          "value": 1,
+          "unit": "%"
+        },
+        "RRU.PrbTotUl": {
+          "type": "integer",
+          "value": 86,
+          "unit": "%"
+        },
+        "PUSCH.RSRP.dBFS": {
+          "type": "real",
+          "value": -9.324999809265137,
+          "unit": "dBFS"
+        },
+        "PUSCH.SNR.dB": {
+          "type": "real",
+          "value": 25.234933853149414,
+          "unit": "dB"
+        },
+        "CQI": {
+          "type": "integer",
+          "value": 13,
+          "unit": "index"
+        },
+        "CQI.Samples": {
+          "type": "integer",
+          "value": 5,
+          "unit": "samples"
+        },
+        "DL.MCS": {
+          "type": "integer",
+          "value": 15,
+          "unit": "index"
+        },
+        "UL.MCS": {
+          "type": "integer",
+          "value": 26,
+          "unit": "index"
+        },
+        "DL.MCS.Samples": {
+          "type": "integer",
+          "value": 39,
+          "unit": "samples"
+        },
+        "UL.MCS.Samples": {
+          "type": "no_value",
+          "value": null,
+          "unit": "samples"
+        },
+        "UL.PHR.dB": {
+          "type": "real",
+          "value": -3,
+          "unit": "dB"
+        },
+        "UL.PHR.AgeMs": {
+          "type": "real",
+          "value": 6.50045919418335,
+          "unit": "ms"
+        },
+        "UL.BSR.Bytes": {
+          "type": "integer",
+          "value": 700000,
+          "unit": "bytes"
+        },
+        "UL.BSR.AgeMs": {
+          "type": "real",
+          "value": 0.3523389995098114,
+          "unit": "ms"
+        },
+        "DL.Buffer.Bytes": {
+          "type": "integer",
+          "value": 232,
+          "unit": "bytes"
+        },
+        "DL.Buffer.AgeMs": {
+          "type": "real",
+          "value": 0.3515389859676361,
+          "unit": "ms"
+        },
+        "DL.MAC.Throughput": {
+          "type": "real",
+          "value": 672.1599731445312,
+          "unit": "kbit/s"
+        },
+        "UL.MAC.Throughput": {
+          "type": "real",
+          "value": 22854,
+          "unit": "kbit/s"
+        },
+        "DL.HARQ.Ok": {
+          "type": "integer",
+          "value": 43,
+          "unit": "count"
+        },
+        "DL.HARQ.Nok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "UL.CRC.Ok": {
+          "type": "integer",
+          "value": 57,
+          "unit": "count"
+        },
+        "UL.CRC.Nok": {
+          "type": "integer",
+          "value": 3,
+          "unit": "count"
+        },
+        "PRB.UsageDl.Percent": {
+          "type": "real",
+          "value": 1.946778655052185,
+          "unit": "%"
+        },
+        "PRB.UsageUl.Percent": {
+          "type": "real",
+          "value": 86.43791198730469,
+          "unit": "%"
+        }
+      }
+    },
+    {
+      "sequence": 6126,
+      "du": "1",
+      "header_time_us": "1792969126340286",
+      "issues": [
+        {
+          "kind": "PRB representation mismatch",
+          "direction": "Dl",
+          "real": 2.0168068408966064,
+          "integer": 1
+        }
+      ],
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "type": "real",
+          "value": 13.100000381469727,
+          "unit": "0.1 ms"
+        },
+        "DRB.UEThpDl": {
+          "type": "real",
+          "value": 461.9200134277344,
+          "unit": "kbit/s"
+        },
+        "DRB.UEThpUl": {
+          "type": "real",
+          "value": 23115.28125,
+          "unit": "kbit/s"
+        },
+        "RRU.PrbTotDl": {
+          "type": "integer",
+          "value": 1,
+          "unit": "%"
+        },
+        "RRU.PrbTotUl": {
+          "type": "integer",
+          "value": 86,
+          "unit": "%"
+        },
+        "PUSCH.RSRP.dBFS": {
+          "type": "real",
+          "value": -8.978333473205566,
+          "unit": "dBFS"
+        },
+        "PUSCH.SNR.dB": {
+          "type": "real",
+          "value": 25.17303466796875,
+          "unit": "dB"
+        },
+        "CQI": {
+          "type": "integer",
+          "value": 13,
+          "unit": "index"
+        },
+        "CQI.Samples": {
+          "type": "integer",
+          "value": 5,
+          "unit": "samples"
+        },
+        "DL.MCS": {
+          "type": "integer",
+          "value": 15,
+          "unit": "index"
+        },
+        "UL.MCS": {
+          "type": "integer",
+          "value": 26,
+          "unit": "index"
+        },
+        "DL.MCS.Samples": {
+          "type": "integer",
+          "value": 43,
+          "unit": "samples"
+        },
+        "UL.MCS.Samples": {
+          "type": "integer",
+          "value": 60,
+          "unit": "samples"
+        },
+        "UL.PHR.dB": {
+          "type": "real",
+          "value": -2,
+          "unit": "dB"
+        },
+        "UL.PHR.AgeMs": {
+          "type": "real",
+          "value": 6.520970821380615,
+          "unit": "ms"
+        },
+        "UL.BSR.Bytes": {
+          "type": "integer",
+          "value": 700000,
+          "unit": "bytes"
+        },
+        "UL.BSR.AgeMs": {
+          "type": "real",
+          "value": 0.526980996131897,
+          "unit": "ms"
+        },
+        "DL.Buffer.Bytes": {
+          "type": "integer",
+          "value": 348,
+          "unit": "bytes"
+        },
+        "DL.Buffer.AgeMs": {
+          "type": "real",
+          "value": 0.007215999998152256,
+          "unit": "ms"
+        },
+        "DL.MAC.Throughput": {
+          "type": "real",
+          "value": 710.7999877929688,
+          "unit": "kbit/s"
+        },
+        "UL.MAC.Throughput": {
+          "type": "real",
+          "value": 22792.48046875,
+          "unit": "kbit/s"
+        },
+        "DL.HARQ.Ok": {
+          "type": "integer",
+          "value": 39,
+          "unit": "count"
+        },
+        "DL.HARQ.Nok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "UL.CRC.Ok": {
+          "type": "integer",
+          "value": 56,
+          "unit": "count"
+        },
+        "UL.CRC.Nok": {
+          "type": "integer",
+          "value": 4,
+          "unit": "count"
+        },
+        "PRB.UsageDl.Percent": {
+          "type": "real",
+          "value": 2.0168068408966064,
+          "unit": "%"
+        },
+        "PRB.UsageUl.Percent": {
+          "type": "real",
+          "value": 86.7973861694336,
+          "unit": "%"
+        }
+      }
+    },
+    {
+      "sequence": 6134,
+      "du": "1",
+      "header_time_us": "1792969126740259",
+      "issues": [
+        {
+          "kind": "PRB representation mismatch",
+          "direction": "Ul",
+          "real": 86.63398742675781,
+          "integer": 87
+        }
+      ],
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "type": "real",
+          "value": 15.100000381469727,
+          "unit": "0.1 ms"
+        },
+        "DRB.UEThpDl": {
+          "type": "real",
+          "value": 269.2799987792969,
+          "unit": "kbit/s"
+        },
+        "DRB.UEThpUl": {
+          "type": "real",
+          "value": 19399.6796875,
+          "unit": "kbit/s"
+        },
+        "RRU.PrbTotDl": {
+          "type": "integer",
+          "value": 1,
+          "unit": "%"
+        },
+        "RRU.PrbTotUl": {
+          "type": "integer",
+          "value": 87,
+          "unit": "%"
+        },
+        "PUSCH.RSRP.dBFS": {
+          "type": "real",
+          "value": -9.324999809265137,
+          "unit": "dBFS"
+        },
+        "PUSCH.SNR.dB": {
+          "type": "real",
+          "value": 25.328500747680664,
+          "unit": "dB"
+        },
+        "CQI": {
+          "type": "integer",
+          "value": 14,
+          "unit": "index"
+        },
+        "CQI.Samples": {
+          "type": "integer",
+          "value": 5,
+          "unit": "samples"
+        },
+        "DL.MCS": {
+          "type": "integer",
+          "value": 17,
+          "unit": "index"
+        },
+        "UL.MCS": {
+          "type": "integer",
+          "value": 26,
+          "unit": "index"
+        },
+        "DL.MCS.Samples": {
+          "type": "integer",
+          "value": 33,
+          "unit": "samples"
+        },
+        "UL.MCS.Samples": {
+          "type": "integer",
+          "value": 60,
+          "unit": "samples"
+        },
+        "UL.PHR.dB": {
+          "type": "real",
+          "value": -3,
+          "unit": "dB"
+        },
+        "UL.PHR.AgeMs": {
+          "type": "real",
+          "value": 1.6327660083770752,
+          "unit": "ms"
+        },
+        "UL.BSR.Bytes": {
+          "type": "integer",
+          "value": 700000,
+          "unit": "bytes"
+        },
+        "UL.BSR.AgeMs": {
+          "type": "real",
+          "value": 1.6331980228424072,
+          "unit": "ms"
+        },
+        "DL.Buffer.Bytes": {
+          "type": "integer",
+          "value": 290,
+          "unit": "bytes"
+        },
+        "DL.Buffer.AgeMs": {
+          "type": "real",
+          "value": 0.006752000190317631,
+          "unit": "ms"
+        },
+        "DL.MAC.Throughput": {
+          "type": "real",
+          "value": 500.7200012207031,
+          "unit": "kbit/s"
+        },
+        "UL.MAC.Throughput": {
+          "type": "real",
+          "value": 21266.880859375,
+          "unit": "kbit/s"
+        },
+        "DL.HARQ.Ok": {
+          "type": "integer",
+          "value": 32,
+          "unit": "count"
+        },
+        "DL.HARQ.Nok": {
+          "type": "integer",
+          "value": 4,
+          "unit": "count"
+        },
+        "UL.CRC.Ok": {
+          "type": "integer",
+          "value": 53,
+          "unit": "count"
+        },
+        "UL.CRC.Nok": {
+          "type": "integer",
+          "value": 7,
+          "unit": "count"
+        },
+        "PRB.UsageDl.Percent": {
+          "type": "real",
+          "value": 1.6106442213058472,
+          "unit": "%"
+        },
+        "PRB.UsageUl.Percent": {
+          "type": "real",
+          "value": 86.63398742675781,
+          "unit": "%"
+        }
+      }
+    },
+    {
+      "sequence": 6190,
+      "du": "1",
+      "header_time_us": "1792969129540301",
+      "issues": [
+        {
+          "kind": "PRB representation mismatch",
+          "direction": "Dl",
+          "real": 2.4649860858917236,
+          "integer": 1
+        }
+      ],
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "type": "real",
+          "value": 14.399999618530273,
+          "unit": "0.1 ms"
+        },
+        "DRB.UEThpDl": {
+          "type": "real",
+          "value": 241.83999633789062,
+          "unit": "kbit/s"
+        },
+        "DRB.UEThpUl": {
+          "type": "real",
+          "value": 19478,
+          "unit": "kbit/s"
+        },
+        "RRU.PrbTotDl": {
+          "type": "integer",
+          "value": 1,
+          "unit": "%"
+        },
+        "RRU.PrbTotUl": {
+          "type": "integer",
+          "value": 86,
+          "unit": "%"
+        },
+        "PUSCH.RSRP.dBFS": {
+          "type": "real",
+          "value": -13.485000610351562,
+          "unit": "dBFS"
+        },
+        "PUSCH.SNR.dB": {
+          "type": "real",
+          "value": 24.825634002685547,
+          "unit": "dB"
+        },
+        "CQI": {
+          "type": "integer",
+          "value": 14,
+          "unit": "index"
+        },
+        "CQI.Samples": {
+          "type": "integer",
+          "value": 5,
+          "unit": "samples"
+        },
+        "DL.MCS": {
+          "type": "integer",
+          "value": 17,
+          "unit": "index"
+        },
+        "UL.MCS": {
+          "type": "integer",
+          "value": 23,
+          "unit": "index"
+        },
+        "DL.MCS.Samples": {
+          "type": "integer",
+          "value": 47,
+          "unit": "samples"
+        },
+        "UL.MCS.Samples": {
+          "type": "integer",
+          "value": 60,
+          "unit": "samples"
+        },
+        "UL.PHR.dB": {
+          "type": "real",
+          "value": 0,
+          "unit": "dB"
+        },
+        "UL.PHR.AgeMs": {
+          "type": "real",
+          "value": 1.532189965248108,
+          "unit": "ms"
+        },
+        "UL.BSR.Bytes": {
+          "type": "integer",
+          "value": 700000,
+          "unit": "bytes"
+        },
+        "UL.BSR.AgeMs": {
+          "type": "real",
+          "value": 1.5329740047454834,
+          "unit": "ms"
+        },
+        "DL.Buffer.Bytes": {
+          "type": "integer",
+          "value": 0,
+          "unit": "bytes"
+        },
+        "DL.Buffer.AgeMs": {
+          "type": "real",
+          "value": 1.5312459468841553,
+          "unit": "ms"
+        },
+        "DL.MAC.Throughput": {
+          "type": "real",
+          "value": 554.5599975585938,
+          "unit": "kbit/s"
+        },
+        "UL.MAC.Throughput": {
+          "type": "real",
+          "value": 15325.919921875,
+          "unit": "kbit/s"
+        },
+        "DL.HARQ.Ok": {
+          "type": "integer",
+          "value": 33,
+          "unit": "count"
+        },
+        "DL.HARQ.Nok": {
+          "type": "integer",
+          "value": 14,
+          "unit": "count"
+        },
+        "UL.CRC.Ok": {
+          "type": "integer",
+          "value": 45,
+          "unit": "count"
+        },
+        "UL.CRC.Nok": {
+          "type": "integer",
+          "value": 15,
+          "unit": "count"
+        },
+        "PRB.UsageDl.Percent": {
+          "type": "real",
+          "value": 2.4649860858917236,
+          "unit": "%"
+        },
+        "PRB.UsageUl.Percent": {
+          "type": "real",
+          "value": 86.17646789550781,
+          "unit": "%"
+        }
+      }
+    },
+    {
+      "sequence": 6915,
+      "du": "2",
+      "header_time_us": "1792969165842031",
+      "issues": [
+        {
+          "kind": "value valid but age unavailable",
+          "metric": "UL.PHR",
+          "value": 6
+        }
+      ],
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "type": "no_value",
+          "value": null,
+          "unit": "0.1 ms"
+        },
+        "DRB.UEThpDl": {
+          "type": "real",
+          "value": 0,
+          "unit": "kbit/s"
+        },
+        "DRB.UEThpUl": {
+          "type": "real",
+          "value": 0,
+          "unit": "kbit/s"
+        },
+        "RRU.PrbTotDl": {
+          "type": "integer",
+          "value": 0,
+          "unit": "%"
+        },
+        "RRU.PrbTotUl": {
+          "type": "integer",
+          "value": 0,
+          "unit": "%"
+        },
+        "PUSCH.RSRP.dBFS": {
+          "type": "no_value",
+          "value": null,
+          "unit": "dBFS"
+        },
+        "PUSCH.SNR.dB": {
+          "type": "no_value",
+          "value": null,
+          "unit": "dB"
+        },
+        "CQI": {
+          "type": "integer",
+          "value": 6,
+          "unit": "index"
+        },
+        "CQI.Samples": {
+          "type": "integer",
+          "value": 5,
+          "unit": "samples"
+        },
+        "DL.MCS": {
+          "type": "no_value",
+          "value": null,
+          "unit": "index"
+        },
+        "UL.MCS": {
+          "type": "no_value",
+          "value": null,
+          "unit": "index"
+        },
+        "DL.MCS.Samples": {
+          "type": "integer",
+          "value": 0,
+          "unit": "samples"
+        },
+        "UL.MCS.Samples": {
+          "type": "integer",
+          "value": 0,
+          "unit": "samples"
+        },
+        "UL.PHR.dB": {
+          "type": "real",
+          "value": 6,
+          "unit": "dB"
+        },
+        "UL.PHR.AgeMs": {
+          "type": "no_value",
+          "value": null,
+          "unit": "ms"
+        },
+        "UL.BSR.Bytes": {
+          "type": "integer",
+          "value": 0,
+          "unit": "bytes"
+        },
+        "UL.BSR.AgeMs": {
+          "type": "real",
+          "value": 501.59539794921875,
+          "unit": "ms"
+        },
+        "DL.Buffer.Bytes": {
+          "type": "integer",
+          "value": 0,
+          "unit": "bytes"
+        },
+        "DL.Buffer.AgeMs": {
+          "type": "real",
+          "value": 1821.5970458984375,
+          "unit": "ms"
+        },
+        "DL.MAC.Throughput": {
+          "type": "real",
+          "value": 0,
+          "unit": "kbit/s"
+        },
+        "UL.MAC.Throughput": {
+          "type": "real",
+          "value": 0,
+          "unit": "kbit/s"
+        },
+        "DL.HARQ.Ok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "DL.HARQ.Nok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "UL.CRC.Ok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "UL.CRC.Nok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "PRB.UsageDl.Percent": {
+          "type": "real",
+          "value": 0,
+          "unit": "%"
+        },
+        "PRB.UsageUl.Percent": {
+          "type": "real",
+          "value": 0,
+          "unit": "%"
+        }
+      }
+    },
+    {
+      "sequence": 6971,
+      "du": "2",
+      "header_time_us": "1792969168642027",
+      "issues": [
+        {
+          "kind": "INTEGER PRB unavailable while REAL is valid",
+          "direction": "Dl",
+          "real": 0
+        }
+      ],
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "type": "no_value",
+          "value": null,
+          "unit": "0.1 ms"
+        },
+        "DRB.UEThpDl": {
+          "type": "real",
+          "value": 0,
+          "unit": "kbit/s"
+        },
+        "DRB.UEThpUl": {
+          "type": "real",
+          "value": 0,
+          "unit": "kbit/s"
+        },
+        "RRU.PrbTotDl": {
+          "type": "no_value",
+          "value": null,
+          "unit": "%"
+        },
+        "RRU.PrbTotUl": {
+          "type": "integer",
+          "value": 0,
+          "unit": "%"
+        },
+        "PUSCH.RSRP.dBFS": {
+          "type": "no_value",
+          "value": null,
+          "unit": "dBFS"
+        },
+        "PUSCH.SNR.dB": {
+          "type": "no_value",
+          "value": null,
+          "unit": "dB"
+        },
+        "CQI": {
+          "type": "integer",
+          "value": 10,
+          "unit": "index"
+        },
+        "CQI.Samples": {
+          "type": "integer",
+          "value": 5,
+          "unit": "samples"
+        },
+        "DL.MCS": {
+          "type": "no_value",
+          "value": null,
+          "unit": "index"
+        },
+        "UL.MCS": {
+          "type": "no_value",
+          "value": null,
+          "unit": "index"
+        },
+        "DL.MCS.Samples": {
+          "type": "integer",
+          "value": 0,
+          "unit": "samples"
+        },
+        "UL.MCS.Samples": {
+          "type": "integer",
+          "value": 0,
+          "unit": "samples"
+        },
+        "UL.PHR.dB": {
+          "type": "real",
+          "value": 6,
+          "unit": "dB"
+        },
+        "UL.PHR.AgeMs": {
+          "type": "real",
+          "value": 1361.3995361328125,
+          "unit": "ms"
+        },
+        "UL.BSR.Bytes": {
+          "type": "integer",
+          "value": 0,
+          "unit": "bytes"
+        },
+        "UL.BSR.AgeMs": {
+          "type": "real",
+          "value": 1361.400146484375,
+          "unit": "ms"
+        },
+        "DL.Buffer.Bytes": {
+          "type": "integer",
+          "value": 0,
+          "unit": "bytes"
+        },
+        "DL.Buffer.AgeMs": {
+          "type": "real",
+          "value": 1361.3990478515625,
+          "unit": "ms"
+        },
+        "DL.MAC.Throughput": {
+          "type": "real",
+          "value": 0,
+          "unit": "kbit/s"
+        },
+        "UL.MAC.Throughput": {
+          "type": "real",
+          "value": 0,
+          "unit": "kbit/s"
+        },
+        "DL.HARQ.Ok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "DL.HARQ.Nok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "UL.CRC.Ok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "UL.CRC.Nok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "PRB.UsageDl.Percent": {
+          "type": "real",
+          "value": 0,
+          "unit": "%"
+        },
+        "PRB.UsageUl.Percent": {
+          "type": "real",
+          "value": 0,
+          "unit": "%"
+        }
+      }
+    },
+    {
+      "sequence": 7075,
+      "du": "2",
+      "header_time_us": "1792969173842031",
+      "issues": [
+        {
+          "kind": "value valid but age unavailable",
+          "metric": "UL.PHR",
+          "value": 4
+        }
+      ],
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "type": "no_value",
+          "value": null,
+          "unit": "0.1 ms"
+        },
+        "DRB.UEThpDl": {
+          "type": "real",
+          "value": 0,
+          "unit": "kbit/s"
+        },
+        "DRB.UEThpUl": {
+          "type": "real",
+          "value": 0,
+          "unit": "kbit/s"
+        },
+        "RRU.PrbTotDl": {
+          "type": "integer",
+          "value": 0,
+          "unit": "%"
+        },
+        "RRU.PrbTotUl": {
+          "type": "integer",
+          "value": 0,
+          "unit": "%"
+        },
+        "PUSCH.RSRP.dBFS": {
+          "type": "no_value",
+          "value": null,
+          "unit": "dBFS"
+        },
+        "PUSCH.SNR.dB": {
+          "type": "no_value",
+          "value": null,
+          "unit": "dB"
+        },
+        "CQI": {
+          "type": "integer",
+          "value": 6,
+          "unit": "index"
+        },
+        "CQI.Samples": {
+          "type": "integer",
+          "value": 5,
+          "unit": "samples"
+        },
+        "DL.MCS": {
+          "type": "no_value",
+          "value": null,
+          "unit": "index"
+        },
+        "UL.MCS": {
+          "type": "no_value",
+          "value": null,
+          "unit": "index"
+        },
+        "DL.MCS.Samples": {
+          "type": "integer",
+          "value": 0,
+          "unit": "samples"
+        },
+        "UL.MCS.Samples": {
+          "type": "integer",
+          "value": 0,
+          "unit": "samples"
+        },
+        "UL.PHR.dB": {
+          "type": "real",
+          "value": 4,
+          "unit": "dB"
+        },
+        "UL.PHR.AgeMs": {
+          "type": "no_value",
+          "value": null,
+          "unit": "ms"
+        },
+        "UL.BSR.Bytes": {
+          "type": "integer",
+          "value": 0,
+          "unit": "bytes"
+        },
+        "UL.BSR.AgeMs": {
+          "type": "real",
+          "value": 3181.53271484375,
+          "unit": "ms"
+        },
+        "DL.Buffer.Bytes": {
+          "type": "integer",
+          "value": 0,
+          "unit": "bytes"
+        },
+        "DL.Buffer.AgeMs": {
+          "type": "real",
+          "value": 3181.53173828125,
+          "unit": "ms"
+        },
+        "DL.MAC.Throughput": {
+          "type": "real",
+          "value": 0,
+          "unit": "kbit/s"
+        },
+        "UL.MAC.Throughput": {
+          "type": "real",
+          "value": 0,
+          "unit": "kbit/s"
+        },
+        "DL.HARQ.Ok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "DL.HARQ.Nok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "UL.CRC.Ok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "UL.CRC.Nok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "PRB.UsageDl.Percent": {
+          "type": "real",
+          "value": 0,
+          "unit": "%"
+        },
+        "PRB.UsageUl.Percent": {
+          "type": "real",
+          "value": 0,
+          "unit": "%"
+        }
+      }
+    }
+  ],
+  "prb_mismatch_rows": 5,
+  "prb_mismatch_pairs": 6,
+  "missing_sample_counts": 1,
+  "missing_ages": 3,
+  "missing_integer_prb": 1,
+  "interpretation": "Sparse PRB and auxiliary-field consistency observations. Separate getter reads may straddle cache replacement; causality remains unproven."
+}

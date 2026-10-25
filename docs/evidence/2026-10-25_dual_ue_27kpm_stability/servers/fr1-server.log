@@ -1,0 +1,243 @@
+2026-10-25T22:51:24Z -----------------------------------------------------------
+2026-10-25T22:51:24Z Server listening on 5201 (test #1)
+2026-10-25T22:51:24Z -----------------------------------------------------------
+2026-10-25T22:54:14Z Accepted connection from 10.45.0.18, port 35385
+2026-10-25T22:54:14Z [  5] local 10.45.0.1 port 5201 connected to 10.45.0.18 port 33935
+2026-10-25T22:54:15Z [ ID] Interval           Transfer     Bitrate
+2026-10-25T22:54:15Z [  5]   0.00-1.00   sec  1.00 MBytes  8.38 Mbits/sec                  
+2026-10-25T22:54:16Z [  5]   1.00-2.00   sec   896 KBytes  7.34 Mbits/sec                  
+2026-10-25T22:54:17Z [  5]   2.00-3.00   sec   512 KBytes  4.20 Mbits/sec                  
+2026-10-25T22:54:18Z [  5]   3.00-4.00   sec   384 KBytes  3.14 Mbits/sec                  
+2026-10-25T22:54:19Z [  5]   4.00-5.00   sec   384 KBytes  3.15 Mbits/sec                  
+2026-10-25T22:54:20Z [  5]   5.00-6.00   sec   384 KBytes  3.15 Mbits/sec                  
+2026-10-25T22:54:21Z [  5]   6.00-7.00   sec   384 KBytes  3.15 Mbits/sec                  
+2026-10-25T22:54:22Z [  5]   7.00-8.00   sec   512 KBytes  4.19 Mbits/sec                  
+2026-10-25T22:54:23Z [  5]   8.00-9.00   sec   512 KBytes  4.19 Mbits/sec                  
+2026-10-25T22:54:24Z [  5]   9.00-10.00  sec  1.12 MBytes  9.45 Mbits/sec                  
+2026-10-25T22:54:25Z [  5]  10.00-11.00  sec  1.38 MBytes  11.5 Mbits/sec                  
+2026-10-25T22:54:26Z [  5]  11.00-12.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:54:27Z [  5]  12.00-13.00  sec  1.38 MBytes  11.5 Mbits/sec                  
+2026-10-25T22:54:28Z [  5]  13.00-14.00  sec   896 KBytes  7.34 Mbits/sec                  
+2026-10-25T22:54:29Z [  5]  14.00-15.00  sec  1.25 MBytes  10.5 Mbits/sec                  
+2026-10-25T22:54:30Z [  5]  15.00-16.00  sec  1.62 MBytes  13.6 Mbits/sec                  
+2026-10-25T22:54:31Z [  5]  16.00-17.00  sec  1.75 MBytes  14.7 Mbits/sec                  
+2026-10-25T22:54:32Z [  5]  17.00-18.00  sec  1.62 MBytes  13.6 Mbits/sec                  
+2026-10-25T22:54:33Z [  5]  18.00-19.00  sec  1.50 MBytes  12.6 Mbits/sec                  
+2026-10-25T22:54:34Z [  5]  19.00-20.00  sec  1.38 MBytes  11.5 Mbits/sec                  
+2026-10-25T22:54:35Z [  5]  20.00-21.00  sec  1.25 MBytes  10.5 Mbits/sec                  
+2026-10-25T22:54:36Z [  5]  21.00-22.00  sec  1.25 MBytes  10.5 Mbits/sec                  
+2026-10-25T22:54:37Z [  5]  22.00-23.00  sec  1.38 MBytes  11.5 Mbits/sec                  
+2026-10-25T22:54:38Z [  5]  23.00-24.00  sec  1.50 MBytes  12.6 Mbits/sec                  
+2026-10-25T22:54:39Z [  5]  24.00-25.00  sec  1.50 MBytes  12.6 Mbits/sec                  
+2026-10-25T22:54:40Z [  5]  25.00-26.00  sec  1.12 MBytes  9.44 Mbits/sec                  
+2026-10-25T22:54:41Z [  5]  26.00-27.00  sec  1.25 MBytes  10.5 Mbits/sec                  
+2026-10-25T22:54:42Z [  5]  27.00-28.00  sec  1.38 MBytes  11.5 Mbits/sec                  
+2026-10-25T22:54:43Z [  5]  28.00-29.00  sec  1.12 MBytes  9.44 Mbits/sec                  
+2026-10-25T22:54:44Z [  5]  29.00-30.00  sec  1.38 MBytes  11.5 Mbits/sec                  
+2026-10-25T22:54:45Z [  5]  30.00-31.00  sec  1.62 MBytes  13.6 Mbits/sec                  
+2026-10-25T22:54:46Z [  5]  31.00-32.00  sec  1.62 MBytes  13.6 Mbits/sec                  
+2026-10-25T22:54:47Z [  5]  32.00-33.00  sec  1.50 MBytes  12.6 Mbits/sec                  
+2026-10-25T22:54:48Z [  5]  33.00-34.00  sec  1.25 MBytes  10.5 Mbits/sec                  
+2026-10-25T22:54:49Z [  5]  34.00-35.00  sec  1.25 MBytes  10.5 Mbits/sec                  
+2026-10-25T22:54:50Z [  5]  35.00-36.00  sec  1.00 MBytes  8.39 Mbits/sec                  
+2026-10-25T22:54:51Z [  5]  36.00-37.00  sec  1.38 MBytes  11.5 Mbits/sec                  
+2026-10-25T22:54:52Z [  5]  37.00-38.00  sec   768 KBytes  6.29 Mbits/sec                  
+2026-10-25T22:54:53Z [  5]  38.00-39.00  sec  1.12 MBytes  9.44 Mbits/sec                  
+2026-10-25T22:54:54Z [  5]  39.00-40.00  sec  1.50 MBytes  12.6 Mbits/sec                  
+2026-10-25T22:54:55Z [  5]  40.00-41.00  sec  1.62 MBytes  13.6 Mbits/sec                  
+2026-10-25T22:54:56Z [  5]  41.00-42.00  sec  1.50 MBytes  12.6 Mbits/sec                  
+2026-10-25T22:54:57Z [  5]  42.00-43.00  sec  1.50 MBytes  12.6 Mbits/sec                  
+2026-10-25T22:54:58Z [  5]  43.00-44.00  sec  1.62 MBytes  13.6 Mbits/sec                  
+2026-10-25T22:54:59Z [  5]  44.00-45.00  sec   896 KBytes  7.35 Mbits/sec                  
+2026-10-25T22:55:00Z [  5]  45.00-46.00  sec   896 KBytes  7.33 Mbits/sec                  
+2026-10-25T22:55:01Z [  5]  46.00-47.00  sec  1.50 MBytes  12.6 Mbits/sec                  
+2026-10-25T22:55:02Z [  5]  47.00-48.00  sec  1.88 MBytes  15.7 Mbits/sec                  
+2026-10-25T22:55:03Z [  5]  48.00-49.00  sec  1.38 MBytes  11.5 Mbits/sec                  
+2026-10-25T22:55:04Z [  5]  49.00-50.00  sec  1.00 MBytes  8.38 Mbits/sec                  
+2026-10-25T22:55:04Z [  5]  50.00-50.33  sec   384 KBytes  9.60 Mbits/sec                  
+2026-10-25T22:55:04Z - - - - - - - - - - - - - - - - - - - - - - - - -
+2026-10-25T22:55:04Z [ ID] Interval           Transfer     Bitrate
+2026-10-25T22:55:04Z [  5]   0.00-50.33  sec  61.1 MBytes  10.2 Mbits/sec                  receiver
+2026-10-25T22:55:05Z -----------------------------------------------------------
+2026-10-25T22:55:05Z Server listening on 5201 (test #2)
+2026-10-25T22:55:05Z -----------------------------------------------------------
+2026-10-25T22:55:56Z Accepted connection from 10.45.0.18, port 56055
+2026-10-25T22:55:57Z [  5] local 10.45.0.1 port 5201 connected to 10.45.0.18 port 46271
+2026-10-25T22:55:58Z [ ID] Interval           Transfer     Bitrate
+2026-10-25T22:55:58Z [  5]   0.00-1.00   sec   640 KBytes  5.24 Mbits/sec                  
+2026-10-25T22:55:59Z [  5]   1.00-2.00   sec  1.00 MBytes  8.39 Mbits/sec                  
+2026-10-25T22:56:00Z [  5]   2.00-3.00   sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:56:01Z [  5]   3.00-4.00   sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:56:02Z [  5]   4.00-5.00   sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:56:03Z [  5]   5.00-6.00   sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:56:04Z [  5]   6.00-7.00   sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:56:05Z [  5]   7.00-8.00   sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:56:06Z [  5]   8.00-9.00   sec  1.75 MBytes  14.7 Mbits/sec                  
+2026-10-25T22:56:07Z [  5]   9.00-10.00  sec  1.62 MBytes  13.6 Mbits/sec                  
+2026-10-25T22:56:08Z [  5]  10.00-11.00  sec  2.00 MBytes  16.8 Mbits/sec                  
+2026-10-25T22:56:09Z [  5]  11.00-12.00  sec  2.00 MBytes  16.8 Mbits/sec                  
+2026-10-25T22:56:10Z [  5]  12.00-13.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:56:11Z [  5]  13.00-14.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:56:12Z [  5]  14.00-15.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:56:13Z [  5]  15.00-16.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:56:14Z [  5]  16.00-17.00  sec  1.75 MBytes  14.7 Mbits/sec                  
+2026-10-25T22:56:15Z [  5]  17.00-18.00  sec  1.50 MBytes  12.6 Mbits/sec                  
+2026-10-25T22:56:16Z [  5]  18.00-19.00  sec  1.62 MBytes  13.6 Mbits/sec                  
+2026-10-25T22:56:17Z [  5]  19.00-20.00  sec  1.25 MBytes  10.5 Mbits/sec                  
+2026-10-25T22:56:18Z [  5]  20.00-21.00  sec  1.00 MBytes  8.39 Mbits/sec                  
+2026-10-25T22:56:19Z [  5]  21.00-22.00  sec  1.00 MBytes  8.38 Mbits/sec                  
+2026-10-25T22:56:20Z [  5]  22.00-23.00  sec  1.25 MBytes  10.5 Mbits/sec                  
+2026-10-25T22:56:21Z [  5]  23.00-24.00  sec  2.00 MBytes  16.8 Mbits/sec                  
+2026-10-25T22:56:22Z [  5]  24.00-25.00  sec  1.38 MBytes  11.5 Mbits/sec                  
+2026-10-25T22:56:23Z [  5]  25.00-26.00  sec  1.25 MBytes  10.5 Mbits/sec                  
+2026-10-25T22:56:24Z [  5]  26.00-27.00  sec  1.75 MBytes  14.7 Mbits/sec                  
+2026-10-25T22:56:25Z [  5]  27.00-28.00  sec  2.00 MBytes  16.8 Mbits/sec                  
+2026-10-25T22:56:26Z [  5]  28.00-29.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:56:27Z [  5]  29.00-30.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:56:28Z [  5]  30.00-31.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:56:29Z [  5]  31.00-32.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:56:30Z [  5]  32.00-33.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:56:31Z [  5]  33.00-34.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:56:32Z [  5]  34.00-35.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:56:33Z [  5]  35.00-36.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:56:34Z [  5]  36.00-37.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:56:35Z [  5]  37.00-38.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:56:36Z [  5]  38.00-39.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:56:37Z [  5]  39.00-40.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:56:38Z [  5]  40.00-41.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:56:39Z [  5]  41.00-42.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:56:40Z [  5]  42.00-43.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:56:41Z [  5]  43.00-44.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:56:42Z [  5]  44.00-45.00  sec  2.75 MBytes  23.0 Mbits/sec                  
+2026-10-25T22:56:43Z [  5]  45.00-46.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:56:44Z [  5]  46.00-47.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:56:45Z [  5]  47.00-48.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:56:46Z [  5]  48.00-49.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:56:47Z [  5]  49.00-50.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:56:47Z [  5]  50.00-50.14  sec   384 KBytes  23.5 Mbits/sec                  
+2026-10-25T22:56:47Z - - - - - - - - - - - - - - - - - - - - - - - - -
+2026-10-25T22:56:47Z [ ID] Interval           Transfer     Bitrate
+2026-10-25T22:56:47Z [  5]   0.00-50.14  sec   107 MBytes  17.9 Mbits/sec                  receiver
+2026-10-25T22:56:47Z -----------------------------------------------------------
+2026-10-25T22:56:47Z Server listening on 5201 (test #3)
+2026-10-25T22:56:47Z -----------------------------------------------------------
+2026-10-25T22:56:48Z Accepted connection from 10.45.0.18, port 37121
+2026-10-25T22:56:48Z [  5] local 10.45.0.1 port 5201 connected to 10.45.0.18 port 43643
+2026-10-25T22:56:49Z [ ID] Interval           Transfer     Bitrate
+2026-10-25T22:56:49Z [  5]   0.00-1.00   sec  1.75 MBytes  14.7 Mbits/sec                  
+2026-10-25T22:56:50Z [  5]   1.00-2.00   sec  2.88 MBytes  24.1 Mbits/sec                  
+2026-10-25T22:56:51Z [  5]   2.00-3.00   sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:56:52Z [  5]   3.00-4.00   sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:56:53Z [  5]   4.00-5.00   sec  2.75 MBytes  23.0 Mbits/sec                  
+2026-10-25T22:56:54Z [  5]   5.00-6.00   sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:56:55Z [  5]   6.00-7.00   sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:56:56Z [  5]   7.00-8.00   sec  2.75 MBytes  23.0 Mbits/sec                  
+2026-10-25T22:56:57Z [  5]   8.00-9.00   sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:56:58Z [  5]   9.00-10.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:56:59Z [  5]  10.00-11.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:00Z [  5]  11.00-12.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:01Z [  5]  12.00-13.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:02Z [  5]  13.00-14.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:03Z [  5]  14.00-15.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:57:04Z [  5]  15.00-16.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:05Z [  5]  16.00-17.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:57:06Z [  5]  17.00-18.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:57:07Z [  5]  18.00-19.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:57:08Z [  5]  19.00-20.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:57:09Z [  5]  20.00-21.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:10Z [  5]  21.00-22.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:57:11Z [  5]  22.00-23.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:57:12Z [  5]  23.00-24.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:57:13Z [  5]  24.00-25.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:57:14Z [  5]  25.00-26.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:57:15Z [  5]  26.00-27.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:57:16Z [  5]  27.00-28.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:57:17Z [  5]  28.00-29.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:57:18Z [  5]  29.00-30.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:57:19Z [  5]  30.00-31.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:20Z [  5]  31.00-32.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:57:21Z [  5]  32.00-33.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:22Z [  5]  33.00-34.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:57:23Z [  5]  34.00-35.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:57:24Z [  5]  35.00-36.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:57:25Z [  5]  36.00-37.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:26Z [  5]  37.00-38.00  sec  2.75 MBytes  23.0 Mbits/sec                  
+2026-10-25T22:57:27Z [  5]  38.00-39.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:28Z [  5]  39.00-40.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:57:29Z [  5]  40.00-41.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:30Z [  5]  41.00-42.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:57:31Z [  5]  42.00-43.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:32Z [  5]  43.00-44.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:57:33Z [  5]  44.00-45.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:57:34Z [  5]  45.00-46.00  sec  2.75 MBytes  23.1 Mbits/sec                  
+2026-10-25T22:57:35Z [  5]  46.00-47.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:57:36Z [  5]  47.00-48.00  sec  1.62 MBytes  13.6 Mbits/sec                  
+2026-10-25T22:57:37Z [  5]  48.00-49.00  sec  1.75 MBytes  14.7 Mbits/sec                  
+2026-10-25T22:57:38Z [  5]  49.00-50.00  sec  1.88 MBytes  15.7 Mbits/sec                  
+2026-10-25T22:57:38Z [  5]  50.00-50.25  sec   384 KBytes  12.8 Mbits/sec                  
+2026-10-25T22:57:38Z - - - - - - - - - - - - - - - - - - - - - - - - -
+2026-10-25T22:57:38Z [ ID] Interval           Transfer     Bitrate
+2026-10-25T22:57:38Z [  5]   0.00-50.25  sec   126 MBytes  21.1 Mbits/sec                  receiver
+2026-10-25T22:57:39Z -----------------------------------------------------------
+2026-10-25T22:57:39Z Server listening on 5201 (test #4)
+2026-10-25T22:57:39Z -----------------------------------------------------------
+2026-10-25T22:58:30Z Accepted connection from 10.45.0.18, port 43487
+2026-10-25T22:58:30Z [  5] local 10.45.0.1 port 5201 connected to 10.45.0.18 port 48335
+2026-10-25T22:58:31Z [ ID] Interval           Transfer     Bitrate
+2026-10-25T22:58:31Z [  5]   0.00-1.00   sec   128 KBytes  1.05 Mbits/sec                  
+2026-10-25T22:58:32Z [  5]   1.00-2.00   sec  1.12 MBytes  9.43 Mbits/sec                  
+2026-10-25T22:58:33Z [  5]   2.00-3.00   sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:58:34Z [  5]   3.00-4.00   sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:58:35Z [  5]   4.00-5.00   sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:58:36Z [  5]   5.00-6.00   sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:58:37Z [  5]   6.00-7.00   sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:58:38Z [  5]   7.00-8.00   sec  2.75 MBytes  23.0 Mbits/sec                  
+2026-10-25T22:58:39Z [  5]   8.00-9.00   sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:58:40Z [  5]   9.00-10.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:58:41Z [  5]  10.00-11.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:58:42Z [  5]  11.00-12.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:58:43Z [  5]  12.00-13.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:58:44Z [  5]  13.00-14.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:58:45Z [  5]  14.00-15.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:58:46Z [  5]  15.00-16.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:58:47Z [  5]  16.00-17.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:58:48Z [  5]  17.00-18.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:58:49Z [  5]  18.00-19.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:58:50Z [  5]  19.00-20.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:58:51Z [  5]  20.00-21.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:58:52Z [  5]  21.00-22.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:58:53Z [  5]  22.00-23.00  sec  2.50 MBytes  21.0 Mbits/sec                  
+2026-10-25T22:58:54Z [  5]  23.00-24.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:58:55Z [  5]  24.00-25.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:58:56Z [  5]  25.00-26.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:58:57Z [  5]  26.00-27.00  sec  2.62 MBytes  22.0 Mbits/sec                  
+2026-10-25T22:58:58Z [  5]  27.00-28.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:58:59Z [  5]  28.00-29.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:59:00Z [  5]  29.00-30.00  sec  2.00 MBytes  16.8 Mbits/sec                  
+2026-10-25T22:59:01Z [  5]  30.00-31.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:59:02Z [  5]  31.00-32.00  sec  2.00 MBytes  16.8 Mbits/sec                  
+2026-10-25T22:59:03Z [  5]  32.00-33.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:59:04Z [  5]  33.00-34.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:59:05Z [  5]  34.00-35.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:59:06Z [  5]  35.00-36.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:59:07Z [  5]  36.00-37.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:59:08Z [  5]  37.00-38.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:59:09Z [  5]  38.00-39.00  sec  2.00 MBytes  16.8 Mbits/sec                  
+2026-10-25T22:59:10Z [  5]  39.00-40.00  sec  2.00 MBytes  16.8 Mbits/sec                  
+2026-10-25T22:59:11Z [  5]  40.00-41.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:59:12Z [  5]  41.00-42.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:59:13Z [  5]  42.00-43.00  sec  2.00 MBytes  16.8 Mbits/sec                  
+2026-10-25T22:59:14Z [  5]  43.00-44.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:59:15Z [  5]  44.00-45.00  sec  2.00 MBytes  16.8 Mbits/sec                  
+2026-10-25T22:59:16Z [  5]  45.00-46.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:59:17Z [  5]  46.00-47.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:59:18Z [  5]  47.00-48.00  sec  2.12 MBytes  17.8 Mbits/sec                  
+2026-10-25T22:59:19Z [  5]  48.00-49.00  sec  2.38 MBytes  19.9 Mbits/sec                  
+2026-10-25T22:59:20Z [  5]  49.00-50.00  sec  2.25 MBytes  18.9 Mbits/sec                  
+2026-10-25T22:59:20Z [  5]  50.00-50.16  sec   384 KBytes  19.4 Mbits/sec                  
+2026-10-25T22:59:20Z - - - - - - - - - - - - - - - - - - - - - - - - -
+2026-10-25T22:59:20Z [ ID] Interval           Transfer     Bitrate
+2026-10-25T22:59:20Z [  5]   0.00-50.16  sec   112 MBytes  18.7 Mbits/sec                  receiver
+2026-10-25T22:59:21Z -----------------------------------------------------------
+2026-10-25T22:59:21Z Server listening on 5201 (test #5)
+2026-10-25T22:59:21Z -----------------------------------------------------------

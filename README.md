@@ -1,5 +1,13 @@
 # Falcomm
 
+**Dual UE live stability, 2026-10-25:** the
+[six-minute 27 KPM experiment report](docs/reports/dual_ue_27kpm_stability_report_2026-10-25.md)
+records six completed alternating/concurrent uplink phases, stable 100 ms DU
+delivery with 1-second CU identity, and continuous current IP binding after
+startup. It includes all 27 measurement line charts and archived source data;
+RSRP 0 dBFS readings are retained as normal upper-bound values. Sparse field
+consistency observations remain documented follow-up work.
+
 **Dual UE checkpoint, 2026-10-24:** the current automatic-reconnect script
 optimization stage is complete. The
 [English UE2 / FR3 recovery report](docs/reports/ue2_fr3_recovery_experiment_report_2026-10-24.md)

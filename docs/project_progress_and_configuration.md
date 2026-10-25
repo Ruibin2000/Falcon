@@ -6,11 +6,18 @@ PHR, DL/UL MCS, HARQ/CRC outcomes, BSR, DL buffer and MAC rates, with sample
 counts and latest-indication ages, plus separate REAL DL/UL PRB percentages.
 CQI and PRB getters now resolve sparse UE
 indices correctly; PRB percentages retain precision until final division.
-Offline/native and independent codec checks cover the extension; a new
-dual-UE live capture is pending. The Spark quick commands target this test.
-The accepted seven-measurement profile remains the launcher default and its
-October 25 acceptance below is preserved. Snapshot-concurrency work stays
-deferred; expanded coverage is not represented as already radio-validated.
+Offline/native and independent codec checks cover the extension. The
+[six-minute live stability report](reports/dual_ue_27kpm_stability_report_2026-10-25.md)
+now records six completed alternating/concurrent traffic phases and eight
+successful TCP transfers, with receiver totals of 28.05 and 29.12 Mbit/s in
+the concurrent phases. Both DUs deliver 3,579 records at median 100.003 ms;
+all 7,138 records after startup match the current UE IPs. The report retains
+line charts for all 27 measurements, original data and independent checks.
+RSRP 0 dBFS readings are normal upper-bound values. Sparse PRB/companion-field
+inconsistencies and RF timing messages remain recorded follow-up observations;
+snapshot-concurrency work stays deferred. The accepted seven-measurement
+profile remains the launcher default and its October 25 acceptance below is
+preserved; the Spark stability procedure explicitly selects 27 measurements.
 
 **Operator acceptance, 2026-10-25:** the current Dual UE integration and
 seven-metric reporting stage is **complete, accepted and operating normally**.

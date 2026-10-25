@@ -1,0 +1,262 @@
+{
+  "experiment_date": "2026-10-25",
+  "timezone": "America/New_York",
+  "operator": "Ruibin",
+  "sources": [
+    {
+      "source": "/tmp/falcon-identity-dual.qbyVsyGT/rows.ndjson",
+      "archived": "xapp/rows.ndjson.gz",
+      "source_sha256": "6e9e6a7f1a1e79725db7bd332fd7ed3a30717bd5544133ab7308bba2781db32b",
+      "archived_sha256": "287d9303173e8935058f940a12501a89070120ae3bbbb65a899aad8172b40a7a",
+      "compressed": true
+    },
+    {
+      "source": "/tmp/falcon-identity-dual.qbyVsyGT/inputs.ndjson",
+      "archived": "xapp/inputs.ndjson.gz",
+      "source_sha256": "fdaf5cc50daa7e5a24a7a4a5c79f7bc3f21ab65a68f0d91b68014cf9b300273d",
+      "archived_sha256": "e14b38a2b068b46a9cd2668266fc5e263f69c69d5e4fe70f29d9cab910fe920f",
+      "compressed": true
+    },
+    {
+      "source": "/tmp/falcon-identity-dual.qbyVsyGT/local.json",
+      "archived": "xapp/local.json",
+      "source_sha256": "1cb15a0cf049e6420190e62f61a5dd0cfc9f4d947ce4a8eabe19fde505ffc7de",
+      "archived_sha256": "1cb15a0cf049e6420190e62f61a5dd0cfc9f4d947ce4a8eabe19fde505ffc7de",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-identity-dual.qbyVsyGT/xapp.conf",
+      "archived": "xapp/xapp.conf",
+      "source_sha256": "e4814dd266389e439ead29fa0bafde827ce3e2f07e86a7cb53ab3c3d42d80544",
+      "archived_sha256": "e4814dd266389e439ead29fa0bafde827ce3e2f07e86a7cb53ab3c3d42d80544",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-identity-dual.qbyVsyGT/xapp.log",
+      "archived": "xapp/xapp.log",
+      "source_sha256": "9a57f951ce1c6bdcf97401088d1586a58dc46a351d3fcd1924fd68bf52a1fc0d",
+      "archived_sha256": "9a57f951ce1c6bdcf97401088d1586a58dc46a351d3fcd1924fd68bf52a1fc0d",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-identity-dual.qbyVsyGT/exit.txt",
+      "archived": "xapp/exit.txt",
+      "source_sha256": "18fce5e3002c0f2b58e36284b6126f830c4983be590e09f02606d98d6b8d716d",
+      "archived_sha256": "18fce5e3002c0f2b58e36284b6126f830c4983be590e09f02606d98d6b8d716d",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-dual-stability-v7mq9unp/phase5-ue2.json",
+      "archived": "laptop/phase5-ue2.json",
+      "source_sha256": "98da93479283c7a9cf3a7a86e909149354e8e8264ffeea66543d12cbaf49d245",
+      "archived_sha256": "98da93479283c7a9cf3a7a86e909149354e8e8264ffeea66543d12cbaf49d245",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-dual-stability-v7mq9unp/phase3-ue2.json",
+      "archived": "laptop/phase3-ue2.json",
+      "source_sha256": "74084882a5ddb06519ec03e727e356917386c4d37a3f59a49feb70a4faf7675f",
+      "archived_sha256": "74084882a5ddb06519ec03e727e356917386c4d37a3f59a49feb70a4faf7675f",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-dual-stability-v7mq9unp/summary.json",
+      "archived": "laptop/summary.json",
+      "source_sha256": "88033bace4193a7495a2b6d3c6fa0a37844c9129ecda559bdd8c86a0b8453f38",
+      "archived_sha256": "88033bace4193a7495a2b6d3c6fa0a37844c9129ecda559bdd8c86a0b8453f38",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-dual-stability-v7mq9unp/phase4-ue1.json",
+      "archived": "laptop/phase4-ue1.json",
+      "source_sha256": "a52a7473f1b96a70424b0398213b5b2d44ad8a5f429a1501ad381e8146d7878c",
+      "archived_sha256": "a52a7473f1b96a70424b0398213b5b2d44ad8a5f429a1501ad381e8146d7878c",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-dual-stability-v7mq9unp/phase3-ue1.json",
+      "archived": "laptop/phase3-ue1.json",
+      "source_sha256": "fe4c1a95429111debe30387fe00cd47b60c997b64d15d4d5ddd51abbc794023d",
+      "archived_sha256": "fe4c1a95429111debe30387fe00cd47b60c997b64d15d4d5ddd51abbc794023d",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-dual-stability-v7mq9unp/phase6-ue2.json",
+      "archived": "laptop/phase6-ue2.json",
+      "source_sha256": "24683569bbbe94ce065fff7f4b655f8c9a8109f7d84fd38e1183f48f1bdc12ae",
+      "archived_sha256": "24683569bbbe94ce065fff7f4b655f8c9a8109f7d84fd38e1183f48f1bdc12ae",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-dual-stability-v7mq9unp/phase2-ue2.json",
+      "archived": "laptop/phase2-ue2.json",
+      "source_sha256": "86e1c827a59740e8cf08d3739f85077ec0b7b75607847fb6a0a3e71efa0c03b7",
+      "archived_sha256": "86e1c827a59740e8cf08d3739f85077ec0b7b75607847fb6a0a3e71efa0c03b7",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-dual-stability-v7mq9unp/truth.json",
+      "archived": "laptop/truth.json",
+      "source_sha256": "faa1910e65ff78fb56672dd27c68bd72a1969ad415ddfbc7a9238108da781df8",
+      "archived_sha256": "faa1910e65ff78fb56672dd27c68bd72a1969ad415ddfbc7a9238108da781df8",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-dual-stability-v7mq9unp/phase1-ue1.json",
+      "archived": "laptop/phase1-ue1.json",
+      "source_sha256": "3576b70e86356cd32ef9620b2867e95636d2cc46ee3d5cdc42730b796074290c",
+      "archived_sha256": "3576b70e86356cd32ef9620b2867e95636d2cc46ee3d5cdc42730b796074290c",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-dual-stability-v7mq9unp/phase6-ue1.json",
+      "archived": "laptop/phase6-ue1.json",
+      "source_sha256": "ea2cdf34883c01d15243fb91508d0e758c1666c980146e1c0bc81344bec66215",
+      "archived_sha256": "ea2cdf34883c01d15243fb91508d0e758c1666c980146e1c0bc81344bec66215",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-dual-stability-v7mq9unp/events.ndjson",
+      "archived": "laptop/events.ndjson",
+      "source_sha256": "cb9fd8524dc03b0966e5baf441e32c90cff8928257ac2b31bc1bb1b3b538de6a",
+      "archived_sha256": "cb9fd8524dc03b0966e5baf441e32c90cff8928257ac2b31bc1bb1b3b538de6a",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-iperf-fr1.KYnxVVyk/server.log",
+      "archived": "servers/fr1-server.log",
+      "source_sha256": "a9f0946db65c0d0dce6d57832b76fb65d3a8de7bebd597e4a6832d31add35012",
+      "archived_sha256": "a9f0946db65c0d0dce6d57832b76fb65d3a8de7bebd597e4a6832d31add35012",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-iperf-fr3.W52KCf25/server.log",
+      "archived": "servers/fr3-server.log",
+      "source_sha256": "0db5fd7f06a054fc1d50af84bcb6cf8b38bb51e1ab4e1a7e66718a73cb635670",
+      "archived_sha256": "0db5fd7f06a054fc1d50af84bcb6cf8b38bb51e1ab4e1a7e66718a73cb635670",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-du1-crash.SG6Lrd9B/binary.sha256",
+      "archived": "ran/du1/binary.sha256",
+      "source_sha256": "924fe0f8cb07eef531d6b1fa3082f3521c7cefa3c15740b11fb6c30b79145f89",
+      "archived_sha256": "924fe0f8cb07eef531d6b1fa3082f3521c7cefa3c15740b11fb6c30b79145f89",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-du1-crash.SG6Lrd9B/startup.log",
+      "archived": "ran/du1/startup.log",
+      "source_sha256": "527ff9aea7606f89d277252f078a98f30f8aa9126a357063cf197d9c2ed229c2",
+      "archived_sha256": "527ff9aea7606f89d277252f078a98f30f8aa9126a357063cf197d9c2ed229c2",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-du1-crash.SG6Lrd9B/du1.yml",
+      "archived": "ran/du1/du1.yml",
+      "source_sha256": "b68c97b0f51702701ded6e87e87aadcd121f6c632a60fc0b33006acaa15b760c",
+      "archived_sha256": "b68c97b0f51702701ded6e87e87aadcd121f6c632a60fc0b33006acaa15b760c",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-du1-crash.SG6Lrd9B/capture.gdb",
+      "archived": "ran/du1/capture.gdb",
+      "source_sha256": "b7ad43b48c7cc09cacd5ddad6336eea3579c7abb094f5f50a4689928455f1614",
+      "archived_sha256": "b7ad43b48c7cc09cacd5ddad6336eea3579c7abb094f5f50a4689928455f1614",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-du2-crash.HaZ16ABm/binary.sha256",
+      "archived": "ran/du2/binary.sha256",
+      "source_sha256": "924fe0f8cb07eef531d6b1fa3082f3521c7cefa3c15740b11fb6c30b79145f89",
+      "archived_sha256": "924fe0f8cb07eef531d6b1fa3082f3521c7cefa3c15740b11fb6c30b79145f89",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-du2-crash.HaZ16ABm/startup.log",
+      "archived": "ran/du2/startup.log",
+      "source_sha256": "f05305ec28f97c34c495b6a440a327da673450ea5d48660afe5c6b68476988ae",
+      "archived_sha256": "f05305ec28f97c34c495b6a440a327da673450ea5d48660afe5c6b68476988ae",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-du2-crash.HaZ16ABm/du2.yml",
+      "archived": "ran/du2/du2.yml",
+      "source_sha256": "78f992119b4771b6995a6f158db1ff2adc2e002507a34d1e18c67f218fcc491a",
+      "archived_sha256": "78f992119b4771b6995a6f158db1ff2adc2e002507a34d1e18c67f218fcc491a",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-du2-crash.HaZ16ABm/e2.yml",
+      "archived": "ran/du2/e2.yml",
+      "source_sha256": "b052deabe71011862fcd047816496c5a3b62901740a0987ef9a3f46d5c35e83f",
+      "archived_sha256": "b052deabe71011862fcd047816496c5a3b62901740a0987ef9a3f46d5c35e83f",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-du2-crash.HaZ16ABm/capture.gdb",
+      "archived": "ran/du2/capture.gdb",
+      "source_sha256": "b7ad43b48c7cc09cacd5ddad6336eea3579c7abb094f5f50a4689928455f1614",
+      "archived_sha256": "b7ad43b48c7cc09cacd5ddad6336eea3579c7abb094f5f50a4689928455f1614",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-identity-ric.RpzSKqQt/ric.log",
+      "archived": "ran/ric.log",
+      "source_sha256": "dbdc5daa41c5de1a4981cc03d0c404361fb0207e402e996bd0e157043cfc259d",
+      "archived_sha256": "dbdc5daa41c5de1a4981cc03d0c404361fb0207e402e996bd0e157043cfc259d",
+      "compressed": false
+    },
+    {
+      "source": "/tmp/falcon-du1-crash.SG6Lrd9B/du.log",
+      "archived": "ran/du1-window-warnings.log",
+      "selection": "W/E severity inside inclusive UTC capture bounds",
+      "window_start_utc": "2026-10-25T22:53:38.060261Z",
+      "window_end_utc": "2026-10-25T22:59:38.031929Z",
+      "lines_in_window": 2280831,
+      "selected_lines": 4724,
+      "prefix_lines_read": 2292735,
+      "prefix_sha256": "1a9e9e71f0a961d2f3d1b9975abb00e687a450e0bf9cfcba5254dd86935efcf7",
+      "prefix_includes_first_line_after_window": true,
+      "archived_sha256": "08a111e19170f45b14dceb6678cae2144bc96bcb9b89b4cc0396783ff6118a5a"
+    },
+    {
+      "source": "/tmp/falcon-du2-crash.HaZ16ABm/du.log",
+      "archived": "ran/du2-window-warnings.log",
+      "selection": "W/E severity inside inclusive UTC capture bounds",
+      "window_start_utc": "2026-10-25T22:53:38.060261Z",
+      "window_end_utc": "2026-10-25T22:59:38.031929Z",
+      "lines_in_window": 1704740,
+      "selected_lines": 4617,
+      "prefix_lines_read": 1714711,
+      "prefix_sha256": "2f6e2605ee4dff68ed9d5c3381609c20200f4a46dc97138782f8b1f447a8e2c5",
+      "prefix_includes_first_line_after_window": true,
+      "archived_sha256": "7e031b1425b6acb980ce8197d5bc47ebdb19b7f44acaad6c491be2e6f228f13d"
+    },
+    {
+      "source": "/tmp/falcon-identity-cu.SDF8R4nl/cu.log",
+      "archived": "ran/cu-window-warnings.log",
+      "selection": "W/E severity inside inclusive UTC capture bounds",
+      "window_start_utc": "2026-10-25T22:53:38.060261Z",
+      "window_end_utc": "2026-10-25T22:59:38.031929Z",
+      "lines_in_window": 2653978,
+      "selected_lines": 0,
+      "prefix_lines_read": 2655087,
+      "prefix_sha256": "02230f01f2d232c6e891567410665d9becc12ff828d624333aabe817fb80175c",
+      "prefix_includes_first_line_after_window": true,
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/tmp/falcon-qby-analysis.Z6amGTlA/phase_results.csv",
+      "archived": "phase_results.csv",
+      "source_sha256": "c63f0632e204f729080d75256b8bab55d86195d074690c7cea4eed477a519edb",
+      "archived_sha256": "c63f0632e204f729080d75256b8bab55d86195d074690c7cea4eed477a519edb",
+      "compressed": false
+    }
+  ],
+  "capture_window_utc": {
+    "start": "2026-10-25T22:53:38.060261+00:00",
+    "end": "2026-10-25T22:59:38.031929+00:00"
+  },
+  "runtime_log_note": "Only the prefix through the first timestamp after capture end was read from each mutable RAN log; W/E lines in the capture window are retained. The prefix digest is not a full-file digest.",
+  "source_semantics": "source_semantics.txt contains bounded source excerpts and full-source digests inspected during report preparation."
+}

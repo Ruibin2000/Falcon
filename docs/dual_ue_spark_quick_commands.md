@@ -550,20 +550,53 @@ F1/E2, console help, both UE paths and traffic after the next actual launch.
 
 ## 6. Start both iperf servers before the laptop sequences
 
-In the Spark UE1 server terminal:
+Start each logged server in its own Spark terminal. Before replacing an old
+unlogged listener, finish active Laptop traffic and press Ctrl+C in that
+server's original terminal. Then use the commands below for the new trial.
+
+**Spark UE1 / FR1 server terminal:**
 
 ```bash
-iperf3 -s -B 10.45.0.1 -p 5201
+FR1_IPERF_RUN=$(mktemp -d /tmp/falcon-iperf-fr1.XXXXXXXX)
+printf 'FR1 iperf server directory: %s\n' "$FR1_IPERF_RUN"
+set -o pipefail
+TZ=UTC stdbuf -oL -eL iperf3 -s -B 10.45.0.1 -p 5201 -i 1 \
+  --timestamps='%Y-%m-%dT%H:%M:%SZ ' --forceflush \
+  2>&1 | tee "$FR1_IPERF_RUN/server.log"
+FR1_IPERF_RC=${PIPESTATUS[0]}
+printf 'iperf server exit=%s\n' "$FR1_IPERF_RC" | tee "$FR1_IPERF_RUN/exit.txt"
 ```
 
-In the Spark UE2 server terminal:
+**Spark UE2 / FR3 server terminal:**
 
 ```bash
-iperf3 -s -B 10.46.0.1 -p 5202
+FR3_IPERF_RUN=$(mktemp -d /tmp/falcon-iperf-fr3.XXXXXXXX)
+printf 'FR3 iperf server directory: %s\n' "$FR3_IPERF_RUN"
+set -o pipefail
+TZ=UTC stdbuf -oL -eL iperf3 -s -B 10.46.0.1 -p 5202 -i 1 \
+  --timestamps='%Y-%m-%dT%H:%M:%SZ ' --forceflush \
+  2>&1 | tee "$FR3_IPERF_RUN/server.log"
+FR3_IPERF_RC=${PIPESTATUS[0]}
+printf 'iperf server exit=%s\n' "$FR3_IPERF_RC" | tee "$FR3_IPERF_RUN/exit.txt"
 ```
 
-Require `Server listening` on both ports. Reuse existing listeners rather than
-starting duplicate servers. Keep both listeners, both DUs, CU and RIC running.
+Require `Server listening` on both ports. Keep both printed directories:
+`server.log` records standard output and errors while also showing them in the
+terminal. iperf report lines carry UTC timestamps; `--forceflush` and line
+buffering keep the log current. Preserve untimestamped error lines with their
+surrounding output. `exit.txt` records the actual iperf exit code only after
+the foreground server ends; its absence while listening is expected.
+
+Reuse listeners already started with these logged commands; start one listener
+per address/port. Keep both listeners, both DUs, CU and RIC running.
+To inspect a saved/live server log in another Spark terminal, paste either
+printed server directory:
+
+```bash
+read -r -p 'Paste the FR1 or FR3 iperf server directory: ' IPERF_SERVER_READ
+tail -n 40 "$IPERF_SERVER_READ/server.log"
+```
+
 For the automatic workflow, follow the
 [Laptop reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md): start
 one watcher per UE, wait for both connection `SUCCESS` markers and pass the
@@ -679,6 +712,11 @@ and leave other applications off the WWAN paths. The test uses the expanded
 27-metric DU profile at **100 ms**, CU identity at **1 second**, and a fresh
 **360-second** xApp capture.
 
+Both iperf listeners must use the logged commands from
+[section 6](#6-start-both-iperf-servers-before-the-laptop-sequences).
+Retain the FR1 and FR3 server directories to correlate connection/reset errors
+with the Laptop's per-phase results.
+
 For this diagnostic run, use **both** optional stack-capture launchers from
 [DU1 startup](#5a-spark-du1-terminal) and [DU2 startup](#5b-spark-du2-terminal)
 when preparing the testbed. Keep the two printed `/tmp/falcon-duN-crash.*`
@@ -736,7 +774,8 @@ coverage; correlate against the Laptop's actual `events.ndjson` timestamps.
 
 Keep the printed Spark capture, Laptop traffic evidence and **both reconnect
 evidence directories**, together with DU/CU/RIC logs and **both DU debug
-directories** when using stack capture. `status.json` / `backtrace.txt` are
+directories** when using stack capture. Keep the **FR1 and FR3 iperf server
+directories** from section 6 as well. `status.json` / `backtrace.txt` are
 written only after that debugger stops/exits, so they need not exist while a
 healthy DU is still running. Timestamp/source checks
 and metric correctness criteria are in the
@@ -772,7 +811,9 @@ sudo docker stop open5gs-mongo
 Retain each capture's `local.json`, `xapp.conf`, `exit.txt`, `inputs.ndjson`,
 `rows.ndjson`, `bindings.txt` and `xapp.log`, together with the
 RIC/CU/DU startup logs, actual source revisions and Laptop truth/events/client
-logs/summary. `/tmp` may be cleared on reboot: copy the printed evidence
+logs/summary. Also retain both `/tmp/falcon-iperf-fr1.*` and
+`/tmp/falcon-iperf-fr3.*` server directories, including `server.log` and the
+post-exit `exit.txt`. `/tmp` may be cleared on reboot: copy the printed evidence
 directories to a persistent experiment directory before shutdown. Keep raw
 security-bearing Core logs and K/OPc outside Git. The October 21 live functional
 results are retained in the [report](reports/ue_identity_dual_ue_live_2026-10-21.md);
