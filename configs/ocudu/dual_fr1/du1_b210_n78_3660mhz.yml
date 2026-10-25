@@ -58,4 +58,4 @@ metrics:
     enable_sched: true
     enable_rlc: true
   periodicity:
-    du_report_period: 1000
+    du_report_period: 100

@@ -110,6 +110,16 @@ values or silently remove metrics to make a performance run pass.
 
 ## Frequency and capacity acceptance
 
+October 25 operator update: advance the existing seven-metric dual-UE profile
+directly to **100 ms**, with CU identity retained at **1000 ms** and Core polling
+at **1 second**. This supersedes the sequencing prerequisite in the next
+paragraph for that baseline. The expanded-profile phases remain separate.
+The operator explicitly retains the existing cache-synchronization deferral:
+no provider mutex, collection guard, E2 receive confinement or cleanup
+relocation is included. Source generation tracing and live capacity/order
+verification remain open. See the
+[current Spark procedure](../dual_ue_spark_quick_commands.md#1b-switch-a-running-testbed-to-100-ms).
+
 The first expanded-profile acceptance remains at 1000 ms. Only after its
 source correctness, codec, identity, live values and lifecycle checks pass,
 test the same declared coverage at 200 ms, then 100 ms. Change the DU producer

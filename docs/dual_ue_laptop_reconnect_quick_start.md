@@ -134,6 +134,7 @@ IP, IMSI and APN are recorded for each role. Retain `summary.json` and both logs
 | DNN | `internet` | `internet2` |
 | UE IPv4 | Matches current Laptop UE1 summary | Matches current Laptop UE2 summary |
 | KPM | Seven metrics, including `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB` | Same seven metrics |
+| DU cadence | `granularity_ms=100`, about 10 reports/s | `granularity_ms=100`, about 10 reports/s |
 | RF during UL | REAL samples; periods without usable PUSCH can be `no_value` | Same |
 
 **Expected capture completion:** xApp exit 0, three subscription delete
@@ -141,6 +142,8 @@ responses, and no Core/input errors or ingress loss. Retain Spark's
 `bindings.txt`, `rows.ndjson`, `inputs.ndjson`, `summary.txt`, `xapp.log`,
 configuration snapshots and `exit.txt`, with the Laptop evidence. Copy both
 printed capture directories to persistent experiment storage before reboot.
+CU identity reports remain at 1000 ms and Core polling at 1 second. Laptop
+watcher commands, their `--interval 3`, and the 60-second upload stay the same.
 
 ## 8. Stop after iperf and the xApp have finished
 

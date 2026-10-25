@@ -10,6 +10,12 @@ Small startup/resume boundary gaps were retained and explained. New runs must
 verify their actual identities and inputs; these counts and numeric IDs are
 historical results, not expected allocations.
 
+Current seven-metric profile: **DU scheduler/RLC source windows and DU KPM
+subscriptions are 100 ms**. CU identity production/subscriptions remain
+**1000 ms**, Core polling **1 second**, and identity freshness **3 seconds**.
+For a running testbed, use [the rate-switch sequence](#1b-switch-a-running-testbed-to-100-ms)
+before section 7. Configuration/build checks do not establish live 100 ms timing.
+
 The standalone xApp combines DU KPM, CU identity-bearing E2 reports and existing
 read-only AMF/SMF infoAPIs. Its `bindings.txt` contains only xApp records:
 gNB/DU/F1 UE ID, SUPI, NGAP IDs/GUAMI, PDU session/DNN/IP, then KPM. The commands
@@ -172,6 +178,34 @@ validate the RF extension.
 See the [identity implementation guide](development/ue_identity_xapp.md#build-and-offline-verification)
 for dependency/build troubleshooting. A successful build is preparation, not
 live binding acceptance.
+
+### 1b. Switch a running testbed to 100 ms
+
+1. Finish the current iperf clients and xApp capture. Stop both Laptop reconnect
+   watchers with Ctrl+C and wait for each UE's shutdown `SUCCESS`. Stop DU1 and
+   DU2 with Ctrl+C in their own terminals. Leave healthy Core, CU, RIC and both
+   iperf listeners running.
+2. Run section 1's config-copy/check block. Require `PASS`; it now requires
+   `du_report_period: 100` on both DUs. Build the updated DU and parse the xApp
+   subscription without starting a radio:
+
+   ```bash
+   cd /home/nyu/Desktop/Falcon_repo/Falcon
+   cmake --build /home/nyu/ocudu/build-integrated --target odu_split_8 -j4 &&
+   /tmp/falcon-xapp-ue-identity --check-config configs/flexric/xapp_ue_identity.conf
+   ```
+
+   Require DU `Time: 100` and CU `Time: 1000` in the parsed subscription profile.
+   If `/tmp` artifacts are missing, prepare them with section 1a first.
+3. Restart DU1 and DU2 using sections 5a/5b, then restart both Laptop watchers
+   and pass their dual-upload preflight. Run a fresh section 7 capture/upload.
+   Restarting the DUs applies the statistics period and throughput-precision
+   fix; restarting the xApp applies the subscription period. CU/RIC/Core do
+   not need a restart for this change.
+
+DU snapshot concurrency changes remain deferred by operator request. This
+rate change preserves the existing cache, cleanup and executor behavior; it
+does not establish synchronized source snapshots or physical sampling boundaries.
 
 ## 2. Restore performance settings after reboot
 
@@ -517,6 +551,10 @@ are `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB`. CU identity subscriptions, including
 `FALCON.UE.RRCState`, remain enabled. `--observed-unique` allows the existing
 experimental CU/DU/Core association; `--fresh-only` disables historical IP
 fallback for this test, so an old cached IP cannot hide a missing current join.
+Both DU subscriptions now use **100 ms** reporting/granularity and require the
+100 ms source configs. CU identity remains at 1000 ms. Expect roughly ten
+reports per second per active DU, twenty DU rows per second across the two
+single-UE paths. An idle 100 ms window may have no usable PUSCH sample.
 
 ### 7a. Start the xApp and write a 120-second TXT capture
 
@@ -532,6 +570,7 @@ cp configs/ue_identity/local.json "$IDENTITY_DUAL_RUN/local.json"
 cp configs/flexric/xapp_ue_identity.conf "$IDENTITY_DUAL_RUN/xapp.conf"
 python3 scripts/ue_identity/xapp_ue_identity.py \
   --config "$IDENTITY_DUAL_RUN/local.json" \
+  --e2-config "$IDENTITY_DUAL_RUN/xapp.conf" \
   --observed-unique --fresh-only --duration 120 \
   --text-output "$IDENTITY_DUAL_RUN/bindings.txt" \
   --capture-events "$IDENTITY_DUAL_RUN/inputs.ndjson" \
@@ -561,13 +600,15 @@ Shell variables do not cross terminals:
 ```bash
 read -r -p 'Paste the current Spark capture directory: ' IDENTITY_WATCH_RUN
 tail -n 40 "$IDENTITY_WATCH_RUN/xapp.log"
-tail -n 45 -f "$IDENTITY_WATCH_RUN/bindings.txt"
+tail -n 45 "$IDENTITY_WATCH_RUN/bindings.txt"
 ```
 
 Require `Registered E2 Nodes = 3`, three successful subscriptions and
 `identity collector: 3 KPM subscriptions, duration=120` in `xapp.log`.
 `bindings.txt` should contain records for both `DU_ID=1` and `DU_ID=2`.
-Ctrl+C in this diagnostics terminal stops only `tail`.
+These snapshot commands return immediately. To watch an active capture, use
+`tail -n 45 -f "$IDENTITY_WATCH_RUN/bindings.txt"`; it intentionally waits for
+new output even after the xApp exits. Ctrl+C there stops only `tail`.
 
 Once subscriptions are ready, immediately run the Laptop's
 [60-second concurrent iperf command](dual_ue_laptop_reconnect_quick_start.md#6-start-spark-section-7a-then-upload-for-60-seconds).
@@ -615,6 +656,7 @@ python3 - "$IDENTITY_CHECK_RUN" <<'PY_CHECK' | tee "$IDENTITY_CHECK_RUN/summary.
 from collections import Counter
 import json
 from pathlib import Path
+import statistics
 import sys
 
 root = Path(sys.argv[1])
@@ -626,12 +668,26 @@ expected_roles = {'1': ('imsi-001010000000101', 'internet'),
                   '2': ('imsi-001010000000102', 'internet2')}
 print('Records:', len(rows), dict(Counter(r['binding_status'] for r in rows)))
 problems = 0
+reports = []
 with (root / 'inputs.ndjson').open() as source:
     for line in source:
         event = json.loads(line)
+        if event['kind'] == 'kpm_report':
+            reports.append(event)
         problems += (event['kind'] not in ('core_snapshot', 'kpm_report')
                      or int(event.get('ingress_dropped_total', 0)) != 0)
 print('Core/input errors or loss events:', problems)
+def intervals(label, timestamps):
+    gaps = [(b - a) / 1000 for a, b in zip(timestamps, timestamps[1:])]
+    if gaps:
+        ordered = sorted(gaps)
+        p95 = ordered[min(len(ordered) - 1, (95 * len(ordered) - 1) // 100)]
+        print(label, 'count=', len(timestamps), 'interval ms min/median/p95/max=',
+              tuple(round(v, 3) for v in (min(gaps), statistics.median(gaps), p95, max(gaps))))
+    else:
+        print(label, 'insufficient reports for cadence inspection')
+cu_reports = [e for e in reports if e['node']['node_type'] != 'ngran_gNB_DU']
+intervals('CU receive', [int(e['received_at_mono_us']) for e in cu_reports])
 blocks = (root / 'bindings.txt').read_text().split('\n\n')
 for du, expected in expected_roles.items():
     selected = [r for r in rows if str(r['node'].get('du_id')) == du]
@@ -647,6 +703,11 @@ for du, expected in expected_roles.items():
         (r['binding']['supi'], r['binding']['dnn']) != expected for r in matched))
     print('Rows with exactly seven expected metrics:', sum(
         set(r['row']['metrics']) == expected_metrics for r in selected), '/', len(selected))
+    print('Granularity ms:', dict(Counter(r['row'].get('granularity_ms') for r in selected)))
+    du_reports = [e for e in reports if str(e['node'].get('du_id')) == du
+                  and e['node']['node_type'] == 'ngran_gNB_DU']
+    intervals('DU' + du + ' header', [int(e['header_time_us']) for e in du_reports])
+    intervals('DU' + du + ' receive', [int(e['received_at_mono_us']) for e in du_reports])
     for metric in ('PUSCH.RSRP.dBFS', 'PUSCH.SNR.dB'):
         print(metric, dict(Counter(r['row']['metrics'].get(metric, {}).get('type', 'absent')
                                    for r in selected)))
@@ -666,10 +727,16 @@ Check the actual results against both Laptop role summaries:
 | UE2 / logical FR3 | DU ID 2, SUPI `imsi-001010000000102`, DNN `internet2`, current Laptop UE2 IP in `10.46.0.0/16` |
 | Current association | Both roles have repeated `status=matched` records with actual F1/NGAP/GUAMI/PDU identifiers; no cross-UE binding. `--fresh-only` produces no cached bindings. |
 | DU measurements | Both DUs carry all seven expected names; throughput uses kbit/s, delay 0.1 ms, PRB %, RSRP dBFS and SNR dB. |
+| Rate and granularity | DU `granularity_ms=100`; measured header and receive interval medians near 100 ms for each DU; CU receive intervals near 1000 ms. Inspect p95/max and any gaps rather than assuming a hard deadline. |
 | RF availability | Both paths produce REAL RF values during UL traffic; negative RSRP is valid. A period without usable PUSCH can report `no_value`, which must remain distinct from measured zero. |
 | Delivery and cleanup | No Core/input errors or ingress loss; three subscription delete responses and xApp exit 0. |
 
 `summary.txt` is an inspection aid, not an automatic acceptance verdict.
+The 120-second window should produce roughly 1200 reports per continuously
+reporting DU, less startup/cleanup and periods without any eligible UE. Actual
+counts and intervals determine the result; the earlier 1-second captures are
+baseline evidence, not evidence for the new 100 ms rate. This is not a guarantee
+of 100 ms end-to-end latency: CU/Core identity refresh still has a 1-second cadence.
 Compare the current Laptop IP and identity evidence with the actual CU/Core
 inputs and output records. A correct DU RF value with `CU identity missing`
 does not verify the combined identity join: check the CU identity overlay,

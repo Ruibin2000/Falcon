@@ -76,9 +76,23 @@ project prefix. RSRP uses software dBFS rather than calibrated dBm; SNR uses
 dB. Both retain REAL values or `no_value`, and their DU statistics use the
 reporting-period average rather than an instantaneous console reading.
 
+The current seven-metric profile uses **100 ms** DU source windows and
+subscription reporting/granularity. Both DU configs must use
+`metrics.periodicity.du_report_period: 100`; changing the subscription alone
+does not produce new source samples. CU identity source/subscriptions stay
+at **1000 ms**, Core polls at **1 second**, and source freshness remains
+**3 seconds**. Fresh CU/Core context can serve multiple fast DU reports.
+New registration/IP association still waits for those independently timed
+identity sources; 100 ms reports do not imply 100 ms end-to-end recovery.
+
+DU snapshot synchronization remains deferred by operator request. The 100 ms
+change preserves existing cache publication, E2 receive execution and cleanup
+behavior. No concurrent-snapshot guarantee or same-window RF pair is claimed;
+the PHY estimator and RF averaging algorithm are unchanged.
+
 The default requires DUs that advertise both RF measurements. For legacy DUs,
 `configs/flexric/xapp_ue_identity_five.conf` preserves the original complete
-five-DU-measurement configuration. Select it explicitly with `--du-metrics 5`:
+five-DU-measurement **1000 ms** configuration. Select it explicitly with `--du-metrics 5`:
 
 ```bash
 python3 scripts/ue_identity/xapp_ue_identity.py \
@@ -93,9 +107,12 @@ above. A mixed deployment with a legacy DU can use the five-metric profile
 for a common supported subscription. Custom `--e2-config PATH` remains
 supported and cannot be combined explicitly with `--du-metrics`.
 
-The RF extension has synthetic two-DU/IP compatibility tests and recorded RF
-replay evidence. The merged live RF plus CU identity join and a live legacy-DU
-subscription still require deployment verification.
+The 1000 ms dual-UE capture inspected on October 25 verified current CU/Core
+IP association and seven RF-inclusive DU measurements under concurrent UL.
+That is baseline evidence. Live cadence, queue loss and radio-health behavior
+at **100 ms** require a new capture using
+[the Spark procedure](../dual_ue_spark_quick_commands.md#1b-switch-a-running-testbed-to-100-ms).
+A live legacy-DU subscription remains separate from this new-rate verification.
 
 ## Build and offline verification
 

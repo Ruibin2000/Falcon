@@ -57,17 +57,24 @@ class ProfileSelectionTests(unittest.TestCase):
 class ProfileCodecTests(unittest.TestCase):
     def test_real_sdk_parses_seven_default_and_five_backup_with_identical_cu_identity(self):
         profiles = []
+        periods = []
         for name in ['xapp_ue_identity.conf', 'xapp_ue_identity_five.conf']:
             result = subprocess.run([str(COLLECTOR), '--check-config', str(ROOT / 'configs/flexric' / name)],
                                     capture_output=True, text=True, check=True, timeout=10)
             profiles.append({ran: actions.split() for ran, actions in
                              re.findall(r'RAN type (\S+), actions = ([^\n]+)', result.stdout)})
+            periods.append({ran: int(period) for period, ran in re.findall(
+                r'Sub_ORAN_SM Name: KPM, Time: (\d+)\s+[^\n]*RAN type (\w+),', result.stdout)})
         seven, five = profiles
         self.assertEqual(seven['ngran_gNB_DU'], BASE_METRICS + ['PUSCH.RSRP.dBFS', 'PUSCH.SNR.dB'])
         self.assertEqual(five['ngran_gNB_DU'], BASE_METRICS)
+        self.assertEqual(periods[0]['ngran_gNB_DU'], 100)
+        self.assertEqual(periods[1]['ngran_gNB_DU'], 1000)
         for ran in ['ngran_gNB', 'ngran_gNB_CU', 'ngran_gNB_CUCP']:
             self.assertEqual(seven[ran], five[ran])
             self.assertEqual(seven[ran], ['FALCON.UE.RRCState'])
+            self.assertEqual(periods[0][ran], 1000)
+            self.assertEqual(periods[1][ran], 1000)
 
 
 if __name__ == '__main__':

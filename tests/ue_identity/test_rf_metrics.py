@@ -3,7 +3,7 @@
 import copy
 import unittest
 
-from test_identity import core_event, du_event, ingest, ready, config
+from test_identity import core_event, cu_event, du_event, ingest, ready, config
 from mapping import Mapper
 from text_report import format_record
 
@@ -18,6 +18,33 @@ def rf_event(du=1, stamp=12_000_000, rsrp=-13.125, snr=21.75):
 
 
 class RFCompatibilityTests(unittest.TestCase):
+    def test_100ms_du_reports_reuse_fresh_1s_identity_and_follow_current_ip(self):
+        mapper = ready()
+        outputs = []
+        for tick in range(100):
+            stamp = 12_000_000 + tick * 100_000
+            if tick % 10 == 0:
+                core = core_event()
+                core['received_at_us'] = stamp
+                if tick >= 50:
+                    core['smf'][0]['pdu'][0]['ipv4'] = '10.45.0.11'
+                ingest(mapper, core)
+                cu = cu_event()
+                cu.update(received_at_us=stamp + 1_000, header_time_us=str(stamp))
+                ingest(mapper, cu)
+            for du in (1, 2):
+                event = rf_event(du, stamp=stamp + 2_000, rsrp=-13.125 - tick / 100)
+                event['received_at_us'] = stamp + 3_000
+                event['rows'][0]['granularity_ms'] = 100
+                row = ingest(mapper, event)[0]
+                self.assertEqual(row['binding_status'], 'matched')
+                expected = '10.45.0.11' if du == 1 and tick >= 50 else f'10.{44 + du}.0.10'
+                self.assertEqual(row['ue_ipv4'], expected)
+                self.assertEqual(row['row']['granularity_ms'], 100)
+                self.assertEqual(row['row']['metrics']['PUSCH.RSRP.dBFS']['value'], -13.125 - tick / 100)
+                outputs.append(row)
+        self.assertEqual(len(outputs), 200)
+
     def test_both_du_bindings_preserve_seven_metrics_and_input_ownership(self):
         mapper = ready()
         for du, ip in [(1, '10.45.0.10'), (2, '10.46.0.10')]:

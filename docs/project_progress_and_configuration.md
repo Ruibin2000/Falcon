@@ -1,5 +1,18 @@
 # Project Progress and System Configuration
 
+**Reporting update, 2026-10-25:** the current default seven-metric profile now
+uses **100 ms** DU scheduler/RLC statistics and DU KPM subscriptions. CU
+identity stays at **1000 ms**, Core polling at **1 second**, and freshness at
+**3 seconds**. Sub-second RLC throughput retains REAL precision. Snapshot
+concurrency work remains deferred by operator request; the existing cache,
+cleanup and executor behavior is preserved. The DU binary is rebuilt and native/offline checks
+pass. Live 100 ms cadence, loss and radio-load behavior remain to be measured
+after operator restart using
+[Spark section 1b](dual_ue_spark_quick_commands.md#1b-switch-a-running-testbed-to-100-ms)
+and section 7. The earlier 1000 ms dual-UE run verified current IP association
+and RF delivery; it does not establish 100 ms performance. Laptop connection
+commands and recovery policy are unchanged.
+
 **Acceptance scope, 2026-10-24:** cold-start reproduction, full
 repeatability/comparative testing and bidirectional link-loss/recovery with
 survivor traffic are
@@ -246,7 +259,7 @@ The existing OCUDU binary already contains E2 support; `ENABLE_EXPORT` controls 
 
 The default xApp config also lists monolithic gNB/CU and RC subscriptions; the RAN-type checks select only the DU KPM block for this node. The `73650812` example runs for about 10 seconds, deletes its subscription and exits normally. An initial actual gNB-DU UE F1AP ID `14` run received all five metrics: selected UL/DL throughput samples were 14163–14675 / 242–253 kbps, DL RLC delay 15.80–17.30 in 0.1 ms units, and UL/DL PRB usage 86%/0%.
 
-After the installed [timestamp repair](troubleshooting/2026-10-07_flexric_latency_fix.md), UE F1AP ID `2` produced 12 `report_age_us` values of **499–717 microseconds**, followed by normal deletion and exit. Its selected UL/DL throughput samples were 11916–11927 / 147–164 kbps, DL RLC delay **1.380–1.440 ms** after conversion, and UL/DL PRB usage **88%/0%**. UE IDs can change. Live timestamp display is now verified; precise age accuracy and synchronized application throughput are not established by these excerpts. See [runtime steps](runbooks/full_reproduction_runbook.md#9a-prepare-the-du-e2-overlay) and the [dated record](troubleshooting/2026-10-07_flexric_bringup.md) for metric interpretation.
+After the installed [timestamp repair](troubleshooting/2026-10-07_flexric_latency_fix.md), UE F1AP ID `2` produced 12 `report_age_us` values of **499–717 microseconds**, followed by normal deletion and exit. Its selected UL/DL throughput samples were 11916–11927 / 147–164 kbps, DL RLC delay **1.380–1.440 ms** after conversion, and UL/DL PRB usage **88%/0%**. UE IDs can change. Live timestamp display is now verified; precise age accuracy and synchronized application throughput are not established by these excerpts. See [runtime steps](runbooks/full_reproduction_runbook.md#9a-deploy-the-complete-du1-configuration) and the [dated record](troubleshooting/2026-10-07_flexric_bringup.md) for metric interpretation.
 
 ### Open5GS identity, sessions and interfaces
 

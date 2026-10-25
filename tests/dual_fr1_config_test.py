@@ -71,6 +71,10 @@ class DualConfigTest(unittest.TestCase):
         self.assertTrue(any("scheduler/RLC" in error for error in errors))
         self.assertIn("Duplicate log across DU1 and DU2", errors)
 
+    def test_old_one_second_source_cannot_pass_the_100ms_preflight(self):
+        self.du2["metrics"]["periodicity"]["du_report_period"] = 1000
+        self.assertIn("DU2: scheduler/RLC metrics and 100-ms reporting are required", self.errors())
+
 
 if __name__ == "__main__":
     unittest.main()

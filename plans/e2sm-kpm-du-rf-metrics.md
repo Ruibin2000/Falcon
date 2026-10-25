@@ -1,19 +1,20 @@
 # E2SM-KPM DU RF Metrics Implementation Plan
 
-Extend FlexRIC reception from the PUSCH RSRP/SNR baseline to the usable DL/UL
-metrics produced by the OCUDU DU. First implement and validate the expanded
-coverage at 1000 ms, including every measurement shown by the DU `t` command
-and the remaining published DU metric families. Then validate 200 ms and
-finally 100 ms reporting. Preserve source semantics and complete UE/cell/DU
-attribution throughout the provider, capability advertisement, codec and xApp.
+The current seven-metric PUSCH RF baseline now targets 100 ms DU production
+and reporting, with 1000 ms CU identity and 1-second Core polling. The operator's
+October 25 request supersedes the earlier expansion-before-frequency order.
+Expanded DL/UL coverage remains planned work: inventory measurements shown by
+the DU `t` command and the remaining published DU metric families. Preserve
+source semantics and complete UE/cell/DU attribution throughout the provider,
+capability advertisement, codec and xApp.
 
 | Field | Value |
 | --- | --- |
 | Plan | 1 |
 | Task | `e2sm-kpm-du-rf-metrics` |
-| Status | RF offline and Step 7 build acceptance passed; expanded DL/UL coverage and live acceptance pending; frequency increase follows expanded 1000 ms acceptance |
+| Status | Seven-metric 100 ms DU profile implemented; snapshot synchronization explicitly deferred; native/offline checks passed; live 100 ms cadence/load verification pending; expanded coverage remains future work |
 | Created at | 13 : 23: 41 Oct 11, 2026 EDT |
-| Last updated at | 23 : 26: 45 Oct 24, 2026 EDT |
+| Last updated at | Oct 25, 2026 EDT |
 | Time zone | `America/New_York` |
 | Developer | To be assigned |
 | Reviewer | Ruibin, project lead; decisions communicated by the developer |
@@ -21,13 +22,29 @@ attribution throughout the provider, capability advertisement, codec and xApp.
 | OCUDU inspection baseline | `69801c7e9a3a72e4f29d98f14f626f156444c3ca` |
 | FlexRIC inspection baseline | `736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8`, with the existing local timestamp repair |
 | Prerequisites | Plan 2 Stage A gate for Plan 1 Steps 7–11 waived by reviewer Ruibin on 2026-10-23; hardware slot confirmed by the developer; preserve the committed FlexRIC timestamp repair |
-| Execution order | Inventory and expand DU metrics at 1000 ms; accept expanded source-to-xApp delivery; then 200 ms, then 100 ms. Plan 2 Stage A remains waived as a prerequisite for Plan 1; application forwarding has its own acceptance. |
+| Execution order | October 25 operator request advances the current seven-metric DU baseline directly to 100 ms. CU identity remains 1000 ms and Core polling 1 second. Expanded coverage and application forwarding retain separate acceptance. |
 | Initial deployment | Existing OCUDU DU and FlexRIC RIC/xApp test environment |
 
 Maintain this file as the single plan for this task. Mark steps complete only
 after their exit criteria pass and their evidence has been retained.
 
 ## October 24 Metric Coverage and Frequency Decision
+
+**October 25 update:** the operator subsequently requested a 100 ms period for
+the current seven-metric dual-UE profile. That request supersedes the earlier
+requirement to finish expanded coverage and 200 ms first. Both maintained and
+deployed DU scheduler/RLC configs now use 100 ms, and only the default profile's
+DU subscription changes to 100 ms. CU source/subscriptions remain 1000 ms,
+Core polling 1 second, and the explicit legacy five-metric backup 1000 ms.
+The operator explicitly retains the earlier snapshot-concurrency deferral.
+Do not include provider locks, collection guards, E2 receive confinement or
+cleanup relocation in this rate change. Native 100 ms APER, throughput
+normalization, and mixed-rate IP mapping checks pass; no concurrent-snapshot
+guarantee is claimed.
+Live 100 ms timing, queue/radio health and operator restart verification are
+still pending. The earlier 1-second live capture is a baseline, not a new-rate
+result. Source-generation trace/header correlation remains unimplemented.
+Use [the Spark rate-switch and inspection commands](../docs/dual_ue_spark_quick_commands.md#1b-switch-a-running-testbed-to-100-ms).
 
 The operator requested more DL/UL measurements before any frequency increase.
 This decision extends the original two-RF-metric scope and supersedes its

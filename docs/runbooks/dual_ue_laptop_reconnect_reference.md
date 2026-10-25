@@ -193,6 +193,15 @@ the short PDU-disconnect limit.
 
 ### Concurrent iperf during Spark section 7
 
+The current Spark seven-metric profile uses **100 ms** DU source windows and
+DU subscription periods; CU identity remains **1000 ms** and Core polling
+**1 second**. Switch/restart the Spark DUs and xApp using
+[Spark section 1b](../dual_ue_spark_quick_commands.md#1b-switch-a-running-testbed-to-100-ms).
+Laptop watcher intervals and the 60-second traffic command below are unchanged.
+Verify `granularity_ms=100` and actual per-DU receive/header intervals in
+Spark section 7c; the period is not a bound on identity recovery or forwarding
+latency. The earlier 1-second captures remain baseline evidence only.
+
 Keep both reconnect terminals running after their connection `SUCCESS`. In a
 third Laptop terminal, run the copied helper's read-only preflight:
 

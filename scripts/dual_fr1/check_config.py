@@ -132,8 +132,8 @@ def validate(cu, du1, du2):
             require(local_e2 == [bind], "DU2: E2 local bind must match its F1 address")
         layers, periods = section(metrics, "layers"), section(metrics, "periodicity")
         require(layers.get("enable_sched") is True and layers.get("enable_rlc") is True
-                and periods.get("du_report_period") == 1000,
-                f"{label}: scheduler/RLC metrics and 1000-ms reporting are required")
+                and periods.get("du_report_period") == 100,
+                f"{label}: scheduler/RLC metrics and 100-ms reporting are required")
         logfile = Path(str(section(config, "log").get("filename", "")))
         require(logfile.is_absolute(), f"{label}: log filename must be absolute")
         require(logfile.parent.is_dir() and os.access(logfile.parent, os.W_OK)
