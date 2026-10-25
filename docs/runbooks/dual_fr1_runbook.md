@@ -3,9 +3,14 @@
 Network update, 2026-10-23: Spark now uses `ogstun_1 / 10.45.0.1/16` for UE1
 and `ogstun_2 / 10.46.0.1/16` for UE2, both MTU 1400, sharing the same UPF.
 The [TUN split guide](../networking/dual_ue_tun_split.md) records the applied migration,
-archived scripts and rollback. Spark checks passed; fresh UE/PDU/ping/traffic
-and cold-boot validation after the split remain pending. The measurements
+archived scripts and rollback. Spark checks and subsequent post-split
+MPTCP traffic/UE2 recovery passed; see the October 23/24 reports. The measurements
 below are historical pre-split checkpoints.
+
+**Acceptance revision, 2026-10-24:** cold-start, full repeatability/comparative
+and bidirectional disturbance/survivor tests are
+[supplemental experiments](../development/dual_ue_supplemental_experiments.md),
+not current Dual UE acceptance criteria or merge prerequisites.
 
 Updated: 2026-10-23. The radio checkpoints below follow the October 13
 [Plan 3](../../plans/dual-ue-du-fr1-channels.md) scope.
@@ -39,8 +44,9 @@ Manually simultaneous clock readbacks put Spark about **199.27 seconds ahead
 of Laptop**; the corrected run window contains approximately **62/61 complete
 UL-active rows**. See [retained dual UL/KPM analysis](../evidence/2026-10-13_dual_kpm_reports/manifest.json).
 Concurrent UL functionality and real two-DU KPM are now observed; full identity
-correlation, precise timing and repeated/UDP/guard/survivor/cold-start gates
-remain pending. The earlier FlexRIC deletion-failure abort path remains unfixed.
+correlation and precise timing retain their separate scope. Repeated/UDP
+comparisons, cold-start and bidirectional disturbance/survivor experiments are
+follow-up work outside current acceptance and merging. The earlier FlexRIC deletion-failure abort path remains unfixed.
 For daily operation, start both DUs and both server endpoints before the
 laptop's ordered UE1 and UE2 sequences. Keep both DUs active during these role
 traffic tests and concurrent UL/KPM.
@@ -216,20 +222,21 @@ ip -4 route get 10.46.0.1 from "${UE2_IP:?Read the actual UE2 bearer}"
 iperf3 -c 10.46.0.1 -p 5202 -B "$UE2_IP" -t 60 -i 1 --get-server-output -J
 ```
 
-Save outputs with exact wall-clock windows, link identity, case and repetition.
-Run UE1 UL alone, UE2 UL alone, each UL with the other DU idle, and both UL
-concurrently, three 60-second trials per case. Use Plan 3's controlled UL UDP
-trials for loss/jitter: choose at most 70% of each measured solo capacity,
-require receiver goodput at least 90% of its isolated result and loss at most 1%.
-Require continuous SA/PDU sessions and correct serving cells. Application DL
-and mixed-direction trials are outside the current acceptance target.
+Save outputs with exact wall-clock windows and link identity. Current
+functional verification covers UE1-only UL, UE2-only UL and concurrent UL with
+working SA/PDU sessions and correct serving cells. The repeated comparison
+matrix, controlled-load UDP measurements and their numerical targets belong to
+[future supplemental experiments](../development/dual_ue_supplemental_experiments.md),
+not current acceptance or merging. Application DL and mixed-direction trials
+remain outside the original UL target.
 
 Keep the existing five-metric KPM subscription. During active UL windows, require
 at least 30 real rows per link with correct full DU/UE identity, numeric
 `DRB.UEThpUl` / `RRU.PrbTotUl`, and successful subscription/deletion/normal exit.
 Retain DL values/noValue as observations. Compare UL metric behavior with that
 link's traffic without equating RLC bitrate to application receiver goodput.
-Repeat attribution/UL checks after reattachment, RIC/DU restart, and cold start.
+Cold-start and repeated restart/reattachment trials, with fresh attribution/UL
+observations, are recorded as supplemental experiments.
 
 Underflow growth alone is nonblocking. Lost links, failed transfers, wrong-cell
 association, crossed/fallback IP paths, missing UL metrics or failed lifecycle

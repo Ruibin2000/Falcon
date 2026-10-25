@@ -14,6 +14,11 @@ queries or ping during that wait. For ongoing monitoring/recovery use the
 AT port/automatic cell-lock options. Those options are not added to the one-shot
 entry scripts. Both modes use the same per-UE lock to reject simultaneous ownership.
 
+**Acceptance scope, 2026-10-24:** cold-start reproduction, full repeatability
+and bidirectional disturbance/survivor testing are
+[supplemental experiments](development/dual_ue_supplemental_experiments.md).
+They are not current Dual UE acceptance criteria or merge prerequisites.
+
 ## 1. Before every start: check the cell lock
 
 On the laptop, manually check each UE's serving cell and restore its cell lock

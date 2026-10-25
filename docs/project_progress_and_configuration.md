@@ -1,5 +1,14 @@
 # Project Progress and System Configuration
 
+**Acceptance scope, 2026-10-24:** cold-start reproduction, full
+repeatability/comparative testing and bidirectional link-loss/recovery with
+survivor traffic are
+[supplemental experiments](development/dual_ue_supplemental_experiments.md).
+They are excluded from current Dual UE acceptance criteria and merge
+prerequisites. They remain uncompleted experiments, rather than failed or
+pending current acceptance gates. The earlier dated scope statements below
+are superseded for these three items.
+
 Automation checkpoint, **2026-10-24**: the current UE automatic-reconnect script
 optimization stage is complete by operator decision. Retain the current recovery
 policy and parameters. The new
@@ -14,8 +23,12 @@ The dated architecture and phase table below remain historical records.
 Network update, **2026-10-23**: the applied [Spark TUN split](networking/dual_ue_tun_split.md)
 places UE1 `10.45.0.1/16` on `ogstun_1` and UE2 `10.46.0.1/16` on `ogstun_2`,
 both MTU 1400, using the existing UPF. Independent checks of Spark configuration,
-routes and services passed. Fresh post-split UE traffic and cold-boot validation
-remain pending. The radio and traffic checkpoints below retain their dates.
+routes and services passed. Subsequent post-split traffic is recorded in the
+[October 23 MPTCP report](reports/mptcp_video_experiment_report_2026-10-23.md),
+with fresh UE2 PDU/ping recovery in the October 24 report above. Cold-boot
+persistence remains to be measured in the supplemental cold-start experiment;
+it does not block current acceptance or merging. The radio and traffic
+checkpoints below retain their dates.
 
 Radio/UE checkpoint summary, **2026-10-13**. DU1 migrated from 3750 to **3660 MHz within n78**. Single-UE IPv4 ping, a 30-second TCP uplink (receiver **17.0 Mbit/s**, sender Retr **0**), and **12 complete five-metric KPM reports for UE F1AP ID 5** passed. The operator now prioritizes DU2 and UL-only dual-link acceptance. Underflow remediation is deferred; count/growth alone does not block this UL scope. DU2 is configured/deployed for B210 `328B021` (USB 3) and passes offline checks. Actual DU2 radio startup/F1/E2 passed; UE2 registration/UL, the dual-link baseline and subscriber identity correlation remain pending. See the [DU2 procedure](runbooks/dual_fr1_runbook.md), historical [daily log](../dev_logs/2026-10-12_ruibin.md) and [retained evidence](evidence/2026-10-12_du1_3660mhz/manifest.json).
 
@@ -63,7 +76,7 @@ The tested application path is **laptop ↔ Spark over private 5G**. Management 
 | 7–8 | FlexRIC / KPM xApp | At 3660 MHz: DU1 E2 Setup and 12 complete UE ID 5 reports passed; subscription/deletion and success marker retained |
 | 9–11 | MPTCP / RIC-assisted control / AI steering | Future work |
 
-Follow the [DU2 procedure](runbooks/dual_fr1_runbook.md) to start the shared infrastructure and validate DU2 with its bound B210 `328B021`. Both B210s now pass simultaneous discovery over USB 3 on separate host controllers; recheck after reconnection. Prepare the two matching Open5GS subscribers using the [SIM and Dual-UE Guide](setup/sim_provisioning_and_dual_ue.md). Preserve DU1's working configuration. Test UE1 UL, UE2 UL and both UL concurrently with retained identities/KPM timing; underflow remediation is deferred. KPM/application correlation, cold-start/new-laptop reproduction and active steering retain their own gates.
+Follow the [DU2 procedure](runbooks/dual_fr1_runbook.md) to start the shared infrastructure and validate DU2 with its bound B210 `328B021`. Both B210s now pass simultaneous discovery over USB 3 on separate host controllers; recheck after reconnection. Prepare the two matching Open5GS subscribers using the [SIM and Dual-UE Guide](setup/sim_provisioning_and_dual_ue.md). Preserve DU1's working configuration. Test UE1 UL, UE2 UL and both UL concurrently with retained identities/KPM timing; underflow remediation is deferred. Protocol-explicit KPM/application correlation and active steering retain their separate scope. Cold-start/new-laptop reproduction is a supplemental experiment outside current acceptance and merging.
 
 ## Platform and prior build evidence
 
@@ -324,6 +337,6 @@ Kernel replacement, PREEMPT_RT, boot parameters, CPU isolation, IRQ pinning and 
 
 Next dual-link sequence: add/verify both matching Open5GS records (SST 1, `internet`, IPv4 type 1 and checked SQN representation) → prepare distinct DU/cell/radio identities and CU + DU1 + DU2 → confirm each modem's intended cell and registration → independent PDU sessions, WWAN interfaces and IP paths → MPTCP → extend verified DU1 FlexRIC collection to per-DU/per-UE telemetry → AI predictor/steering → blockage/QoE experiments.
 
-The single-link checkpoint is uplink only: the 30-second TCP transfer and five-metric delivery passed. The current Plan 3 target is dual-link UL functionality/coexistence, with underflow remediation deferred. Retain subscriber/bearer identity, exact UL/KPM timing and repeatability. Application DL and mixed-direction tests are outside the current target; controlled UL UDP remains in the dual-link coexistence gate. SIM preparation alone does not validate the dual RAN.
+The historical single-link checkpoint is uplink only: the 30-second TCP transfer and five-metric delivery passed. Current Dual UE functional verification retains subscriber/bearer identity, independent IP paths, UL/KPM timing and concurrent traffic, with underflow remediation deferred. Cold-start, full repeatability/comparative UDP and bidirectional disturbance testing are supplemental experiments, not current acceptance or merge criteria. Application DL and mixed-direction tests remain outside the original UL scope. SIM preparation alone does not validate the dual RAN.
 
 Follow the [Full Reproduction Runbook](runbooks/full_reproduction_runbook.md), or its [Spark](single_ue/spark_quick_commands.md) and [UE laptop](single_ue/ue_laptop_quick_commands.md) command summaries. Shutdown order is traffic/xApp → PDU → laptop WWAN → DU → FlexRIC → CU → 5GC → optional MongoDB. Check runtime state before operation; keep SIM secrets and raw INFO logs out of Git.

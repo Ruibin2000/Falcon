@@ -5,8 +5,12 @@ UE1 `internet / 10.45.0.0/16 / 10.45.0.1` on `ogstun_1`, and
 UE2 `internet2 / 10.46.0.0/16 / 10.46.0.1` on `ogstun_2`, both MTU 1400.
 The operator applied the split and Spark-side checks passed. Follow the
 [TUN split guide](dual_ue_tun_split.md) for current configuration, the archived
-modification scripts and rollback. Fresh post-split UE traffic and cold-boot
-validation remain pending.
+modification scripts and rollback. Post-split traffic is retained in the
+[October 23 report](../reports/mptcp_video_experiment_report_2026-10-23.md);
+fresh UE2 recovery is retained in the October 24 report. Cold-start, full
+repeatability and bidirectional disturbance testing are
+[supplemental experiments](../development/dual_ue_supplemental_experiments.md),
+excluded from current acceptance and merging.
 
 ## Historical two-subnet migration — 2026-10-13
 

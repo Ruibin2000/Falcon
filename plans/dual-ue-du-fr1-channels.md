@@ -12,24 +12,47 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 | --- | --- |
 | Plan | 3 |
 | Task | `dual-ue-du-fr1-channels` |
-| Status | In progress: concurrent dual-UE TCP UL functionality and simultaneous DU-tagged UE KPM observed; full cross-layer correlation, repeatability/UDP/guard/survivor/cold-start acceptance pending; underflow remediation deferred |
+| Status | Current dual-UE functional scope verified; cold start, full repeatability and bidirectional disturbance/survivor experiments are follow-up work, excluded from current acceptance and merge criteria; integrations retain their separate scope |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 22 : 57: 24 Oct 13, 2026 EDT |
+| Last updated at | 2026-10-24, acceptance scope revision |
 | Time zone | `America/New_York` |
-| Developer | To be assigned |
+| Developer | Ruibin |
 | Reviewer | To be assigned |
 | Falcon inspection baseline | `3f12f627d80cdad14bc9a5ab267f8f65452a2da9` |
 | OCUDU inspection baseline | `69801c7e9a3a72e4f29d98f14f626f156444c3ca` |
 | FlexRIC inspection baseline | `736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8`, with the existing local timestamp repair |
 | Prerequisites | Baseline: authorization covering both selected channels and actual lab conditions, two independently tunable radios, two prepared UE/modem/SIM paths, and the existing five-metric E2 path. Integration: accepted dual-link baseline and the applicable Plan 1/2 stage |
-| Execution order | Steps 1–10 establish the dual FR1 baseline independently; Step 11 integrates accepted features while preserving Plan 2 Stage A → Plan 1 → Plan 2 Stage B |
+| Execution order | Steps 1–9 cover the functional baseline; Step 10 tracks nonblocking supplemental experiments; Step 11 integrates accepted features while preserving Plan 2 Stage A → Plan 1 → Plan 2 Stage B |
 | Initial deployment | Indoor, short-range, low-power testbed with partial shielding; shared CU/Open5GS/two DUs/FlexRIC on Spark and two RM500Q modems on one laptop; both carriers within the CBRS frequency range |
 
 Maintain one plan for this task. Complete checkboxes only after the stated exit
 criteria pass and the reviewer can inspect the retained evidence. Plan numbers
 identify tasks; they do not require executing Plan 1 before this baseline.
 
-## Current State and Scope
+## 2026-10-24 Acceptance Scope Revision
+
+The operator moved **cold-start reproduction, full repeatability/comparative
+experiments, and bidirectional link-loss/recovery with survivor traffic** to
+[supplemental experiments](../docs/development/dual_ue_supplemental_experiments.md).
+They are follow-up experimental requirements, **not acceptance criteria or
+merge prerequisites for the current Dual UE development scope**. Their status
+remains not completed; this scope change does not turn them into passed tests.
+
+Current functional verification covers the intended modem/SIM/cell identities,
+PDU/IP paths, policy routing and Wi-Fi fallback guards, private connectivity,
+concurrent UL and correctly attributed KPM. Retained reports also cover
+experimental CU/DU/Core association, MPTCP primary/backup video and UE2 automatic
+recovery with changed IPs. Cold-start, repeated load/UDP comparisons and symmetric
+disturbance trials are not needed to accept or merge those implemented functions.
+Runtime identity checks and route guards remain part of normal operation.
+
+This revision supersedes earlier dated references to these three experiments
+as full-baseline gates, including the original Step 10 criteria. Historical
+reports and their measurements keep their original scope. Plan 1/2 integrations,
+protocol-explicit identity transport, actual FR3 conversion and RIC/AI steering
+retain their separate requirements.
+
+## Historical Checkpoints through 2026-10-13
 
 The [single-link runbook](../docs/runbooks/full_reproduction_runbook.md) records successful
 SA registration and application traffic with IMSI `001010000000001`, followed
@@ -46,7 +69,8 @@ UL acceptance requirements remain pending.
 The [SIM preparation record](../docs/setup/sim_provisioning_and_dual_ue.md) identifies
 two provisioned cards and two physical RM500Q modems. Both new subscribers have now registered on their intended cells. Two DU/radios
 have started; both private IP paths and concurrent TCP UL functionality have
-passed. Full repeatability and the remaining acceptance gates are pending.
+passed. At that checkpoint full repeatability was pending; the October 24
+revision now tracks it as a supplemental experiment outside current acceptance.
 DU2's radio/F1/cell and E2/KPM configurations are now prepared and deployed for
 B210 `328B021`, discovered over USB 3 on 2026-10-13 after reconnection. Offline
 configuration checks and DU parsing pass. After reconnecting both radios, UHD
@@ -126,7 +150,7 @@ client/server output, actual Spark KPM log, parsed rows and current artifact has
 - [x] Verify both DU nodes in the diagnostic xApp and two KPM subscription/delete responses with pipeline exit 0. The 19:29:23–19:30:14 EDT probe received **zero UE callback blocks**; this is subscription/lifecycle evidence, not two-link KPM data. See [subscription evidence](../docs/evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
 - [ ] Complete streaming and deliberate path-survivor checks. Concurrent TCP UL subsequently passed in the checkpoint below. The earlier concurrent launcher's `wait`/`printf` lost variable expansions; its printed zero statuses and end timestamp remain invalid historical records.
 - [x] Accumulate at least 30 real UL-active rows per DU with explicit DU/F1AP attribution, subscription/deletion responses and normal xApp exit. The latest completed capture has 63/61 complete five-metric UL-active rows, approximately 62/61 inside the clock-corrected laptop window; see the checkpoint below.
-- [ ] Complete the full cross-layer modem/SIM/cell/F1AP/bearer ledger and remaining repeated/UDP/guard/survivor/cold-start gates.
+- [ ] Complete the full cross-layer modem/SIM/cell/F1AP/bearer ledger under its own scope. Repeated/comparative UDP, cold-start and bidirectional disturbance/survivor work is now tracked as supplemental experiments under the October 24 revision.
 - [ ] Restore and verify connections after modem power cycle: the operator reported `AT+QNWLOCK="common/5g"` readback `0` (affected role unspecified). Treat locks as requiring boot restoration, reselect by IMEI/SIM, reapply each intended lock and require actual PCI/NCI/SSB/SA before PDU; refresh bearer/path and recheck cell before UL. Prior live mappings do not certify restored connections. See [power-cycle observation](../docs/evidence/2026-10-13_modem_lock_power_cycle/manifest.json).
 
 This checkpoint is **DU2 Single-Link UL Functionality / KPM Smoke Passed**.
@@ -175,7 +199,9 @@ the original complete laptop logs remain in `/tmp/falcon-dual-ul-iakb3ttb` there
   RNTI 0x460c / F1AP11; internal UE13 maps DU2 / PCI2 / RNTI 0x4608 / F1AP7.
   KPM does not carry modem/SIM identity; the complete cross-layer ledger remains pending.
 - [ ] Complete precise host-clock synchronization and the remaining repeated,
-  UDP, guard/survivor, streaming and cold-start acceptance gates.
+  UDP, guard/survivor, streaming and cold-start work. The October 24 revision
+  moves the repeated/comparative, cold-start and bidirectional disturbance
+  experiments outside current acceptance and merging.
 
 UL-active KPM sample means are **14.35 / 18.06 Mbit/s**; these are RLC-layer
 measurements and have different windows/overheads from application receivers.
@@ -202,7 +228,7 @@ record startup, UE correlation, traffic, telemetry, and configuration hashes.
 - [x] Verify one DU, UE F1AP ID 5, IPv4 private ping (5/5, 0% loss), 30-second TCP uplink (receiver 17.0 Mbit/s; sender Retr 0), and 12 complete five-metric KPM rows with subscription/deletion and the success marker.
 - [ ] Deferred: resolve RF underflows. A bounded snapshot contained 117 underflows by 11:39:44 EDT; underflow count/growth is an observation, not a gate for the current UL baseline.
 - [ ] Retain the active IMSI/SIM/bearer and modem serving-cell readback. These were not captured in the acceptance excerpts.
-- [ ] Complete the remaining RF-condition, DU2, coexistence, identity, and cold-start gates required by the full dual-link plan.
+- [ ] Historical remaining work included RF conditions, DU2, coexistence, identity and cold start. Cold-start, full comparative/repeated and bidirectional disturbance experiments are now supplemental under the October 24 scope revision.
 
 This historical checkpoint is **Migration Successful / Uplink Functionality
 Passed / Stability Pending**, not completion of Steps 1–10. The 2026-10-13 scope
@@ -218,8 +244,9 @@ the application regression checks in Step 11:
 - Prepare DU2 at 3600 MHz / ARFCN 640000, DU ID 2, PCI 2, sector ID 1,
   NCI 6733825, and F1/E2 local bind 127.0.10.3. Preserve DU1 at 3660 MHz.
 - Accept UE1-only UL, UE2-only UL, and simultaneous UE1+UE2 UL. Retain SA/PDU,
-  intended serving cell, distinct IP/WWAN paths, receiver throughput, controlled
-  UL UDP loss/jitter, identity correlation, and repeatability checks.
+  intended serving cell, distinct IP/WWAN paths, receiver throughput and identity
+  correlation. The October 24 revision moves full repeatability and comparative
+  UL/UDP experiments outside current acceptance and merging.
 - Do not require application DL or mixed UL/DL traffic trials. Radio DL
   synchronization/control and TCP acknowledgements remain part of normal SA/UL
   operation; this revision does not alter TDD or disable the radio downlink.
@@ -376,7 +403,7 @@ they already exist:
 | `scripts/dual_fr1/configure_ue_routes.sh` | Guarded per-UE policy routes and precise rollback |
 | `scripts/dual_fr1/verify_kpm.py` | Per-link report/lifecycle/evidence checks |
 | `docs/runbooks/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; startup/F1/E2, UE2 solo UL and subsequent concurrent TCP UL / two-DU KPM checkpoints observed; full acceptance pending |
-| `docs/dual_ue_laptop_quick_commands.md` | Separate ordered UE1/UE2 sequences, source/server-destination rules and complete per-role IPv4 reset using current state only. Latest measured launcher record is UE1 modem/SIM 13 / bearer 9 / 10.45.0.6/30 / wwan0 / table 151 and UE2 modem/SIM 14 / bearer 10 / 10.46.0.5/30 / wwan1 / table 152. Both exits 0, receiver 13.8/17.3 Mbit/s; latest KPM has 123 callbacks per DU and 63/61 complete UL-active rows. Approximate +199.27-second clock correction gives 62/61 rows inside the laptop run. Full cross-layer correlation and repeatability/UDP/guard/survivor/cold-start gates pending |
+| `docs/dual_ue_laptop_quick_commands.md` | Separate ordered UE1/UE2 sequences, source/server-destination rules and complete per-role IPv4 reset using current state only. October 13 launcher record: UE1 modem/SIM 13 / bearer 9 / 10.45.0.6/30 / wwan0 / table 151 and UE2 modem/SIM 14 / bearer 10 / 10.46.0.5/30 / wwan1 / table 152. Both exits 0, receiver 13.8/17.3 Mbit/s; that KPM capture has 123 callbacks per DU and 63/61 complete UL-active rows. Approximate +199.27-second historical clock correction gives 62/61 rows inside the laptop run. Full repeatability/comparative UDP, cold-start and bidirectional disturbance experiments are now supplemental, outside current acceptance and merging |
 | `scripts/dual_fr1/reset_ue_network.py` / `tests/dual_ue_reset_test.py` | Implemented per-role IPv4 reset from current IMEI/ports and kernel state, with optional PDU disconnect. Added `--shutdown`: disconnect, clear the role's host path, delete all selected-modem bearer objects and disable it; rereads identity and verifies zero bearers / disabled state. Ordinary reset and disconnect-only behavior are preserved. Thirty-two offline stateful tests passed, covering both roles, other-UE preservation, stale bearers, idempotence, dry run, failed deletion/disable, reconnection and changed identity. No live laptop shutdown executed by the agent |
 | `scripts/dual_fr1/run_dual_ul.py` / `tests/dual_ue_ul_test.py` | Implemented concurrent launcher that discovers both current IMEI/SIM/APN/bearer addresses and interfaces instead of historical tuples, checks installed prefixes and source/unbound routes, and rereads identities before starting either client; supports read-only preflight and records real per-process status/time/metadata, with partial-start/interrupt cleanup. Twenty-five offline tests passed, including indexed/scalar access technologies, LTE/missing-report rejection and different/unreported gateways. Operator's measured concurrent run completed with both exits 0 and receiver 13.8/17.3 Mbit/s, overlapping the latest dual-DU KPM after approximate clock correction. Full acceptance pending |
 | `docs/dual_ue_spark_quick_commands.md` | Spark commands for core/CU/RIC/two-DU startup, both server endpoints, DU-tagged KPM capture and shutdown |
@@ -792,10 +819,11 @@ source-policy route setup for this dual-link test instead.
 - [ ] Verify `ip route get` from each UE IP, interface counters/captures, and
   successful private ping. Source/interface-bound traffic must reach its own
   path, with no implicit fallback over Wi-Fi or the other modem.
-- [ ] Negative-test disconnecting each bearer/removing its run-owned path in
-  turn: the affected source cannot reach Spark through another interface, while
-  the survivor still works. Check captures/counters, then rediscover the restored
-  bearer/IP and refresh its rules and correlation ledger before continuing.
+- Supplemental experiment: disconnect each bearer/remove its run-owned path in
+  turn and retain affected-path and survivor-traffic observations. Track this in
+  [bidirectional disturbance experiments](../docs/development/dual_ue_supplemental_experiments.md#3-bidirectional-link-loss-and-recovery);
+  completion is not required for current acceptance or merging. Actual route
+  ownership and fallback guards remain required operating behavior.
 
 Verification commands in each UE's own terminal after guarded route setup:
 
@@ -891,52 +919,23 @@ existing KPM xApp receives numeric UL throughput/UL PRB measurements with correc
 DU/UE attribution for both links and completes both subscription lifecycles
 normally. The other three subscribed measurements remain observations.
 
-## Step 10 Accept Coexistence and Repeatability
+## Step 10 Track Supplemental Experiments
 
-- [ ] With fixed gains and recorded antenna/attenuation setup, compare each
-  link's UL alone, its UL with the other DU transmitting idle, and both links' UL
-  concurrently. Run three 60-second trials per case.
-- [ ] Select the same controlled offered load for a link in its isolated and
-  simultaneous trials, at no more than 70% of its demonstrated solo capacity.
-  Use receiver goodput and UDP loss/jitter; full-rate TCP tests additionally
-  characterize shared resource limits.
-- [ ] Use these initial project acceptance thresholds: continuous SA/PDU
-  sessions, no wrong-cell migration, receiver goodput at least 90% of its
-  isolated result, and UDP loss at most 1% at the controlled rate. Record any
-  reviewed threshold change before testing; do not lower it after a failure.
-- [ ] Compare available DU PHY/modem quality evidence. Where measurements are
-  comparable, require median PUSCH SINR degradation no more than 3 dB and
-  CRC-failure/BLER increase no more than five percentage points. Record missing
-  observability and its effect on the RF conclusion. Existing dummy KPM RF
-  getters cannot supply this evidence; use available PHY/firmware observations.
-- [ ] Record USB/radio underflow, overflow, late events, process failures, and
-  host saturation for every case. Underflow count/growth alone is deferred and
-  nonblocking for this UL scope. Dropped SA/PDU links, failed UL traffic, process
-  failures, or persistent overflow/late failures still keep their gates pending.
-  Separate RF coupling from CPU/USB/CU/UPF/routing bottlenecks and
-  repeat the failing case after a measured remedy.
-- [ ] Reattach UE2 while UE1 continues, then reverse the roles. Update changed
-  F1AP IDs and verify fresh attribution, working survivor traffic, and KPM.
-- [ ] Wait for the monitor's finite run and subscription cleanup, then restart
-  RIC and DUs in the documented order. Relaunch the xApp after both Setup records.
-  The existing SDK has no accepted
-  late-DU-join or automatic RIC-reconnection path. Repeat two-link reception.
-- [ ] After each reattachment/restart, repeat Step 9's active-window UL-metric
-  gate with fresh identities and at least 30 rows per link. Missing UL PRB values
-  or ambiguous/wrong-source tuples keep the corresponding repeatability gate
-  pending; retain evidence and diagnose the source/index issue separately.
-- [ ] Repeat a complete cold start with both subscribers and retained configs.
-  A post-power lock query of `0` has been reported; reapply and verify the target
-  lock and actual serving cell rather than assuming NV retention. Recheck the
-  cell after PDU establishment and before UL; wrong identity/cell must stop
-  that role's setup/test.
-  Preserve the hashes/results as the accepted dual FR1 UL baseline.
+The following work is tracked separately from current acceptance and merging:
 
-**Exit criteria:** UL coexistence passes under the recorded load/setup, both links
-survive the intended independent-UE tests, and cold-start/restart procedures are
-reproducible. State the result as nominally non-overlapping carriers with tested
-UL coexistence; do not claim zero interference or accepted RF stability in all
-operating conditions. Underflow remediation remains a separate deferred task.
+- [ ] Cold-start reproduction from restarted Spark/Laptop/modems, with fresh
+  identities, TUN configuration, PDU/IP paths and host routing.
+- [ ] Full repeatability and comparative UL/load/UDP experiments, including
+  repeated isolated, other-DU-idle and concurrent cases, and planned restart
+  reproductions with fresh KPM attribution.
+- [ ] Bidirectional link-loss/recovery: disturb UE2 while UE1 continues traffic,
+  then reverse roles, recording survivor behavior and restored PDU/IP/KPM state.
+
+Use the [supplemental experiment requirements](../docs/development/dual_ue_supplemental_experiments.md)
+for the test method and evidence to retain. Keep these checkboxes pending until
+performed; their completion is not an exit criterion for the current baseline.
+Describe only the RF conditions and disturbance directions actually measured.
+Underflow remediation remains a separate deferred task.
 
 ## Step 11 Integrate Accepted Plan 1 and Plan 2 Features
 
@@ -948,7 +947,7 @@ gate below passes. Keep the existing global implementation order in
 
 | Integration | Required accepted inputs | Dual-link acceptance |
 | --- | --- | --- |
-| Existing monitor, five metrics | Plan 3 Steps 1–10 | Baseline accepted independently of Plan 1/2 |
+| Existing monitor, five metrics | Plan 3 functional checks in Steps 1–9 and handoff; Step 10 is supplemental | Baseline accepted independently of Plan 1/2 |
 | Broker/dummy, `base5` | Dual baseline and Plan 2 Stage A | All-links and exact-link clients receive five metrics from the intended links |
 | Existing monitor, seven metrics | Dual baseline and Plan 1 | Both DUs expose correct RSRP/SNR and all five existing measurements |
 | Broker/dummy, `rf7` | Dual baseline, Plan 1, and Plan 2 Stage B | Both links push seven correctly attributed metrics with Plan 2's delivery guarantees |
@@ -1008,7 +1007,10 @@ checks pass; MPTCP is not part of this interface acceptance.
   both PDU sessions and run-owned laptop settings, then stop DUs, RIC, CU, and
   the runbook's core services as needed. Preserve MongoDB/subscribers and SIMs.
 
-**Completion:** baseline acceptance requires Steps 1–10 and the applicable
-handoff/rollback review. Plan 3 may be reported as Baseline Accepted / Integration
-Pending while waiting for Plan 1/2. Report full integration only after every
-selected ready feature passes Step 11; never present a pending feature as tested.
+**Completion:** current baseline acceptance uses the functional checks in
+Steps 1–9 and the applicable handoff/rollback review. Step 10's cold-start,
+full-repeatability and bidirectional disturbance experiments are follow-up work,
+not acceptance or merge requirements. Plan 3 may be reported as Baseline Accepted /
+Integration Pending while waiting for Plan 1/2. Report full integration only after
+every selected ready feature passes Step 11; never present a pending experiment
+or integration as tested.

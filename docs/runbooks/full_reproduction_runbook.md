@@ -4,8 +4,11 @@ Network update, 2026-10-23: this installed Spark now uses `ogstun_1` for UE1
 `10.45.0.1/16` and `ogstun_2` for UE2 `10.46.0.1/16`, both MTU 1400. The
 Spark commands below use UE1's new interface. The
 [TUN split guide](../networking/dual_ue_tun_split.md) contains the applied configuration,
-archived scripts and rollback; post-split UE traffic and cold-boot validation
-remain pending. Earlier measurements below retain their original scope.
+archived scripts and rollback. Post-split traffic and UE2 recovery are retained
+in the October 23/24 reports. Cold-start reproduction is a
+[supplemental experiment](../development/dual_ue_supplemental_experiments.md),
+excluded from current Dual UE acceptance and merging. Earlier measurements
+below retain their original scope.
 
 Last updated: 2026-10-23. The **2026-10-12 3660-MHz single-UE/DU1 uplink checkpoint passed** private ping, a 30-second TCP uplink with receiver 17.0 Mbit/s and sender Retr 0, and 12 complete five-metric KPM reports for UE F1AP ID 5. **RF stability remains pending** because of recurring underflows; downlink is outside the current acceptance scope. The earlier 2026-10-05 and 2026-10-07 results remain historical evidence. See the [daily log](../../dev_logs/2026-10-12_ruibin.md), [retained evidence](../evidence/2026-10-12_du1_3660mhz/manifest.json), and [Spark](../single_ue/spark_quick_commands.md) / [UE](../single_ue/ue_laptop_quick_commands.md) quick commands.
 

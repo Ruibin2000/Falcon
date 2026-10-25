@@ -17,6 +17,11 @@ Keep the recovery policy and defaults below. The new
 records two completed recovery cycles with new IP allocations after host NTP
 synchronization; the final operator-directed closing stage is excluded.
 
+**Acceptance scope:** cold-start reproduction, full repeatability and
+bidirectional disturbance/survivor tests are
+[supplemental experiments](development/dual_ue_supplemental_experiments.md),
+excluded from current Dual UE acceptance and merge prerequisites.
+
 <a id="before-starting"></a>
 
 ## 1. Before starting

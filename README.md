@@ -1,5 +1,15 @@
 # Falcomm
 
+**Dual UE checkpoint, 2026-10-24:** the current automatic-reconnect script
+optimization stage is complete. The
+[English UE2 / FR3 recovery report](docs/reports/ue2_fr3_recovery_experiment_report_2026-10-24.md)
+records two successful TX-gain disturbance/recovery cycles with fresh IPv4
+allocations and both source-bound and ordinary ping. This is a functional
+checkpoint. Cold-start reproduction, full repeatability and bidirectional
+link-loss/recovery are tracked as
+[supplemental experiments](docs/development/dual_ue_supplemental_experiments.md),
+not current acceptance criteria or merge prerequisites.
+
 **DU console startup:** the [DU1/DU2 launch commands](docs/dual_ue_spark_quick_commands.md#5-start-du1-and-du2-in-separate-terminals-and-keep-both-running)
 use the [PTY console launcher](scripts/dual_fr1/run_du_console.sh) to retain
 interactive commands and record startup output. After startup, verify `;h;`
@@ -9,7 +19,7 @@ in each DU terminal; runtime RX gain changes use semicolon-delimited commands.
 and UE2 uses `ogstun_2 / 10.46.0.1/16`, both with MTU 1400 and the existing
 shared UPF. The migration and independent Spark-side checks passed; fresh
 post-split application traffic was subsequently verified in the MPTCP run below.
-Cold-boot validation remains pending. See the
+Cold-boot reproduction is a nonblocking supplemental experiment. See the
 [TUN split guide and archived scripts](docs/networking/dual_ue_tun_split.md).
 
 **MPTCP experiment report: [2026-10-23 FR1/FR3 Video and Switching](docs/reports/mptcp_video_experiment_report_2026-10-23.md)**
@@ -22,15 +32,15 @@ was the second path's logical demo label.
 
 **Experiment report: [2026-10-13 Dual UE and Dual DU Uplink Experiment](docs/reports/dual_ue_ul_experiment_report_2026-10-13.md)** covers link configurations, concurrent TCP UL, KPM from both DUs, clock correction, throughput and CRC plots, and the scope of path-isolation acceptance.
 
-Falcomm is a 5G/AI-RAN experimental platform based on the NVIDIA DGX Spark. **On 2026-10-13, concurrent TCP uplink delivered receiver UE1 13.8 Mbit/s and UE2 17.3 Mbit/s, both with sender Retr 0 and process exit 0. The xApp received 123 real UE callbacks per DU, including 63/61 complete UL-active five-metric rows, with successful subscription/deletion and normal exit.** The [retained analysis](docs/evidence/2026-10-13_dual_kpm_reports/manifest.json) reconciles the approximately 199.27-second Spark/Laptop clock difference and retains both captures, parsed rows and the throughput/CRC plot. This establishes concurrent UL functionality and two-DU KPM reception; full cross-layer correlation, repeatability/UDP/guard/survivor/cold-start acceptance remain pending. Earlier single-link checkpoints are retained. The longer-term objective is dual independent radio paths with FlexRIC telemetry, AI channel/rate prediction, and MPTCP video steering.
+Falcomm is a 5G/AI-RAN experimental platform based on the NVIDIA DGX Spark. **On 2026-10-13, concurrent TCP uplink delivered receiver UE1 13.8 Mbit/s and UE2 17.3 Mbit/s, both with sender Retr 0 and process exit 0. The xApp received 123 real UE callbacks per DU, including 63/61 complete UL-active five-metric rows, with successful subscription/deletion and normal exit.** The [retained analysis](docs/evidence/2026-10-13_dual_kpm_reports/manifest.json) reconciles the approximately 199.27-second Spark/Laptop clock difference and retains both captures, parsed rows and the throughput/CRC plot. This establishes concurrent UL functionality and two-DU KPM reception; protocol-explicit cross-layer correlation retains its separate scope. Cold-start, full repeatability/comparative UDP and bidirectional disturbance/survivor tests are supplemental experiments, excluded from current acceptance and merging. Earlier single-link checkpoints are retained. The longer-term objective is dual independent radio paths with FlexRIC telemetry, AI channel/rate prediction, and MPTCP video steering.
 
 **Start here: [Full Reproduction Runbook](docs/runbooks/full_reproduction_runbook.md)** — restart the installed Spark infrastructure, configure the RMU500EK/RM500Q on a new Ubuntu laptop, register, establish IPv4 data, configure WWAN, test local traffic and shut down. [Troubleshooting and the 2026-10-05 debug record](docs/troubleshooting/2026-10-05_sa_bringup.md) explain the repaired failures.
 
 For daily operation, use the command booklets: **[Spark quick commands](docs/single_ue/spark_quick_commands.md)** and **[UE laptop quick commands](docs/single_ue/ue_laptop_quick_commands.md)**. They show compact confirmations; the full runbook retains detailed diagnostics. The [2026-10-07 FlexRIC record](docs/troubleshooting/2026-10-07_flexric_bringup.md) records the codec/version repair, successful subscription and actual UE measurements.
 
-For the two-modem setup, use **[Dual UE laptop quick commands](docs/dual_ue_laptop_quick_commands.md)** and **[Dual UE Spark quick commands](docs/dual_ue_spark_quick_commands.md)**. Start the shared core/CU/RIC, both DUs and both iperf servers on Spark first; then prepare UE1 and UE2 in sequence before concurrent UL. The new **[laptop one-shot startup and self-check](docs/dual_ue_automation.md)** automates modem/SIM selection, enable/registration, live serving-cell checks, PDU connection, host IPv4 configuration and both source-bound and ordinary ping. A matching cell skips serial configuration; a mismatch stops with manual instructions. Successful one-shot startup now holds in a blocking wait without further probes; Ctrl+C/SIGTERM on either kind of launcher runs that role's shutdown, deleting bearers and disabling the modem. The [laptop automatic reconnect Quick Start](docs/dual_ue_laptop_reconnect_quick_start.md) covers continuous monitoring and recovery of dropped/stuck PDUs, with `--interval 1` and `--verbose 1|2|3`. Offline tests are available; fresh physical-modem validation is pending. Each role has its own modem/SIM selection, cell lock, complete host IPv4 reset, policy table and connectivity checks. [The reset helper](scripts/dual_fr1/reset_ue_network.py) discovers current state and needs only the UE role, without any old IP/CIDR/interface or session ledger. The connection scripts and the handbook's [guarded reset blocks](docs/dual_ue_laptop_quick_commands.md#block-wifi-fallback) prevent ordinary ping and traffic to `10.45.0.1` / `10.46.0.1` from falling back to Wi-Fi after reset; rebuilding installs both source and destination lookups. Management Wi-Fi remains available. The operator completed the [two-subnet core migration](docs/networking/dual_ue_subnets.md) for UE2 `internet2 / 10.46.0.1`; both role IPv4/private-ping, individual UL and subsequent concurrent UL/KPM functionality checkpoints passed. Repeatable modem-power recovery and the remaining full acceptance gates are pending.
+For the two-modem setup, use **[Dual UE laptop quick commands](docs/dual_ue_laptop_quick_commands.md)** and **[Dual UE Spark quick commands](docs/dual_ue_spark_quick_commands.md)**. Start the shared core/CU/RIC, both DUs and both iperf servers on Spark first; then prepare UE1 and UE2 in sequence before concurrent UL. The new **[laptop one-shot startup and self-check](docs/dual_ue_automation.md)** automates modem/SIM selection, enable/registration, live serving-cell checks, PDU connection, host IPv4 configuration and both source-bound and ordinary ping. A matching cell skips serial configuration; a mismatch stops with manual instructions. Successful one-shot startup now holds in a blocking wait without further probes; Ctrl+C/SIGTERM on either kind of launcher runs that role's shutdown, deleting bearers and disabling the modem. The [laptop automatic reconnect Quick Start](docs/dual_ue_laptop_reconnect_quick_start.md) covers continuous monitoring and recovery of dropped/stuck PDUs, with `--interval 1` and `--verbose 1|2|3`. Offline tests and two live UE2 recovery cycles passed; the latest recovery report does not establish symmetric UE1 recovery or full repeatability. Each role has its own modem/SIM selection, cell lock, complete host IPv4 reset, policy table and connectivity checks. [The reset helper](scripts/dual_fr1/reset_ue_network.py) discovers current state and needs only the UE role, without any old IP/CIDR/interface or session ledger. The connection scripts and the handbook's [guarded reset blocks](docs/dual_ue_laptop_quick_commands.md#block-wifi-fallback) prevent ordinary ping and traffic to `10.45.0.1` / `10.46.0.1` from falling back to Wi-Fi after reset; rebuilding installs both source and destination lookups. Management Wi-Fi remains available. The operator completed the [two-subnet core migration](docs/networking/dual_ue_subnets.md) for UE2 `internet2 / 10.46.0.1`; both role IPv4/private-ping, individual UL and subsequent concurrent UL/KPM functionality checkpoints passed. Cold-start, full repeatability and bidirectional disturbance testing are follow-up experiments, not prerequisites for current acceptance or merging.
 
-As of **2026-10-13**, [Plan 3](plans/dual-ue-du-fr1-channels.md) uses **UL-only dual-link acceptance**. Underflow remediation is deferred and count/growth alone is nonblocking for this scope. Both B210 DUs are deployed with distinct radio/cell/F1/E2 identities, and both intended SIMs have registration/PDU/private-ping and individual UL checkpoints. The latest concurrent run now passes application UL functionality and real DU-tagged KPM reception. Full repeatability and the remaining acceptance gates are recorded in Plan 3. The earlier disconnected-xApp deletion-failure RIC abort path remains unfixed; normal monitor completion is still required. Follow the [DU2 bring-up procedure](docs/runbooks/dual_fr1_runbook.md). The [2026-10-12 daily log](dev_logs/2026-10-12_ruibin.md) and [retained evidence](docs/evidence/2026-10-12_du1_3660mhz/manifest.json) remain the historical single-DU UL result.
+As of **2026-10-13**, [Plan 3](plans/dual-ue-du-fr1-channels.md) uses **UL-only dual-link acceptance**. Underflow remediation is deferred and count/growth alone is nonblocking for this scope. Both B210 DUs are deployed with distinct radio/cell/F1/E2 identities, and both intended SIMs have registration/PDU/private-ping and individual UL checkpoints. The latest concurrent run now passes application UL functionality and real DU-tagged KPM reception. The October 24 Plan 3 revision moves cold-start, full repeatability and bidirectional disturbance/survivor testing to supplemental experiments outside current acceptance and merging. The earlier disconnected-xApp deletion-failure RIC abort path remains unfixed; normal monitor completion is still required. Follow the [DU2 bring-up procedure](docs/runbooks/dual_fr1_runbook.md). The [2026-10-12 daily log](dev_logs/2026-10-12_ruibin.md) and [retained evidence](docs/evidence/2026-10-12_du1_3660mhz/manifest.json) remain the historical single-DU UL result.
 
 For the new cards, follow [SIM Provisioning and Dual-UE Preparation](docs/setup/sim_provisioning_and_dual_ue.md): reader setup, personalization, authentication checks, modem verification, and the remaining Open5GS/dual-link work.
 
@@ -48,17 +58,17 @@ The verified telemetry connection is `OCUDU DU1 ↔ E2 ↔ FlexRIC ↔ KPM xApp`
 
 ## Target Architecture
 
-The next deployment uses two separate UEs/subscribers on the same laptop, each with its own SIM, modem, and intended DU path:
+The verified dual-UE deployment uses two subscribers on the same laptop, each with its own SIM, modem and intended DU path:
 
 ```text
 OC011830 / IMSI 001010000000101 → Quectel #1 → DU1 ─┐
                                                   ├→ shared CU → Open5GS / UPF
 OC011831 / IMSI 001010000000102 → Quectel #2 → DU2 ─┘
 
-UE laptop: two independent WWAN interfaces / IP paths → later MPTCP
+UE laptop: two independent WWAN interfaces / IP paths → MPTCP primary/backup demo
 ```
 
-Both cards use PLMN `00101`, but have independent K/OPc pairs. The shared PLMN does not force SIM1 onto DU1 or SIM2 onto DU2; cell selection and the observed serving cell must establish that intended association. The two-modem/two-DU RAN and independent IP paths have not yet been validated. MPTCP will combine transport paths after both UEs have working PDU sessions; it does not merge their RAN/core subscriber identities. The FR1/FR3 research design below remains the longer-term target.
+Both cards use PLMN `00101`, but have independent K/OPc pairs. The shared PLMN does not force SIM1 onto DU1 or SIM2 onto DU2; cell selection and the observed serving cell must establish that intended association. Both intended UE/cell paths and concurrent UL/KPM passed functional tests. The October 23 MPTCP video experiment verified primary/backup switching. MPTCP uses the two IP paths without merging their RAN/core subscriber identities. The FR1/FR3 research design below remains the longer-term target.
 
 ```mermaid
 flowchart LR
@@ -105,7 +115,7 @@ flowchart LR
     Up <-->|approximately 7 GHz OTA| Link3
 ```
 
-The future FR1/FR3 diagram uses nominal 3.5 GHz equipment interfaces and an approximately 7 GHz converted OTA path. The verified single-link radio operates at **3.75 GHz**. Pi-Radio frequency conversion, the second path and MPTCP steering remain future work. FlexRIC and its KPM xApp receive actual UE measurements from DU1. The working RAN is OCUDU with Open5GS; the OAI label in the concept diagram is an alternative implementation, not part of the current deployment.
+The future FR1/FR3 diagram uses nominal 3.5 GHz equipment interfaces and an approximately 7 GHz converted OTA path. The verified dual-UE radios operate at **3660 MHz and 3600 MHz**, both within n78. Pi-Radio frequency conversion and RIC/AI-assisted steering remain future work. FlexRIC and the KPM xApps receive actual measurements from both DUs. The working RAN is OCUDU with Open5GS; the OAI label in the concept diagram is an alternative implementation, not part of the current deployment.
 
 ### Network-Side Implementation: OCUDU, Open5GS, and FlexRIC
 
@@ -153,9 +163,14 @@ flowchart LR
 
 In the target system, E2 carries DU/RAN measurements to FlexRIC, and the xApp provides path-steering input to the server application and MPTCP controller. The diagram describes the future two-path implementation. The single-DU chain has now been verified through SA registration, IPv4 PDU setup and initial application traffic, as described below.
 
-Both DUs' E2 connections and simultaneous actual UE KPM collection are verified, with stable DU/F1AP attribution in the latest capture. The complete modem/SIM/cell/F1AP/bearer ledger and the path-steering connections in this diagram remain pending.
+Both DUs' E2 connections and simultaneous actual UE KPM collection are verified, with stable DU/F1AP attribution in the latest capture. The [October 21 identity report](docs/reports/ue_identity_dual_ue_live_2026-10-21.md) verifies experimental CU/DU/Core IP association during simultaneous traffic and bidirectional idle/resume. Explicit serving-DU/context-generation transport and the RIC/AI steering connections remain future work.
 
 ## Current Status
+
+Current dual-UE results are the October 13 concurrent UL/KPM checkpoint,
+the October 21 identity association trials, the October 23 TUN/MPTCP video
+experiment and the October 24 UE2 recovery report linked above. The following
+single-link bring-up records retain their original dates.
 
 The reported **2026-10-05** session verified private SSB detection, PRACH/PUSCH with CRC OK and strong uplink SINR, SA registration/authentication, attached packet service, IPv4 PDU/IP allocation, a connected bearer and manually configured WWAN. The first 10-second TCP uplink test reported **6.29 Mbit/s sender, 5.09 Mbit/s receiver, 0 sender retransmissions**. This is a functional user-plane result; throughput and sustained real-time operation are not yet characterized.
 
@@ -167,9 +182,12 @@ After installing the [timestamp repair](docs/troubleshooting/2026-10-07_flexric_
 
 Open Cells **OC011830** now holds IMSI `001010000000101` / `OpenCells101`; **OC011831** holds IMSI `001010000000102` / `OpenCells102`. Both passed Milenage authentication at programmer SQN **64**, with a reported HSS reference SQN **96**, and both Quectel USIM applications were ready. SIM2 was also verified in the second physical RM500QGL_VH, IMEI `863305041980706`; the first unit's previously observed IMEI was `863305041978437`. These are SIM/UICC checks, not successful private-network registration. The verified single-link subscriber remains IMSI `001010000000001`.
 
-Authentication secrets stay in local permission-600 files `~/sim_du1_credentials.txt` and `~/sim_du2_credentials.txt`, outside Git. Next, create or verify the two matching Open5GS subscriber records with SST 1 and IPv4 session type 1, checking Open5GS SQN representation before using the programmer's reference value. The prepared subnet migration keeps UE1 DNN `internet` and changes UE2 to `internet2`, with address pools `10.45.0.0/16` and `10.46.0.0/16`. Then deploy CU + DU1 + DU2, verify each UE's intended cell and registration, establish separate PDU/WWAN/IP paths, and test MPTCP. Extend the already verified DU1 FlexRIC telemetry to per-DU/per-UE monitoring after dual-link reception works.
+Authentication secrets stay in local permission-600 files `~/sim_du1_credentials.txt` and `~/sim_du2_credentials.txt`, outside Git. The original preparation sequence was to create or verify the two matching Open5GS subscriber records with SST 1 and IPv4 session type 1, checking Open5GS SQN representation before using the programmer's reference value. The prepared subnet migration keeps UE1 DNN `internet` and changes UE2 to `internet2`, with address pools `10.45.0.0/16` and `10.46.0.0/16`. Then deploy CU + DU1 + DU2, verify each UE's intended cell and registration, establish separate PDU/WWAN/IP paths, and test MPTCP. Extend the already verified DU1 FlexRIC telemetry to per-DU/per-UE monitoring after dual-link reception works.
 
 ## Platform and Software Versions
+
+This table records the original single-link platform. Current radio and
+software revisions are retained with each dated dual-UE experiment report.
 
 | Component | Recorded configuration |
 |---|---|
@@ -240,6 +258,7 @@ docs/
 | [FlexRIC Timestamp Repair, 2026-10-07](docs/troubleshooting/2026-10-07_flexric_latency_fix.md) | Tested timestamp patch, deployment command and report-age semantics |
 | [Development Handoff](docs/development/development_handoff.md) | Working constraints and next steps for continued development |
 | [UE identity xApp](docs/development/ue_identity_xapp.md) | Standalone xApp implementation, CU/DU/Core association, build/start commands and validation scope |
+| [Dual UE supplemental experiments](docs/development/dual_ue_supplemental_experiments.md) | Cold-start, repeatability/comparative and bidirectional disturbance requirements; excluded from current acceptance and merging |
 
 The five files at the top of `docs/` cover the Laptop/Spark command booklets,
 Laptop one-shot automation, Laptop automatic reconnect and project status. Supporting documents are grouped under `setup/` (installation
@@ -262,15 +281,15 @@ The following reproduces the existing single-link subscriber `001010000000001`. 
 6. Test local private traffic and record RF-error growth. Run the 10-second KPM xApp during UE traffic to validate actual reports.
 7. Stop traffic/xApp and the laptop PDU first, then DU, FlexRIC, CU and core.
 
-Before operation, verify that local configuration files and device state match the [Full Reproduction Runbook](docs/runbooks/full_reproduction_runbook.md). The current DU configuration transmits at approximately **3.75 GHz**. Operate only at an authorized frequency, location, and power level. Do not run UHD probes or benchmarks that access the B210 while the DU is using it.
+Before operation, verify that local configuration files and device state match the [Full Reproduction Runbook](docs/runbooks/full_reproduction_runbook.md). The current dual-UE configurations use **3660 MHz for DU1** and **3600 MHz for DU2**. Operate only at an authorized frequency, location, and power level. Do not run UHD probes or benchmarks that access the B210 while the DU is using it.
 
 The current Falcomm over-the-air chain uses **UHD and a USRP B210**. ZeroMQ settings in upstream RIC tutorials describe a software-radio example and are not part of this deployment. FlexRIC validation should enable E2 on the existing UHD/DU configuration.
 
 ## Scope and Limitations
 
-- The verified configuration now includes two DUs, two B210s and two RM500Q modems with concurrent 60-second TCP UL functionality. Repeatable cold-start/new-laptop reproduction, longer uplink, UDP loss/jitter and video remain validation tasks.
-- Both intended SIM/modem identities, registered IPv4/private-ping paths and concurrent UL/KPM checkpoints are verified. Deliberate guard/survivor testing and MPTCP remain pending.
-- FlexRIC E2 Setup, real two-DU UE KPM, the repaired report-age display and normal subscription/deletion are verified. The current application/KPM timeline uses approximate retrospective clock alignment; precise synchronization, complete cross-layer correlation and sustained stability remain validation tasks.
+- The verified configuration now includes two DUs, two B210s and two RM500Q modems with concurrent 60-second TCP UL functionality. Cold-start/new-laptop reproduction, repeated comparative UL/UDP measurements and bidirectional disturbance/survivor trials remain supplemental experiments, not current acceptance or merge requirements. The October 23 MPTCP video trial passed with one measured rebuffering event.
+- Both intended SIM/modem identities, registered IPv4/private-ping paths and concurrent UL/KPM checkpoints are verified. The MPTCP primary/backup video demo and UE2 recovery with changed IPs passed in separate experiments. The complete symmetric disturbance/survivor experiment remains follow-up work, excluded from current acceptance and merging.
+- FlexRIC E2 Setup, real two-DU UE KPM, the repaired report-age display and normal subscription/deletion are verified. The October 13 application/KPM timeline retains its approximate retrospective clock correction. Both hosts were synchronized to external NTP before the October 24 recovery trial; this does not recalibrate historical traces. Protocol-explicit identity correlation and sustained stability remain validation tasks.
 - The 30.72 MS/s, 20-s UHD benchmark is a radio/USB stress test. The current OCUDU configuration uses a 23.04 MS/s sample rate.
 - The NVIDIA kernel, PREEMPT_RT status, and system-default GCC configuration are retained to preserve the reproducible baseline.
 - `ocudu_performance` and privileged RAN launch were applied. Recurring RF failures improved; long-duration stability is still open.

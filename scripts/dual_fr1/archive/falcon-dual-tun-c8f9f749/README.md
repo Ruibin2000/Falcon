@@ -23,5 +23,7 @@ Run `sha256sum -c archive.sha256` from this directory to check the snapshot.
 The deployed backup is `/var/backups/falcon-dual-tun-c8f9f749`.
 
 This bundle is specific to the captured host/configuration and is already
-applied. Do not rerun `apply.sh` on the current Spark. Live rollback, automatic
-failure recovery, post-split UE traffic and cold-boot validation remain untested.
+applied. Do not rerun `apply.sh` on the current Spark. Post-split traffic is
+recorded in the [October 23 MPTCP report](../../../../docs/reports/mptcp_video_experiment_report_2026-10-23.md).
+Live migration rollback, automatic migration-failure recovery and cold-boot
+validation remain untested.

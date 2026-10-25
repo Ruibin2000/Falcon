@@ -1,6 +1,6 @@
 # Dual UE Spark Quick Commands — UE IP Binding and UL
 
-Updated: 2026-10-23. Developer: Ruibin Chen. This is the Spark half of the
+Updated: 2026-10-24. Developer: Ruibin Chen. This is the Spark half of the
 operator-run reproduction of the October 21 CU/DU/Core UE IP binding. The
 [live report](reports/ue_identity_dual_ue_live_2026-10-21.md) describes the final
 implementation and six-minute bidirectional idle/resume capture
@@ -51,7 +51,10 @@ source and destination lookups; verify both routes before traffic. Management
 Wi-Fi and its default route remain available for other destinations.
 The October 23 [TUN split](networking/dual_ue_tun_split.md) is applied: UE1 uses `ogstun_1`
 and UE2 uses `ogstun_2`, both with MTU 1400. Spark configuration checks passed;
-post-split UE/PDU/ping/traffic and cold-boot validation remain pending.
+post-split traffic and UE2 PDU/ping recovery passed in the October 23/24
+reports. Cold-start, full repeatability and bidirectional disturbance/survivor
+tests are [supplemental experiments](development/dual_ue_supplemental_experiments.md),
+not current Dual UE acceptance criteria or merge prerequisites.
 
 ## 0. Role assignments and core preparation
 
@@ -681,9 +684,10 @@ For the **six-minute test**, require all of the following:
 missing own verification inputs as `cached`; it is separate from this test.
 Compare times within Spark's Core/CU/DU capture. Laptop wall-clock alignment
 is uncalibrated; do not reuse the old approximate 199-second clock correction.
-A successful new run from stopped infrastructure establishes this stage's
-cold-start reproducibility; it does not close all strict lifecycle/reuse,
-restart/recovery or repeated performance gates.
+A completed cold-start run adds a separate reproduction result. Cold-start,
+full repeatability and bidirectional disturbance experiments are follow-up work,
+excluded from current Dual UE acceptance and merging. Protocol-explicit identity
+lifecycle/reuse work retains its separate scope.
 
 ## 8. Shutdown and retained evidence
 

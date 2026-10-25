@@ -10,8 +10,15 @@ Spark's October 23 [TUN split](networking/dual_ue_tun_split.md) is applied: `ogs
 serves `10.45.0.1` and `ogstun_2` serves `10.46.0.1`. Laptop APNs, service IPs
 and policy tables are retained; WWAN names and bearer parameters still require
 fresh discovery. After the SMF/UPF restart, re-enable each selected modem and
-repeat its complete sequence below. Post-split UE connectivity and traffic
-have not yet been validated.
+repeat its complete sequence below. Post-split traffic is retained in the
+[October 23 MPTCP report](reports/mptcp_video_experiment_report_2026-10-23.md);
+fresh UE2 PDU/IP recovery and both ping modes passed in the
+[October 24 report](reports/ue2_fr3_recovery_experiment_report_2026-10-24.md).
+
+**Acceptance scope, 2026-10-24:** cold-start, full repeatability/comparative
+and bidirectional disturbance/survivor testing are
+[supplemental experiments](development/dual_ue_supplemental_experiments.md),
+excluded from current acceptance criteria and merge prerequisites.
 
 The [live report](reports/ue_identity_dual_ue_live_2026-10-21.md) describes the
 final implementation and six-minute bidirectional idle/resume validation
@@ -1704,11 +1711,11 @@ intervals on continuing clients rather than inferring stall-free traffic from
 exit 0. A new successful cold start is a separate reproduction result; the October 21
 archived counts are not a requirement for the new run.
 
-### 3.2. Optional Plan 3 UDP and path guards
+### 3.2. Supplemental UDP comparisons and path-loss experiments
 
-These are separate from the UE IP binding reproduction. For full Plan 3 UL
-coexistence, repeat each solo/other-DU-idle/concurrent case three times. Add UL
-UDP at a controlled rate no greater than 70% of each measured solo capacity:
+These follow-up experiments are separate from current acceptance and merging.
+The comparison recipe repeats each solo/other-DU-idle/concurrent case three
+times, with controlled UL UDP at no greater than 70% of measured solo capacity:
 
 ```bash
 set -o pipefail
@@ -1719,13 +1726,14 @@ UL_RC=$?
 printf 'pipeline_exit=%d\n' "$UL_RC" | tee "$UE_RUN/ul-udp-exit.txt"
 ```
 
-At the same offered load, require receiver goodput at least 90% of its isolated
-result and UDP loss at most 1%. Retain jitter, cell/SA/PDU continuity and the
-planned PHY observations. No application DL or mixed-direction trials are required.
+The earlier comparison targets were receiver goodput at least 90% of the
+isolated result and UDP loss at most 1%, at the same offered load. They are
+reference targets for future experiments, not current development acceptance
+criteria. Retain jitter, cell/SA/PDU continuity and planned PHY observations. No application DL or mixed-direction trials are required.
 Use distinct filenames for subsequent repetitions.
 
-Before declaring independent paths, stop traffic on one UE and remove only its
-table route. Keep the other UE's ping/UL running. In the affected terminal:
+For the supplemental bidirectional path-loss experiment, stop traffic on one
+UE and remove only its table route. Keep the other UE's ping/UL running. In the affected terminal:
 
 ```bash
 sudo ip -4 route del table "$PATH_TABLE" "$PATH_SERVER/32" dev "$PATH_IF" src "$PATH_IP"
@@ -1836,4 +1844,6 @@ and read fresh bearer/IP/interface values before creating routes.
 After both laptop modems are shut down, use
 [Spark step 8](dual_ue_spark_quick_commands.md#8-shutdown-and-retained-evidence)
 for server/RAN/core shutdown. Retain identity/cell/bearer/path/UL/KPM correlation
-and restart/guard/survivor observations; full acceptance remains pending.
+as current functional evidence. Record cold-start, full repeatability and
+bidirectional disturbance/survivor observations in the separate supplemental
+experiments; their completion is not required for current acceptance or merging.

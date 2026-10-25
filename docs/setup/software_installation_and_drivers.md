@@ -305,8 +305,10 @@ After the applied October 23 [TUN split](../networking/dual_ue_tun_split.md), th
 `.netdev` defines `Name=ogstun_1`, `Kind=tun`, and its `.network` configures UE1
 IPv4, original IPv6, routes and `MTUBytes=1400`. The additional UE2 pair defines
 `ogstun_2 / 10.46.0.1/16`, also MTU 1400. UPF session entries select the matching
-device. The UPF service requests `systemd-networkd`; cold-boot validation
-remains pending. Verify these host-specific files before another deployment.
+device. The UPF service requests `systemd-networkd`; cold-boot reproduction
+is a [supplemental experiment](../development/dual_ue_supplemental_experiments.md),
+excluded from current Dual UE acceptance and merging. Verify these host-specific
+files before another deployment.
 
 PLMN alignment across NRF/AMF, the subscriber database, and IPv4 session selection are covered in the configuration record and runbook. WebUI is an optional administration component; an existing WebUI installation is not evidence that all runtime SA functions are ready.
 

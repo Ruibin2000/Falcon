@@ -1,5 +1,22 @@
 # Development Handoff
 
+Current checkpoint, **2026-10-24**: dual-UE concurrent UL/KPM, experimental
+CU/DU/Core IP association, the two Spark TUNs, the MPTCP primary/backup video
+demo and two live UE2 automatic recoveries have retained evidence. The current
+reconnect optimization stage is complete by operator decision. Use
+[Project Progress](../project_progress_and_configuration.md) and the
+[English recovery report](../reports/ue2_fr3_recovery_experiment_report_2026-10-24.md)
+for the latest state. The dated checkpoints below preserve earlier preparation
+status; their pending statements apply to those checkpoints. By the October 24
+operator decision, cold-start, full repeatability and bidirectional disturbance/
+survivor testing are [supplemental experiments](dual_ue_supplemental_experiments.md),
+not acceptance criteria or merge prerequisites for the current Dual UE scope.
+
+Shutdown order: stop experimental traffic and finish xApp subscription cleanup,
+then Ctrl+C each UE holder/watcher and confirm its shutdown succeeds before
+stopping the DUs, CU and core. The October 24 final shutdown occurred after
+DU2 had stopped and is excluded from recovery acceptance.
+
 Laptop routing update, 2026-10-23: use the handbook's
 [guarded reset blocks](../dual_ue_laptop_quick_commands.md#block-wifi-fallback).
 They install independent destination blocks `20151/20152` before reset so
@@ -122,7 +139,7 @@ Prepare the two new subscribers using [SIM Provisioning and Dual-UE Preparation]
 
 Then confirm each modem registers through its intended cell, establish two independent PDU sessions and guarded laptop WWAN/IP paths, and test each UL alone followed by concurrent UL. Extend the verified DU1 FlexRIC/KPM collection to both DU/UE identities; MPTCP, AI prediction, active steering and blockage/QoE comparison follow later.
 
-The 30-second TCP UL and five-metric reception are already verified at 3660 MHz. Current Plan 3 acceptance requires per-link/concurrent UL, correct identities/IP paths, numeric UL throughput/UL PRB reports and repeatability. Application DL and mixed-direction tests are outside this target. Underflow count/growth alone is nonblocking; remediation remains deferred without claiming accepted RF stability. Retain timing, identity/bearer/serving-cell and error-count evidence.
+The 30-second TCP UL and five-metric reception are already verified at 3660 MHz. Current Plan 3 functional verification uses per-link/concurrent UL, correct identities/IP paths and numeric UL throughput/UL PRB reports. Cold-start, full repeatability and bidirectional disturbance/survivor experiments are excluded from current acceptance and merging. Application DL and mixed-direction tests are outside this target. Underflow count/growth alone is nonblocking; remediation remains deferred without claiming accepted RF stability. Retain timing, identity/bearer/serving-cell and error-count evidence.
 
 The original example's huge negative `KPM ... ind_msg latency` is invalid. The [timestamp repair](../troubleshooting/2026-10-07_flexric_latency_fix.md) is applied to local FlexRIC source, rebuilt, tested and installed; do not discard these local source changes when switching commits. It normalizes v3 ASN timestamps to Unix microseconds and prints signed `report_age_us`. Installed KPM library and `xapp_oran_moni` match the repaired build. Following the initial preview without UE indications, an actual UE ID `2` run produced 12 report-age values of **499–717 microseconds** and completed subscription deletion/exit normally. Live time display is verified; precise delay accuracy and synchronized application performance remain open. Follow [Spark step 7a](../single_ue/spark_quick_commands.md#7a-verify-reports-after-the-timestamp-repair) for repeat runs. Selected UE `2` DL RLC delay samples 13.80–14.40 in 0.1 ms units mean **1.380–1.440 ms**; UE IDs are not fixed.
 

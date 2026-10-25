@@ -1,9 +1,15 @@
 # Dual UE Spark TUN Split
 
-Updated: 2026-10-23. The operator applied this migration on `spark-7c40`
-(Open5GS `2.8.0~noble5`). Independent read-only checks confirmed the deployed
-configuration, addresses, return routes and active SMF/UPF services. Post-split
-UE reconnection, ping, traffic and cold-boot persistence remain untested.
+Updated: 2026-10-24. The operator applied this migration on `spark-7c40`
+(Open5GS `2.8.0~noble5`) on October 23. Independent read-only checks confirmed
+the deployed configuration, addresses, return routes and active SMF/UPF services.
+Subsequent post-split traffic passed in the
+[October 23 MPTCP video trial](../reports/mptcp_video_experiment_report_2026-10-23.md);
+fresh UE2 PDU/IP recovery and both ping modes passed in the
+[October 24 recovery trial](../reports/ue2_fr3_recovery_experiment_report_2026-10-24.md).
+Cold-boot persistence remains untested and is tracked as a
+[supplemental experiment](../development/dual_ue_supplemental_experiments.md),
+not a prerequisite for current acceptance or merging.
 
 ## Current layout
 
@@ -144,6 +150,8 @@ The operator's final output line was truncated. The complete durable backup
 path was independently observed; its root-only contents were not independently
 read.
 
-Fresh UE/PDU/ping, individual and concurrent iperf/MPX traffic, cold-boot
-persistence and live rollback remain untested. October 13 and October 21
-measurements describe the shared-`ogstun` deployment and remain historical.
+Post-split MPTCP traffic and fresh UE2 PDU/IP/ping recovery are recorded in
+the October 23/24 reports linked above. Cold-boot persistence remains a
+supplemental experiment; live rollback remains untested. October 13 and
+October 21 measurements describe the shared-`ogstun` deployment and remain
+historical.
