@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "type": "register",
+  "request_id": "reg-1",
+  "app_id": "mptcp-server",
+  "expected_profile": "du27_bound_v1",
+  "filter": {
+    "mode": "links",
+    "links": [
+      {
+        "node": {
+          "mcc": "001",
+          "mnc": "01",
+          "node_type": "ngran_gNB_DU",
+          "gnb_id": "411",
+          "gnb_id_bits": 22,
+          "du_id": "1"
+        },
+        "ue": {
+          "id_type": "gnb_du",
+          "gnb_cu_ue_f1ap_id": "9"
+        }
+      }
+    ]
+  }
+}

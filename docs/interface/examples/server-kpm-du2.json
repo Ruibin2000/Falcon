@@ -1,0 +1,225 @@
+{
+  "version": 2,
+  "type": "kpm_report",
+  "broker_instance_id": "084a2165-a889-441c-99b6-c37940d887d9",
+  "data_source": "e2",
+  "metric_profile": "du27_bound_v1",
+  "subscription_id": "sub-1",
+  "report_seq": "4527",
+  "delivery_seq": "1309",
+  "link_id": "001:01:ngran_gNB_DU:411:22:2:gnb_du:0",
+  "binding_revision": "1",
+  "callback_at_mono_us": "1387872460418",
+  "report_ready_at_mono_us": "1387872460873",
+  "published_at_mono_us": "1387872461774",
+  "valid_until_mono_us": "1387875057856",
+  "ingress_dropped_total": "0",
+  "report": {
+    "schema": "falcon.ue_identity.experimental.v1",
+    "app_instance": "ab21ea93-3609-4c0b-a469-ecdcdcc5e47f",
+    "sequence": 4527,
+    "node": {
+      "mcc": "001",
+      "mnc": "01",
+      "gnb_id": "411",
+      "gnb_padding": 10,
+      "node_type": "ngran_gNB_DU",
+      "du_id": "2",
+      "gnb_id_bits": 22
+    },
+    "row": {
+      "ue": {
+        "id_type": "gnb_du",
+        "gnb_cu_ue_f1ap_id": "0"
+      },
+      "sample_idx": 0,
+      "incomplete": null,
+      "granularity_ms": 100,
+      "metrics": {
+        "DRB.RlcSduDelayDl": {
+          "type": "real",
+          "value": 13.399999618530273,
+          "unit": "0.1 ms"
+        },
+        "DRB.UEThpDl": {
+          "type": "real",
+          "value": 165.1199951171875,
+          "unit": "kbit/s"
+        },
+        "DRB.UEThpUl": {
+          "type": "real",
+          "value": 4482.72021484375,
+          "unit": "kbit/s"
+        },
+        "RRU.PrbTotDl": {
+          "type": "integer",
+          "value": 1,
+          "unit": "%"
+        },
+        "RRU.PrbTotUl": {
+          "type": "integer",
+          "value": 43,
+          "unit": "%"
+        },
+        "PUSCH.RSRP.dBFS": {
+          "type": "real",
+          "value": -10.300000190734863,
+          "unit": "dBFS"
+        },
+        "PUSCH.SNR.dB": {
+          "type": "real",
+          "value": 17.852571487426758,
+          "unit": "dB"
+        },
+        "CQI": {
+          "type": "integer",
+          "value": 10,
+          "unit": "index"
+        },
+        "CQI.Samples": {
+          "type": "integer",
+          "value": 5,
+          "unit": "samples"
+        },
+        "DL.MCS": {
+          "type": "integer",
+          "value": 11,
+          "unit": "index"
+        },
+        "UL.MCS": {
+          "type": "integer",
+          "value": 13,
+          "unit": "index"
+        },
+        "DL.MCS.Samples": {
+          "type": "integer",
+          "value": 20,
+          "unit": "samples"
+        },
+        "UL.MCS.Samples": {
+          "type": "integer",
+          "value": 31,
+          "unit": "samples"
+        },
+        "UL.PHR.dB": {
+          "type": "real",
+          "value": -2,
+          "unit": "dB"
+        },
+        "UL.PHR.AgeMs": {
+          "type": "real",
+          "value": 1.5570000410079956,
+          "unit": "ms"
+        },
+        "UL.BSR.Bytes": {
+          "type": "integer",
+          "value": 28581,
+          "unit": "bytes"
+        },
+        "UL.BSR.AgeMs": {
+          "type": "real",
+          "value": 1.5574320554733276,
+          "unit": "ms"
+        },
+        "DL.Buffer.Bytes": {
+          "type": "integer",
+          "value": 232,
+          "unit": "bytes"
+        },
+        "DL.Buffer.AgeMs": {
+          "type": "real",
+          "value": 0.4375059902667999,
+          "unit": "ms"
+        },
+        "DL.MAC.Throughput": {
+          "type": "real",
+          "value": 224.8800048828125,
+          "unit": "kbit/s"
+        },
+        "UL.MAC.Throughput": {
+          "type": "real",
+          "value": 5038.9599609375,
+          "unit": "kbit/s"
+        },
+        "DL.HARQ.Ok": {
+          "type": "integer",
+          "value": 19,
+          "unit": "count"
+        },
+        "DL.HARQ.Nok": {
+          "type": "integer",
+          "value": 0,
+          "unit": "count"
+        },
+        "UL.CRC.Ok": {
+          "type": "integer",
+          "value": 27,
+          "unit": "count"
+        },
+        "UL.CRC.Nok": {
+          "type": "integer",
+          "value": 1,
+          "unit": "count"
+        },
+        "PRB.UsageDl.Percent": {
+          "type": "real",
+          "value": 1.0084034204483032,
+          "unit": "%"
+        },
+        "PRB.UsageUl.Percent": {
+          "type": "real",
+          "value": 43.267974853515625,
+          "unit": "%"
+        }
+      }
+    },
+    "header_time_us": "1793050413281132",
+    "received_at_us": "1793050413282175",
+    "callback_at_us": "1793050413282056",
+    "binding_status": "matched",
+    "reason": "serving DU explicitly identified by admitted CU RAN UE allocation",
+    "ue_ipv4": "10.46.0.4",
+    "derived_metrics": {
+      "DL.HARQ.FailureRatio": {
+        "type": "real",
+        "value": 0.0,
+        "unit": "%",
+        "derived_from": [
+          "DL.HARQ.Ok",
+          "DL.HARQ.Nok"
+        ]
+      },
+      "UL.CRC.FailureRatio": {
+        "type": "real",
+        "value": 3.5714285714285716,
+        "unit": "%",
+        "derived_from": [
+          "UL.CRC.Ok",
+          "UL.CRC.Nok"
+        ]
+      }
+    },
+    "binding": {
+      "method": "core_infoapi_cu_e2",
+      "assurance": "cu_reported_du_scope",
+      "serving_du_id": "2",
+      "cu_ue_index": "11",
+      "amf_ue_ngap_id": "25",
+      "guami": [
+        "001",
+        "01",
+        "2",
+        "1",
+        "0"
+      ],
+      "supi": "imsi-001010000000102",
+      "ran_ue_ngap_id": "11",
+      "pdu_session_id": "2",
+      "dnn": "internet2"
+    },
+    "emitted_at_us": "1793050413282516",
+    "source_instance_id": "422e1a3a-f5aa-453f-b629-f3a35965e604",
+    "source_indication_seq": "4753",
+    "ingress_dropped_total": "0"
+  }
+}

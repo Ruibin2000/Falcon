@@ -1,0 +1,63 @@
+{
+  "status": "passed",
+  "error": null,
+  "reports_received": 7200,
+  "text_reports_written": 7200,
+  "unregistered": true,
+  "interrupted": false,
+  "timing": {
+    "push_ms": {
+      "count": 7200,
+      "p50": 1.046,
+      "p95": 2.334,
+      "p99": 3.595,
+      "max": 7.349
+    },
+    "callback_to_receive_ms": {
+      "count": 7200,
+      "p50": 1.865,
+      "p95": 3.888,
+      "p99": 5.383,
+      "max": 11.87
+    },
+    "matching_ms": {
+      "count": 7200,
+      "p50": 0.679,
+      "p95": 1.951,
+      "p99": 2.967,
+      "max": 10.709
+    },
+    "publishing_ms": {
+      "count": 7200,
+      "p50": 0.709,
+      "p95": 1.736,
+      "p99": 2.846,
+      "max": 5.978
+    },
+    "queue_and_socket_ms": {
+      "count": 7200,
+      "p50": 0.295,
+      "p95": 1.095,
+      "p99": 1.8,
+      "max": 3.734
+    }
+  },
+  "per_link_interval_ms": {
+    "001:01:ngran_gNB_DU:411:22:2:gnb_du:0": {
+      "count": 3599,
+      "p50": 99.998,
+      "p95": 101.484,
+      "p99": 102.931,
+      "max": 109.526
+    },
+    "001:01:ngran_gNB_DU:411:22:1:gnb_du:9": {
+      "count": 3599,
+      "p50": 99.99,
+      "p95": 101.415,
+      "p99": 103.142,
+      "max": 107.874
+    }
+  },
+  "writer_queue_peak": 2,
+  "writer_max_delay_ms": 8.929
+}

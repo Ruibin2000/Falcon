@@ -1,0 +1,32 @@
+[
+  {
+    "file": "examples/du1-10.45.0.4.kpm_report.json",
+    "source_receipt_line": 284,
+    "source_receipt_line_sha256": "631360a7056a2660cf9670cc9fff5bc3275dd7755058701b1f314619fddda7af",
+    "du_id": "1",
+    "ue_ipv4": "10.45.0.4",
+    "report_seq": "3498",
+    "delivery_seq": "280",
+    "selection": "First received report for this DU with UL.MAC.Throughput > 1000 kbit/s",
+    "removed_dummy_observation_fields": {
+      "dummy_received_at_mono_us": "1387820965292",
+      "dummy_received_at_unix_us": "1793050361786929",
+      "dummy_written_at_mono_us": "1387820966242"
+    }
+  },
+  {
+    "file": "examples/du2-10.46.0.4.kpm_report.json",
+    "source_receipt_line": 1318,
+    "source_receipt_line_sha256": "d152205ba819282db24ef5ef6599cd00454327ec436122eee7fb5efaeb19a137",
+    "du_id": "2",
+    "ue_ipv4": "10.46.0.4",
+    "report_seq": "4527",
+    "delivery_seq": "1309",
+    "selection": "First received report for this DU with UL.MAC.Throughput > 1000 kbit/s",
+    "removed_dummy_observation_fields": {
+      "dummy_received_at_mono_us": "1387872462041",
+      "dummy_received_at_unix_us": "1793050413283696",
+      "dummy_written_at_mono_us": "1387872463639"
+    }
+  }
+]

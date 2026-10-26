@@ -1,0 +1,91 @@
+{
+  "source_archive": "../../evidence/2026-10-26_du27_app_subscription_6min_live/live-artifacts.tar.gz",
+  "source_archive_sha256": "8f762d8d69f1f872b17220f76ef2313f3391d300a9e9ac6bcd8e59cdd1ede219",
+  "receipt_member": "dummy/receipts.jsonl",
+  "captured_server_frames": [
+    {
+      "file": "server-registration.json",
+      "receipt_line": 1,
+      "receipt_line_sha256": "557dd9c2780a23546dfa5e8750bcd3b81e5946053b3c40d2705dc53868579966",
+      "dummy_observation_fields_removed": {
+        "dummy_received_at_mono_us": "1387807038699",
+        "dummy_received_at_unix_us": "1793050347860337"
+      },
+      "wire_object_sha256": "587086ad585578abe52b75f476ef0bcc852b1f5fa012f11b6c6134ac2df2c0ea"
+    },
+    {
+      "file": "server-binding-state.json",
+      "receipt_line": 2,
+      "receipt_line_sha256": "3fff28dc0f7f856b210e4e1597a29ea2aa343ae10ccf83603a6438e195610c40",
+      "dummy_observation_fields_removed": {
+        "dummy_received_at_mono_us": "1387807046713",
+        "dummy_received_at_unix_us": "1793050347868351"
+      },
+      "wire_object_sha256": "3164782c8151db1b4d017bdda4019cfd9f9af2e84c2813c2ef9231802941dbed"
+    },
+    {
+      "file": "server-pong.json",
+      "receipt_line": 204,
+      "receipt_line_sha256": "c95fc99b110d4104067cf439493f5a24797c96120377c290f9f8a440c8249e4c",
+      "dummy_observation_fields_removed": {
+        "dummy_received_at_mono_us": "1387817047022",
+        "dummy_received_at_unix_us": "1793050357868660"
+      },
+      "wire_object_sha256": "cd70dfc39cd137e9d8c6db515ea14a1c1294479428b8ceca57da8bb9681210db"
+    },
+    {
+      "file": "server-unregistration.json",
+      "receipt_line": 7239,
+      "receipt_line_sha256": "1336ca644d68f4f081623964036b90aab4e78a6be3757c72a0c79ce2e51b4fdd",
+      "dummy_observation_fields_removed": {
+        "dummy_received_at_mono_us": "1388167046985",
+        "dummy_received_at_unix_us": "1793050707868623"
+      },
+      "wire_object_sha256": "8922f5fafef3982fb41c2a19becd13cbc15b19317eef90616d2ae686449fc3f6"
+    },
+    {
+      "file": "server-kpm-du1.json",
+      "receipt_line": 284,
+      "receipt_line_sha256": "631360a7056a2660cf9670cc9fff5bc3275dd7755058701b1f314619fddda7af",
+      "dummy_observation_fields_removed": {
+        "dummy_received_at_mono_us": "1387820965292",
+        "dummy_received_at_unix_us": "1793050361786929",
+        "dummy_written_at_mono_us": "1387820966242"
+      },
+      "wire_object_sha256": "c153dc1ebd69c6619e43b5d0b83fb6dcbdf7d736ea8c7d39be4aea6e09c67767"
+    },
+    {
+      "file": "server-kpm-du2.json",
+      "receipt_line": 1318,
+      "receipt_line_sha256": "d152205ba819282db24ef5ef6599cd00454327ec436122eee7fb5efaeb19a137",
+      "dummy_observation_fields_removed": {
+        "dummy_received_at_mono_us": "1387872462041",
+        "dummy_received_at_unix_us": "1793050413283696",
+        "dummy_written_at_mono_us": "1387872463639"
+      },
+      "wire_object_sha256": "15eb5407f91ee67de58e76001bcd6d80cd3dabe3135fefc85204cc640af58cb0"
+    }
+  ],
+  "illustrative_client_requests": [
+    {
+      "file": "client-register.json",
+      "sha256": "959a824a50003e8c3426b49ca026d35f90107a230430476799ead35204f505ee",
+      "origin": "Illustrative version-2 client request; identifiers must be replaced with current session values."
+    },
+    {
+      "file": "client-register-exact.json",
+      "sha256": "9e96c5088018ad15c740fb27b0821fc57d28e8c9d2a1bd23a98b9fa0fcbae38c",
+      "origin": "Illustrative version-2 client request; identifiers must be replaced with current session values."
+    },
+    {
+      "file": "client-ping.json",
+      "sha256": "282ad09a41f804a9bb0ef99822190fd6ccb1b0db5bb4d80bd6d5e3f48c45a503",
+      "origin": "Illustrative version-2 client request; identifiers must be replaced with current session values."
+    },
+    {
+      "file": "client-unregister.json",
+      "sha256": "ed31bd9b62e989f79eee0ebb7a6440768be286839036bc512839774d8823240b",
+      "origin": "Illustrative version-2 client request; identifiers must be replaced with current session values."
+    }
+  ]
+}

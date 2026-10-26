@@ -1,5 +1,9 @@
 # Bound KPM application subscription interface
 
+For MPTCP/MPX client adaptation, use the [version 2 interface definition](interface/README.md),
+including message examples, IP-to-path association, lifecycle handling, migration
+from the older draft, and the successful dummy application use case.
+
 The existing 27-metric identity xApp now accepts application subscriptions and
 pushes its newly matched reports over TCP. Each report retains its full link,
 DU/UE, CU/Core/session and current IP association. The independent dummy receives
@@ -10,8 +14,12 @@ This implements the revised [Plan 2](../plans/xapp-kpm-app-subscription.md).
 Offline mapper/codec/socket/TXT checks and a 60-second paced archived-input run
 pass. A subsequent [120-second live E2 test](reports/du27_app_subscription_live_2026-10-26.md)
 receives and writes all 2,400 dual-DU reports through one dummy, with normal
-unregister and push p99 2.314 ms. The planned 30-minute live stability run and
-live reconnect/slow-client scenarios remain pending. See the
+unregister and push p99 2.314 ms. A subsequent
+[six-minute alternating/concurrent uplink test](reports/du27_app_subscription_6min_live_2026-10-26.md)
+receives and writes all 7,200 reports, verifies all raw DU rows and full bound
+payloads, and measures push p99 3.595 ms with normal service/E2 cleanup.
+The planned 30-minute live stability run and live reconnect/slow-client scenarios
+remain pending. See the
 [implementation and verification record](reports/du27_app_subscription_2026-10-26.md).
 
 ## Start the service

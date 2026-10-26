@@ -1,0 +1,48 @@
+SUBSCRIPTION_READY host=127.0.0.1 port=8765 profile=du27_bound_v1 source=e2 instance=084a2165-a889-441c-99b6-c37940d887d9
+Setting the config -c file to /tmp/falcon-dual-subscriptions-6min.DoXemxFa/xapp.conf
+[LibConf]: loading service models from SM_DIR: /tmp/falcon-dual-subscriptions-6min.DoXemxFa/sm/
+[LibConf]: reading configuration for xApp
+[LibConf]: NearRT_RIC IP: 127.0.0.1
+[LibConf]: E42_Port Port: 36422
+[LibConf]: Sub_ORAN_SM Name: KPM, Time: 100
+[LibConf]: format 4, RAN type ngran_gNB_DU, actions = DRB.RlcSduDelayDl DRB.UEThpDl DRB.UEThpUl RRU.PrbTotDl RRU.PrbTotUl PUSCH.RSRP.dBFS PUSCH.SNR.dB CQI CQI.Samples DL.MCS UL.MCS DL.MCS.Samples UL.MCS.Samples UL.PHR.dB UL.PHR.AgeMs UL.BSR.Bytes UL.BSR.AgeMs DL.Buffer.Bytes DL.Buffer.AgeMs DL.MAC.Throughput UL.MAC.Throughput DL.HARQ.Ok DL.HARQ.Nok UL.CRC.Ok UL.CRC.Nok PRB.UsageDl.Percent PRB.UsageUl.Percent 
+[LibConf]: Sub_ORAN_SM Name: KPM, Time: 1000
+[LibConf]: format 4, RAN type ngran_gNB, actions = FALCON.UE.RRCState 
+[LibConf]: Sub_ORAN_SM Name: KPM, Time: 1000
+[LibConf]: format 4, RAN type ngran_gNB_CU, actions = FALCON.UE.RRCState 
+[LibConf]: Sub_ORAN_SM Name: KPM, Time: 1000
+[LibConf]: format 4, RAN type ngran_gNB_CUCP, actions = FALCON.UE.RRCState 
+[xAap]: Initializing ... 
+[xApp]: nearRT-RIC IP Address = 127.0.0.1, PORT = 36422
+[E2-AGENT]: Opening plugin from path = /tmp/falcon-dual-subscriptions-6min.DoXemxFa/sm/libkpm_sm.so 
+[NEAR-RIC]: Loading SM ID = 2 with def = ORAN-E2SM-KPM 
+[xApp]: E42 SETUP-REQUEST tx
+[xApp]: E42 SETUP-RESPONSE rx 
+[xApp]: xApp ID = 7 
+[xApp]: Registered E2 Nodes = 3 
+E42_RIC_SUBSCRIPTION_REQUEST 40 
+[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
+[xApp]: SUBSCRIPTION RESPONSE rx
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+E42_RIC_SUBSCRIPTION_REQUEST 40 
+[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 2 
+[xApp]: SUBSCRIPTION RESPONSE rx
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+E42_RIC_SUBSCRIPTION_REQUEST 40 
+[xApp]: E42 RIC SUBSCRIPTION REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 3 
+[xApp]: SUBSCRIPTION RESPONSE rx
+[xApp]: Successfully subscribed to RAN_FUNC_ID 2 
+identity collector: 3 KPM subscriptions, duration=0
+APP_REGISTER_RECEIVED {"at_utc":"2026-10-26T21:32:27.860+00:00","broker_instance_id":"084a2165-a889-441c-99b6-c37940d887d9","data_source":"e2","peer":"127.0.0.1:44988","app_id":null,"subscription_id":null,"request_id":"reg-1","requested_app_id":"dual-ue-dummy"}
+APP_REGISTERED {"at_utc":"2026-10-26T21:32:27.860+00:00","broker_instance_id":"084a2165-a889-441c-99b6-c37940d887d9","data_source":"e2","peer":"127.0.0.1:44988","app_id":"dual-ue-dummy","subscription_id":"sub-1","request_id":"reg-1","filter_mode":"all_matched_links","exact_links":0,"acknowledgement":"queued","active_registrations":1}
+APP_UNREGISTER_RECEIVED {"at_utc":"2026-10-26T21:38:27.868+00:00","broker_instance_id":"084a2165-a889-441c-99b6-c37940d887d9","data_source":"e2","peer":"127.0.0.1:44988","app_id":"dual-ue-dummy","subscription_id":"sub-1","request_id":"unreg-1"}
+APP_UNREGISTERED {"at_utc":"2026-10-26T21:38:27.868+00:00","broker_instance_id":"084a2165-a889-441c-99b6-c37940d887d9","data_source":"e2","peer":"127.0.0.1:44988","app_id":"dual-ue-dummy","subscription_id":"sub-1","request_id":"unreg-1","acknowledgement":"queued"}
+APP_DISCONNECTED {"at_utc":"2026-10-26T21:38:27.868+00:00","broker_instance_id":"084a2165-a889-441c-99b6-c37940d887d9","data_source":"e2","peer":"127.0.0.1:44988","app_id":"dual-ue-dummy","subscription_id":"sub-1","reason":"drained","active_registrations":0}
+[xApp]: E42 RIC_SUBSCRIPTION_DELETE_REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 1 
+[xApp]: E42 SUBSCRIPTION DELETE RESPONSE rx
+[xApp]: E42 RIC_SUBSCRIPTION_DELETE_REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 2 
+[xApp]: E42 SUBSCRIPTION DELETE RESPONSE rx
+[xApp]: E42 RIC_SUBSCRIPTION_DELETE_REQUEST tx RAN_FUNC_ID 2 RIC_REQ_ID 3 
+[xApp]: E42 SUBSCRIPTION DELETE RESPONSE rx
+[xApp]: Sucessfully stopped 
+SUBSCRIPTION_SUMMARY {"source":"e2","metric_profile":"du27_bound_v1","counters":{"binding_transitions":527,"matched_reports":12570,"ingress_peak":2,"ingress_peak_bytes":42423,"active_connections":0,"active_registrations":0,"frames_queued":7239,"reports_queued":7200,"disconnect_drained":1,"ingress_depth":0,"ingress_bytes":0,"known_links":2,"failed":false},"failures":[],"status":"passed"}

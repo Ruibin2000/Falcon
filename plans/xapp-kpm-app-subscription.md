@@ -12,9 +12,9 @@ time between report generation and application receipt.
 | --- | --- |
 | Plan | 2 |
 | Task | `xapp-kpm-app-subscription` |
-| Status | Bound-report subscription implemented; 107/107 normal and sanitizer offline cases plus 60-second paced delivery pass; real E2 and 30-minute live acceptance pending |
+| Status | Implemented; 107/107 normal and sanitizer offline cases, 60-second paced delivery, and 120/360-second single-dummy live E2 delivery pass; 30-minute and live fault acceptance pending |
 | Created at | 14 : 15: 11 Oct 11, 2026 EDT |
-| Last updated at | 13 : 09: 01 Oct 26, 2026 EDT |
+| Last updated at | Oct 26, 2026 EDT, after the six-minute live run |
 | Time zone | `America/New_York` |
 | Developer | Codex |
 | Reviewer | To be assigned |
@@ -24,7 +24,7 @@ time between report generation and application receipt.
 | Acquisition baseline | 27 raw DU KPM names, DU producer/subscription/granularity 100 ms; CU identity and Core polling 1000 ms |
 | Execution order | Integrate subscriptions at the existing matched-report output; validate the full 27-metric path directly at 100 ms |
 | Initial deployment | xApp and dummy/MPTCP server on the same Spark host; loopback TCP |
-| Current authorization | Implement and validate offline first while equipment is stopped; live application-delivery acceptance remains a later equipment run |
+| Current authorization | Offline implementation completed; operator-run live captures are available for analysis, reporting and archival |
 
 This revision supersedes the previous base5 → rf7 → expanded 1000 → 200 → 100 ms
 execution order. **Five- or seven-metric live acceptance is no longer a prerequisite
@@ -54,8 +54,13 @@ See the [implementation report](../docs/reports/du27_app_subscription_2026-10-26
 [interface and commands](../docs/kpm_app_interface.md) and
 [retained manifest](../docs/evidence/2026-10-26_du27_app_subscriptions/manifest.json).
 Sanitizers instrument the changed collector, with the existing SDK/plugin reused.
-These are offline results; real E2 delivery, normal live E2 cleanup, 30-minute
-stability and reviewer acceptance remain open in Steps 6–8. No equipment was started.
+That offline checkpoint started no equipment. Subsequent operator-run
+[120-second](../docs/reports/du27_app_subscription_live_2026-10-26.md) and
+[360-second](../docs/reports/du27_app_subscription_6min_live_2026-10-26.md) live E2
+tests use one all-links dummy. They deliver and write all 2,400 / 7,200 reports,
+with push p99 2.314 / 3.595 ms. The six-minute run additionally verifies every raw
+DU row in its subscription window and normal three-subscription E2 cleanup.
+The 30-minute workload, live fault cases and reviewer acceptance remain open.
 
 ## Verified starting point
 
@@ -514,15 +519,18 @@ with zero skipped required cases; the new live gate remains explicitly pending.
 
 ### Step 6 Verify live functional delivery at the existing 100 ms setting
 
-- [ ] Start the installed RIC/CU/DUs/Core and verify the already-supported 27-metric
+- [x] Start the installed RIC/CU/DUs/Core and verify the already-supported 27-metric
   input and current bindings. Use fresh, recorded instances and configurations.
 - [ ] Start the subscription-mode xApp and all/exact dummy clients. Confirm each
   registration, full bound pushes, dummy TXT completeness and normal unregister.
-- [ ] Collect at least 60 seconds of controlled activity, with at least 100
+  One all-links dummy passes the 120/360-second live runs; exact-link delivery is
+  covered offline and has no live result in these runs.
+- [x] Collect at least 60 seconds of controlled activity, with at least 100
   currently matched delivered reports per active link. Compare all captured
   source/received/TXT records and distinguish startup/binding suppression.
 - [ ] Exercise app disconnect/reconnect without restarting the xApp or increasing
   its E2 subscription count; verify source and collector cleanup on service exit.
+  Normal collector/E2 cleanup passes the six-minute run; live reconnect is pending.
 
 Exit: actual DU → existing matcher → registry/push → independent dummy TXT passes
 for both current links at 100 ms. No 1000/200 ms forwarding gate is imposed.
@@ -547,10 +555,11 @@ added-delay/cadence budgets pass for the declared workload.
   the final 27-metric binding implementation; mark obsolete prototype commands.
 - [ ] Retain source changes, exact metric/config identities, binary hashes,
   offline/live manifests, binding snapshots, receipt/TXT files and timing analysis.
-  Offline artifacts are retained; add live artifacts after Steps 6–7.
+  Offline and 120/360-second live artifacts are retained; add the remaining
+  long-run/fault artifacts after their acceptance workloads.
 - [x] Record acquisition baseline, integrated offline correctness, live functional
   delivery, connection stability and timeliness as separate acceptance results,
-  explicitly marking live results pending.
+  distinguishing the passing 120/360-second live runs from remaining live gates.
 - [ ] Reviewer verifies registry cutoff, immutable association snapshots, correct
   filters, source-driven publication, bounded slow-consumer isolation and cleanup.
 

@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "type": "unregister",
+  "request_id": "unreg-1",
+  "subscription_id": "sub-1"
+}

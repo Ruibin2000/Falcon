@@ -949,7 +949,21 @@ sed "s#^SM_DIR = .*#SM_DIR = \"$KPM_SUB_RUN/sm/\"#" \
 "$KPM_SUB_RUN/collector" --check-clock
 ```
 
-Stop on any build/config error. In the same terminal, start the Python service:
+Stop on any build/config error.
+
+**Spark xApp terminal — print the service directory to copy:**
+
+Run this in the same terminal before starting the service:
+
+```bash
+printf '%s\n' "$KPM_SUB_RUN"
+```
+
+Copy the printed path. When the Spark dummy terminal prompts
+`Paste the subscription service directory:`, paste only this path and press
+Enter. Use the directory from this run; shell variables do not cross terminals.
+
+In the same xApp terminal, start the Python service:
 
 ```bash
 git -C /home/nyu/Desktop/Falcon_repo/Falcon rev-parse HEAD > "$KPM_SUB_RUN/falcon-head.txt"

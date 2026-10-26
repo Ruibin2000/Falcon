@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "type": "pong",
+  "broker_instance_id": "084a2165-a889-441c-99b6-c37940d887d9",
+  "data_source": "e2",
+  "metric_profile": "du27_bound_v1",
+  "request_id": "ping-200",
+  "data_state": "receiving",
+  "last_matching_report_age_ms": 84.567
+}

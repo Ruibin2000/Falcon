@@ -1,0 +1,167 @@
+{
+  "experiment": "Six minute live E2 KPM subscription delivery, October 26, 2026",
+  "created_at_utc": "2026-10-26T21:50:39.858171+00:00",
+  "original_dummy_directory": "/tmp/falcon-dual-dummy-6min.jnQVdVYj",
+  "original_service_directory": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa",
+  "report": "../../reports/du27_app_subscription_6min_live_2026-10-26.md",
+  "captured_heads": {
+    "falcon": "3e10f8daa5a65739db30e26364ba4259946740cf",
+    "flexric": "d93076eed138079be51c43ca5b57908c67581aab",
+    "ocudu": "9bbf6398507a30e469df31e4667056577b2af2c5"
+  },
+  "archived_files": [
+    {
+      "member": "dummy/bindings.txt",
+      "bytes": 15319537,
+      "sha256": "8a2fce7e6f8363fb979e4eb92b6c88d588dec675647077f84da7512555fde7b1"
+    },
+    {
+      "member": "dummy/dummy.log",
+      "bytes": 831,
+      "sha256": "d34b640f61bd7fce2a4e0aad59353f095fda558d1e2d0dbfa3ade6de42da8472"
+    },
+    {
+      "member": "dummy/duration-seconds.txt",
+      "bytes": 4,
+      "sha256": "f60260e656ad57721144aa337d701695322e53d2973b6ff8b384cd0d331bc382"
+    },
+    {
+      "member": "dummy/exit.txt",
+      "bytes": 13,
+      "sha256": "ee1ea9105c6cf4afd3e03b9f48be1384333ca4bcb5048aca24975da7cb66b3bd"
+    },
+    {
+      "member": "dummy/receipts.jsonl",
+      "bytes": 25620094,
+      "sha256": "07de71a31d972df804dd791ab747e5ce34d3bc5daaab4f79e25cf7db35a50619"
+    },
+    {
+      "member": "dummy/service-directory.txt",
+      "bytes": 45,
+      "sha256": "1422aa8f08316c5eb2034fe12d659d1acc3d2f65f129e66b7f8a8ac867e3604e"
+    },
+    {
+      "member": "dummy/summary.json",
+      "bytes": 1235,
+      "sha256": "0e9071b73337203bcd071bb7c90bd137cf665b202a45e57b7913f78a64c5e252"
+    },
+    {
+      "member": "service/exit.txt",
+      "bytes": 12,
+      "sha256": "18fce5e3002c0f2b58e36284b6126f830c4983be590e09f02606d98d6b8d716d"
+    },
+    {
+      "member": "service/falcon-head.txt",
+      "bytes": 41,
+      "sha256": "15a0bfbea0d5d1320520f229727dbc5aca70e8c30043acb0e50b1a2e7c9eec38"
+    },
+    {
+      "member": "service/falcon-status.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "member": "service/flexric-head.txt",
+      "bytes": 41,
+      "sha256": "51073ef77dd8fa95df1492953ad58a26e30397f2eccaa4d65d2e9343c50841b7"
+    },
+    {
+      "member": "service/inputs.ndjson",
+      "bytes": 26623514,
+      "sha256": "b0e64f843a34e00cf61189eea4b9462d9d32d227015d5b10aadb837d61f0d13b"
+    },
+    {
+      "member": "service/local.json",
+      "bytes": 833,
+      "sha256": "1cb15a0cf049e6420190e62f61a5dd0cfc9f4d947ce4a8eabe19fde505ffc7de"
+    },
+    {
+      "member": "service/ocudu-head.txt",
+      "bytes": 41,
+      "sha256": "2bbdbd6aa85be7206457c9f5235f021e5b8c4e0adcfabf28b22529293b4b41c1"
+    },
+    {
+      "member": "service/publisher.json",
+      "bytes": 471,
+      "sha256": "697dae2655013783a64855683bc120812d8d65cde2a0709df6ece7232b3b7e45"
+    },
+    {
+      "member": "service/sha256.txt",
+      "bytes": 2079,
+      "sha256": "def1a28b42635d82854a6a4b456636f1f7efc256b33a28c0bf37b69ac0d0ab4f"
+    },
+    {
+      "member": "service/sm.manifest.json",
+      "bytes": 634,
+      "sha256": "e86d146f9b91314851fb76b126914ca648be6196b03125b5cac2c9c00d55cbd8"
+    },
+    {
+      "member": "service/source.jsonl",
+      "bytes": 43767691,
+      "sha256": "fb858014afde3edc61a3285921f0e55c5e21d4eb60c21048a2c8aca9195c4550"
+    },
+    {
+      "member": "service/subscriptions.json",
+      "bytes": 275,
+      "sha256": "136e33272a850f8c33050a2f4dae2852b760b54acc7fcfd42fde2be2a56feb5e"
+    },
+    {
+      "member": "service/xapp.conf",
+      "bytes": 2259,
+      "sha256": "b23aae6384b706651333cd4cf191375484466536c15f7aaaf12af3981e27c083"
+    },
+    {
+      "member": "service/xapp.log",
+      "bytes": 4326,
+      "sha256": "95ab981b28566066e0d0c2bfea1ba3f8967ddad0a73cf984bbdb96970109c88f"
+    },
+    {
+      "member": "snapshot.json",
+      "bytes": 9582,
+      "sha256": "949a7c48b8629ffb174f0c86dc611658cb46975a8cb4fe98fc2a2f9589fc4935"
+    },
+    {
+      "member": "traffic/du1-server.log",
+      "bytes": 21790,
+      "sha256": "06109360ba15cc99c0c62942045fc8959710babf93fb31a45aba38b9a2fd0219"
+    },
+    {
+      "member": "traffic/du2-server.log",
+      "bytes": 21698,
+      "sha256": "ff5f6d8b5f33eee818604b79775fae5947ce501f3a55ab9258a36d31b9fffc69"
+    }
+  ],
+  "binary_retention": "Collector/plugin binaries excluded; recorded hashes and plugin build manifest retained. Original binaries/source hashes verified in build-hash-verification.json.",
+  "sha256": {
+    "analysis.json": "0483bd688c4f3e1f453c6504bc6668975abdee10c4d33d1821a2c8ef8c3197c9",
+    "analyze_results.py": "94f1354a57fe58ceb5256f5cfd3129cc360e99b7b9d99cac74a6063b165b831d",
+    "build-hash-verification.json": "906c2a2d1fca013610adb23f5dc773da6cc9732ffd971140fa02b67b736d2ebd",
+    "capture-manifest.json": "949a7c48b8629ffb174f0c86dc611658cb46975a8cb4fe98fc2a2f9589fc4935",
+    "delivery-stability.png": "3d1384587861708c096e02ee47648ab87783654c969cda796468a501b23ec790",
+    "delivery-stability.svg": "b4e75cae0248e57d79c82126ccfcf6f4885380d9ef59ca79eb38e30ac6eb094f",
+    "delivery-timeseries.csv": "88331f43b2e46578bc97748cfe2d033171cf292638b8687c597ca009eb13740c",
+    "downlink-overview.png": "39e4d97800bb93f9c96073beb0fc8e0851ceb4bd3b54a8bcd073840c70204de3",
+    "downlink-overview.svg": "3cd96341c61092c78ff33c56f0c2f38c2dcc8a9989931f448d5f398fd38fd8ba",
+    "dummy-summary.json": "0e9071b73337203bcd071bb7c90bd137cf665b202a45e57b7913f78a64c5e252",
+    "dummy.log": "d34b640f61bd7fce2a4e0aad59353f095fda558d1e2d0dbfa3ade6de42da8472",
+    "examples/du1-10.45.0.4.kpm_report.json": "c153dc1ebd69c6619e43b5d0b83fb6dcbdf7d736ea8c7d39be4aea6e09c67767",
+    "examples/du2-10.46.0.4.kpm_report.json": "15eb5407f91ee67de58e76001bcd6d80cd3dabe3135fefc85204cc640af58cb0",
+    "examples/index.json": "eb44df1cb4c67f54f9fb9a6690894b6126199fcfdd9de59c102490662b3145ea",
+    "live-artifacts.tar.gz": "8f762d8d69f1f872b17220f76ef2313f3391d300a9e9ac6bcd8e59cdd1ede219",
+    "metric-statistics.csv": "6db9da5fd018c1c746087c5aa8e2d4e552d139f3a3f67308c83dd6549f573461",
+    "metrics-01-09.png": "5dac402ca37e142230343e1deed8b8aaa2c69c1b2159529e7b3bb96b73d43c13",
+    "metrics-01-09.svg": "62a4d4b62fd62fdcb12aa2daad7b5dbb458b47a22ed3df0c999f57005f687184",
+    "metrics-10-18.png": "8d7bd9b5c521bf18aa2b22761f789067ae4c9040dc75ee03191bf52302dfa887",
+    "metrics-10-18.svg": "616ba83cce3df689ef8ef2611db77a38ab2547b359a8f75057dbd994540ba200",
+    "metrics-19-27.png": "caa522f3c24b8812caed55e340363d16eda7cb109dae7bdc79d69157cc45e050",
+    "metrics-19-27.svg": "6ef08dc9c161ffc95a6311b763631c30dc9ce983cc64eb860b10c106c97d77f9",
+    "publisher-summary.json": "697dae2655013783a64855683bc120812d8d65cde2a0709df6ece7232b3b7e45",
+    "traffic-and-radio.png": "c1c8b2c27a7d3469cd3ad5a3fbf8d0f5024fc95eafa6cf1421e8cc68a48004d7",
+    "traffic-and-radio.svg": "93e9be03ceff8cffee63ba015309f2aa92db6f6ea2c76c83721e57eb24e10895",
+    "uplink-overview.png": "06ac42d784439006c59a21ab92e5ccf2d4a8203d34223669b669411ca2ae597a",
+    "uplink-overview.svg": "4e27614a286de174b882c898a0b75b781a794c6fc2620315aa7dad93201d0eed",
+    "verification.json": "9683fbaea2811710248d78e6a2a7f187a9f324b4ecf8571a8a26a1f66182f1e5",
+    "xapp.log": "95ab981b28566066e0d0c2bfea1ba3f8967ddad0a73cf984bbdb96970109c88f"
+  },
+  "updated_at_utc": "2026-10-26T21:53:34.102589+00:00"
+}

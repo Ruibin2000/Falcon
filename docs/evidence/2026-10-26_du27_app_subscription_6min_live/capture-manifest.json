@@ -1,0 +1,211 @@
+{
+  "snapshot_created_at_utc": "2026-10-26T21:41:30.031374+00:00",
+  "original_dummy_directory": "/tmp/falcon-dual-dummy-6min.jnQVdVYj",
+  "original_service_directory": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa",
+  "service_shutdown_summary_available": true,
+  "files": [
+    {
+      "original": "/tmp/falcon-dual-dummy-6min.jnQVdVYj/summary.json",
+      "archive_member": "dummy/summary.json",
+      "bytes": 1235,
+      "sha256": "0e9071b73337203bcd071bb7c90bd137cf665b202a45e57b7913f78a64c5e252",
+      "capture_started_utc": "2026-10-26T21:41:29.908772+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:29.908862+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-dummy-6min.jnQVdVYj/duration-seconds.txt",
+      "archive_member": "dummy/duration-seconds.txt",
+      "bytes": 4,
+      "sha256": "f60260e656ad57721144aa337d701695322e53d2973b6ff8b384cd0d331bc382",
+      "capture_started_utc": "2026-10-26T21:41:29.908871+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:29.908912+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-dummy-6min.jnQVdVYj/exit.txt",
+      "archive_member": "dummy/exit.txt",
+      "bytes": 13,
+      "sha256": "ee1ea9105c6cf4afd3e03b9f48be1384333ca4bcb5048aca24975da7cb66b3bd",
+      "capture_started_utc": "2026-10-26T21:41:29.908918+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:29.908945+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-dummy-6min.jnQVdVYj/dummy.log",
+      "archive_member": "dummy/dummy.log",
+      "bytes": 831,
+      "sha256": "d34b640f61bd7fce2a4e0aad59353f095fda558d1e2d0dbfa3ade6de42da8472",
+      "capture_started_utc": "2026-10-26T21:41:29.908950+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:29.908976+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-dummy-6min.jnQVdVYj/bindings.txt",
+      "archive_member": "dummy/bindings.txt",
+      "bytes": 15319537,
+      "sha256": "8a2fce7e6f8363fb979e4eb92b6c88d588dec675647077f84da7512555fde7b1",
+      "capture_started_utc": "2026-10-26T21:41:29.908981+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:29.924299+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-dummy-6min.jnQVdVYj/service-directory.txt",
+      "archive_member": "dummy/service-directory.txt",
+      "bytes": 45,
+      "sha256": "1422aa8f08316c5eb2034fe12d659d1acc3d2f65f129e66b7f8a8ac867e3604e",
+      "capture_started_utc": "2026-10-26T21:41:29.925247+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:29.925326+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-dummy-6min.jnQVdVYj/receipts.jsonl",
+      "archive_member": "dummy/receipts.jsonl",
+      "bytes": 25620094,
+      "sha256": "07de71a31d972df804dd791ab747e5ce34d3bc5daaab4f79e25cf7db35a50619",
+      "capture_started_utc": "2026-10-26T21:41:29.925332+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:29.951425+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/local.json",
+      "archive_member": "service/local.json",
+      "bytes": 833,
+      "sha256": "1cb15a0cf049e6420190e62f61a5dd0cfc9f4d947ce4a8eabe19fde505ffc7de",
+      "capture_started_utc": "2026-10-26T21:41:30.030954+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:30.030982+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/subscriptions.json",
+      "archive_member": "service/subscriptions.json",
+      "bytes": 275,
+      "sha256": "136e33272a850f8c33050a2f4dae2852b760b54acc7fcfd42fde2be2a56feb5e",
+      "capture_started_utc": "2026-10-26T21:41:30.030991+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:30.031015+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/xapp.conf",
+      "archive_member": "service/xapp.conf",
+      "bytes": 2259,
+      "sha256": "b23aae6384b706651333cd4cf191375484466536c15f7aaaf12af3981e27c083",
+      "capture_started_utc": "2026-10-26T21:41:30.031023+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:30.031047+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/falcon-head.txt",
+      "archive_member": "service/falcon-head.txt",
+      "bytes": 41,
+      "sha256": "15a0bfbea0d5d1320520f229727dbc5aca70e8c30043acb0e50b1a2e7c9eec38",
+      "capture_started_utc": "2026-10-26T21:41:30.031056+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:30.031079+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/falcon-status.txt",
+      "archive_member": "service/falcon-status.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "capture_started_utc": "2026-10-26T21:41:30.031087+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:30.031115+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/flexric-head.txt",
+      "archive_member": "service/flexric-head.txt",
+      "bytes": 41,
+      "sha256": "51073ef77dd8fa95df1492953ad58a26e30397f2eccaa4d65d2e9343c50841b7",
+      "capture_started_utc": "2026-10-26T21:41:30.031123+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:30.031149+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/ocudu-head.txt",
+      "archive_member": "service/ocudu-head.txt",
+      "bytes": 41,
+      "sha256": "2bbdbd6aa85be7206457c9f5235f021e5b8c4e0adcfabf28b22529293b4b41c1",
+      "capture_started_utc": "2026-10-26T21:41:30.031157+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:30.031181+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/sha256.txt",
+      "archive_member": "service/sha256.txt",
+      "bytes": 2079,
+      "sha256": "def1a28b42635d82854a6a4b456636f1f7efc256b33a28c0bf37b69ac0d0ab4f",
+      "capture_started_utc": "2026-10-26T21:41:30.031188+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:30.031215+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/sm.manifest.json",
+      "archive_member": "service/sm.manifest.json",
+      "bytes": 634,
+      "sha256": "e86d146f9b91314851fb76b126914ca648be6196b03125b5cac2c9c00d55cbd8",
+      "capture_started_utc": "2026-10-26T21:41:30.031223+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:30.031250+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-iperf-fr1.leW4CZux/server.log",
+      "archive_member": "traffic/du1-server.log",
+      "bytes": 21790,
+      "sha256": "06109360ba15cc99c0c62942045fc8959710babf93fb31a45aba38b9a2fd0219",
+      "capture_started_utc": "2026-10-26T21:41:30.031253+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:30.031325+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-iperf-fr3.oliiP47l/server.log",
+      "archive_member": "traffic/du2-server.log",
+      "bytes": 21698,
+      "sha256": "ff5f6d8b5f33eee818604b79775fae5947ce501f3a55ab9258a36d31b9fffc69",
+      "capture_started_utc": "2026-10-26T21:41:30.031328+00:00",
+      "capture_finished_utc": "2026-10-26T21:41:30.031372+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/inputs.ndjson",
+      "archive_member": "service/inputs.ndjson",
+      "bytes": 26623514,
+      "sha256": "b0e64f843a34e00cf61189eea4b9462d9d32d227015d5b10aadb837d61f0d13b",
+      "capture_finished_utc": "2026-10-26T21:43:27.196456+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/source.jsonl",
+      "archive_member": "service/source.jsonl",
+      "bytes": 43767691,
+      "sha256": "fb858014afde3edc61a3285921f0e55c5e21d4eb60c21048a2c8aca9195c4550",
+      "capture_finished_utc": "2026-10-26T21:43:27.246325+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/publisher.json",
+      "archive_member": "service/publisher.json",
+      "bytes": 471,
+      "sha256": "697dae2655013783a64855683bc120812d8d65cde2a0709df6ece7232b3b7e45",
+      "capture_finished_utc": "2026-10-26T21:43:27.248389+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/xapp.log",
+      "archive_member": "service/xapp.log",
+      "bytes": 4326,
+      "sha256": "95ab981b28566066e0d0c2bfea1ba3f8967ddad0a73cf984bbdb96970109c88f",
+      "capture_finished_utc": "2026-10-26T21:43:27.248456+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    },
+    {
+      "original": "/tmp/falcon-dual-subscriptions-6min.DoXemxFa/exit.txt",
+      "archive_member": "service/exit.txt",
+      "bytes": 12,
+      "sha256": "18fce5e3002c0f2b58e36284b6126f830c4983be590e09f02606d98d6b8d716d",
+      "capture_finished_utc": "2026-10-26T21:43:27.248513+00:00",
+      "incomplete_tail_bytes_excluded": 0
+    }
+  ],
+  "snapshot_finalized_at_utc": "2026-10-26T21:43:27.248516+00:00"
+}

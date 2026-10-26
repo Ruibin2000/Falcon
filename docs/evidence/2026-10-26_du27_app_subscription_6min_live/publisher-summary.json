@@ -1,0 +1,21 @@
+{
+  "source": "e2",
+  "metric_profile": "du27_bound_v1",
+  "counters": {
+    "binding_transitions": 527,
+    "matched_reports": 12570,
+    "ingress_peak": 2,
+    "ingress_peak_bytes": 42423,
+    "active_connections": 0,
+    "active_registrations": 0,
+    "frames_queued": 7239,
+    "reports_queued": 7200,
+    "disconnect_drained": 1,
+    "ingress_depth": 0,
+    "ingress_bytes": 0,
+    "known_links": 2,
+    "failed": false
+  },
+  "failures": [],
+  "status": "passed"
+}

@@ -6,8 +6,13 @@ link/UE/session/IP reports. The independent dummy saves TXT and timing evidence.
 Offline regressions and a paced archived-input/socket/TXT comparison pass. A
 subsequent [120-second live test](docs/reports/du27_app_subscription_live_2026-10-26.md)
 receives and writes all 2,400 reports, with push p99 2.314 ms and normal unregister.
+The subsequent [six-minute alternating/concurrent uplink test](docs/reports/du27_app_subscription_6min_live_2026-10-26.md)
+delivers and writes all 7,200 reports, with push p99 3.595 ms, stable 100 ms
+per-link cadence, and normal dummy/xApp/E2 cleanup. Its report includes delivery,
+traffic, and all 27 metric plots with archived raw data.
 The planned 30-minute live stability run remains pending. See the
 [interface and commands](docs/kpm_app_interface.md),
+[MPTCP client interface and working dummy use case](docs/interface/README.md),
 [implementation record](docs/reports/du27_app_subscription_2026-10-26.md) and
 [Plan 2](plans/xapp-kpm-app-subscription.md).
 

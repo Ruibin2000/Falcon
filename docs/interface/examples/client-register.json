@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "type": "register",
+  "request_id": "reg-1",
+  "app_id": "mptcp-server",
+  "expected_profile": "du27_bound_v1",
+  "filter": {
+    "mode": "all_matched_links"
+  }
+}
