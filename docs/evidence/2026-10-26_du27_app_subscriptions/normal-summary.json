@@ -1,0 +1,441 @@
+{
+  "status": "passed",
+  "required": 107,
+  "subscription_cases": 23,
+  "passed": 107,
+  "skipped": 0,
+  "outcomes": {
+    "test_cached_binding.CachedBindingTests.test_actual_own_cu_silence_uses_labelled_history": {
+      "status": "passed",
+      "seconds": 0.0006780531257390976
+    },
+    "test_cached_binding.CachedBindingTests.test_cold_start_and_new_du_key_cannot_borrow_someone_elses_binding": {
+      "status": "passed",
+      "seconds": 0.0004317311104387045
+    },
+    "test_cached_binding.CachedBindingTests.test_core_timeout_keeps_history_and_recovery_verifies_again": {
+      "status": "passed",
+      "seconds": 0.00044654705561697483
+    },
+    "test_cached_binding.CachedBindingTests.test_current_ip_change_can_match_on_established_radio_scope": {
+      "status": "passed",
+      "seconds": 0.0003771381452679634
+    },
+    "test_cached_binding.CachedBindingTests.test_current_multiple_sessions_cannot_fall_back_to_single_old_ip": {
+      "status": "passed",
+      "seconds": 0.0003798268735408783
+    },
+    "test_cached_binding.CachedBindingTests.test_delayed_sample_before_verification_does_not_borrow_history": {
+      "status": "passed",
+      "seconds": 0.0003073939587920904
+    },
+    "test_cached_binding.CachedBindingTests.test_explicit_cu_retirement_and_new_f1_do_not_reuse_old_binding": {
+      "status": "passed",
+      "seconds": 0.0010206149891018867
+    },
+    "test_cached_binding.CachedBindingTests.test_fresh_only_also_matches_independently_and_never_falls_back": {
+      "status": "passed",
+      "seconds": 0.00041221105493605137
+    },
+    "test_cached_binding.CachedBindingTests.test_fresh_own_relation_does_not_expire_because_other_du_is_idle": {
+      "status": "passed",
+      "seconds": 0.0003635380417108536
+    },
+    "test_cached_binding.CachedBindingTests.test_idle_other_ue_does_not_retire_own_binding": {
+      "status": "passed",
+      "seconds": 0.0003582111094146967
+    },
+    "test_cached_binding.CachedBindingTests.test_known_core_changes_never_reuse_old_ip_or_ngap_identity": {
+      "status": "passed",
+      "seconds": 0.0018899638671427965
+    },
+    "test_cached_binding.CachedBindingTests.test_new_cu_f1_list_cannot_resurrect_old_scope_with_other_du_fresh": {
+      "status": "passed",
+      "seconds": 0.00036843493580818176
+    },
+    "test_cached_binding.CachedBindingTests.test_other_du_silence_keeps_fresh_own_relation_matched_and_preserves_metrics": {
+      "status": "passed",
+      "seconds": 0.0004356829449534416
+    },
+    "test_cached_binding.CachedBindingTests.test_other_ue_new_context_cannot_downgrade_this_ue": {
+      "status": "passed",
+      "seconds": 0.0003977939486503601
+    },
+    "test_cached_binding.CachedBindingTests.test_queue_loss_and_du_collision_never_fall_back": {
+      "status": "passed",
+      "seconds": 0.0007198450621217489
+    },
+    "test_codec.CodecTests.test_independent_decoder_and_large_id_core_join": {
+      "status": "passed",
+      "seconds": 0.001960237044841051
+    },
+    "test_codec.CodecTests.test_real_sdk_config_and_plugin_directory_load_without_network": {
+      "status": "passed",
+      "seconds": 0.001676635118201375
+    },
+    "test_codec.CodecTests.test_scoped_cu_codec_preserves_duplicate_f1_and_explicit_du_scope": {
+      "status": "passed",
+      "seconds": 0.0014266010839492083
+    },
+    "test_codec.ReplayTests.test_launcher_strict_and_explicit_experimental_modes": {
+      "status": "passed",
+      "seconds": 0.06992160202935338
+    },
+    "test_expansion.ExpandedCodecTests.test_actual_ocudu_aper_to_flexric_preserves_all_27_fields": {
+      "status": "passed",
+      "seconds": 0.0019196928478777409
+    },
+    "test_expansion.ExpansionTests.test_both_ip_bindings_all_27_fields_signed_power_and_uint32_are_preserved": {
+      "status": "passed",
+      "seconds": 0.0018150520045310259
+    },
+    "test_expansion.ExpansionTests.test_failure_ratios_require_counts_and_a_nonzero_denominator": {
+      "status": "passed",
+      "seconds": 3.8256170228123665e-05
+    },
+    "test_expansion.ExpansionTests.test_no_value_and_measured_zero_remain_distinct": {
+      "status": "passed",
+      "seconds": 0.013763131108134985
+    },
+    "test_expansion.ExpansionTests.test_preserved_seven_metric_profile_adds_no_derived_fields": {
+      "status": "passed",
+      "seconds": 0.00067491689696908
+    },
+    "test_expansion.ExpansionTests.test_real_prb_fractional_values_keep_units_and_integer_fields_separate": {
+      "status": "passed",
+      "seconds": 0.0009559269528836012
+    },
+    "test_identity.AssociationTests.test_core_error_immediately_withholds_identity": {
+      "status": "passed",
+      "seconds": 0.0006823891308158636
+    },
+    "test_identity.AssociationTests.test_cu_stale_despite_fresh_du_and_core": {
+      "status": "passed",
+      "seconds": 0.000858372775837779
+    },
+    "test_identity.AssociationTests.test_delayed_cu_header_cannot_refresh_identity": {
+      "status": "passed",
+      "seconds": 0.0009571099653840065
+    },
+    "test_identity.AssociationTests.test_delayed_du_header_cannot_refresh_a_match": {
+      "status": "passed",
+      "seconds": 0.0006267239805310965
+    },
+    "test_identity.AssociationTests.test_different_report_rates_reuse_valid_relation": {
+      "status": "passed",
+      "seconds": 0.002359712030738592
+    },
+    "test_identity.AssociationTests.test_du_before_cu_is_not_retroactively_relabelled": {
+      "status": "passed",
+      "seconds": 0.0006201961077749729
+    },
+    "test_identity.AssociationTests.test_encoded_queue_byte_and_item_limits": {
+      "status": "passed",
+      "seconds": 7.494515739381313e-05
+    },
+    "test_identity.AssociationTests.test_expiry_uses_monotonic_clock": {
+      "status": "passed",
+      "seconds": 0.0006688849534839392
+    },
+    "test_identity.AssociationTests.test_explicit_cu_unavailable_state_withdraws_candidate": {
+      "status": "passed",
+      "seconds": 0.0016346510965377092
+    },
+    "test_identity.AssociationTests.test_first_du_waits_for_other_admitted_source": {
+      "status": "passed",
+      "seconds": 0.00043059512972831726
+    },
+    "test_identity.AssociationTests.test_idle_session_retained_but_idle_amf_not_radio_context": {
+      "status": "passed",
+      "seconds": 0.00021744100376963615
+    },
+    "test_identity.AssociationTests.test_ingress_loss_latches_until_verified_restart": {
+      "status": "passed",
+      "seconds": 0.0006940851453691721
+    },
+    "test_identity.AssociationTests.test_invalid_identifiers_and_plmn": {
+      "status": "passed",
+      "seconds": 0.0001333609689027071
+    },
+    "test_identity.AssociationTests.test_missing_cu_row_does_not_imply_release": {
+      "status": "passed",
+      "seconds": 0.0007457169704139233
+    },
+    "test_identity.AssociationTests.test_multiple_sessions_do_not_duplicate_ue_metrics": {
+      "status": "passed",
+      "seconds": 0.0007642449345439672
+    },
+    "test_identity.AssociationTests.test_no_value_and_incomplete_preserved": {
+      "status": "passed",
+      "seconds": 0.0006289640441536903
+    },
+    "test_identity.AssociationTests.test_ran_context_change_does_not_relabel_earlier_sample": {
+      "status": "passed",
+      "seconds": 0.0007902448996901512
+    },
+    "test_identity.AssociationTests.test_reused_key_does_not_recover_after_timer": {
+      "status": "passed",
+      "seconds": 0.0009028699714690447
+    },
+    "test_identity.AssociationTests.test_same_f1_id_in_two_cu_contexts_is_ambiguous": {
+      "status": "passed",
+      "seconds": 0.0007014449220150709
+    },
+    "test_identity.AssociationTests.test_same_f1_id_seen_on_two_dus_is_ambiguous": {
+      "status": "passed",
+      "seconds": 0.0006913640536367893
+    },
+    "test_identity.AssociationTests.test_sixty_four_current_contexts_remain_separate": {
+      "status": "passed",
+      "seconds": 0.016592398984357715
+    },
+    "test_identity.AssociationTests.test_strict_mode_never_claims_du_scope_from_standard_ueid": {
+      "status": "passed",
+      "seconds": 0.0003128340467810631
+    },
+    "test_identity.AssociationTests.test_two_paths_preserve_values_units_and_do_not_modify_input": {
+      "status": "passed",
+      "seconds": 0.0003418100532144308
+    },
+    "test_identity.AssociationTests.test_wrong_guami_or_gnb_never_matches": {
+      "status": "passed",
+      "seconds": 0.00028990604914724827
+    },
+    "test_identity.InfoAPITests.test_complete_paginated_snapshot": {
+      "status": "passed",
+      "seconds": 0.012654436053708196
+    },
+    "test_identity.InfoAPITests.test_missing_pager_and_bad_session_rejected": {
+      "status": "passed",
+      "seconds": 0.011793453944846988
+    },
+    "test_identity.InfoAPITests.test_partial_or_changed_page_is_not_an_empty_snapshot": {
+      "status": "passed",
+      "seconds": 0.02359345299191773
+    },
+    "test_identity.InfoAPITests.test_unknown_pdu_state_and_expired_poll_rejected": {
+      "status": "passed",
+      "seconds": 0.011918063974007964
+    },
+    "test_profiles.ProfileCodecTests.test_real_sdk_parses_seven_default_and_five_backup_with_identical_cu_identity": {
+      "status": "passed",
+      "seconds": 0.0030618279706686735
+    },
+    "test_profiles.ProfileCodecTests.test_sdk_parses_all_27_expanded_names_with_100ms_du_and_1s_cu": {
+      "status": "passed",
+      "seconds": 0.001384394010528922
+    },
+    "test_profiles.ProfileSelectionTests.test_custom_configuration_and_profile_cannot_silently_override_each_other": {
+      "status": "passed",
+      "seconds": 0.000743828946724534
+    },
+    "test_profiles.ProfileSelectionTests.test_custom_e2_configuration_keeps_its_existing_override": {
+      "status": "passed",
+      "seconds": 0.0002795059699565172
+    },
+    "test_profiles.ProfileSelectionTests.test_existing_command_now_selects_seven_metric_default": {
+      "status": "passed",
+      "seconds": 0.00022020889446139336
+    },
+    "test_profiles.ProfileSelectionTests.test_expanded_profile_requires_explicit_selection": {
+      "status": "passed",
+      "seconds": 0.00020979414694011211
+    },
+    "test_profiles.ProfileSelectionTests.test_explicit_seven_selects_the_same_default": {
+      "status": "passed",
+      "seconds": 0.0022403509356081486
+    },
+    "test_profiles.ProfileSelectionTests.test_invalid_profile_fails_before_runtime_start": {
+      "status": "passed",
+      "seconds": 0.0002741140779107809
+    },
+    "test_profiles.ProfileSelectionTests.test_legacy_five_selects_complete_backup_profile": {
+      "status": "passed",
+      "seconds": 0.00020265718922019005
+    },
+    "test_rf_metrics.RFCompatibilityTests.test_100ms_du_reports_reuse_fresh_1s_identity_and_follow_current_ip": {
+      "status": "passed",
+      "seconds": 0.011456907959654927
+    },
+    "test_rf_metrics.RFCompatibilityTests.test_both_du_bindings_preserve_seven_metrics_and_input_ownership": {
+      "status": "passed",
+      "seconds": 0.0003646588884294033
+    },
+    "test_rf_metrics.RFCompatibilityTests.test_existing_text_formatter_exposes_new_names_without_aliases": {
+      "status": "passed",
+      "seconds": 0.000312289921566844
+    },
+    "test_rf_metrics.RFCompatibilityTests.test_ip_change_updates_only_the_matching_du_binding": {
+      "status": "passed",
+      "seconds": 0.00034654606133699417
+    },
+    "test_rf_metrics.RFCompatibilityTests.test_measured_zero_and_no_value_remain_distinct": {
+      "status": "passed",
+      "seconds": 0.0009836708195507526
+    },
+    "test_rf_metrics.RFCompatibilityTests.test_missing_identity_does_not_fabricate_an_ip": {
+      "status": "passed",
+      "seconds": 7.651210762560368e-05
+    },
+    "test_rf_metrics.RFCompatibilityTests.test_strict_scope_withholds_ip_and_preserves_rf_data": {
+      "status": "passed",
+      "seconds": 0.00024006608873605728
+    },
+    "test_scoped_identity.ScopedIdentityTests.test_explicit_release_withdraws_only_own_scope": {
+      "status": "passed",
+      "seconds": 0.0002739860210567713
+    },
+    "test_scoped_identity.ScopedIdentityTests.test_explicit_scope_does_not_wait_for_other_du": {
+      "status": "passed",
+      "seconds": 0.00016726506873965263
+    },
+    "test_scoped_identity.ScopedIdentityTests.test_full_36_bit_du_scope_and_input_immutability": {
+      "status": "passed",
+      "seconds": 0.00019123288802802563
+    },
+    "test_scoped_identity.ScopedIdentityTests.test_ingress_loss_still_blocks_explicit_match": {
+      "status": "passed",
+      "seconds": 0.00015830504707992077
+    },
+    "test_scoped_identity.ScopedIdentityTests.test_opaque_ran_id_requires_explicit_allocation_configuration": {
+      "status": "passed",
+      "seconds": 0.00015492993406951427
+    },
+    "test_scoped_identity.ScopedIdentityTests.test_reestablishment_with_new_f1_keeps_peer_binding": {
+      "status": "passed",
+      "seconds": 0.00038520200178027153
+    },
+    "test_scoped_identity.ScopedIdentityTests.test_report_before_new_relation_is_not_relabelled": {
+      "status": "passed",
+      "seconds": 0.0002056180965155363
+    },
+    "test_scoped_identity.ScopedIdentityTests.test_same_du_same_f1_new_context_remains_quarantined": {
+      "status": "passed",
+      "seconds": 0.00024710502475500107
+    },
+    "test_scoped_identity.ScopedIdentityTests.test_stale_cu_is_not_hidden_by_explicit_scope": {
+      "status": "passed",
+      "seconds": 0.0001935209147632122
+    },
+    "test_scoped_identity.ScopedIdentityTests.test_two_du_f1_id_one_matches_both_even_in_strict_mode": {
+      "status": "passed",
+      "seconds": 0.000277521088719368
+    },
+    "test_scoped_identity.ScopedIdentityTests.test_unadmitted_or_malformed_allocation_is_rejected": {
+      "status": "passed",
+      "seconds": 0.0006204370874911547
+    },
+    "test_scoped_identity.ScopedIdentityTests.test_upgraded_identity_can_resolve_legacy_cross_du_taint": {
+      "status": "passed",
+      "seconds": 0.00033553806133568287
+    },
+    "test_subscriptions.SubscriptionTests.test_27_metrics_full_bindings_duplicate_f1_and_exact_filter": {
+      "status": "passed",
+      "seconds": 0.01491917110979557
+    },
+    "test_subscriptions.SubscriptionTests.test_ambiguous_internal_json_is_rejected_without_silent_key_overwrite": {
+      "status": "passed",
+      "seconds": 1.0801148030441254
+    },
+    "test_subscriptions.SubscriptionTests.test_binding_release_and_core_error_do_not_become_fresh_data": {
+      "status": "passed",
+      "seconds": 0.003169060917571187
+    },
+    "test_subscriptions.SubscriptionTests.test_cli_rejects_wrong_source_period_before_opening_listener": {
+      "status": "passed",
+      "seconds": 0.04609070695005357
+    },
+    "test_subscriptions.SubscriptionTests.test_connection_registration_incomplete_and_idle_limits": {
+      "status": "passed",
+      "seconds": 0.22014450491406024
+    },
+    "test_subscriptions.SubscriptionTests.test_duplicate_invalid_requests_and_oversized_frames": {
+      "status": "passed",
+      "seconds": 0.012017023982480168
+    },
+    "test_subscriptions.SubscriptionTests.test_expiry_updates_data_state_without_new_du_rows": {
+      "status": "passed",
+      "seconds": 0.21280338405631483
+    },
+    "test_subscriptions.SubscriptionTests.test_ingress_bounded_and_no_client_acquisition_continues": {
+      "status": "passed",
+      "seconds": 0.0051822110544890165
+    },
+    "test_subscriptions.SubscriptionTests.test_invalid_profile_mapping_nonfinite_missing_metric_are_counted": {
+      "status": "passed",
+      "seconds": 0.012533491011708975
+    },
+    "test_subscriptions.SubscriptionTests.test_live_rejects_fixture_io_adapters_and_unsafe_bind": {
+      "status": "passed",
+      "seconds": 4.6353088691830635e-05
+    },
+    "test_subscriptions.SubscriptionTests.test_multiple_ues_on_one_du_and_ip_change_snapshot_revision": {
+      "status": "passed",
+      "seconds": 0.00313640502281487
+    },
+    "test_subscriptions.SubscriptionTests.test_native_callback_clock_has_same_python_process_origin": {
+      "status": "passed",
+      "seconds": 0.000934006180614233
+    },
+    "test_subscriptions.SubscriptionTests.test_owned_report_and_bitwise_real_zero_novalue_uint32": {
+      "status": "passed",
+      "seconds": 0.0012250959407538176
+    },
+    "test_subscriptions.SubscriptionTests.test_partial_frames_unregister_ack_and_twenty_reconnects": {
+      "status": "passed",
+      "seconds": 0.08968525310046971
+    },
+    "test_subscriptions.SubscriptionTests.test_quiet_source_ping_no_fake_reports_and_shutdown_bound": {
+      "status": "passed",
+      "seconds": 0.12813922110944986
+    },
+    "test_subscriptions.SubscriptionTests.test_real_coordinator_cli_archived_replay_and_no_txt_sink": {
+      "status": "passed",
+      "seconds": 1.8598271911032498
+    },
+    "test_subscriptions.SubscriptionTests.test_registration_barrier_excludes_callback_finishing_late": {
+      "status": "passed",
+      "seconds": 0.004665215965360403
+    },
+    "test_subscriptions.SubscriptionTests.test_serialization_limit_closes_consumer_without_truncated_json": {
+      "status": "passed",
+      "seconds": 0.014368559001013637
+    },
+    "test_subscriptions.SubscriptionTests.test_slow_client_isolated_and_write_timeout": {
+      "status": "passed",
+      "seconds": 0.08745290106162429
+    },
+    "test_subscriptions.SubscriptionTests.test_slow_dummy_txt_writer_fails_without_affecting_healthy_app": {
+      "status": "passed",
+      "seconds": 0.47390656103380024
+    },
+    "test_subscriptions.SubscriptionTests.test_source_eof_preserves_final_queued_report_before_state_notice": {
+      "status": "passed",
+      "seconds": 0.003194404998794198
+    },
+    "test_subscriptions.SubscriptionTests.test_two_actual_dummy_processes_persist_txt_and_timing": {
+      "status": "passed",
+      "seconds": 1.713302327785641
+    },
+    "test_subscriptions.SubscriptionTests.test_txt_writer_failure_and_overflow_are_visible": {
+      "status": "passed",
+      "seconds": 0.02241622912697494
+    },
+    "test_text_report.TextReportTests.test_cli_writes_same_number_of_records_and_refuses_overwrite": {
+      "status": "passed",
+      "seconds": 0.07264333101920784
+    },
+    "test_text_report.TextReportTests.test_same_record_preserves_actual_identifiers_zero_and_no_value": {
+      "status": "passed",
+      "seconds": 0.0010435429867357016
+    },
+    "test_text_report.TextReportTests.test_unresolved_stale_or_ambiguous_cannot_leak_a_previous_binding": {
+      "status": "passed",
+      "seconds": 0.0008632221724838018
+    }
+  },
+  "data_source": "fixture/replay",
+  "metric_profile": "du27_bound_v1",
+  "live_acceptance": "pending",
+  "thirty_minute_live_stability": "pending"
+}

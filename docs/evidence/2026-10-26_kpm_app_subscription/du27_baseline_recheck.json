@@ -1,0 +1,65 @@
+{
+  "checked_at": "2026-10-26",
+  "scope": "Read-only recheck of archived acquisition and current source/configuration; no live services started",
+  "source": "docs/evidence/2026-10-25_dual_ue_27kpm_stability/xapp/rows.ndjson.gz",
+  "source_sha256": "287d9303173e8935058f940a12501a89070120ae3bbbb65a899aad8172b40a7a",
+  "registry": "scripts/ue_identity/metrics.py:EXPANDED",
+  "metric_names": [
+    "DRB.RlcSduDelayDl",
+    "DRB.UEThpDl",
+    "DRB.UEThpUl",
+    "RRU.PrbTotDl",
+    "RRU.PrbTotUl",
+    "PUSCH.RSRP.dBFS",
+    "PUSCH.SNR.dB",
+    "CQI",
+    "CQI.Samples",
+    "DL.MCS",
+    "UL.MCS",
+    "DL.MCS.Samples",
+    "UL.MCS.Samples",
+    "UL.PHR.dB",
+    "UL.PHR.AgeMs",
+    "UL.BSR.Bytes",
+    "UL.BSR.AgeMs",
+    "DL.Buffer.Bytes",
+    "DL.Buffer.AgeMs",
+    "DL.MAC.Throughput",
+    "UL.MAC.Throughput",
+    "DL.HARQ.Ok",
+    "DL.HARQ.Nok",
+    "UL.CRC.Ok",
+    "UL.CRC.Nok",
+    "PRB.UsageDl.Percent",
+    "PRB.UsageUl.Percent"
+  ],
+  "configuration": "configs/flexric/xapp_ue_identity_expanded.conf",
+  "configuration_sha256": "e4814dd266389e439ead29fa0bafde827ce3e2f07e86a7cb53ab3c3d42d80544",
+  "rows": 7158,
+  "rows_without_exact_27_names": 0,
+  "binding_status": {
+    "unresolved": 1,
+    "ambiguous": 19,
+    "matched": 7138
+  },
+  "rows_by_du": {
+    "2": 3579,
+    "1": 3579
+  },
+  "granularity_ms": {
+    "100": 7158
+  },
+  "existing_generation_point": "scripts/ue_identity/xapp_ue_identity.py:run.handle -> Mapper.ingest",
+  "existing_sinks": [
+    "stdout NDJSON",
+    "optional text_report.format_record -> --text-output"
+  ],
+  "old_plan_snapshot": "docs/evidence/2026-10-26_kpm_app_subscription/plan_before_du27_revision.txt",
+  "old_plan_sha256": "60e672ae3495d172461942b32a75519cdaf7246259bf6d90cd6fcb71ed2793bf",
+  "application_push_acceptance": "pending",
+  "matched_report_json_bytes": {
+    "min": 2731,
+    "max": 2905,
+    "measured_payload": "existing compact matched report before new protocol envelope"
+  }
+}

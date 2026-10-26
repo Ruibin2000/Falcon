@@ -1,0 +1,277 @@
+# KPM application subscription interface
+
+The current requirement in [Plan 2](../plans/xapp-kpm-app-subscription.md) is to
+publish the **existing 27-metric, 100 ms matched reports**, retaining link/UE and
+CU/Core/session/IP binding, to registered applications. The dummy receives these
+pushes and saves TXT; connection stability and added delivery delay are acceptance
+criteria. Version-2 bound-report publishing is planned and not yet implemented.
+
+The commands and version-1 schema below describe the earlier **base5 offline
+prototype**, `xapp_kpm_broker`, on TCP `127.0.0.1:8765`. Its codec/normalizer/socket
+checks pass, but it lacks the existing matcher's full bindings and 27-metric
+application delivery. It is reusable transport scaffolding. Live base5/rf7 gates
+and a 1000/200 ms migration are superseded prerequisites, not required steps
+before the current 27-metric/100 ms integration. Preserve these prototype commands
+for reproducing its historical results; use Plan 2 for the active implementation.
+
+## Build and run
+
+Install the development dependency with `sudo apt install libjson-c-dev` when
+needed. Only the opt-in broker targets link json-c. Use a separate build directory:
+
+```bash
+FALCON_REPO=/home/nyu/Desktop/Falcon_repo/Falcon
+FLEXRIC_SOURCE=/home/nyu/flexric
+FLEXRIC_BUILD="$FLEXRIC_SOURCE/build-kpm-broker"
+cmake -S "$FLEXRIC_SOURCE" -B "$FLEXRIC_BUILD" \
+  -DCMAKE_BUILD_TYPE=Debug -DE2AP_VERSION=E2AP_V3 -DKPM_VERSION=KPM_V3_00 \
+  -DXAPP_DB=NONE_XAPP -DXAPP_MULTILANGUAGE=OFF \
+  -DFALCON_KPM_BROKER=ON -DFALCON_REPO_ROOT="$FALCON_REPO"
+cmake --build "$FLEXRIC_BUILD" --target \
+  xapp_kpm_broker falcon_kpm_broker_test falcon_kpm_broker_fixture -j 8
+BROKER="$FLEXRIC_BUILD/examples/xApp/c/monitor/xapp_kpm_broker"
+```
+
+The feature defaults to `FALCON_KPM_BROKER=OFF`. The existing monitor remains
+available. The fixture generator links only the KPM ASN runtime; the broker
+loads its fixture decoder from the normal KPM shared plugin. It does not combine
+incompatible static KPM and E2AP ASN runtimes in one executable.
+
+Generate fixtures into a new directory and start the offline publisher:
+
+```bash
+FIXTURE_DIR=$(mktemp -d /tmp/kpm-fixture-parent-XXXXXXXX)/fixtures
+"$FLEXRIC_BUILD/examples/xApp/c/monitor/falcon_kpm_broker_fixture" "$FIXTURE_DIR"
+"$BROKER" --source fixture --metric-profile base5 \
+  --broker-config "$FALCON_REPO/configs/flexric/kpm_app_broker.json" \
+  --fixture-dir "$FIXTURE_DIR" --fixture-period-ms 1000 --fixture-repeat
+```
+
+`BROKER_READY` means the loopback listener is bound. Fixtures use synthetic data,
+including deliberate invalid mappings, and every response carries
+`data_source: fixture`. The optional `--fixture-plugin PATH` selects another
+compatible KPM v3 shared library. Fixture files are trusted codec test inputs;
+the underlying FlexRIC decoder still contains assertion-based failure paths.
+
+In another terminal, register the independent client:
+
+```bash
+python3 "$FALCON_REPO/scripts/flexric/dummy_kpm_client.py" \
+  --app-id dummy-all --all-links --expected-profile base5 \
+  --reports 30 --timeout 60 --jsonl-output /tmp/kpm-dummy-new.jsonl
+```
+
+Use a new output filename on each run. For an exact client, replace `--all-links`
+with `--links-file FILE`; the file contains a JSON array of complete link keys
+shown below. Registration can wait for an idle or absent UE. The client sends a
+ping every 10 seconds, validates every received row, prints all values and
+states, saves complete received frames, and unregisters before a successful exit.
+
+The offline configuration check exercises the production action builder without
+starting the SDK or opening an E2 connection:
+
+```bash
+"$BROKER" --source e2 --check-config \
+  -c "$FALCON_REPO/configs/flexric/xapp_du_kpm_base5.conf"
+```
+
+For subsequent live acceptance, first start the RIC and all intended DUs using
+the existing operating procedure, then run:
+
+```bash
+"$BROKER" --source e2 --metric-profile base5 \
+  -c "$FALCON_REPO/configs/flexric/xapp_du_kpm_base5.conf" \
+  --broker-config "$FALCON_REPO/configs/flexric/kpm_app_broker.json" \
+  --callback-evidence /tmp/kpm-callback-new.jsonl
+```
+
+`E2_READY` additionally confirms successful admission of one shared subscription
+per discovered DU. Acquisition continues without registered applications. App
+registration and disconnection never call SDK subscription APIs. DU/RIC changes
+require relaunch; the SDK retains its blocking initialization and assertion-based
+timeouts. `SIGINT`/`SIGTERM` disable ingress and new registrations, remove
+successful handles serially, stop SDK dispatch while the context remains alive,
+and finish bounded client draining. Live execution of that lifecycle is pending.
+
+## Protocol version 1
+
+Each wire frame is one UTF-8 JSON object followed by `\n`. TCP reads and writes
+may split a frame or combine several frames. IDs, sequence counters and epoch
+microsecond timestamps use canonical unsigned decimal **strings**. MCC has three
+digits; MNC has two or three, including leading zeros. `version`, bit length,
+sample index and metric values use JSON numbers.
+
+Each connection owns one registration, moving through awaiting registration,
+registered, closing and closed states. App/request IDs contain 1–64 ASCII
+characters from `[A-Za-z0-9_.-]`.
+
+An all-links request is:
+
+```json
+{"version":1,"type":"register","request_id":"reg-1","app_id":"dummy-all","filter":{"mode":"all_du_ues"}}
+```
+
+An exact filter uses `{"mode":"links","links":[KEY,...]}` with 1–32 distinct keys.
+Each key has this shape:
+
+```json
+{
+  "node": {
+    "mcc": "001", "mnc": "01", "node_type": "ngran_gNB_DU",
+    "gnb_id": "411", "gnb_id_bits": 22, "du_id": "1"
+  },
+  "ue": {"id_type": "gnb_du", "gnb_cu_ue_f1ap_id": "1007"}
+}
+```
+
+Matching uses every key field. DU ID is required; gNB bit length is
+`32 - nb_id.unused`. F1AP IDs are UE context identifiers and may be reused.
+Optional `ran_ue_id` is metadata in output rows, excluded from the filter key.
+
+A successful `registration_status` echoes `request_id`/`app_id` and includes:
+
+| Field | Value or meaning |
+| --- | --- |
+| `status` | `registered` |
+| `subscription_id` | Fresh connection registration, e.g. `sub-1` |
+| `broker_instance_id` | Fresh random identifier on each process start |
+| `data_source` | `fixture` or `e2` |
+| `metric_profile`, `metric_names` | `base5` and the ordered five names below |
+| `registration_cutoff_report_seq` | Callback sequence captured at registry commit |
+| `data_state` | Initially `waiting_for_kpm` |
+| `last_matching_kpm_age_ms` | Initially `null`; otherwise elapsed monotonic milliseconds |
+| `report_period_ms` | `1000` for live base5 acquisition |
+| `delivery` | `best_effort_no_replay` |
+
+Success is queued before any KPM. Only callbacks that started after the cutoff
+can deliver rows, including when an older callback finishes normalization later.
+Fixture acceleration is a test input setting and does not establish an E2 rate.
+
+A rejected registration uses `status: rejected` and `error_code`. Stable codes
+are `unsupported_version`, `invalid_request`, `duplicate_app_id`,
+`already_registered`, `too_many_clients`, `frame_too_large` and `shutting_down`.
+Malformed frames without a safe request ID receive an `error` followed by closure
+when possible. A full connection pool receives `too_many_clients` on admission.
+Rejected registration attempts do not change an existing registration.
+
+## Measurement rows and validity
+
+Each `kpm` frame contains the common version/instance/source/profile fields,
+`subscription_id`, `report_seq`, `delivery_seq`, `sample_idx`, `header_time_us`,
+`received_at_unix_us`, `published_at_unix_us`, complete `node` and `ue` objects,
+`incomplete`, `ingress_dropped_total` and exactly five entries in `metrics`:
+
+| Metric | Exported unit |
+| --- | --- |
+| `DRB.RlcSduDelayDl` | `0.1 ms` |
+| `DRB.UEThpDl` | `kbit/s` |
+| `DRB.UEThpUl` | `kbit/s` |
+| `RRU.PrbTotDl` | `%` |
+| `RRU.PrbTotUl` | `%` |
+
+For example, one metric entry is
+`"DRB.UEThpUl":{"kpm_type":"real","status":"ok","value":5120.125,"unit":"kbit/s"}`.
+Delay retains its raw unit: 13.8 means 1.38 ms. Base5 requests and emits no RF
+keys. The historical PRB source-mapping caveat remains attached to legacy runs;
+the current OCUDU expansion contains getter repairs. Broker transport equality
+does not independently certify source correctness or calibration.
+
+| Source | `kpm_type` | `status` | `value` |
+| --- | --- | --- | --- |
+| Finite decoded number | `integer` or `real` | `ok` | Unchanged number |
+| KPM noValue | `noValue` | `no_value` | `null` |
+| Missing active named metric | `absent` | `not_reported` | `null` |
+| Non-finite REAL | `real` | `invalid`, reason `non_finite` | `null` |
+| Unsupported decoded record tag | `unsupported` | `invalid`, reason `unsupported_type` | `null` |
+
+Valid zero, unsigned 32-bit KPM integers and finite double precision are retained.
+Missing values never become zeros. `incomplete` is `true`, `false` or `null`;
+the SDK's ASN incomplete flag currently encodes only present-true or absent.
+Optional `ue.ran_ue_id` is an unsigned decimal string or `null`.
+
+Names determine the mapping. Duplicate names/UE identities, measurement-ID-only
+mappings, unequal name/value cardinality, unsupported UE types, invalid node
+identities and missing required pointers reject the indication with a counted
+diagnostic. Rows from different DUs, UEs or report indices are never merged.
+
+`report_seq` identifies callback entry within the broker instance. Several UE
+rows can share it. `delivery_seq` starts at 1 and increases for each KPM queued
+for a registration. Filtering can create report-sequence gaps. The repaired
+header timestamp, callback arrival and serialization/enqueue timestamp describe
+different events; they do not establish pure transport latency or PHY sample age.
+
+## Liveness and cleanup
+
+Send `{"version":1,"type":"ping","request_id":"p-1"}` to receive a `pong`
+with the same request ID, instance/profile/source and current data state.
+`receiving_kpm` indicates that a matching row has been queued at least once;
+inspect `last_matching_kpm_age_ms` to assess subsequent silence. Quiet sources
+produce no synthetic measurements.
+
+Send `{"version":1,"type":"unregister","request_id":"u-1","subscription_id":"sub-1"}`
+to stop delivery. Complete queued frames drain before the final
+`unregistration_status` with `status: unregistered`; no KPM follows that reply.
+EOF/reset/timeout/overflow remove only that client's registration and buffers.
+Reconnect needs fresh registration, with no history replay.
+
+## Bounds and evidence
+
+Defaults are in [the broker configuration](../configs/flexric/kpm_app_broker.json).
+Configuration accepts known keys and loopback binding only; tests can lower limits.
+
+| Resource | Bound or deadline |
+| --- | --- |
+| Connections / exact filters | 16 / 32 per registration |
+| Incoming line / outgoing frame | 8 KiB / 16 KiB including the outgoing newline |
+| Owned ingress | 256 fixed-size rows, additionally bounded by 4 MiB |
+| Per-client output | 64 complete/partial frames and 1 MiB |
+| Initial registration / incomplete request | 5 s / 5 s from first byte |
+| Registered idle | 30 s without a complete valid client request |
+| Pending output without write progress | 5 s |
+| Unregister / shutdown drain | At most 2 s |
+| Callback evidence | 1000 rows by default; configurable `evidence_limit` |
+
+Ingress overflow drops the newly arriving row and increments the cumulative
+counter exposed on later KPM frames. Output overflow/write timeout disconnects
+only the affected client. Serialization limit failures close that connection
+and increment an error counter. `BROKER_STATS` reports queue peak, drops,
+malformed callbacks, serialization/admission failures, client overflows and
+evidence limits. Evidence errors or capture truncation produce a nonzero final
+exit. Choose a sufficient capture limit before a long run.
+
+The callback copies bounded typed data and signals an eventfd; socket, JSON,
+terminal and evidence I/O run in the broker worker. Evidence stores independently
+formatted identities, numeric type/state tags, unsigned integers and IEEE-754
+REAL bit strings. It describes accepted owned rows before network serialization;
+ingress drops are accounted separately.
+
+`write_chunk` and `test_stall_app` are deterministic fixture I/O adapters for
+partial writes and stalled clients. Live mode rejects both. `test_stall_app`
+lets that app's registration status pass, then withholds its output progress.
+
+## Reproduce offline validation
+
+All output directories must be new. The runner preserves commands, logs, exit
+codes, fresh APER fixtures and hashes, an explicit 25-case required manifest,
+two actual dummy JSONL receipts and an independent bitwise equality result.
+
+```bash
+python3 "$FALCON_REPO/scripts/flexric/test_kpm_app_subscription.py" \
+  --broker "$BROKER" \
+  --unit-test "$FLEXRIC_BUILD/examples/xApp/c/monitor/falcon_kpm_broker_test" \
+  --fixture-generator "$FLEXRIC_BUILD/examples/xApp/c/monitor/falcon_kpm_broker_fixture" \
+  --dummy "$FALCON_REPO/scripts/flexric/dummy_kpm_client.py" \
+  --metric-profile base5 --output-dir /tmp/kpm-base5-new-run
+python3 "$FALCON_REPO/scripts/flexric/test_kpm_app_sanitizers.py" \
+  --source "$FLEXRIC_SOURCE" --build "$FLEXRIC_BUILD" \
+  --output-dir /tmp/kpm-base5-new-sanitizers
+```
+
+The sanitizer runner instruments broker-owned C code with ASan/UBSan and enables
+leak detection, while reusing the SDK archive and KPM plugin. It runs the same
+socket suite. Four producer threads also exercise 40,000 callbacks against the
+bounded queue. A sandbox that denies sockets or sanitizer process inspection
+needs the corresponding execution permission; such a denial is not a passing test.
+
+See the [October 26 offline verification record](reports/kpm_app_subscription_offline_2026-10-26.md)
+for the retained results and pending live acceptance.

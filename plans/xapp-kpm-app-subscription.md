@@ -1,974 +1,567 @@
-# KPM xApp Subscription and Publishing Interface Implementation Plan
+# xApp subscription and bound KPM report push plan
 
-Implement the broker and an independent dummy application with typed metric
-profiles. The October 24 priority is expanded DU DL/UL coverage at 1000 ms,
-followed by 200 ms and then 100 ms validation. Preserve the five-metric and
-seven-metric profiles as compatibility regressions; add the expanded profile
-from Plan 1's reviewed registry. Keep MPTCP integration and traffic routing
-outside this task.
+Extend the existing **27-metric identity xApp at 100 ms** with an application
+subscription service. An application such as the MPTCP server registers with the
+xApp. Each newly generated, successfully matched KPM report is offered to every
+matching registered application, retaining the report's existing link, UE,
+CU/Core/session and current IP association. The example dummy application receives
+these pushes and saves them to TXT. Validate connection stability and the added
+time between report generation and application receipt.
 
 | Field | Value |
 | --- | --- |
 | Plan | 2 |
 | Task | `xapp-kpm-app-subscription` |
-| Status | Planned; implementation and acceptance pending; expanded DU coverage at 1000 ms precedes frequency increases |
+| Status | Bound-report subscription implemented; 107/107 normal and sanitizer offline cases plus 60-second paced delivery pass; real E2 and 30-minute live acceptance pending |
 | Created at | 14 : 15: 11 Oct 11, 2026 EDT |
-| Last updated at | 23 : 26: 45 Oct 24, 2026 EDT |
+| Last updated at | 13 : 09: 01 Oct 26, 2026 EDT |
 | Time zone | `America/New_York` |
-| Developer | To be assigned |
+| Developer | Codex |
 | Reviewer | To be assigned |
-| Falcon inspection baseline | `3f12f627d80cdad14bc9a5ab267f8f65452a2da9` |
-| OCUDU inspection baseline | `69801c7e9a3a72e4f29d98f14f626f156444c3ca` |
-| FlexRIC inspection baseline | `736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8`, with the existing local timestamp repair |
-| Prerequisites | Preserve Stage A/B compatibility checks; expanded forwarding requires Plan 1's reviewed metric registry and source correctness at 1000 ms. Plan 2 remains waived as a prerequisite for Plan 1's acquisition work. |
-| Execution order | Prioritize Plan 1's expanded DU metrics at 1000 ms; implement and accept expanded broker delivery at 1000 ms; then validate 200 ms and 100 ms on each implemented path. Keep Stage A/B regressions distinct. |
-| Initial deployment | xApp and dummy clients on the same Spark host |
+| Falcon inspected HEAD | `d4fbd0846c28fe055aea887d4e015c0b86255ab9`, plus the current uncommitted base5 prototype |
+| FlexRIC inspected HEAD | `3597413fb564ceb778778e7c3dde4534a2c321d5`, plus the current uncommitted base5 prototype |
+| OCUDU inspected HEAD | `9bbf6398507a30e469df31e4667056577b2af2c5` |
+| Acquisition baseline | 27 raw DU KPM names, DU producer/subscription/granularity 100 ms; CU identity and Core polling 1000 ms |
+| Execution order | Integrate subscriptions at the existing matched-report output; validate the full 27-metric path directly at 100 ms |
+| Initial deployment | xApp and dummy/MPTCP server on the same Spark host; loopback TCP |
+| Current authorization | Implement and validate offline first while equipment is stopped; live application-delivery acceptance remains a later equipment run |
 
-Maintain one plan for this task. Complete checkboxes only after their exit
-criteria pass and the reviewer can inspect the retained evidence.
+This revision supersedes the previous base5 → rf7 → expanded 1000 → 200 → 100 ms
+execution order. **Five- or seven-metric live acceptance is no longer a prerequisite
+for this task.** Their existing code, configs and offline results remain reusable
+transport regressions. The active task starts from the working 27-metric matched
+report pipeline. Maintain this single active plan; the
+[previous text](../docs/evidence/2026-10-26_kpm_app_subscription/plan_before_du27_revision.txt)
+is retained only as historical evidence.
 
-## October 24 Scope and Ordering Update
+## Implementation checkpoint
 
-The operator requested additional DL/UL metrics before faster reporting.
-The [metric coverage and period contract](../docs/e2sm-kpm/2026-10-24_du_metric_expansion_and_reporting_periods.md)
-and Plan 1 Steps 12–17 define the source expansion. The fixed five/seven-name
-schemas, commands and tests in Steps 1–11 below remain the compatibility
-profiles; they do not limit the expanded profile or establish full completion.
-Steps 12–14 below add expanded forwarding and rate acceptance.
+The subscription-mode coordinator now routes the existing mapper's newly matched
+27-metric snapshots to a bounded loopback publisher. Registration, all/exact
+filters, heartbeat, disconnect/unregister cleanup and immutable link/UE/CU/Core/IP
+bindings are implemented. The independent dummy validates socket reports and
+writes its own TXT asynchronously. Acquisition remains independent of app churn.
 
-Plan 1 can validate the DU-to-monitor path independently. Only a running
-broker and independent client can establish forwarding acceptance. Expanding
-metric coverage stays at 1000 ms; no rate result is claimed merely because a
-configuration parses or a monitor prints frequent messages.
+Both normal and ASan/UBSan collector verification pass **107/107 mandatory cases,
+zero skipped**, including 23 subscription cases. A separate 60-second original-pace
+archived-input run delivers and writes all 1,140 eligible reports to the all-link
+dummy and 570 to the exact-link dummy. Complete source/receipt/TXT comparisons pass;
+report-ready-to-receive p99 is 3.380/3.595 ms. The final replay has no ingress/client
+overflow or expired report. An initial EOF ordering failure is retained with its
+fix and dedicated regression.
 
-## Scope and Current Implementation
+See the [implementation report](../docs/reports/du27_app_subscription_2026-10-26.md),
+[interface and commands](../docs/kpm_app_interface.md) and
+[retained manifest](../docs/evidence/2026-10-26_du27_app_subscriptions/manifest.json).
+Sanitizers instrument the changed collector, with the existing SDK/plugin reused.
+These are offline results; real E2 delivery, normal live E2 cleanup, 30-minute
+stability and reviewer acceptance remain open in Steps 6–8. No equipment was started.
 
-The current timestamp-repaired monitor can receive the five existing DU metrics.
-The installed `xapp_oran_sm.conf` contains their DU Style 4 subscription. Create
-a repository-owned DU-only five-metric config during Stage A; the repository's
-existing RF configs request six or seven measurements and are not the Stage A input.
+## Verified starting point
 
-The [seven-metric configuration](../configs/flexric/xapp_du_rf_metrics.conf)
-and cumulative RF monitor patch are Stage B inputs. Plan 1 must establish correct
-RSRP/SNR acquisition before live seven-metric acceptance. Broker/dummy development
-and live five-metric acceptance do not depend on applying that RF patch.
+Read-only source/configuration inspection and a fresh scan of the archived raw
+rows confirm the operator's current baseline:
 
-| Stage | Implement and validate | Required gate |
-| --- | --- | --- |
-| A | Broker, registry, dummy, and the existing five KPM measurements | Fixture/socket tests and real five-metric E2-to-dummy delivery pass in Step 8 |
-| B | Add RSRP and SNR to the accepted interface | Accepted Stage A and original Plan 1 RF source acceptance; verify seven-metric delivery in Step 10 |
-| C | Expanded UE, cell and DU-health profiles from Plan 1's registry | Complete declared coverage and typed callback-to-client equality at 1000 ms; Steps 12–13 |
-| D | Faster delivery of the accepted expanded profiles | 200 ms first, then 100 ms; producer cadence, queue/load and client equality checks in Step 14 |
+| Evidence | Finding |
+| --- | --- |
+| [Expanded E2 configuration](../configs/flexric/xapp_ue_identity_expanded.conf) | Exactly the 27 DU actions in `metrics.EXPANDED`; DU 100 ms, CU identity 1000 ms |
+| [Metric registry](../scripts/ue_identity/metrics.py) and [reference](../docs/du_kpm_metrics_reference.md) | Raw metric names, units and INTEGER/REAL/noValue semantics already exist; derived failure ratios remain separate |
+| [Coordinator](../scripts/ue_identity/xapp_ue_identity.py) | `run.handle()` calls `Mapper.ingest()`, then writes each generated record to stdout NDJSON and optional TXT |
+| [Matcher](../scripts/ue_identity/mapping.py) | Generated records already contain full DU/UE identity, binding status/reason, CU/Core/session relation and current UE IPv4 |
+| [TXT formatter](../scripts/ue_identity/text_report.py) | `format_record()` already formats bound identity and KPM values for a human-readable report |
+| [October 25 live report](../docs/reports/dual_ue_27kpm_stability_report_2026-10-25.md) | Six-minute dual-UE acquisition and association run at nominal 100 ms |
+| [October 26 raw-data recheck](../docs/evidence/2026-10-26_kpm_app_subscription/du27_baseline_recheck.json) | 7,158 rows, all with exactly 27 names and 100 ms granularity; 3,579 rows per DU; 7,138 matched, 19 ambiguous and 1 unresolved |
 
-Stages A/B establish and preserve the compatibility interface at 1000 ms.
-They can be developed while Plan 1 expands the sources, without blocking its
-acquisition work. Accept the expanded 1000 ms coverage before either plan
-increases frequency. Stage B's prerequisite refers to the original RF source
-acceptance, not the later acceleration steps, so it creates no dependency cycle.
+The 20 startup rows without a current match must stay explicitly unbound. The
+existing matched records carry `cu_reported_du_scope` in this captured deployment.
+Do not infer associations from DU numbering, IP subnet, traffic rate, or FR1/FR3
+labels. The admitted `du36-cuue28-v1` CU allocation and existing reuse/quarantine
+rules remain in force; the CU index is not a shared lifecycle generation token.
+Diagnostic invocations retain their seven-metric default. Subscription mode now
+selects 27 metrics by default and validates the expanded 100 ms DU/1000 ms CU
+configuration before source startup.
 
-There are two independent subscriptions:
+Current compact matched report payloads in that archive are 2,731–2,905 UTF-8
+bytes before the new subscription envelope. This is a sizing observation for
+the existing reports, not a bound on all future frames.
 
-1. **E2 acquisition:** at 1000 ms, the compatibility profiles use one Style 4
-   subscription per DU. Expanded coverage uses a declared, bounded set of shared
-   subscriptions per DU/scope/metric group, including a separate cell/node path.
-   App registration never adds another copy of those subscriptions. Faster
-   acquisition begins only after expanded 1000 ms acceptance.
-2. **Application delivery:** each external app registers with the xApp's local
-   server to receive all links or an exact list of DU and UE associations.
+The [earlier base5 prototype](../docs/evidence/2026-10-26_kpm_app_subscription/base5_interface_reference.txt)
+passed 25 offline transport cases and a synthetic demonstration. It does not yet
+publish the 27-metric matched reports or their CU/Core/IP bindings. Those results
+cannot establish the new application's correctness, stability or timeliness.
 
-App registration must not create another E2 subscription. App disconnection must
-not delete the shared E2 subscription. Continue collecting while no app is registered.
+## Required behavior and scope
 
-For this first version, all intended DUs and the RIC must be available before
-the live xApp starts. Keep a static DU subscription set until shutdown; relaunch
-after DU membership or RIC changes. The current SDK has blocking startup and
-assertion-based subscription/timeouts. Periodic discovery alone would not make
-late joins or automatic E2 reconnection reliable. Those SDK changes are separate
-work. An app may register while the UE is idle or has not yet produced KPM.
+1. The xApp listens for application subscription requests, validates each request,
+   creates a registry entry and acknowledges admission before delivering data.
+2. It continues the existing shared DU/CU acquisition and Core polling independently
+   of application registration. An application never creates or deletes an E2
+   subscription, changes source periods or changes the identity matching policy.
+3. For each new report returned by the existing matcher, preserve an immutable
+   snapshot of its full identity, association and 27 measurements. After a current
+   match succeeds, consult the app registry and enqueue the report to every
+   application whose filter matches that snapshot.
+4. Publishing follows **actual DU arrivals and report generation**. A DU's nominal
+   100 ms period normally yields about ten reports per second per active UE/link.
+   There is no independent 1-second batch, periodic retransmission of the latest
+   report, wait for the other DU, or wait for a new CU/Core poll on every DU row.
+5. In subscription mode, the xApp's routine report destination is application
+   push. It does not write a per-report TXT file or require stdout redirection to
+   construct or transport reports. The dummy owns the required TXT output.
+6. The dummy registers, receives and validates bound reports, records receipt
+   times, saves TXT, maintains the connection and unregisters cleanly. Its evidence
+   must establish stable receipt and bounded added delay at the full 27-metric rate.
 
-Develop a dedicated `xapp_kpm_broker` target from the existing monitor's reviewed
-KPM builders and decoder handling. Keep `xapp_oran_moni` available for Plan 1's
-diagnostics and regressions. Reuse the SDK and KPM handling directly; never parse
-monitor terminal output to construct application data.
+MPTCP is a real intended consumer of this interface. This task defines delivery
+of link/UE/IP information to it and can use its future client implementation.
+Changing routing, MPTCP subflows, path selection or the video algorithm is outside
+this subscription mechanism. New KPM metrics and new cell/DU-health scopes are
+also outside the current 27-metric UE-report task.
 
-Stage A includes mandatory live validation with the existing five measurements.
-Fixtures alone cannot authorize Stage B. This task verifies decoded-value
-preservation, attribution, registration, and delivery. It does not certify PHY
-calibration. The expanded profile depends on Plan 1's getter audit and repairs;
-the existing OCUDU PRB paths use an internal UE index as a snapshot vector
-offset, and the CQI path does not correctly expose requested UE measurements.
-Receipt equality alone cannot certify those source values. Retain the caveat
-for legacy runs and require source correctness for expanded-profile acceptance.
+The existing standalone diagnostic capture remains available explicitly. Optional
+bounded evidence capture can be enabled for validation, but TXT/file/terminal
+output is not the production forwarding path. Current source consistency caveats
+remain with the measurements; transport equality does not certify PHY calibration
+or synchronized snapshots across getters.
 
-## Architecture and Data Ownership
+## Integration architecture
 
 ```mermaid
 sequenceDiagram
-    participant DU as DU via RIC
-    participant X as xApp KPM callback
-    participant B as Local broker worker
-    participant A as Dummy application
+    participant S as DU 100 ms via RIC and collector
+    participant X as Existing xApp matcher
+    participant C as CU identity and Core 1000 ms
+    participant B as Subscription worker and registry
+    participant A as Dummy or MPTCP server
     A->>B: register app and link filter
-    B->>B: Commit registry entry and sequence cutoff
-    B-->>A: registration_status registered
-    DU->>X: New Format 3 KPM indication
-    X->>B: Bounded handoff of owned UE rows
-    B->>B: Match filters and serialize active metric profile
-    B-->>A: kpm push
-    A->>A: Validate and print
-    A->>B: unregister
-    B-->>A: unregistration_status unregistered
+    B-->>A: registered or waiting for match
+    C->>X: Update identity and session context
+    S->>X: New decoded 27-metric UE row
+    X->>X: Match using current identity context
+    X->>B: Owned new matched report
+    B->>B: Find matching active registrations
+    B-->>A: Push report immediately
+    A->>A: Timestamp receipt and validate
+    A->>A: Dummy saves TXT
+    A->>B: ping or unregister
+    B-->>A: pong or final unregistered
 ```
 
-Use three execution responsibilities:
+Use the existing path:
 
-- **SDK controller:** initialize the SDK, establish the static DU subscriptions,
-  and remove successful subscriptions during shutdown. Serialize SDK report/remove
-  calls in this thread; the existing SDK uses shared synchronous request state.
-- **KPM callback:** validate and deep-copy one owned snapshot per UE/measurement
-  row into a bounded ingress queue. Assign a monotonic `report_seq` at callback
-  entry. Do not send sockets, serialize JSON, or call subscription APIs here.
-- **Broker worker:** own all sockets, the app registry, filter evaluation, JSON
-  serialization, per-client queues, timeouts, and disconnect cleanup.
+`e2_collector.c → bounded internal pipe/events → Mapper.ingest() → matched report → subscription worker → application`.
 
-The SDK frees both the decoded indication and node identity after the callback
-returns. No queued snapshot may retain SDK pointers. Create the queue/context
-before SDK subscriptions can produce callbacks, and retain it until SDK callback
-dispatch has stopped. Network writes must never hold the ingress queue lock.
+The implementation entry point is the existing Python coordinator's
+`run.handle()` output boundary. Introduce a publisher/sink abstraction there;
+reuse the existing collector, metric registry, association logic and TXT formatter.
+**Do not build a second DU-only path that omits CU/Core matching**, and do not
+parse human TXT or terminal output to reconstruct application reports. The
+collector's existing machine-readable internal events are valid inputs.
 
-## Link and Measurement Contract
+Keep responsibilities separate:
 
-Identify a link by the complete node identity plus the UE context:
+- The existing collector/SDK controller owns E2 acquisition, static subscription
+  handles and normal cleanup. Preserve owned event handoff after callback return.
+- The coordinator owns ordering of DU/CU/Core events and identity resolution.
+  Only a newly processed DU row produces a new measurement report. CU/Core updates
+  refresh association state; they do not fabricate or replay DU measurements.
+- A nonblocking publisher worker owns listener sockets, registration/lifecycle,
+  filtering, JSON framing, per-client queues, write offsets and timeouts. The
+  matcher makes a bounded nonblocking handoff and continues processing events.
+- The dummy separates socket reception/timestamping from bounded TXT writing, so
+  a slow disk or terminal does not silently distort application receipt timing.
 
-`PLMN + node type + gNB ID and bit length + DU ID + UE ID type + CU UE F1AP ID`
+The current collector already performs bounded internal event serialization.
+This task must add no application socket, TXT, terminal or subscriber work inside
+its SDK callback. No client operation may hold an acquisition or mapper queue lock.
 
-Preserve MCC as three digits and MNC as two or three digits. Derive gNB bit length
-from the SDK's `nb_id.unused` field. Require a present DU ID for this DU-only
-publisher; never replace a missing DU ID with zero. Preserve optional `ran_ue_id`
-as metadata when present. UE F1AP IDs may change or be reused after reconnection;
-they are not permanent subscriber identifiers or MPTCP path identifiers.
+Start the listener independently of source readiness, so apps can register into
+`waiting_for_match` while startup completes. The service must remain responsive
+while the collector initializes. First-version DU/RIC membership remains static;
+a restart after membership changes is separate from app reconnect. Do not claim
+automatic SDK/E2 reconnection from implementing the app TCP lifecycle.
 
-Select a process-wide profile at startup. Preserve `--metric-profile base5`
-and `--metric-profile rf7` with their original exact names, units and counts.
-Add a versioned expanded profile, provisionally `du_full_v1`, whose registry
-declares its UE, cell and DU-health groups. Freeze the final name/schema in
-Step 12. Profiles do not change during a process run and apps cannot change
-E2 acquisition. Changes require restart and fresh app registration.
+## Bound report and link contract
 
-For the compatibility profiles, one outbound KPM message represents one UE row
-from one indication. Include exactly the profile's five or seven named entries,
-with explicit absence states when the source omits an active metric. In `base5`,
-omit the two RF keys entirely; do not emit placeholder RSRP/SNR values or request
-them from the DU. Expanded rows carry their declared scope and the exact metric
-list for that scope/group; do not fabricate a UE identifier for a cell or DU row.
-Do not merge different DUs, UEs, indication rows, or source windows into one row.
-The active values share a KPM report row; that does not prove identical underlying
-PHY, scheduler, and RLC measurement windows.
+Freeze the published profile as **`du27_bound_v1`**. Its 27 raw names come from
+`metrics.EXPANDED` and the existing E2 configuration, without a second handwritten
+metric list. Keep the existing two derived failure ratios in `derived_metrics`,
+separate from the 27 raw measurements.
 
-| Metric | Profile | DU representation | Exported unit |
-| --- | --- | --- | --- |
-| `DRB.RlcSduDelayDl` | `base5` and `rf7` | `REAL` | `0.1 ms` |
-| `DRB.UEThpDl` | `base5` and `rf7` | `REAL` | `kbit/s` |
-| `DRB.UEThpUl` | `base5` and `rf7` | `REAL` | `kbit/s` |
-| `RRU.PrbTotDl` | `base5` and `rf7` | `INTEGER` | `%` |
-| `RRU.PrbTotUl` | `base5` and `rf7` | `INTEGER` | `%` |
-| `PUSCH.RSRP.dBFS` | `rf7` only, Stage B | `REAL` | `dBFS` |
-| `PUSCH.SNR.dB` | `rf7` only, Stage B | `REAL` | `dB` |
+One pushed report represents one newly generated DU/UE sample row. Do not combine
+DUs, UEs, different samples or different source windows. Retain:
 
-Keep the raw delay unit; for example, `13.8` in `0.1 ms` means `1.38 ms`.
-RSRP is software uplink PUSCH DM-RS power. The SNR name retains the scheduler's
-selected PHY SINR source. Preserve Plan 1's units and validity rules. No measured
-RSRQ or additional SINR metric is introduced.
+| Data | Required fields and semantics |
+| --- | --- |
+| Full radio key | MCC, MNC, node type, gNB ID and bit length, DU ID, UE ID type and gNB-CU UE F1AP ID; optional RAN UE metadata |
+| Current binding | `binding_status`, reason, method, assurance, serving DU, CU UE index where present, GUAMI, AMF/RAN UE NGAP IDs, SUPI, PDU session ID, DNN and UE IPv4 |
+| Report provenance | Existing mapper instance/sequence, source indication/row identity, sample index, granularity and incomplete flag |
+| Metric data | All 27 names with original decoded types, numeric values, units and explicit unavailable states; derived metrics kept distinct |
+| Freshness | Header and callback times, report receive/ready times, identity source ages or validity deadline, queue/publish times and source/drop counters |
 
-For each metric, publish `kpm_type`, `status`, `value`, and `unit`:
+Expose a deterministic `link_id` derived from the full radio key, with the full
+key also present. FR1/FR3 display labels can be explicit configuration metadata;
+they cannot replace that key. A F1AP number alone is insufficient, particularly
+when both DUs use F1AP ID 1. `link_id` is scoped to the current radio context, not
+an eternal subscriber identifier or an MPTCP subflow ID.
 
-| Source condition | `kpm_type` | `status` | `value` |
-| --- | --- | --- | --- |
-| Valid source number | `integer` or `real` | `ok` | Original decoded number |
-| KPM `noValue` | `noValue` | `no_value` | `null` |
-| Missing named metric | `absent` | `not_reported` | `null` |
-| Invalid RF integer, non-finite real, or unsupported record type | Actual source type where known | `invalid` with a reason | `null` |
+Carry a publisher-local `binding_revision` when that link's actual association
+changes. It helps order delivered association snapshots; it does not prove a
+DU/CU context generation and must not bypass the mapper's ambiguity quarantine.
+Copy binding metadata when the report is generated. Never look up a newer IP at
+socket-write time and attach it to an older queued sample.
 
-This SDK represents integer, real, and noValue records; do not invent another
-source record type. Preserve a valid zero. Serialize finite doubles with enough
-precision to round-trip the decoded value; normal two-decimal terminal formatting
-must not become the machine interface. Preserve the row's incomplete flag as
-`true`, `false`, or `null` for absent; do not mark incomplete data fully reliable.
+Normal `kpm_report` pushes require `binding_status: matched` under the existing
+current-context/fresh-only policy. `no_value` measurements do not invalidate an
+otherwise valid binding. Startup unresolved, ambiguous, stale or cached bindings
+must not appear as currently matched application data. Keep the connection
+registered; send an explicit `binding_state`/data-state change with a reason,
+and wait for a new currently matched DU report. Do not fabricate zeros, replay
+older rows after matching recovers or retroactively relabel the startup rows.
 
-Use measurement names to map values. For each active named profile, reject
-ambiguous mappings, duplicate names, name/value length mismatch, or unsupported
-measurement-ID-only mappings with a diagnostic. Never guess column order when
-the indication has no usable mapping. Missing entries in an otherwise valid
-named row remain explicit `not_reported` entries.
+Preserve existing identity release/reuse, Core failure, source TTL and ingress-loss
+invalidation rules. Changes to Core/CU state and expiry must update app data state
+even if a DU becomes silent. A valid registration does not guarantee current data.
+Exact radio-key subscriptions remain registered but waiting when reconnection
+changes their UE context; the app must explicitly register a new filter. All-link
+subscribers receive a new context only after the existing matcher verifies it.
 
-## Local Application Protocol Version 1
+Keep IEEE-754 precision for finite REALs, signed PHR, valid zero, unsigned INTEGER
+limits, noValue, absence and incomplete flags. Do not silently drop unsupported
+names or fabricate a valid measurement to maintain the 27-key declaration. Freeze
+explicit absence/error encoding in Step 2 and exercise it through the actual
+publisher and dummy. The raw source row and its types must remain independently
+comparable with the delivered representation.
 
-Use TCP on **`127.0.0.1:8765`**, separate from FlexRIC E2/E42 ports. Each wire
-message is one UTF-8 JSON object followed by a newline. Pretty-printed examples
-below represent single-line frames on the connection. Treat TCP as a byte stream:
-handle split lines, several lines in one read, and partial writes.
+## Application protocol and lifecycle
 
-One TCP connection owns one registration. The app initiates the connection and
-the xApp pushes on that same connection. No callback port, polling, database,
-HTTP server, or external message broker is needed. This version is restricted
-to the same host; cross-host delivery is a future interface deployment task.
+Retain loopback TCP `127.0.0.1:8765` and UTF-8 JSON Lines, with full split/coalesced
+read and partial-write handling. The expanded envelope is **protocol version 2**;
+the earlier version-1 base5 implementation remains a historical prototype, not an
+implicit compatibility promise for the new binding schema. Reject unsupported
+version/profile combinations explicitly.
 
-Use JSON strings for unsigned IDs, sequence counters, and epoch-microsecond
-timestamps to preserve 64-bit values across clients. Numeric ID strings must be
-canonical unsigned decimal; MCC/MNC retain their specified leading zeros.
-Protocol version, bit length, row index, and metric numeric values remain JSON
-numbers. The examples use synthetic identities and values.
+One connection owns one registration. App/request IDs remain 1–64 ASCII characters
+from `[A-Za-z0-9_.-]`. Use canonical unsigned decimal strings for IDs, sequence
+counters and epoch/monotonic microsecond timestamps; preserve MCC/MNC leading zeros.
+Metric numeric values, protocol version, bit length and sample index remain JSON
+numbers. Any conversion of the existing mapper's numeric sequence into a wire
+string is explicit and tested.
 
-### Register and Receive Status
+An all-currently-matched-links registration is planned as:
 
-An app subscribing to every DU/UE sends:
+```json
+{"version":2,"type":"register","request_id":"reg-1","app_id":"dummy-all","expected_profile":"du27_bound_v1","filter":{"mode":"all_matched_links"}}
+```
+
+An exact filter uses `mode: links` with 1–32 complete node/UE keys. Keep the
+previous full-key shape; optional session constraints, if exposed, are additional
+exact matches against the same report snapshot. Unsupported filter forms are
+rejected rather than guessed. Admission is allowed before matching KPM exists.
+
+A successful reply must include `registered`, the request/app/subscription IDs,
+a fresh broker instance ID, declared profile and 27-name set, actual source kind,
+DU period 100 ms, CU/Core periods 1000 ms, filter, current data state and
+`best_effort_no_replay` delivery semantics. At registry commit capture the report
+**acquisition-entry** cutoff, not just the most recently generated mapper row.
+Use the shared monotonic clock to compare callback entry with registry commit;
+retain source-instance/indication sequence and sample identity for reconciliation.
+If a sequence-based barrier is used instead, it needs a real collector-entry
+snapshot, not a counter assigned only after pipe reading or matching.
+A callback received before registration but still awaiting association/processing
+must not leak into the new subscription afterward. Queue success before data.
+
+A pushed envelope has this shape; `report` is the actual complete bound record,
+not a string containing TXT:
 
 ```json
 {
-  "version": 1,
-  "type": "register",
-  "request_id": "reg-001",
-  "app_id": "dummy-all",
-  "filter": {"mode": "all_du_ues"}
-}
-```
-
-An app requesting specific associations supplies `mode: links` and a nonempty
-list of exact node/UE keys. Each key has this shape:
-
-```json
-{
-  "node": {
-    "mcc": "001", "mnc": "01", "node_type": "ngran_gNB_DU",
-    "gnb_id": "411", "gnb_id_bits": 22, "du_id": "1"
-  },
-  "ue": {"id_type": "gnb_du", "gnb_cu_ue_f1ap_id": "1007"}
-}
-```
-
-Limit a registration to 32 exact links. Match the complete key, with no guessed
-DU, default UE, or substring matching. Accept registration for a currently idle
-or absent UE; its state is waiting for matching KPM, not registration failure.
-
-On success, return:
-
-```json
-{
-  "version": 1,
-  "type": "registration_status",
-  "request_id": "reg-001",
-  "status": "registered",
-  "app_id": "dummy-all",
+  "version": 2,
+  "type": "kpm_report",
   "subscription_id": "sub-1",
   "broker_instance_id": "example-instance",
-  "data_source": "fixture",
-  "metric_profile": "base5",
-  "metric_names": ["DRB.RlcSduDelayDl", "DRB.UEThpDl", "DRB.UEThpUl", "RRU.PrbTotDl", "RRU.PrbTotUl"],
-  "data_state": "waiting_for_kpm",
-  "report_period_ms": 1000,
-  "delivery": "best_effort_no_replay"
-}
-```
-
-Registration status declares the active profile and exact metric-name set.
-The dummy checks both before accepting pushes. Registration success confirms
-registry admission, not source readiness or receipt of
-a measurement. At registry commit, capture the current atomic `report_seq` as a
-cutoff. Deliver only rows whose callback started after this cutoff; an old callback
-still being normalized must not become a new post-registration report. Queue
-the success frame before any KPM frame for that connection.
-
-Reject invalid requests with `registration_status`, `status: rejected`, the
-request ID when safely available, and a stable `error_code`. Define at least
-`unsupported_version`, `invalid_request`, `duplicate_app_id`, `already_registered`,
-`too_many_clients`, and `frame_too_large`. Malformed frames without a usable request
-ID receive an `error` frame when possible, followed by connection closure.
-Keep app/request identifiers to 1–64 ASCII characters from `[A-Za-z0-9_.-]`.
-
-### Push a KPM Row
-
-```json
-{
-  "version": 1,
-  "type": "kpm",
-  "subscription_id": "sub-1",
-  "broker_instance_id": "example-instance",
-  "data_source": "fixture",
-  "metric_profile": "base5",
+  "data_source": "e2",
+  "metric_profile": "du27_bound_v1",
   "report_seq": "42",
   "delivery_seq": "1",
-  "sample_idx": 0,
-  "header_time_us": "1791745200000000",
-  "received_at_unix_us": "1791745200000500",
-  "published_at_unix_us": "1791745200000600",
-  "node": {
-    "mcc": "001", "mnc": "01", "node_type": "ngran_gNB_DU",
-    "gnb_id": "411", "gnb_id_bits": 22, "du_id": "1"
-  },
-  "ue": {"id_type": "gnb_du", "gnb_cu_ue_f1ap_id": "1007", "ran_ue_id": null},
-  "incomplete": null,
-  "ingress_dropped_total": "0",
-  "metrics": {
-    "DRB.RlcSduDelayDl": {"kpm_type": "real", "status": "ok", "value": 13.8, "unit": "0.1 ms"},
-    "DRB.UEThpDl": {"kpm_type": "real", "status": "ok", "value": 1280.0, "unit": "kbit/s"},
-    "DRB.UEThpUl": {"kpm_type": "real", "status": "ok", "value": 5120.0, "unit": "kbit/s"},
-    "RRU.PrbTotDl": {"kpm_type": "integer", "status": "ok", "value": 12, "unit": "%"},
-    "RRU.PrbTotUl": {"kpm_type": "integer", "status": "ok", "value": 86, "unit": "%"}
-  }
+  "link_id": "canonical-full-radio-key",
+  "binding_revision": "1",
+  "report_ready_at_mono_us": "1000000",
+  "published_at_mono_us": "1000100",
+  "report": {}
 }
 ```
 
-Stage B keeps this version-1 envelope and sets `metric_profile: rf7`. The success
-reply lists seven names, and each KPM frame adds the two RF entries from the
-measurement table. Unknown profiles are rejected; five-metric operation remains
-supported after the extension. Implement RF-specific behavior in Step 9.
+The empty object above marks the complete record defined in the bound-report
+contract, which includes `node`, `row.ue`, `row.metrics`, `binding`, `ue_ipv4` and
+the existing provenance/timing fields. It is not a valid empty report payload.
+Store actual full examples and their schema alongside implementation in Step 2.
+Each eligible report is delivered once per active registration; every matching
+app gets its own delivery sequence, starting at 1. There is no replay on reconnect.
+`report_seq` identifies the newly generated bound report within this broker
+instance. Keep original mapper instance/sequence and source indication/row IDs
+separately; several UE rows may come from one source callback.
 
-Assign a fresh broker instance ID on every process start. `report_seq` identifies
-a callback within that instance; `delivery_seq` starts at 1 for each registration
-and increases for each KPM frame queued to it. Multiple UE rows can share a report
-sequence. Filtered report-sequence gaps do not by themselves prove loss.
+Lifecycle states are `awaiting_registration → registered → draining → closed`.
+Data states are separate: `waiting_for_match`, `receiving`, `source_unavailable`
+and `binding_invalid`. Define and test transitions and last-report ages. Support:
 
-`header_time_us` is the repaired KPM header time. `received_at_unix_us` is captured
-at callback entry; `published_at_unix_us` records serialization/enqueue time,
-not successful client receipt. `sample_idx` is the original row index. These
-fields do not establish PHY sample age or pure transport latency. Use monotonic
-time for internal deadlines. Human-readable save/log timestamps use New York
-24-hour display, for example `14 : 15: 11 Oct 11, 2026 EDT`.
+- `ping`/`pong` every 10 seconds, with current data state and last matching report
+  age; expire a registered connection after 30 seconds without a valid request.
+- `unregister`: stop adding data, drain intact queued frames, send a final
+  `unregistered` acknowledgment and close. No report may follow that acknowledgment.
+- EOF/reset, registration/incomplete-frame timeout, overflow and write failure:
+  remove the registry entry and its buffers; preserve other apps and acquisition.
+- Reconnect: fresh registration/subscription ID, same app ID allowed after cleanup;
+  active duplicates, unsupported profiles and malformed requests get stable errors.
+- Shutdown: stop admission, stop new report handoff, complete existing collector
+  subscription cleanup, and bound client drain. Preserve an already-running
+  unregister deadline rather than extending it during shutdown.
 
-### Unregister and Check Liveness
+`binding_state` notifications are state changes, not KPM reports and do not count
+as fresh measurement delivery. Keep ordering with report revisions and queued
+frames. Applications receive observation times/validity metadata so they can
+reject aged measurements rather than treating every TCP delivery as current.
 
-Support `unregister` with version, request ID, and subscription ID. At acceptance,
-stop adding matching frames, drain already queued frames, then send
-`unregistration_status` with `status: unregistered` and close the connection.
-No KPM may follow that acknowledgment. Never discard the remainder of a partially
-sent JSON frame and splice an acknowledgment into it.
+## Bounds and source-driven publishing
 
-Support `ping` and `pong` with a request ID on the same connection. The dummy sends
-a ping every 10 seconds; close a registered connection after 30 seconds without
-any complete valid client request. Replies include current data state and time
-since the last matching KPM, or null when none has arrived. A quiet UE must not
-produce fabricated zero-valued KPM. On EOF, reset, timeout, or client overflow,
-remove the registry entry and free its buffers. Reconnect requires a new
-registration; no history is replayed. An active duplicate `app_id` is rejected.
-
-### Bounds and Backpressure
-
-| Resource | Initial bound and behavior |
+| Resource | Initial bound/policy |
 | --- | --- |
-| Client connections | 16; reject additional admission |
-| Incoming JSON line | 8 KiB; reject/close oversized or invalid frames |
-| Initial registration and incomplete request | 5 seconds using monotonic deadlines |
-| Exact link filters per app | 32 |
-| Outbound JSON frame | 16 KiB; record serialization errors rather than truncating JSON |
-| Owned ingress queue | 256 rows and 4 MiB; drop a newly arriving row on overflow and increment a counter |
-| Per-client output queue | 64 frames and 1 MiB, including control frames |
-| Slow subscriber | Disconnect it on queue overflow or 5 seconds of pending writes without progress |
-| Unregister/shutdown drain | At most 2 seconds; close if draining cannot complete |
+| Application connections | 16, including registrations still pending |
+| Exact links per registration | 32 |
+| Incoming JSON line | 8 KiB |
+| Version-2 outgoing frame | 64 KiB including newline; measure actual bound report plus envelope before freezing |
+| Publisher ingress | 256 owned reports and 4 MiB accounted payload; reject new arrival on overflow and count it |
+| Per-app output | 64 frames and 1 MiB, including control frames; disconnect only the overflowing app |
+| Registration / incomplete request | 5 seconds each, monotonic deadlines |
+| Pending output without progress | 5 seconds; healthy clients continue |
+| Unregister / shutdown drain | At most 2 seconds, without splicing partially sent frames |
+| Dummy TXT handoff | Explicit item and byte bounds; record writer delay/failure; a full writer queue fails the run visibly |
+| Evidence capture | Sized for the run; all limits/truncation and queue drops visible in summary |
 
-Track admission rejects, active clients, malformed inputs, ingress drops,
-serialization errors, client overflows, and disconnect reasons. Put the cumulative
-ingress drop counter in later KPM frames and diagnostics. A full client queue
-affects only that client. Delivery is best effort: there is no durable replay,
-application acknowledgment for every KPM, or exactly-once guarantee.
+Do not add a timer to emit an old report every 100 ms. The timer in the publisher
+serves control deadlines and freshness only. New report events wake it promptly;
+coordinator polling intervals and socket scheduling must not introduce a hidden
+100 ms or 1-second batching delay. Flush complete frames promptly and inspect
+TCP_NODELAY for this TCP interface separately from the existing SCTP setting.
 
-## Step 1 Confirm Dependencies and Preserve the Baseline
+The existing 100 ms DU producer and granularity remain unchanged. CU/Core context
+refreshes at 1000 ms are reused according to the existing freshness rules; no
+extra Core request is issued per app or per DU report. Low-traffic noValue values
+are forwarded when the report has a valid current association. A stopped DU does
+not cause fake periodic pushes.
 
-- [ ] Record Falcon/FlexRIC revisions, local diffs, configuration hashes, compiler
-  versions, and the existing monitor/KPM plugin hashes.
-- [ ] Preserve the existing timestamp repair and five-metric reception baseline.
-  Record Plan 1's RF implementation separately when Stage B begins; do not make
-  it a Stage A prerequisite.
-- [ ] Record separate Stage A fixture/live and Stage B fixture/live results.
-  Preserve the original PRB mapping limitation explicitly.
-- [ ] Create an implementation branch and unique evidence directory outside the
-  source/build trees. Keep the original monitor available for comparison.
+Report acquisition drops, matcher suppressions by reason, ingress/output drops,
+active registrations, queue peak/age, serialization errors and per-client closure
+reasons. Never infer transport loss from nominal 10 Hz counts alone. Count only
+reports actually generated, matched, admitted after the cutoff and eligible for
+that client's filter. Separate expected binding suppression from lost delivery.
 
-Use Bash variables throughout this task:
+## Dummy application and TXT ownership
 
-```bash
-set -euo pipefail
-FALCON_REPO=/home/nyu/Desktop/Falcon_repo/Falcon
-FLEXRIC_SOURCE=/home/nyu/flexric
-FLEXRIC_BUILD="$FLEXRIC_SOURCE/build-ocudu"
-KPM_APP_EVIDENCE_ROOT=/home/nyu/verification/kpm-app-subscription
-mkdir -p "$KPM_APP_EVIDENCE_ROOT"
-KPM_APP_EVIDENCE=$(mktemp -d "$KPM_APP_EVIDENCE_ROOT/run-XXXXXXXX")
-mkdir -p "$KPM_APP_EVIDENCE"/{baseline,base5/{tests,dummy,live},rf7/{tests,dummy,live}}
+The new dummy uses only the application socket; it does not read the collector,
+Core, old TXT output or shared xApp files. Planned CLI support is:
 
-git -C "$FALCON_REPO" rev-parse HEAD > "$KPM_APP_EVIDENCE/baseline/falcon-head.txt"
-git -C "$FLEXRIC_SOURCE" rev-parse HEAD > "$KPM_APP_EVIDENCE/baseline/flexric-head.txt"
-git -C "$FLEXRIC_SOURCE" diff --binary > "$KPM_APP_EVIDENCE/baseline/flexric-local.patch"
-git -C "$FLEXRIC_SOURCE" status --short > "$KPM_APP_EVIDENCE/baseline/flexric-status.txt"
-sha256sum "$FLEXRIC_BUILD/examples/xApp/c/monitor/xapp_oran_moni" \
-  /usr/local/lib/flexric/libkpm_sm.so \
-  /usr/local/etc/flexric/xapp_oran_sm.conf \
-  > "$KPM_APP_EVIDENCE/baseline/artifact-sha256.txt"
-```
+`--app-id`, `--host`, `--port`, `--all-links`/`--links-file`,
+`--expected-profile du27_bound_v1`, `--reports`/`--duration`, `--timeout`,
+`--text-output`, plus optional structured receipt/timing evidence.
 
-Retain the timestamp helper if it is still untracked, as instructed in Plan 1.
-For every verification command, save the exact invocation, output, and exit
-status; use a logging wrapper that retains the executable's exit code when piping.
+Use the existing `text_report.format_record()` on the received report snapshot
+where compatible, preserving link, full UE/session/IP binding and all 27 values.
+Add subscription/report/delivery IDs and dummy receipt time to each TXT record.
+TXT formatting is a view of received machine data, not an input to the protocol.
+No hard-coded five-name check may survive in the expanded dummy path.
 
-**Exit criteria:** the approved input revisions and recoverable local changes
-are recorded; Stage A can run with the existing five metrics independently of RF work.
+Timestamp receipt at the point the full frame is available, before formatting
+or writing. Maintain a bounded asynchronous TXT writer, track complete written
+records and flush/drain on normal exit. Record socket-receipt, validation and
+TXT-write timing separately. Missing/unwritable output, overflow, write errors,
+partial final records or missing unregister acknowledgment must produce a
+nonzero result. A receive count alone cannot certify successful TXT persistence.
 
-## Step 2 Freeze the Protocol and Add Build Targets
+The example workflow is: start xApp subscription service, run all-links and
+exact-link dummies together, inspect their TXT and timing summaries, unregister,
+then stop the xApp normally. Consumer reconnects must be demonstrated without
+restarting the xApp or changing its E2 subscription count.
 
-- [ ] Write the version-1 protocol specification and JSON examples from this plan.
-  Define field types, limits, state transitions, error codes, and ordering rules.
-- [ ] Add the dedicated xApp and test targets in the monitor CMake directory.
-  Keep E2AP v3, KPM v3.00, GCC, and the current `NONE_XAPP` build settings.
-  Define a `FALCON_REPO_ROOT` CMake cache path, validate it, and use it to locate
-  the Falcon C regression/fixture sources. Do not assume Falcon resides beneath
-  the FlexRIC source tree.
-- [ ] Use `json-c` for JSON parsing/serialization and target-specific linking.
-  This host currently has no `libjson-c-dev` and `pkg-config` cannot find it.
-  Add the documented build dependency; keep it scoped to the new targets.
-  Use bounded parsing and a schema validator rather than a handwritten JSON parser.
-- [ ] Keep fixture mode separate from live mode in startup configuration while
-  exercising the same production normalizer, registry, and socket publisher.
-- [ ] Declare the active profile in status/push frames. Implement `base5` first;
-  keep RF activation out of Stage A. Add the `rf7` implementation only in Step 9.
-- [ ] Create `configs/flexric/xapp_du_kpm_base5.conf` from the installed config's
-  DU block: exactly five names, Style 4, 1000 ms, and database OFF for `NONE_XAPP`.
-  Preserve the installed config and working RIC/DU configuration.
+## Stability and timeliness acceptance
 
-Proposed implementation files, to be created during execution:
+The following are **initial planned acceptance budgets**, not measured results.
+Freeze them with workload/configuration before each run; retain outliers and
+investigate a miss rather than silently relaxing the limits.
 
-| Location | Responsibility |
+Use per-stage monotonic microsecond timestamps with a documented shared clock
+origin on this same-host deployment:
+
+| Event | Measurement point |
 | --- | --- |
-| FlexRIC `examples/xApp/c/monitor/xapp_kpm_broker.c` | Main, owned configuration, SDK/fixture startup, readiness, stop handling |
-| FlexRIC `examples/xApp/c/monitor/kpm_broker/kpm_source.[ch]` | Five-metric action builders first; RF extension in Stage B; static DU handles |
-| FlexRIC `.../kpm_broker/kpm_snapshot.[ch]` | Format 3 validation, full identities, typed owned snapshots, ingress queue |
-| FlexRIC `.../kpm_broker/kpm_protocol.[ch]` | Request validation and versioned JSON encoding |
-| FlexRIC `.../kpm_broker/kpm_server.[ch]` | Listener, registry, filters, partial I/O, per-client queues, timers |
-| FlexRIC `.../kpm_broker/kpm_fixture.[ch]` | Offline APER fixture loading and callback injection |
-| Falcon `configs/flexric/kpm_app_broker.json` | Loopback bind, port, protocol limits, timeout defaults |
-| Falcon `configs/flexric/xapp_du_kpm_base5.conf` | DU-only subscription for the existing five metrics |
-| Falcon `scripts/flexric/dummy_kpm_client.py` | Independent client using Python standard-library sockets/JSON |
-| Falcon `scripts/flexric/test_kpm_app_subscription.py` | Subprocess/socket integration runner and evidence summary |
-| Falcon `tests/flexric_kpm_broker_test.c` | Normalizer, ownership, ordering, filter, and queue regressions |
-| Falcon `tests/flexric_kpm_broker_fixture.c` | Generate five-metric APER fixtures first; extend to seven in Stage B |
-| Falcon `docs/kpm_app_interface.md` | Final implemented protocol and operator examples |
-| Falcon `patches/flexric/kpm-app-subscription-base5.patch` | Reviewed Stage A delta against the existing timestamp-repaired source |
-| Falcon `patches/flexric/kpm-app-subscription-rf7.patch` | Separate Stage B extension after accepted Stage A and Plan 1 |
+| `t_callback` | Entry of the existing collector's DU indication callback |
+| `t_ready` | Matcher has produced a complete currently matched report snapshot |
+| `t_publish` | Matching subscriber frame is serialized/enqueued for transmission |
+| `t_receive` | Dummy has a complete frame, before TXT formatting or disk I/O |
+| `t_written` | Dummy has successfully written the corresponding TXT record |
 
-Use `find_package(PkgConfig)` and `pkg_check_modules(JSONC REQUIRED IMPORTED_TARGET
-json-c)` for the new targets, linking `PkgConfig::JSONC`. Provide a clear configure
-error when the dependency is absent. Keep the existing monitor usable without
-enabling the new broker targets, and document the feature switch.
-For offline targets linking both the static KPM codec and SDK, preserve the
-existing harness's KPM ASN runtime selection before the E2AP runtime; same-named
-ASN functions use incompatible descriptors. Keep normal dynamic plugin loading
-for the live xApp target.
+Add monotonic callback/ready/publish fields where the existing path has only
+wall-clock values. Same-host Python/C timestamps must use the same specified
+clock; do not subtract unrelated per-process relative origins. Keep Unix/header
+times as provenance. The KPM header-to-client age does not prove PHY sample age
+or pure network latency; CU/Core source age is a separate reported quantity.
 
-**Exit criteria:** the protocol is reviewable, build targets and dependencies
-are defined, and no existing monitor/SDK behavior changes implicitly.
-
-## Step 3 Implement the Application Registry and Registration Barrier
-
-- [ ] Implement connection states `awaiting_registration`, `registered`,
-  `closing`, and `closed`. The broker worker owns all state changes.
-- [ ] Store app ID, subscription ID, full link filter, report-sequence cutoff,
-  registration time, last valid client activity, output queue, and delivery counter.
-- [ ] Validate the complete registration before admitting it. Reject active duplicate
-  app IDs, repeated registration on the same connection, unsupported versions,
-  invalid filters, and capacity overflow without changing existing entries.
-- [ ] Commit the cutoff and queue the successful status before evaluating KPM
-  delivery for that connection. Rows from earlier callbacks must not leak through
-  even when they remain in the ingress queue.
-- [ ] Match exact node/UE identities; never filter on UE F1AP ID alone. For each
-  eligible row, deliver to every matching registered connection.
-- [ ] Implement unregister, EOF/reset cleanup, ping/pong, timeouts, and fresh
-  reconnect registration. Registry entries are in memory and expire on process exit.
-
-**Exit criteria:** success precedes data, pre-registration backlog is excluded,
-filters are correct, and disconnected/unregistered entries cannot receive new rows.
-
-## Step 4 Implement Bounded Nonblocking Publishing and Shutdown
-
-- [ ] Use nonblocking sockets with `poll` or equivalent and a wakeup descriptor
-  for callback-to-worker notification. Accumulate bounded incoming lines and
-  maintain a per-frame write offset for partial sends.
-- [ ] Serialize a normalized row once when practical; attach each connection's
-  subscription/delivery fields without sharing mutable buffers between clients.
-  Start with the five-entry snapshot contract and a local injection adapter;
-  integrate the actual KPM callback after broker and dummy implementation.
-- [ ] Enforce every resource/time bound in the protocol. Handle `EAGAIN`, interrupted
-  calls, EOF, resets, and broken pipes as connection events, not process termination.
-- [ ] Remove only the slow/overflowing subscriber; healthy subscribers and the
-  KPM callback continue. Free snapshots when no longer queued/referenced.
-- [ ] Make startup print a readiness line only after the configured listener is
-  bound. Live startup follows the RIC/DU prerequisite; fixture startup skips SDK init.
-- [ ] On SIGINT/SIGTERM, the handler sets a stop flag. Main disables new callback
-  enqueueing, stops admission, removes successful E2 subscriptions serially, and
-  stops SDK dispatch while broker context is still valid. Then finish bounded
-  client drains, join the worker, close descriptors, and free storage.
-  Reinstall the broker's flag-only handlers after `init_xapp_api()`, which
-  installs its own abrupt SIGINT handler. Fixture mode installs broker handlers
-  directly because it does not initialize the SDK.
-
-**Exit criteria:** no client network operation blocks the SDK callback, queue
-memory is bounded, partial frames remain valid, and normal shutdown has no
-callbacks accessing freed broker state.
-
-## Step 5 Implement the Dummy Application
-
-- [ ] Connect to `127.0.0.1:8765`, send registration, and require a matching
-  `registration_status` with `status: registered` before treating data as accepted.
-- [ ] Support `--all-links` and `--links-file`, `--app-id`, `--host`, `--port`,
-  `--reports`, `--timeout`, `--jsonl-output`, and `--expected-profile`.
-  Start with expected `base5`; profile selection belongs to the server.
-  Default to local host; no MPTCP APIs.
-- [ ] Maintain the 10-second ping schedule, parse split/coalesced frames, verify
-  protocol/instance/subscription fields, and count only KPM pushes toward `--reports`.
-- [ ] Check the advertised profile/metric names and print complete node/DU/UE
-  identity, original header time, and all five active values with units/states.
-  Print null states explicitly; never replace them with zero. Add seven-metric
-  expectations in Stage B while retaining five-metric support.
-- [ ] Save each received JSON frame when requested. Use full values for validation;
-  readable presentation may be compact without altering saved data.
-- [ ] After the requested report count, send unregister, verify its final status,
-  and exit 0. Reject status failures, malformed data, timeout, missing metrics,
-  unexpected closure, or a changed broker instance without reconnection with nonzero exit.
-- [ ] On Ctrl+C, attempt bounded unregister and close. Reconnect creates a fresh
-  registration; do not silently replay or reuse an expired subscription ID.
-
-**Exit criteria:** an independent Python program can demonstrate the complete
-register/status/push/print/unregister interface and report meaningful failures.
-
-## Step 6 Connect the Existing Five Metrics and Owned Normalization
-
-- [ ] Use the current timestamp-repaired monitor's Style 4 builders and decoder
-  handling with `xapp_du_kpm_base5.conf`. Request exactly the existing five names.
-  No Plan 1 RF implementation is required for this stage.
-- [ ] Subscribe once per full DU identity, store only successful handles, and
-  avoid indexing handles by an assumed dense node-array position.
-- [ ] Restrict collection to gNB-DU nodes with DU identity and baseline KPM
-  capabilities. Validate the five-name action/config before reporting readiness.
-- [ ] Implement a callback adapter that creates complete owned five-entry UE
-  rows, preserving raw finite values, noValue, missing entries, and incomplete flags.
-- [ ] Validate node/UE type, pointers, list bounds, measurement-name lengths,
-  duplicate identities/names, and row cardinality before reading them.
-- [ ] Reject malformed/ambiguous rows with counted diagnostics. Copy every string,
-  optional ID, and value before returning. Increment the atomic report sequence
-  at callback entry and enqueue without waiting for a client.
-- [ ] Add opt-in `--callback-evidence PATH` capture of the owned callback rows
-  before network serialization. A worker writes it; the callback never performs
-  file I/O. Bound capture to 1000 rows by default and report any trace/drop/limit
-  error. Key records by instance, profile, report sequence, node/DU/UE, and row.
-  Retain types/states and numeric integers; capture finite REAL values as IEEE-754
-  bit strings using an independent trace representation so two-decimal formatting
-  or the network serializer cannot hide a value change.
-- [ ] Parse broker-owned flags before passing remaining arguments to `init_fr_args`;
-  do not assume FlexRIC understands `--source`, `--metric-profile`, or broker flags.
-
-Inspect `src/xApp/msg_dispatcher_xapp.c`, `src/xApp/e42_xapp_api.c`, and
-`src/xApp/e42_xapp.c` for SDK lifetime/concurrency rules. Obtain full node/UE
-identity from existing callback data; do not require applying the RF monitor
-patch simply to obtain identity, safe missing-value handling, or normal shutdown.
-
-**Exit criteria:** the production callback feeds the implemented broker/dummy
-path with owned five-entry rows; source and output configuration both select `base5`.
-
-## Step 7 Run Five Metric Fixture and Socket Tests
-
-- [ ] Create fresh APER header/message fixtures using the actual FlexRIC KPM
-  encoder and decoder. Feed the decoded objects and recorded node identities
-  into the production callback, ingress queue, registry, and server.
-- [ ] Include DU1/UE1007 and DU2/UE1007 with distinct values, plus DU1/UE2091.
-  This proves repeated UE numbers across DUs and multiple UEs within one DU.
-- [ ] Include reordered five-metric names, multiple rows, fractional REAL values,
-  measured zero, noValue, one absent active metric, and incomplete rows.
-- [ ] Include malformed mappings, unsupported UE/record types, non-finite values,
-  an unexpected profile, and a missing DU ID. Require diagnostics without crashes
-  or fabricated valid measurements.
-- [ ] Mark every fixture-driven status/KPM frame `data_source: fixture`.
-  Generate a fresh five-metric fixture; do not require RF fixtures or getters.
-  Assert exactly five keys and no RF subscription or output entries.
-- [ ] Free and overwrite decoded buffers immediately after the callback in a
-  regression to prove the queued data is independently owned.
-
-### Socket Integration and Failure Cases
-
-Implement a Python runner that starts the actual `xapp_kpm_broker` in fixture
-mode and the actual dummy client as subprocesses. Use real TCP sockets and the
-production code; a separate Python mock server does not satisfy acceptance.
-
-| Required test | Observable result |
+| Acceptance item | Initial workload and pass condition |
 | --- | --- |
-| Broker first, app later | Listener ready; success status precedes first post-cutoff KPM |
-| Two registered apps | Each receives the expected matching rows independently |
-| All-links versus exact-links | Same F1AP ID on another DU never leaks into the exact filter |
-| Reordered/multi-row five metrics | Correct names, identities, row indices, types, units, and values |
-| Profile declaration | `base5` status and pushes contain the exact five names; no RF placeholders |
-| Fractional/zero/noValue/absent/incomplete | Preserved states; no JSON NaN, rounding loss, or fake zeros |
-| Invalid/oversized/version/duplicate requests | Explicit rejection; existing clients keep working |
-| Split/coalesced input and partial output | Valid newline framing, correct parsing and write offsets |
-| Unregister/EOF/reconnect | Cleanup, final acknowledgment barrier, fresh subscription and no replay |
-| Queue saturation and non-reading client | Slow client removed; fast client continues; callback has no socket wait |
-| Ingress overflow | Counted drop, bounded memory, later frames expose cumulative count |
-| Quiet/stopped fixture source | No invented KPM; ping/pong and data-state responses remain meaningful |
-| SIGINT/SIGTERM and process restart | Normal cleanup; new instance ID and empty registry after restart |
-| Full registry and incomplete-frame timeout | Bounded admission and timely removal |
+| Steady connection | At least 30 minutes, two DUs with one UE each, full 27-name profile, all-links plus exact-link dummy; no unexpected disconnect, crash or registry leak |
+| Full delivery | Each eligible post-cutoff matched report received once by every matching healthy app, in per-link source order; zero unexplained duplicates/missing reports and zero cross-link leakage |
+| Typed/binding preservation | Exact source/received/TXT agreement for full node/UE/session/IP identity, 27 types/states/units and numeric values; finite REAL comparison uses bit-preserving evidence |
+| Added push delay | `t_receive - t_ready`: p95 ≤ 10 ms, p99 ≤ 25 ms, maximum ≤ 100 ms for healthy same-host clients |
+| Callback through application | Record `t_ready - t_callback`, `t_publish - t_ready` and `t_receive - t_callback` separately; initial healthy-client p99 callback-to-receipt budget ≤ 100 ms |
+| Cadence | During continuously generated/matched 100 ms source rows, per-link receipt interval p99 ≤ 150 ms, no unexplained gap > 200 ms; pair every gap with source/mapper/queue evidence |
+| TXT completion | Every received report accepted for persistence has one complete TXT record; report writer queue age and `t_written - t_receive`; zero silent writer loss |
+| Resource behavior | Bounded queues and stable RSS trend, zero healthy-client queue drops in steady state; record CPU, actual frame sizes, queue peak and age |
+| Lifecycle | Explicit unregister plus EOF/reset/timeout cleanup; at least 20 app reconnect cycles, no replay, duplicate active app or extra E2 subscriptions |
+| Slow consumer | Non-reading/slow client or slow TXT writer causes a counted bounded failure for that consumer; healthy app continues with its timing budget and exact report set |
+| Identity lifecycle | Startup wait, CU/Core expiry/failure, idle/resume and current IP/context changes preserve matching rules; invalid/cached rows never masquerade as current data |
 
-Use deterministic synchronization and deadlines instead of fixed sleeps for
-ordering tests. Force partial writes/queue overflow with configurable test bounds
-or a tested I/O adapter; localhost TCP buffers alone may hide these cases.
-Use AddressSanitizer/UndefinedBehaviorSanitizer for broker-owned memory paths and
-a focused concurrency check for queue/context shutdown. Keep sanitizer builds
-separate from the deployed FlexRIC build.
+For two DUs and one UE each, 30 minutes at nominal 100 ms can yield about 36,000
+source UE rows. With two all-link clients that is about 72,000 receipt records;
+actual counts depend on the generated/matched rows and filters. Size evidence for
+all stages and statuses rather than using the old 1000-row capture default.
 
-Require an explicit manifest of mandatory case names, test-runner exit 0, and
-zero skipped required cases. Retain machine-readable per-case outcomes, commands,
-logs, fixture hashes, and actual dummy JSONL receipts. A printed `PASS` without
-these cases running does not close the gate.
+Run a short functional pass before the long stability run, then test no-client,
+normal-client, multi-client and slow-client conditions at the same 100 ms source
+settings. Replay/fixtures establish deterministic correctness and publisher
+performance; a real 27-metric E2 → matcher → app → TXT run is required for live
+acceptance. The historical six-minute acquisition run establishes the input
+baseline, not the new subscription timing or 30-minute delivery stability.
 
-Create the planned files/targets and use these Stage A build/test commands.
-The feature switch and profile flag below are part of the implementation to add:
+## Implementation and verification steps
 
-```bash
-pkg-config --modversion json-c
-cmake -S "$FLEXRIC_SOURCE" -B "$FLEXRIC_BUILD" \
-  -DFALCON_KPM_BROKER=ON -DFALCON_REPO_ROOT="$FALCON_REPO"
-cmake --build "$FLEXRIC_BUILD" \
-  --target xapp_kpm_broker falcon_kpm_broker_test falcon_kpm_broker_fixture -j 8
+### Step 1 Freeze the existing 27-metric matched-report baseline
 
-python3 "$FALCON_REPO/scripts/flexric/test_kpm_app_subscription.py" \
-  --broker "$FLEXRIC_BUILD/examples/xApp/c/monitor/xapp_kpm_broker" \
-  --unit-test "$FLEXRIC_BUILD/examples/xApp/c/monitor/falcon_kpm_broker_test" \
-  --fixture-generator "$FLEXRIC_BUILD/examples/xApp/c/monitor/falcon_kpm_broker_fixture" \
-  --dummy "$FALCON_REPO/scripts/flexric/dummy_kpm_client.py" \
-  --metric-profile base5 --output-dir "$KPM_APP_EVIDENCE/base5/tests"
-```
+- [x] Verify the 27-name registry, E2 periods, generation/output boundary and
+  existing full association fields against source/configuration.
+- [x] Recheck archived raw rows: 7,158 complete 27-name/100 ms rows and 7,138
+  currently matched records; retain the recheck and historical plan snapshot.
+- [x] Capture exact source/binary/configuration identities for the implementation
+  run; freeze the bound-report fixtures, startup states and timing/queue workload.
 
-**Exit criteria:** every mandatory five-metric fixture/socket case executes and
-passes, including ownership, multi-link filtering, and bounded slow-client isolation.
-This fixture gate alone does not permit the RF extension.
+Exit: a reproducible 27-metric matched-report input exists without starting a new
+five/seven-metric acquisition project.
 
-## Step 8 Demonstrate and Accept Live Five Metric Delivery
+### Step 2 Freeze the bound-report schema and registry protocol
 
-Complete Step 7, then demonstrate broker/dummy registration and output with
-its retained five-metric fixture set before connecting the same publisher to E2.
+- [x] Publish complete version-2 register/status/report/binding-state/ping/
+  unregister examples, including exact link filters and 27 raw names.
+- [x] Freeze `link_id`, snapshot binding revision, source-entry cutoff, sequence
+  semantics, current-binding eligibility, absence/type encoding and clock origins.
+- [x] Measure full envelope sizes and freeze byte/count/deadline limits; reject
+  unsupported versions/profiles/filters with stable errors.
 
-The runner must generate/persist fixtures before returning. In one Spark terminal,
-launch the broker using its retained complete fixture set:
+Exit: a client can register and interpret an actual full bound report without
+reading TXT or guessing an identity.
 
-```bash
-"$FLEXRIC_BUILD/examples/xApp/c/monitor/xapp_kpm_broker" \
-  --source fixture \
-  --metric-profile base5 \
-  --broker-config "$FALCON_REPO/configs/flexric/kpm_app_broker.json" \
-  --fixture-dir "$KPM_APP_EVIDENCE/base5/tests/fixtures" \
-  --fixture-period-ms 1000 --fixture-repeat
-```
+### Step 3 Integrate the listener and publisher with the current xApp
 
-In another Spark terminal, set the same evidence path/variables and run:
+- [x] Add a bounded publisher module at the existing `Mapper.ingest()` output;
+  preserve the original acquisition/matching logic and direct 100 ms source rate.
+- [x] Add the protocol/registry worker and explicit subscription-mode CLI/config.
+  Start the listener independently of source readiness and support continuous
+  service operation until SIGINT/SIGTERM, rather than the current finite-only run.
+- [x] Route new matched reports to registered matching apps; propagate binding/
+  source state separately. Keep routine TXT and per-report stdout writes off the
+  subscription path; diagnostic file capture remains explicitly selectable.
+- [x] Reuse transport concepts/tests from the base5 prototype where useful;
+  adapt all five-name assumptions and do not require its standalone E2 source.
+- [x] Verify bounded ownership, ordering, partial I/O, backpressure and publisher
+  shutdown offline; implement collector cleanup without app-driven E2 changes.
+  Live SDK/E2 deletion verification remains in Step 6.
 
-```bash
-python3 "$FALCON_REPO/scripts/flexric/dummy_kpm_client.py" \
-  --host 127.0.0.1 --port 8765 --app-id dummy-all --all-links \
-  --expected-profile base5 \
-  --reports 30 --timeout 60 \
-  --jsonl-output "$KPM_APP_EVIDENCE/base5/dummy/all-links.jsonl"
-```
+Exit: the actual existing 27-metric association pipeline drives the app service,
+with no console/TXT parsing or timer-based replay.
 
-Run a second client concurrently with an exact-links file generated by the test
-runner for DU1/UE1007:
+### Step 4 Implement the independent dummy and TXT writer
 
-```bash
-python3 "$FALCON_REPO/scripts/flexric/dummy_kpm_client.py" \
-  --host 127.0.0.1 --port 8765 --app-id dummy-du1 \
-  --expected-profile base5 \
-  --links-file "$KPM_APP_EVIDENCE/base5/tests/fixtures/du1-ue1007-links.json" \
-  --reports 10 --timeout 60 \
-  --jsonl-output "$KPM_APP_EVIDENCE/base5/dummy/du1-only.jsonl"
-```
+- [x] Implement version-2 admission, full-key filtering, profile/binding/value
+  checks, ping/pong, unregister and reconnect semantics.
+- [x] Timestamp full-frame receipt before work; use bounded TXT writing and retain
+  complete link/UE/session/IP details, all 27 KPM values and receipt metadata.
+- [x] Emit structured timing/counter summaries and nonzero failures for protocol,
+  falsely current identity, socket/queue, output-file or lifecycle errors.
+  A legitimate waiting/invalid-binding state keeps registration alive and is
+  recorded separately rather than being misclassified as a TCP failure.
 
-Capture success replies, printed five-value rows, receipts, unregister responses,
-and process exit statuses. Compare the machine receipts to independent fixture
-expectations. Stop the broker normally and confirm the port/registry is released.
+Exit: the dummy receives machine pushes and produces its own complete TXT file.
 
-### Mandatory Live Five Metric Gate
+### Step 5 Verify the integrated 27-metric path offline
 
-Start the existing RIC/DU/UE path using the [runbook](../docs/runbooks/full_reproduction_runbook.md).
-Keep its radio configuration and scheduler/RLC metrics enabled. Stop the fixture
-broker and launch the same target with the five-metric subscription:
+- [x] Drive the actual service with retained decoded CU/DU/Core events through
+  the production mapper, plus fresh 27-metric codec fixtures where applicable.
+  Feed replay with acquisition-entry sequence and monotonic timing semantics.
+- [x] Run two actual dummies against the real publisher at a 100 ms replay pace;
+  test duplicate F1AP IDs across DUs, multiple UEs on a DU, all/exact filters,
+  current IP changes, stale/missing/ambiguous inputs and noValue/zero/incomplete data.
+- [x] Test success-before-data and a pre-registration callback that finishes later,
+  EOF/reconnect, duplicates, malformed/oversized/split/coalesced frames, partial
+  writes, queue saturation, no-client operation and quiet/stopped input.
+- [x] Force a slow socket and a slow/failing TXT writer deterministically. Preserve
+  healthy-client reports, protocol framing, bounded memory and explicit counters.
+- [x] Compare each generated eligible bound snapshot to independent dummy receipt
+  and TXT data; retain per-stage timing and all mandatory per-case outcomes.
+- [x] Re-run relevant existing identity/27-metric regressions and memory/concurrency
+  checks appropriate to changed modules. Label old base5-only results separately.
 
-```bash
-"$FLEXRIC_BUILD/examples/xApp/c/monitor/xapp_kpm_broker" \
-  --source e2 --metric-profile base5 \
-  -c "$FALCON_REPO/configs/flexric/xapp_du_kpm_base5.conf" \
-  --broker-config "$FALCON_REPO/configs/flexric/kpm_app_broker.json" \
-  --callback-evidence "$KPM_APP_EVIDENCE/base5/live/callback.jsonl"
-```
+Exit: full 27-metric bound-report/socket/TXT correctness and lifecycle pass offline
+with zero skipped required cases; the new live gate remains explicitly pending.
 
-Run the dummy in a second terminal during controlled traffic:
+### Step 6 Verify live functional delivery at the existing 100 ms setting
 
-```bash
-python3 "$FALCON_REPO/scripts/flexric/dummy_kpm_client.py" \
-  --host 127.0.0.1 --port 8765 --app-id dummy-live-base5 --all-links \
-  --expected-profile base5 --reports 30 --timeout 60 \
-  --jsonl-output "$KPM_APP_EVIDENCE/base5/live/dummy.jsonl"
-```
+- [ ] Start the installed RIC/CU/DUs/Core and verify the already-supported 27-metric
+  input and current bindings. Use fresh, recorded instances and configurations.
+- [ ] Start the subscription-mode xApp and all/exact dummy clients. Confirm each
+  registration, full bound pushes, dummy TXT completeness and normal unregister.
+- [ ] Collect at least 60 seconds of controlled activity, with at least 100
+  currently matched delivered reports per active link. Compare all captured
+  source/received/TXT records and distinguish startup/binding suppression.
+- [ ] Exercise app disconnect/reconnect without restarting the xApp or increasing
+  its E2 subscription count; verify source and collector cleanup on service exit.
 
-- [ ] Require successful registration, `data_source: e2`, `metric_profile: base5`,
-  and at least 30 real received rows with exactly the five baseline entries.
-- [ ] Generate traffic that exercises the baseline measurements. Observe at least
-  one valid numeric sample for each of the five over the acceptance window;
-  preserve expected noValue samples as well. A quiet/all-null run does not pass.
-- [ ] Compare saved callback values/types/states to independent dummy receipts,
-  keyed by broker instance, report sequence, node/DU/UE identity, and row index.
-  Compare finite REAL bit patterns after parsing the receipt. Require exact
-  preservation, no missing trace match/capture error, and successful unregister/normal exit.
-- [ ] Use actual reported UE IDs for live filters; fixture UE1007 is not a live
-  allocation. If two physical links are available, verify both; otherwise retain
-  mandatory fixture multi-link coverage and mark physical multi-link coverage pending.
-- [ ] Retain the accepted Stage A source/patch, binary hashes, baseline config,
-  socket-test results, live receipts, and reviewer sign-off under `base5/`.
+Exit: actual DU → existing matcher → registry/push → independent dummy TXT passes
+for both current links at 100 ms. No 1000/200 ms forwarding gate is imposed.
 
-**Exit criteria:** the broker and dummy pass the existing five-metric fixture,
-socket, demonstration, and live E2-to-dummy gates. Record Stage A as accepted
-only when all four pass. If live data is unavailable, leave Stage A pending and
-do not begin the RSRP/SNR implementation stage.
+### Step 7 Accept stability and timeliness
 
-## Step 9 Add RSRP and SNR After Stage A Acceptance
+- [ ] Freeze the stated same-host workload/budgets, then run the 30-minute stable
+  two-DU/two-client workload with complete counters, timings and TXT verification.
+- [ ] Run at least 20 app reconnects and separate no-client/slow-client/slow-writer
+  cases; distinguish deliberate removal from unexpected disconnect or source loss.
+- [ ] Reconcile every eligible source report with client receipts and TXT records;
+  analyze latency/cadence percentiles/maxima, gaps, source ages, CPU/RSS and queues.
+- [ ] Retain outliers, failures and normal collector/E2 shutdown. A period setting,
+  a short receipt count or an old acquisition report cannot close these gates.
 
-Begin this implementation only after Step 8 is accepted and Plan 1's RF export
-is accepted. If either prerequisite is pending, keep the five-metric broker usable
-and record Stage B as pending. Do not enable RF placeholders to bypass either gate.
+Exit: measured connection stability, full identity/value delivery and the frozen
+added-delay/cadence budgets pass for the declared workload.
 
-- [ ] Preserve the accepted Stage A commit/patch, config, binary, and evidence.
-  Integrate Plan 1's reviewed RF changes without overwriting the broker/dummy work.
-  Use compatible verification checkouts if its runners reject the newer broker
-  revision; preserve revision guards and review any base adaptation explicitly.
-- [ ] Add the `rf7` profile by extending the five-name list with exactly
-  `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB`. Use the reviewed seven-metric
-  config while keeping `base5` as the default and retaining its config.
-- [ ] Add RF type/unit/validity handling: finite REAL values, valid zero,
-  noValue, invalid integers, and non-finite values. Preserve full precision and
-  the original five metrics; do not change registration or connection semantics.
-- [ ] Declare `rf7` and all seven metric names in registration status, and seven
-  entries in each KPM frame. Make the dummy validate `--expected-profile rf7`.
-  Keep exact DU/UE filters, queue limits, sequence cutoffs, and identity handling.
-- [ ] Require both RF capabilities and actual seven-metric admission in live mode.
-  Report failure explicitly; never fall back to five while claiming `rf7` readiness.
-- [ ] Extend the fixture generator and mandatory test manifest with RF-specific
-  cases. Retain all Stage A cases and keep phase evidence in separate directories.
-- [ ] Retain the Stage B interface delta as `kpm-app-subscription-rf7.patch`,
-  separate from Stage A, the timestamp repair, and the upstream RF patches.
+### Step 8 Deliver and review
 
-**Exit criteria:** the same accepted interface supports an explicit seven-metric
-profile, and five-metric operation remains available without RF dependencies.
+- [x] Update the interface guide, service/dummy launch commands and handoff around
+  the final 27-metric binding implementation; mark obsolete prototype commands.
+- [ ] Retain source changes, exact metric/config identities, binary hashes,
+  offline/live manifests, binding snapshots, receipt/TXT files and timing analysis.
+  Offline artifacts are retained; add live artifacts after Steps 6–7.
+- [x] Record acquisition baseline, integrated offline correctness, live functional
+  delivery, connection stability and timeliness as separate acceptance results,
+  explicitly marking live results pending.
+- [ ] Reviewer verifies registry cutoff, immutable association snapshots, correct
+  filters, source-driven publication, bounded slow-consumer isolation and cleanup.
 
-## Step 10 Verify Seven Metrics and Recheck the Five Metric Baseline
-
-- [ ] Rebuild the actual broker/test/fixture targets after Step 9. Rerun the full
-  Stage A `base5` fixture/socket suite and a live five-metric smoke check; retain
-  at least 10 actual baseline rows after the extension. Use a fresh regression
-  directory; do not overwrite signed Stage A results under `base5/`:
-
-```bash
-mkdir -p "$KPM_APP_EVIDENCE/rf7/base5-regression"
-KPM_BASE5_REGRESSION=$(mktemp -d "$KPM_APP_EVIDENCE/rf7/base5-regression/run-XXXXXXXX")
-mkdir -p "$KPM_BASE5_REGRESSION/live"
-python3 "$FALCON_REPO/scripts/flexric/test_kpm_app_subscription.py" \
-  --broker "$FLEXRIC_BUILD/examples/xApp/c/monitor/xapp_kpm_broker" \
-  --unit-test "$FLEXRIC_BUILD/examples/xApp/c/monitor/falcon_kpm_broker_test" \
-  --fixture-generator "$FLEXRIC_BUILD/examples/xApp/c/monitor/falcon_kpm_broker_fixture" \
-  --dummy "$FALCON_REPO/scripts/flexric/dummy_kpm_client.py" \
-  --metric-profile base5 --output-dir "$KPM_BASE5_REGRESSION/tests"
-```
-
-For the live smoke check, reuse Step 8's five-metric launch/client commands with
-`--reports 10`, callback evidence at `$KPM_BASE5_REGRESSION/live/callback.jsonl`,
-and dummy receipts at `$KPM_BASE5_REGRESSION/live/dummy.jsonl`.
-
-- [ ] Generate fresh seven-metric APER fixtures and run the same socket/dummy path.
-  Include negative/fractional RSRP, fractional SNR, zero, noValue, invalid RF
-  integers, non-finite RF values, reordered names, and multiple DU/UE identities.
-  Existing RF-only two-metric fixtures cannot replace this complete fixture set.
-
-```bash
-python3 "$FALCON_REPO/scripts/flexric/test_kpm_app_subscription.py" \
-  --broker "$FLEXRIC_BUILD/examples/xApp/c/monitor/xapp_kpm_broker" \
-  --unit-test "$FLEXRIC_BUILD/examples/xApp/c/monitor/falcon_kpm_broker_test" \
-  --fixture-generator "$FLEXRIC_BUILD/examples/xApp/c/monitor/falcon_kpm_broker_fixture" \
-  --dummy "$FALCON_REPO/scripts/flexric/dummy_kpm_client.py" \
-  --metric-profile rf7 --output-dir "$KPM_APP_EVIDENCE/rf7/tests"
-```
-
-- [ ] Start the RIC and all intended DUs using Plan 1's accepted operating
-  procedure. Confirm both RF capabilities, identities, and seven-metric admission.
-  Stop other broker runs and launch the same target in live seven-metric mode:
-
-```bash
-"$FLEXRIC_BUILD/examples/xApp/c/monitor/xapp_kpm_broker" \
-  --source e2 --metric-profile rf7 \
-  -c "$FALCON_REPO/configs/flexric/xapp_du_rf_metrics.conf" \
-  --broker-config "$FALCON_REPO/configs/flexric/kpm_app_broker.json" \
-  --callback-evidence "$KPM_APP_EVIDENCE/rf7/live/callback.jsonl"
-```
-
-Run the existing dummy with the expected profile changed to seven:
-
-```bash
-python3 "$FALCON_REPO/scripts/flexric/dummy_kpm_client.py" \
-  --host 127.0.0.1 --port 8765 --app-id dummy-live-rf7 --all-links \
-  --expected-profile rf7 --reports 30 --timeout 60 \
-  --jsonl-output "$KPM_APP_EVIDENCE/rf7/live/dummy.jsonl"
-```
-
-- [ ] Require `data_source: e2`, `metric_profile: rf7`, exactly seven entries per
-  row, and at least 30 real received rows during controlled traffic. Compare
-  decoded callback values/types/states to independent dummy receipts as in Step 8.
-  Observe at least 10 rows with both RF values valid; preserve missing-value cases.
-- [ ] If two physical links are available, collect at least 10 rows for each,
-  compare full identities, and use an exact-link client to verify exclusion.
-  Record single-link-only coverage when the second physical link is unavailable.
-- [ ] Leave WWAN/IP/IMSI binding and MPTCP subflow selection outside this task.
-  Keep source correctness evidence from Plan 1 separate from transport equality.
-
-**Exit criteria:** seven-metric fixture/socket and live delivery pass, Stage A
-regressions remain green, and actual source/receipt equality is recorded. If RF
-live data is unavailable, retain Stage A acceptance and leave Stage B pending.
-
-## Step 11 Review Deliverables and Close Interface Acceptance
-
-- [ ] Retain separate Stage A and Stage B interface patches, both subscription
-  configs, protocol, dummy client, fixtures/tests, revisions, and binary hashes.
-- [ ] Keep timestamp and RF patches separate. Update [repository documentation](../docs/development/development_handoff.md)
-  with the new target/launch paths and the local interface scope.
-- [ ] Record Stage A fixture/live and Stage B fixture/live acceptance separately.
-  Preserve the PRB source caveat and separate physical multi-link coverage.
-- [ ] Have the reviewer verify all mandatory results, registration ordering,
-  owned callback data, queue bounds, disconnect cleanup, and successful dummy output.
-
-| Completion gate | Required evidence |
-| --- | --- |
-| Protocol | Versioned registration/status/push/unregister schema and exact-link contract |
-| Stage A five metrics | Five-metric fixtures/socket cases plus real E2-to-dummy receipts with unchanged values/types/states |
-| Stage B prerequisites | Stage A accepted before rf7 publisher integration; original Plan 1 RF source acceptance retained |
-| Stage B seven metrics | Seven-metric fixtures/socket cases and actual RF-enabled E2-to-dummy receipts pass |
-| Multi-link isolation | Two DUs sharing a UE number and two UEs on one DU pass filtering |
-| Registration | Success precedes data; cutoff excludes prior callbacks; rejected requests do not mutate registry |
-| Resource behavior | Bounded queues; slow subscriber isolation; timeout/EOF/unregister cleanup |
-| Demonstration | Actual broker and two dummy clients register, receive, print, and exit successfully |
-| Regression | Accepted five-metric broker/dummy still pass after the extension; monitor and timestamp repair remain usable |
-| Live evidence | Actual five and seven metrics recorded separately; fixture success cannot close either live gate |
-| Stage C expanded coverage | Plan 1 registry/source acceptance and complete typed expanded-profile receipts at 1000 ms |
-| Stage D higher frequency | Expanded coverage accepted before 200 ms and then 100 ms; separate cadence, load, queue and client-equality evidence |
-
-Record `Stage A accepted; Stage B pending` when only the five-metric stage has
-passed. Close the compatibility 5+2 scope only after both stages' required fixture/socket,
-demonstration, and live gates pass. Record physical multi-link coverage as pending
-when the second link is unavailable, while preserving successful single-link
-live results and mandatory fixture multi-link coverage. MPTCP remains separate.
-
-The expanded October 24 task additionally requires Steps 12–14; the legacy
-Stage A/B result cannot be reported as expanded or high-frequency acceptance.
-
-## Step 12 Implement Expanded Profiles and Scope Metadata
-
-- [ ] Consume Plan 1's reviewed registry rather than hard-coding a seven-entry
-  limit. Keep the accepted base5/rf7 names, units, counts and tests unchanged.
-- [ ] Define the versioned expanded profile and explicit UE/cell/DU scopes,
-  complete identities, per-group metric lists, source periods and aggregation
-  metadata. Preserve window averages, counters and last-known-value semantics.
-  Version any incompatible schema change and reject unsupported client/profile
-  combinations explicitly; do not send cell rows to a UE-only client.
-- [ ] Keep the existing exact UE-link filter behavior for compatibility clients.
-  Define explicit cell/DU filters for expanded scope, with no invented UE key.
-- [ ] Subscribe once per selected DU/scope/group, not once per application.
-  Track every successful handle for normal cleanup. Reassemble only explicitly
-  related groups; do not claim they share a source window without evidence.
-- [ ] Deep-copy typed callback values into bounded owned rows. Preserve signed
-  REAL values, valid zero, optional absence and full precision; reject numeric
-  range violations instead of truncating or wrapping counters/identifiers.
-- [ ] Keep JSON Lines/TCP as the application protocol, separate from the ASN.1
-  E2/E42 path. Calculate actual serialized frame sizes and revise declared
-  bounds/versioned grouping if necessary before expanded live tests.
-
-**Exit criteria:** expanded fixtures, scope/filter handling and value/type/state
-preservation pass, while base5/rf7 compatibility regressions remain intact.
-
-## Step 13 Accept Expanded Application Delivery at 1000 ms
-
-- [ ] Cover every declared metric group with fresh codec fixtures and independent
-  client receipts, including multiple UEs, duplicate UE numbers across DUs,
-  cell/DU rows, zero/absent data, integer limits, negative REALs and reordered names.
-- [ ] Establish populated DL/UL live delivery after Plan 1's expanded source
-  validation. Compare typed callback records against independent client records
-  by full identity, scope, profile/group and report sequence.
-- [ ] Verify bounded admission, partial I/O, queue saturation, client disconnect,
-  registration ordering and normal subscription cleanup at 1000 ms. Keep slow
-  terminal/file/socket operations outside the KPM callback.
-- [ ] Retain actual PDU and JSON frame sizes, callback/worker processing times,
-  queue depth/drop counters and the complete profile/configuration identities.
-  Freeze the expanded 1000 ms baseline before any rate increase.
-
-**Exit criteria:** the complete declared expanded profile reaches the independent
-application at 1000 ms with its source attribution, values, types and states intact.
-
-## Step 14 Validate 200 ms and Then 100 ms Forwarding
-
-- [ ] After expanded 1000 ms acceptance, coordinate a 200 ms DU producer period,
-  KPM reporting/granularity period and broker profile; then repeat at 100 ms
-  only after the 200 ms result passes. Keep slower producers explicitly labeled
-  or in a separate slower group. Forward on new callbacks, not a timer that
-  retransmits stale data to simulate a faster source.
-- [ ] Freeze coverage, traffic, client count, test duration and cadence/latency
-  tolerances before each comparison. Preserve the metric set rather than
-  reducing it to obtain a throughput pass.
-- [ ] Measure monotonic callback arrival, worker enqueue/publish and client
-  receipt timing separately, together with actual queue growth, CPU and drops.
-  Size the bounded evidence capture for the expected row count; the legacy
-  1000-row default can truncate a dual-DU 60-second run at 100 ms.
-- [ ] Exercise no-client, normal-client and non-reading/slow-client cases.
-  Verify the planned bounded-queue policy: count discarded ingress rows and
-  disconnect only the slow/overflowing subscriber, preserving healthy clients.
-  Include serialization-limit, partial-write and disconnect/reconnect tests.
-- [ ] Preserve low-traffic noValue behavior and exact typed callback-to-receipt
-  equality at each supported rate. Missing traffic samples are not queue loss.
-- [ ] Record monitor acquisition and application-forwarding acceptance separately
-  for 1000, 200 and 100 ms. A monitor-only success does not close this step.
-  If 100 ms fails, retain 200 ms and the failure evidence as the supported result.
-
-**Exit criteria:** each claimed rate passes the frozen cadence, correctness,
-bounded-memory and slow-client isolation checks for its declared coverage and
-workload. Reporting period alone is not a hard end-to-end latency guarantee.
+Exit: the requested subscription mechanism is accepted on the existing 27-metric
+100 ms xApp with independent application TXT and timing/stability evidence.
 
 ## Rollback
 
-Stop dummy clients normally, then stop the broker with SIGINT/SIGTERM and verify
-subscription deletion/SDK shutdown when in live mode.
-
-For Stage B failures, first restart the broker with `--metric-profile base5` and
-the accepted `xapp_du_kpm_base5.conf`. If code regression remains, reverse/revert
-only the reviewed Stage B interface delta, rebuild, and repeat the accepted five
-metric smoke check. Preserve the accepted Stage A broker, dummy, config, and evidence.
-
-For Stage A interface failures, reverse/revert its dedicated delta as needed and
-relaunch the original timestamp-repaired `xapp_oran_moni` with the five-metric
-config. Do not use seven-metric subscriptions as the baseline fallback.
-
-Reverse only the reviewed interface patch or revert its dedicated commit after
-checking for later dependencies. For uncommitted patch execution, check reversal
-before applying it; for committed work use a reviewed revert rather than forcing
-an apply. Rebuild affected targets and disable `FALCON_KPM_BROKER` if needed.
-Preserve Plan 1's DU fixes, timestamp repair, configurations, and original monitor.
-Clear in-memory registrations by stopping the broker; do not remove RIC or DU
-source changes to roll back an application-delivery feature.
-
-## Repository References
-
-- [Plan 1 RF implementation and validation](e2sm-kpm-du-rf-metrics.md).
-- [Existing five-metric installed config](/usr/local/etc/flexric/xapp_oran_sm.conf),
-  whose DU block is the source for the planned repository-owned baseline config.
-- [Seven-metric DU subscription configuration](../configs/flexric/xapp_du_rf_metrics.conf).
-- [Existing RF monitor candidate](../patches/flexric/73650812-du-rf-metrics.patch).
-- [Existing RF callback/codec harness](../tests/flexric_du_rf_metrics_test.c)
-  and [its runner](../scripts/flexric/test_du_rf_metrics.py).
-- [Timestamp repair](../docs/troubleshooting/2026-10-07_flexric_latency_fix.md).
-- [Current implementation record](../docs/troubleshooting/2026-10-07_flexric_bringup.md#du-rf-metrics-extension-offline-package-2026-10-09)
-  and [full reproduction runbook](../docs/runbooks/full_reproduction_runbook.md).
+Stop/unregister dummy applications, stop the subscription service normally and
+verify collector subscription cleanup. Return to the existing 27-metric diagnostic
+xApp and its `--text-output` command if delivery integration fails. Preserve the
+working DU/CU/Core matching, 100 ms producer/configuration, metric registry and
+prior experiment evidence. Reversing application delivery does not require
+rolling back source metrics, RF patches, identity scope fixes or SCTP_NODELAY.

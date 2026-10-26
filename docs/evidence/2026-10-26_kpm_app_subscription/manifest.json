@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-26",
+  "scope": "base5 offline only",
+  "working_evidence": "/tmp/falcon-kpm-subscription-rrq7ig7y",
+  "heads": {
+    "falcon": "d4fbd0846c28fe055aea887d4e015c0b86255ab9",
+    "flexric": "3597413fb564ceb778778e7c3dde4534a2c321d5",
+    "ocudu": "9bbf6398507a30e469df31e4667056577b2af2c5"
+  },
+  "source_sha256": {
+    "/home/nyu/Desktop/Falcon_repo/Falcon/configs/flexric/kpm_app_broker.json": "9b180cb67231aaeadf8cb333a30577ea49b11f911df405b9cf8a10b9b5948ace",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/configs/flexric/xapp_du_kpm_base5.conf": "7fc0852decc8fc2057149c455864d70c6ca05ce2ec5b45e21c19d772ee438b67",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/scripts/flexric/dummy_kpm_client.py": "39d46eedbb40f6fa66b0caa2614eee2598d0e4e5daaafdd0beb8ce9e2b8fa19b",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/scripts/flexric/test_kpm_app_subscription.py": "79b0bdf9428073a10facf25c54ee9703f031bd095c111b9661df02f352c2431a",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/scripts/flexric/test_kpm_app_sanitizers.py": "e5f87ccfa80b763bfa1e090dd88ee5745aa0bcccddace1b0f7bc40814373d65e",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/tests/flexric_kpm_broker_test.c": "4ceddf0d1281bf6dc905cb1a63bfa7497901ca321d2cf5b08d105cc988143053",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/tests/flexric_kpm_broker_fixture.c": "5789847891618a523433ae7ea32300fba58de4fff870e6018cb90b4950f782d2",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/patches/flexric/kpm-app-subscription-base5.patch": "607560dd7285dcabbc7ebf500c14e4c7400d141a2c7e2169aedf0d61ffcf82f5",
+    "/home/nyu/flexric/examples/xApp/c/monitor/kpm_broker/kpm_broker.h": "35cdbe3fdbdb5479b820caba354562ba3979f6cd3f64e60d649674229bc62127",
+    "/home/nyu/flexric/examples/xApp/c/monitor/kpm_broker/kpm_fixture.c": "b0b079fc7bc89e6f839ecf423582d0a54bcb327cee947b3563a32875db53e78b",
+    "/home/nyu/flexric/examples/xApp/c/monitor/kpm_broker/kpm_protocol.c": "ce247ab69931e74c29a7ced8894c6888d1015b32f20bc7ed4efdccb0ca3f60a7",
+    "/home/nyu/flexric/examples/xApp/c/monitor/kpm_broker/kpm_server.c": "db6f0be0c5767091c0ee677837e2e27aae50009978e7a2a47b60d6fcf26ffa30",
+    "/home/nyu/flexric/examples/xApp/c/monitor/kpm_broker/kpm_snapshot.c": "bc5d712cf0bdcc8cd8cccbb15be5d3aee30edd007d8d2ba9ecc08f4f06b59c97",
+    "/home/nyu/flexric/examples/xApp/c/monitor/kpm_broker/kpm_source.c": "53aa9cc6b10c56c1d97a62855e6863d256096bdf4ad731bab4e9a46b2d269098",
+    "/home/nyu/flexric/examples/xApp/c/monitor/xapp_kpm_broker.c": "1b84d7a08887166a9a0ab8fa30a80c1cc0331c0d0f4babb788d93adf42f02126",
+    "/home/nyu/flexric/examples/xApp/c/monitor/CMakeLists.txt": "ad090a689074764858831bcdde8ac0a6c09b8385810592f2617dca54477771e5",
+    "/home/nyu/flexric/.gitignore": "8e827e8491f05760df6228f5af184c16e7f4e046e54c277944d3be98a392baab"
+  },
+  "binary_and_plugin_sha256": {
+    "fixtures/duplicate.aper": "18fe2b50245ae83d2e565d3a77aa5ae235cafbd047194e2adc278d3ac9b9ee0e",
+    "fixtures/ids.aper": "e9f7cd89232fe988019333bf748bde6544fb2859b0eb33a8530f067dbc9c6906",
+    "fixtures/states.aper": "0f9f9d1d447914f84c86c4e277272e7f4bb83f37b38bdc0afbed6c0063b581f6",
+    "fixtures/normal.aper": "06c4735dcef9dc52a5bd8d3e1fcd982484dbff1c837c09a91ff5b651f8074884",
+    "fixtures/header.aper": "5af7c33c2099786413c63d3597cf3ee43da8670e0f79897dd4320c47523ddbd6",
+    "fixtures/reordered.aper": "384ea831d9d0e40853b63207bd594583355b815323363324d10b8d946ca7d0f0",
+    "fixtures/mismatch.aper": "61891968bdd7ce92d46678dfad0cde981b4886c43a512dd839cb87517432aed6",
+    "fixtures/manifest.json": "19c8e08e61f3a711777efdc6d0d089df9bed87bd824632a376b8cf687b4cb1e9",
+    "/home/nyu/flexric/build-kpm-broker/examples/xApp/c/monitor/xapp_kpm_broker": "fb58ebada83c46f96e486e3e14f6132042f3543ac975ee18a9a41e910a3bc97e",
+    "/home/nyu/flexric/build-kpm-broker/examples/xApp/c/monitor/falcon_kpm_broker_test": "d8260d803b387392d5442679b1ed4d18976dcf02d9953e66f89c3aa7602d1cbe",
+    "/home/nyu/flexric/build-kpm-broker/examples/xApp/c/monitor/falcon_kpm_broker_fixture": "8bdeadd0d16f02ff500f5d30b19d5d64f600438036821f0d2d329230a234f25b",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/scripts/flexric/dummy_kpm_client.py": "39d46eedbb40f6fa66b0caa2614eee2598d0e4e5daaafdd0beb8ce9e2b8fa19b",
+    "/usr/local/lib/flexric/libkpm_sm.so": "f7e62d2a135e587d67a39cddcc1270ec9ba0ec97df03a3f8dbf63124c46ed53d",
+    "/home/nyu/Desktop/Falcon_repo/Falcon/scripts/flexric/test_kpm_app_subscription.py": "79b0bdf9428073a10facf25c54ee9703f031bd095c111b9661df02f352c2431a"
+  },
+  "original_artifacts_unchanged": {
+    "/home/nyu/flexric/build-ocudu/examples/xApp/c/monitor/xapp_oran_moni": "95b2a3a6d5a2764efa8c3266d4a3b7fa75a35bb6700dd0cc43f9732a7591b7d3",
+    "/usr/local/lib/flexric/libkpm_sm.so": "f7e62d2a135e587d67a39cddcc1270ec9ba0ec97df03a3f8dbf63124c46ed53d",
+    "/usr/local/etc/flexric/xapp_oran_sm.conf": "ce35820f73c33c496c52644ba5550bb9bf5ebf380a0e722cb4a58f0f1d176c6c"
+  },
+  "archive": {
+    "file": "offline-evidence.tar.gz",
+    "bytes": 78656,
+    "sha256": "b3019a7e3207d7fc5e09e4e28dfd4c9273f6a819cdd28c5294016fdba20c56de"
+  },
+  "verification": {
+    "normal_cases_passed": 25,
+    "sanitizer_cases_passed": 25,
+    "skipped": 0,
+    "normal_rows_compared": 128,
+    "sanitizer_rows_compared": 128,
+    "demonstration_rows_compared": 62,
+    "live": "pending"
+  },
+  "final_evidence": {
+    "normal": "/tmp/falcon-kpm-subscription-rrq7ig7y/base5/tests-deadlines",
+    "sanitizers": "/tmp/falcon-kpm-subscription-rrq7ig7y/base5/sanitizers-deadlines",
+    "demonstration": "/tmp/falcon-kpm-subscription-rrq7ig7y/base5/demonstration-deadlines"
+  }
+}

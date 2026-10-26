@@ -1,0 +1,14 @@
+{
+  "bind": "127.0.0.1",
+  "port": 8765,
+  "clients": 16,
+  "ingress_reports": 256,
+  "ingress_bytes": 4194304,
+  "output_frames": 64,
+  "output_bytes": 1048576,
+  "registration_ms": 5000,
+  "incomplete_ms": 5000,
+  "idle_ms": 30000,
+  "write_ms": 5000,
+  "drain_ms": 2000
+}

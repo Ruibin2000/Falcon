@@ -37,6 +37,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <stdatomic.h>
+#include <time.h>
 #include <unistd.h>
 
 // Only owned serialized records cross the callback boundary. Slow output never
@@ -49,6 +51,14 @@ static uint64_t dropped;
 static bool drain_stop;
 static FILE* events;
 static volatile sig_atomic_t stopping;
+static atomic_uint_fast64_t source_sequence;
+static const char* source_instance = "offline-codec";
+
+static uint64_t monotonic_us(void) {
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return (uint64_t)ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+}
 
 static void stop_handler(int sig) { (void)sig; stopping = 1; }
 
@@ -130,13 +140,16 @@ static bool bounded_report(const kpm_ind_data_t* kpm)
 }
 
 static char* serialize_report(const kpm_ind_data_t* kpm, const global_e2_node_id_t* node,
-                              int64_t callback_us, size_t* length)
+                              int64_t callback_us, uint64_t callback_mono, uint64_t sequence, size_t* length)
 {
   char* bytes = NULL;
   FILE* out = open_memstream(&bytes, length);
   if (!out) return NULL;
   fputs("{\"kind\":\"kpm_report\",\"node\":", out);
   json_node(out, node);
+  fputs(",\"source_instance_id\":", out);
+  json_bytes(out, (const uint8_t*)source_instance, strlen(source_instance));
+  fprintf(out, ",\"source_indication_seq\":\"%" PRIu64 "\",\"callback_at_mono_us\":\"%" PRIu64 "\"", sequence, callback_mono);
   fprintf(out, ",\"header_time_us\":\"%" PRIu64 "\",\"callback_at_us\":\"%" PRId64 "\","
                "\"ingress_dropped_total\":\"%" PRIu64 "\",\"rows\":[",
           kpm->hdr.kpm_ric_ind_hdr_format_1.collectStartTime, callback_us, dropped);
@@ -177,12 +190,15 @@ static char* serialize_report(const kpm_ind_data_t* kpm, const global_e2_node_id
 
 static void callback(sm_ag_if_rd_t const* rd, global_e2_node_id_t const* node)
 {
+  int64_t callback_us = time_now_us();
+  uint64_t callback_mono = monotonic_us();
+  uint64_t sequence = atomic_fetch_add(&source_sequence, 1) + 1;
   if (!rd || rd->type != INDICATION_MSG_AGENT_IF_ANS_V0 || rd->ind.type != KPM_STATS_V3_0) return;
   pthread_mutex_lock(&queue_mutex);
   const kpm_ind_data_t* kpm = &rd->ind.kpm.ind;
   if (!bounded_report(kpm) || count == 16) { ++dropped; pthread_mutex_unlock(&queue_mutex); return; }
   size_t length = 0;
-  char* bytes = serialize_report(kpm, node, time_now_us(), &length);
+  char* bytes = serialize_report(kpm, node, callback_us, callback_mono, sequence, &length);
   if (!bytes || length > 4 * 1024 * 1024 || queued_bytes + length > 4 * 1024 * 1024) {
     free(bytes); ++dropped;
   } else {
@@ -350,7 +366,7 @@ static int decode_fixture(const char* hdr, const char* msg, const char* plugin)
   node.plmn.mcc = 1; node.plmn.mnc = 1; node.plmn.mnc_digit_len = 2;
   node.nb_id.nb_id = 411;
   size_t length = 0;
-  char* output = bounded_report(&decoded.kpm.ind) ? serialize_report(&decoded.kpm.ind, &node, 100000001, &length) : NULL;
+  char* output = bounded_report(&decoded.kpm.ind) ? serialize_report(&decoded.kpm.ind, &node, 100000001, 0, 0, &length) : NULL;
   bool success = output != NULL;
   if (output) { fwrite(output, 1, length, stdout); free(output); }
   model->alloc.free_ind_data(&decoded);
@@ -362,6 +378,10 @@ static int decode_fixture(const char* hdr, const char* msg, const char* plugin)
 int main(int argc, char** argv)
 {
   setvbuf(stdout, NULL, _IOLBF, 0);
+  if (argc == 2 && !strcmp(argv[1], "--check-clock")) {
+    printf("%" PRIu64 "\n", monotonic_us());
+    return 0;
+  }
   if (argc == 3 && !strcmp(argv[1], "--check-config")) {
     char* arguments[] = {argv[0], "-c", argv[2]};
     fr_args_t config = init_fr_args(3, arguments);
@@ -384,13 +404,16 @@ int main(int argc, char** argv)
   const char* duration = getenv("FALCON_KPM_SECONDS");
   if (duration) {
     seconds = strtoul(duration, &end, 10);
-    if (!*duration || *end || seconds < 1 || seconds > 3600) return 2;
+    if (!*duration || *end || seconds > 3600) return 2;
   }
+  const char* instance = getenv("FALCON_IDENTITY_INSTANCE");
+  if (instance && strlen(instance) <= 64) source_instance = instance;
   signal(SIGINT, stop_handler); signal(SIGTERM, stop_handler); signal(SIGPIPE, SIG_IGN);
   pthread_t thread;
   if (pthread_create(&thread, NULL, writer, NULL)) return 2;
   fr_args_t args = init_fr_args(argc, argv);
   init_xapp_api(&args);
+  signal(SIGINT, stop_handler); signal(SIGTERM, stop_handler);
   sleep(1);
   e2_node_arr_xapp_t nodes = e2_nodes_xapp_api();
   sm_ans_xapp_t* handles = calloc(nodes.len ? nodes.len : 1, sizeof(*handles));
@@ -415,7 +438,7 @@ int main(int argc, char** argv)
     }
   }
   fprintf(stderr, "identity collector: %zu KPM subscriptions, duration=%lu\n", subscriptions, seconds);
-  for (unsigned long tick = 0; tick < seconds * 10 && !stopping; ++tick) usleep(100000);
+  for (unsigned long tick = 0; (!seconds || tick < seconds * 10) && !stopping; ++tick) usleep(100000);
   for (size_t i = 0; i < subscriptions; ++i) { rm_report_sm_xapp_api(handles[i].u.handle); usleep(100000); }
   free(handles); free_e2_node_arr_xapp(&nodes);
   while (!try_stop_xapp_api()) usleep(1000);

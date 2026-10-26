@@ -1,0 +1,1104 @@
+diff --git a/.gitignore b/.gitignore
+index 6985a3da..764dfd51 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -7,4 +7,5 @@ archives/
+ test_results*.html
+ 
+ /build-ocudu/
++/build-kpm-broker/
+ /compile_commands.json
+diff --git a/examples/xApp/c/monitor/CMakeLists.txt b/examples/xApp/c/monitor/CMakeLists.txt
+index 4878faf0..d9786c4c 100644
+--- a/examples/xApp/c/monitor/CMakeLists.txt
++++ b/examples/xApp/c/monitor/CMakeLists.txt
+@@ -36,6 +36,36 @@ target_link_libraries(xapp_oran_moni
+ # enable below directive if you need to debug asn code
+ # target_compile_options(xapp_kpm_moni PUBLIC -DASN_EMIT_DEBUG=1)
+ 
++option(FALCON_KPM_BROKER "Build the Falcon local KPM application broker" OFF)
++set(FALCON_REPO_ROOT "" CACHE PATH "Falcon repository containing broker tests")
++if(FALCON_KPM_BROKER)
++  if(NOT E2AP_VERSION STREQUAL "E2AP_V3" OR NOT KPM_VERSION STREQUAL "KPM_V3_00" OR NOT XAPP_DB STREQUAL "NONE_XAPP")
++    message(FATAL_ERROR "Falcon broker requires E2AP_V3 / KPM_V3_00 / NONE_XAPP")
++  endif()
++  if(NOT EXISTS "${FALCON_REPO_ROOT}/tests/flexric_kpm_broker_test.c" OR
++     NOT EXISTS "${FALCON_REPO_ROOT}/tests/flexric_kpm_broker_fixture.c")
++    message(FATAL_ERROR "Set FALCON_REPO_ROOT to the Falcon repository containing tests/flexric_kpm_broker_*.c")
++  endif()
++  find_package(PkgConfig REQUIRED)
++  pkg_check_modules(JSONC REQUIRED IMPORTED_TARGET json-c)
++  add_library(falcon_kpm_broker_core STATIC kpm_broker/kpm_snapshot.c kpm_broker/kpm_protocol.c kpm_broker/kpm_server.c)
++  target_include_directories(falcon_kpm_broker_core PUBLIC "${CMAKE_SOURCE_DIR}/src" "${CMAKE_CURRENT_SOURCE_DIR}")
++  target_compile_definitions(falcon_kpm_broker_core PUBLIC ASN E2AP_V3 KPM_V3_00 NONE_XAPP)
++  target_compile_options(falcon_kpm_broker_core PRIVATE -Wall -Wextra -Werror)
++  target_link_libraries(falcon_kpm_broker_core PUBLIC PkgConfig::JSONC pthread)
++  add_executable(xapp_kpm_broker xapp_kpm_broker.c kpm_broker/kpm_source.c kpm_broker/kpm_fixture.c)
++  target_link_libraries(xapp_kpm_broker PRIVATE falcon_kpm_broker_core e42_xapp $<TARGET_OBJECTS:e2_time_obj> sctp dl m)
++  add_executable(falcon_kpm_broker_test "${FALCON_REPO_ROOT}/tests/flexric_kpm_broker_test.c")
++  target_link_libraries(falcon_kpm_broker_test PRIVATE falcon_kpm_broker_core)
++  target_compile_options(falcon_kpm_broker_test PRIVATE -UNDEBUG)
++  # The fixture generator links only KPM ASN. The live executable loads the KPM
++  # plugin locally, keeping the incompatible E2AP and KPM runtimes separate.
++  add_executable(falcon_kpm_broker_fixture "${FALCON_REPO_ROOT}/tests/flexric_kpm_broker_fixture.c")
++  target_include_directories(falcon_kpm_broker_fixture PRIVATE "${CMAKE_SOURCE_DIR}/src")
++  target_compile_options(falcon_kpm_broker_fixture PRIVATE -UNDEBUG)
++  target_link_libraries(falcon_kpm_broker_fixture PRIVATE kpm_sm_static)
++endif()
++
+ # xapp_all_moni
+ add_executable(xapp_all_moni
+ 		xapp_all_moni.c
+@@ -51,4 +81,4 @@ target_link_libraries(xapp_all_moni
+ 											-pthread
+ 											-lsctp
+ 											-ldl
+-											)
+\ No newline at end of file
++											)
+diff --git a/examples/xApp/c/monitor/kpm_broker/kpm_broker.h b/examples/xApp/c/monitor/kpm_broker/kpm_broker.h
+new file mode 100644
+index 00000000..dd9367e4
+--- /dev/null
++++ b/examples/xApp/c/monitor/kpm_broker/kpm_broker.h
+@@ -0,0 +1,91 @@
++#ifndef FALCON_KPM_BROKER_H
++#define FALCON_KPM_BROKER_H
++#include "xApp/e42_xapp_api.h"
++#include <json-c/json.h>
++#include <pthread.h>
++#include <stdatomic.h>
++#include <signal.h>
++#include <stdio.h>
++
++#define BK_METRICS 5
++#define BK_ROWS 256
++#define BK_CLIENTS 16
++#define BK_FILTERS 32
++#define BK_INPUT 8192
++#define BK_FRAME 16384
++#define BK_OUTPUT 64
++extern const char *const bk_names[BK_METRICS], *const bk_units[BK_METRICS];
++typedef struct {
++  char mcc[4], mnc[4];
++  uint32_t gnb, ue;
++  unsigned bits;
++  uint64_t du;
++} bk_key;
++typedef struct {
++  enum { BK_ABSENT, BK_INTEGER, BK_REAL, BK_NO_VALUE, BK_UNSUPPORTED } type;
++  enum { BK_OK, BK_NOT_REPORTED, BK_NO_DATA, BK_INVALID } status;
++  uint32_t integer;
++  double real;
++} bk_value;
++typedef struct {
++  bk_key key;
++  uint64_t report_seq, header_us, received_us, ran_ue;
++  bool has_ran_ue;
++  unsigned sample_idx;
++  int incomplete; /* -1 absent, 0 false, 1 true */
++  bk_value values[BK_METRICS];
++} bk_row;
++typedef struct {
++  unsigned port, clients, ingress_rows, output_frames;
++  size_t ingress_bytes, output_bytes, frame_bytes;
++  unsigned registration_ms, incomplete_ms, idle_ms, write_ms, drain_ms;
++  unsigned write_chunk; /* 0: normal; deterministic partial-I/O verification */
++  unsigned evidence_limit;
++  char test_stall_app[65]; /* Fixture-only I/O adapter; rejected in live mode. */
++} bk_config;
++typedef struct {
++  bk_config cfg;
++  pthread_mutex_t mutex;
++  bk_row rows[BK_ROWS];
++  size_t head, count, peak;
++  bool accepting;
++  atomic_uint_fast64_t sequence, dropped, malformed;
++  atomic_bool stop, ready, failed, admission_closed;
++  int wake;
++  const char *source;
++  char instance[65];
++  FILE *evidence;
++  unsigned evidence_count;
++  uint64_t evidence_limited, serialization_errors, admission_rejects, client_overflows;
++} bk_context;
++
++uint64_t bk_mono_ms(void);
++uint64_t bk_unix_us(void);
++void bk_defaults(bk_config *cfg);
++bool bk_config_load(bk_config *cfg, const char *path);
++bool bk_init(bk_context *ctx, const bk_config *cfg, const char *source, const char *evidence);
++void bk_destroy(bk_context *ctx);
++void bk_disable(bk_context *ctx);
++void bk_wake(bk_context *ctx);
++void bk_callback(bk_context *ctx, const sm_ag_if_rd_t *rd, const global_e2_node_id_t *node);
++bool bk_pop(bk_context *ctx, bk_row *row);
++void bk_enqueue_owned(bk_context *ctx, const bk_row *row);
++bool bk_key_equal(const bk_key *a, const bk_key *b);
++bool bk_key_parse(json_object *obj, bk_key *key);
++json_object *bk_node_json(const bk_key *key);
++json_object *bk_ue_json(const bk_row *row);
++json_object *bk_names_json(void);
++json_object *bk_envelope(const bk_context *ctx, const char *type);
++json_object *bk_row_json(const bk_context *ctx, const bk_row *row);
++void bk_trace(bk_context *ctx, const bk_row *row);
++json_object *bk_parse(const char *bytes, size_t len);
++const char *bk_string(json_object *obj, const char *name);
++bool bk_identifier(const char *s);
++bool bk_uint(json_object *obj, const char *name, uint64_t max, uint64_t *value);
++void bk_add_u64(json_object *obj, const char *name, uint64_t value);
++void *bk_server(void *arg);
++bool bk_fixture_load(bk_context *ctx, const char *dir, const char *plugin, unsigned period_ms,
++                     bool repeat, volatile sig_atomic_t *stopping);
++bool bk_source_run(bk_context *ctx, int argc, char **argv, volatile sig_atomic_t *stopping);
++bool bk_source_check(int argc, char **argv);
++#endif
+diff --git a/examples/xApp/c/monitor/kpm_broker/kpm_fixture.c b/examples/xApp/c/monitor/kpm_broker/kpm_fixture.c
+new file mode 100644
+index 00000000..c9edf0a8
+--- /dev/null
++++ b/examples/xApp/c/monitor/kpm_broker/kpm_fixture.c
+@@ -0,0 +1,56 @@
++#include "kpm_broker.h"
++#include "sm/sm_ric.h"
++#include <dlfcn.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++
++static unsigned char *read_file(const char *path, size_t *len) {
++  FILE *f=fopen(path,"rb"); if (!f) return NULL;
++  unsigned char *bytes=malloc(2*1024*1024+1); if (!bytes) { fclose(f); return NULL; }
++  *len=fread(bytes,1,2*1024*1024+1,f); bool ok=!ferror(f) && *len && *len<=2*1024*1024; fclose(f);
++  if (!ok) { free(bytes); return NULL; } return bytes;
++}
++static bool path_for(char *out, size_t size, const char *dir, const char *name) {
++  return bk_identifier(name) && snprintf(out,size,"%s/%s",dir,name)>0 && strlen(dir)+strlen(name)+2<=size;
++}
++bool bk_fixture_load(bk_context *ctx, const char *dir, const char *plugin, unsigned period_ms,
++                     bool repeat, volatile sig_atomic_t *stopping) {
++  char path[4096]; if (snprintf(path,sizeof(path),"%s/manifest.json",dir)>=(int)sizeof(path)) return false;
++  size_t len; unsigned char *bytes=read_file(path,&len); if (!bytes) return false;
++  json_object *manifest=bk_parse((const char*)bytes,len); free(bytes);
++  const char *profile=bk_string(manifest,"profile"); json_object *cases=NULL;
++  bool ok=profile && !strcmp(profile,"base5") && json_object_object_get_ex(manifest,"cases",&cases) &&
++    json_object_is_type(cases,json_type_array) && json_object_array_length(cases)>0 && json_object_array_length(cases)<=32;
++  if (!ok) { json_object_put(manifest); return false; }
++  /* KPM ASN symbols stay in their plugin; the executable uses the SDK's E2AP runtime. */
++  void *library=dlopen(plugin,RTLD_NOW|RTLD_LOCAL);
++  if (!library) { fprintf(stderr,"fixture plugin: %s\n",dlerror()); json_object_put(manifest); return false; }
++  sm_ric_t *(*make)(void)=dlsym(library,"make_kpm_sm_ric");
++  if (!make) { dlclose(library); json_object_put(manifest); return false; }
++  sm_ric_t *model=make();
++  do {
++    for (size_t i=0;i<json_object_array_length(cases) && !*stopping && !atomic_load(&ctx->failed);++i) {
++      uint64_t deadline=bk_mono_ms()+period_ms;
++      while (bk_mono_ms()<deadline && !*stopping && !atomic_load(&ctx->failed)) usleep(1000);
++      if (*stopping || atomic_load(&ctx->failed)) break;
++      json_object *item=json_object_array_get_idx(cases,i), *link=NULL;
++      bk_key key; sm_ind_data_t raw={0};
++      if (!json_object_object_get_ex(item,"link",&link) || !bk_key_parse(link,&key) ||
++          !path_for(path,sizeof(path),dir,bk_string(item,"header")) || !(raw.ind_hdr=read_file(path,&raw.len_hdr)) ||
++          !path_for(path,sizeof(path),dir,bk_string(item,"message")) || !(raw.ind_msg=read_file(path,&raw.len_msg))) {
++        free(raw.ind_hdr); free(raw.ind_msg); ok=false; break;
++      }
++      sm_ag_if_rd_t rd={.type=INDICATION_MSG_AGENT_IF_ANS_V0};
++      rd.ind=model->proc.on_indication(model,&raw);
++      global_e2_node_id_t node={.type=e2ap_ngran_gNB_DU,.cu_du_id=&key.du};
++      node.plmn.mcc=(uint16_t)strtoul(key.mcc,NULL,10); node.plmn.mnc=(uint16_t)strtoul(key.mnc,NULL,10);
++      node.plmn.mnc_digit_len=strlen(key.mnc); node.nb_id.nb_id=key.gnb; node.nb_id.unused=32-key.bits;
++      bk_callback(ctx,&rd,&node);
++      /* Destroy decoded buffers immediately; the queued rows own every field. */
++      model->alloc.free_ind_data(&rd.ind); memset(&rd,0xa5,sizeof(rd));
++      free(raw.ind_hdr); free(raw.ind_msg);
++    }
++  } while (ok && repeat && !*stopping && !atomic_load(&ctx->failed));
++  model->free_sm(model); dlclose(library); json_object_put(manifest); return ok;
++}
+diff --git a/examples/xApp/c/monitor/kpm_broker/kpm_protocol.c b/examples/xApp/c/monitor/kpm_broker/kpm_protocol.c
+new file mode 100644
+index 00000000..89669fcd
+--- /dev/null
++++ b/examples/xApp/c/monitor/kpm_broker/kpm_protocol.c
+@@ -0,0 +1,167 @@
++#include "kpm_broker.h"
++#include <ctype.h>
++#include <inttypes.h>
++#include <stdlib.h>
++#include <string.h>
++
++const char *bk_string(json_object *obj, const char *name) {
++  json_object *value = NULL;
++  if (!obj || !json_object_object_get_ex(obj, name, &value) || !json_object_is_type(value, json_type_string)) return NULL;
++  const char *s = json_object_get_string(value);
++  return strlen(s) == (size_t)json_object_get_string_len(value) ? s : NULL;
++}
++bool bk_identifier(const char *s) {
++  if (!s || !*s || strlen(s) > 64) return false;
++  for (; *s; ++s) if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') ||
++      (*s >= '0' && *s <= '9') || *s == '_' || *s == '.' || *s == '-')) return false;
++  return true;
++}
++bool bk_uint(json_object *obj, const char *name, uint64_t max, uint64_t *value) {
++  const char *s = bk_string(obj, name);
++  if (!s || !*s || (s[0] == '0' && s[1])) return false;
++  uint64_t n = 0;
++  for (; *s; ++s) {
++    if (*s < '0' || *s > '9' || n > max/10 || (n == max/10 && (unsigned)(*s-'0') > max%10)) return false;
++    n = n*10 + *s-'0';
++  }
++  *value = n; return true;
++}
++static bool digits(const char *s, size_t low, size_t high) {
++  if (!s || strlen(s) < low || strlen(s) > high) return false;
++  for (; *s; ++s) if (*s < '0' || *s > '9') return false;
++  return true;
++}
++bool bk_key_parse(json_object *obj, bk_key *key) {
++  json_object *node = NULL, *ue = NULL, *bits = NULL;
++  if (!json_object_is_type(obj, json_type_object) || json_object_object_length(obj) != 2 ||
++      !json_object_object_get_ex(obj, "node", &node) || !json_object_object_get_ex(obj, "ue", &ue) ||
++      !json_object_is_type(node, json_type_object) || json_object_object_length(node) != 6 ||
++      !json_object_is_type(ue, json_type_object) || json_object_object_length(ue) != 2) return false;
++  const char *mcc = bk_string(node, "mcc"), *mnc = bk_string(node, "mnc");
++  const char *nt = bk_string(node, "node_type"), *ut = bk_string(ue, "id_type");
++  if (!digits(mcc,3,3) || !digits(mnc,2,3) || !nt || strcmp(nt,"ngran_gNB_DU") || !ut || strcmp(ut,"gnb_du") ||
++      !json_object_object_get_ex(node,"gnb_id_bits",&bits) || !json_object_is_type(bits,json_type_int)) return false;
++  int64_t nbits = json_object_get_int64(bits); uint64_t gnb, du, f1ap;
++  if (nbits < 22 || nbits > 32 || !bk_uint(node,"gnb_id",(UINT64_C(1)<<nbits)-1,&gnb) ||
++      !bk_uint(node,"du_id",(UINT64_C(1)<<36)-1,&du) || !bk_uint(ue,"gnb_cu_ue_f1ap_id",UINT32_MAX,&f1ap)) return false;
++  memset(key,0,sizeof(*key)); strcpy(key->mcc,mcc); strcpy(key->mnc,mnc);
++  key->bits = nbits; key->gnb = gnb; key->du = du; key->ue = f1ap; return true;
++}
++void bk_add_u64(json_object *obj, const char *name, uint64_t value) {
++  char s[21]; snprintf(s,sizeof(s),"%" PRIu64,value); json_object_object_add(obj,name,json_object_new_string(s));
++}
++json_object *bk_node_json(const bk_key *key) {
++  json_object *obj = json_object_new_object();
++  json_object_object_add(obj,"mcc",json_object_new_string(key->mcc));
++  json_object_object_add(obj,"mnc",json_object_new_string(key->mnc));
++  json_object_object_add(obj,"node_type",json_object_new_string("ngran_gNB_DU"));
++  bk_add_u64(obj,"gnb_id",key->gnb); bk_add_u64(obj,"du_id",key->du);
++  json_object_object_add(obj,"gnb_id_bits",json_object_new_int(key->bits)); return obj;
++}
++json_object *bk_ue_json(const bk_row *row) {
++  json_object *obj = json_object_new_object();
++  json_object_object_add(obj,"id_type",json_object_new_string("gnb_du"));
++  bk_add_u64(obj,"gnb_cu_ue_f1ap_id",row->key.ue);
++  if (row->has_ran_ue) bk_add_u64(obj,"ran_ue_id",row->ran_ue);
++  else json_object_object_add(obj,"ran_ue_id",NULL);
++  return obj;
++}
++json_object *bk_names_json(void) {
++  json_object *obj = json_object_new_array();
++  for (unsigned i = 0; i < BK_METRICS; ++i) json_object_array_add(obj,json_object_new_string(bk_names[i]));
++  return obj;
++}
++json_object *bk_envelope(const bk_context *ctx, const char *type) {
++  json_object *obj = json_object_new_object();
++  json_object_object_add(obj,"version",json_object_new_int(1));
++  json_object_object_add(obj,"type",json_object_new_string(type));
++  json_object_object_add(obj,"broker_instance_id",json_object_new_string(ctx->instance));
++  json_object_object_add(obj,"data_source",json_object_new_string(ctx->source));
++  json_object_object_add(obj,"metric_profile",json_object_new_string("base5")); return obj;
++}
++json_object *bk_row_json(const bk_context *ctx, const bk_row *row) {
++  static const char *types[] = {"absent","integer","real","noValue","unsupported"};
++  static const char *states[] = {"ok","not_reported","no_value","invalid"};
++  json_object *obj = bk_envelope(ctx,"kpm"), *metrics = json_object_new_object();
++  bk_add_u64(obj,"report_seq",row->report_seq); bk_add_u64(obj,"header_time_us",row->header_us);
++  bk_add_u64(obj,"received_at_unix_us",row->received_us); bk_add_u64(obj,"published_at_unix_us",bk_unix_us());
++  bk_add_u64(obj,"ingress_dropped_total",atomic_load(&ctx->dropped));
++  json_object_object_add(obj,"sample_idx",json_object_new_int(row->sample_idx));
++  json_object_object_add(obj,"incomplete",row->incomplete < 0 ? NULL : json_object_new_boolean(row->incomplete));
++  json_object_object_add(obj,"node",bk_node_json(&row->key)); json_object_object_add(obj,"ue",bk_ue_json(row));
++  for (unsigned i = 0; i < BK_METRICS; ++i) {
++    const bk_value *v = &row->values[i]; json_object *m = json_object_new_object(), *number = NULL;
++    json_object_object_add(m,"kpm_type",json_object_new_string(types[v->type]));
++    json_object_object_add(m,"status",json_object_new_string(states[v->status]));
++    if (v->status == BK_OK) number = v->type == BK_INTEGER ? json_object_new_int64(v->integer) : json_object_new_double(v->real);
++    json_object_object_add(m,"value",number); json_object_object_add(m,"unit",json_object_new_string(bk_units[i]));
++    if (v->status == BK_INVALID) json_object_object_add(m,"reason",json_object_new_string(v->type == BK_REAL ? "non_finite" : "unsupported_type"));
++    json_object_object_add(metrics,bk_names[i],m);
++  }
++  json_object_object_add(obj,"metrics",metrics); return obj;
++}
++/* Independent evidence representation: no network JSON encoder or rounded REALs. */
++void bk_trace(bk_context *ctx, const bk_row *row) {
++  if (!ctx->evidence) return;
++  if (ctx->evidence_count >= ctx->cfg.evidence_limit) { ++ctx->evidence_limited; return; }
++  FILE *f = ctx->evidence;
++  fprintf(f,"{\"instance\":\"%s\",\"profile\":\"base5\",\"report_seq\":\"%" PRIu64
++    "\",\"mcc\":\"%s\",\"mnc\":\"%s\",\"gnb\":\"%u\",\"bits\":%u,\"du\":\"%" PRIu64
++    "\",\"ue\":\"%u\",\"sample_idx\":%u,\"header_us\":\"%" PRIu64 "\",\"received_us\":\"%" PRIu64
++    "\",\"incomplete\":%d,\"ran_ue\":",ctx->instance,row->report_seq,row->key.mcc,row->key.mnc,row->key.gnb,
++    row->key.bits,row->key.du,row->key.ue,row->sample_idx,row->header_us,row->received_us,row->incomplete);
++  if (row->has_ran_ue) fprintf(f,"\"%" PRIu64 "\"",row->ran_ue); else fputs("null",f);
++  fputs(",\"values\":[",f);
++  for (unsigned i = 0; i < BK_METRICS; ++i) {
++    const bk_value *v = &row->values[i]; uint64_t bits; memcpy(&bits,&v->real,sizeof(bits));
++    fprintf(f,"%s{\"type\":%d,\"state\":%d,\"integer\":%u,\"real_bits\":\"%016" PRIx64 "\"}",
++      i ? "," : "",v->type,v->status,v->integer,bits);
++  }
++  fputs("]}\n",f); ++ctx->evidence_count;
++  if (fflush(f)) atomic_store(&ctx->failed,true);
++}
++json_object *bk_parse(const char *bytes, size_t len) {
++  if (!len || len > BK_INPUT || memchr(bytes,0,len)) return NULL;
++  json_tokener *tok = json_tokener_new_ex(16); if (!tok) return NULL;
++  json_tokener_set_flags(tok,JSON_TOKENER_STRICT | JSON_TOKENER_VALIDATE_UTF8);
++  json_object *obj = json_tokener_parse_ex(tok,bytes,(int)len);
++  bool valid = json_tokener_get_error(tok) == json_tokener_success && json_object_is_type(obj,json_type_object);
++  size_t end = json_tokener_get_parse_end(tok);
++  while (end < len && isspace((unsigned char)bytes[end])) ++end;
++  valid = valid && end == len; json_tokener_free(tok);
++  if (!valid) { json_object_put(obj); return NULL; } return obj;
++}
++void bk_defaults(bk_config *c) {
++  *c = (bk_config){.port=8765,.clients=16,.ingress_rows=256,.ingress_bytes=4*1024*1024,
++    .output_frames=64,.output_bytes=1024*1024,.frame_bytes=16384,.registration_ms=5000,
++    .incomplete_ms=5000,.idle_ms=30000,.write_ms=5000,.drain_ms=2000,.evidence_limit=1000};
++}
++bool bk_config_load(bk_config *c, const char *path) {
++  FILE *f = fopen(path,"rb"); if (!f) return false;
++  char bytes[BK_INPUT+1]; size_t len = fread(bytes,1,sizeof(bytes),f); bool io = !ferror(f); fclose(f);
++  json_object *obj = io ? bk_parse(bytes,len) : NULL; if (!obj) return false;
++  bool ok = true;
++  json_object_object_foreach(obj,name,value) {
++    if (!strcmp(name,"test_stall_app")) {
++      const char *s=bk_string(obj,name);
++      if (!bk_identifier(s)) ok=false; else strcpy(c->test_stall_app,s);
++      continue;
++    }
++    if (!strcmp(name,"bind")) {
++      const char *s = bk_string(obj,name); if (!s || strcmp(s,"127.0.0.1")) ok=false;
++      continue;
++    }
++    if (!json_object_is_type(value,json_type_int)) { ok=false; continue; }
++    int64_t n = json_object_get_int64(value); bool known = false;
++#define SET(field,low,high) if (!strcmp(name,#field)) { known=true; if (n < (int64_t)(low) || (uint64_t)n > (high)) ok=false; else c->field=n; }
++    SET(port,1,65535) SET(clients,1,BK_CLIENTS) SET(ingress_rows,1,BK_ROWS)
++    SET(ingress_bytes,sizeof(bk_row),4*1024*1024) SET(output_frames,1,BK_OUTPUT)
++    SET(output_bytes,128,1024*1024) SET(frame_bytes,128,BK_FRAME)
++    SET(registration_ms,20,5000) SET(incomplete_ms,20,5000) SET(idle_ms,20,30000)
++    SET(write_ms,20,5000) SET(drain_ms,20,2000) SET(write_chunk,0,BK_FRAME)
++    SET(evidence_limit,1,10000000)
++#undef SET
++    if (!known) ok=false;
++  }
++  json_object_put(obj); return ok;
++}
+diff --git a/examples/xApp/c/monitor/kpm_broker/kpm_server.c b/examples/xApp/c/monitor/kpm_broker/kpm_server.c
+new file mode 100644
+index 00000000..922d0ac2
+--- /dev/null
++++ b/examples/xApp/c/monitor/kpm_broker/kpm_server.c
+@@ -0,0 +1,249 @@
++#define _GNU_SOURCE
++#include "kpm_broker.h"
++#include <arpa/inet.h>
++#include <errno.h>
++#include <inttypes.h>
++#include <poll.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/socket.h>
++#include <unistd.h>
++
++typedef struct { char *bytes; size_t len, offset; } frame;
++typedef struct {
++  int fd;
++  enum { AWAITING, REGISTERED, CLOSING } state;
++  char app[65], subscription[32], input[BK_INPUT];
++  size_t input_len, filter_len;
++  bk_key filters[BK_FILTERS];
++  bool all;
++  uint64_t cutoff, delivery, opened, activity, partial_since, progress, closing_since, matched, sent_frames;
++  frame output[BK_OUTPUT];
++  size_t head, count, bytes;
++} client;
++
++static void remove_client(client *c, const char *reason) {
++  if (c->fd < 0) return;
++  fprintf(stderr,"CLIENT_CLOSE app=%s reason=%s\n",c->app,reason);
++  close(c->fd);
++  for (size_t j = 0; j < c->count; ++j) free(c->output[(c->head+j)%BK_OUTPUT].bytes);
++  memset(c,0,sizeof(*c)); c->fd=-1;
++}
++static bool queue_json(bk_context *ctx, client *c, json_object *obj) {
++  size_t len = 0; const char *s = json_object_to_json_string_length(obj,JSON_C_TO_STRING_PLAIN,&len);
++  if (!s || len+1 > ctx->cfg.frame_bytes) {
++    ++ctx->serialization_errors; remove_client(c,"serialization_limit"); return false;
++  }
++  if (c->count >= ctx->cfg.output_frames || len+1 > ctx->cfg.output_bytes-c->bytes) {
++    ++ctx->client_overflows; remove_client(c,"output_overflow"); return false;
++  }
++  char *owned = malloc(len+1);
++  if (!owned) { atomic_store(&ctx->failed,true); remove_client(c,"allocation_failure"); return false; }
++  memcpy(owned,s,len); owned[len]='\n';
++  c->output[(c->head+c->count)%BK_OUTPUT] = (frame){.bytes=owned,.len=len+1};
++  if (!c->count) c->progress=bk_mono_ms();
++  ++c->count; c->bytes+=len+1; return true;
++}
++static void closing(client *c) {
++  if (c->state!=CLOSING) { c->state=CLOSING; c->closing_since=bk_mono_ms(); }
++}
++static void reject(bk_context *ctx, client *c, const char *type, const char *request, const char *code, bool fatal) {
++  ++ctx->admission_rejects;
++  json_object *obj = bk_envelope(ctx,type);
++  if (request) json_object_object_add(obj,"request_id",json_object_new_string(request));
++  json_object_object_add(obj,"status",json_object_new_string("rejected"));
++  json_object_object_add(obj,"error_code",json_object_new_string(code));
++  if (queue_json(ctx,c,obj) && fatal) closing(c);
++  json_object_put(obj);
++}
++static bool version_one(json_object *obj) {
++  json_object *v=NULL;
++  return json_object_object_get_ex(obj,"version",&v) && json_object_is_type(v,json_type_int) && json_object_get_int64(v)==1;
++}
++static bool filter_parse(json_object *obj, bk_key keys[BK_FILTERS], size_t *len, bool *all) {
++  if (!json_object_is_type(obj,json_type_object)) return false;
++  const char *mode=bk_string(obj,"mode"); if (!mode) return false;
++  *len=0; *all=false;
++  if (!strcmp(mode,"all_du_ues")) { *all=true; return json_object_object_length(obj)==1; }
++  json_object *links=NULL;
++  if (strcmp(mode,"links") || json_object_object_length(obj)!=2 || !json_object_object_get_ex(obj,"links",&links) ||
++      !json_object_is_type(links,json_type_array)) return false;
++  *len=json_object_array_length(links); if (!*len || *len>BK_FILTERS) return false;
++  for (size_t j=0;j<*len;++j) {
++    if (!bk_key_parse(json_object_array_get_idx(links,j),&keys[j])) return false;
++    for (size_t z=0;z<j;++z) if (bk_key_equal(&keys[j],&keys[z])) return false;
++  }
++  return true;
++}
++static void data_state(json_object *obj, const client *c) {
++  json_object_object_add(obj,"data_state",json_object_new_string(c->matched ? "receiving_kpm" : "waiting_for_kpm"));
++  json_object_object_add(obj,"last_matching_kpm_age_ms",c->matched ? json_object_new_int64(bk_mono_ms()-c->matched) : NULL);
++}
++static void request(bk_context *ctx, client clients[BK_CLIENTS], client *c, const char *s, size_t len, uint64_t *next_sub) {
++  json_object *obj=bk_parse(s,len);
++  const char *id=bk_string(obj,"request_id"), *type=bk_string(obj,"type");
++  if (!bk_identifier(id)) {
++    reject(ctx,c,"error",NULL,"invalid_request",true); json_object_put(obj); return;
++  }
++  bool registration=type && !strcmp(type,"register");
++  const char *response=registration ? "registration_status" : "error";
++  if (!version_one(obj)) { reject(ctx,c,response,id,"unsupported_version",false); goto done; }
++  if (!type) { reject(ctx,c,response,id,"invalid_request",false); goto done; }
++  if (registration) {
++    if (atomic_load(&ctx->admission_closed)) { reject(ctx,c,response,id,"shutting_down",true); goto done; }
++    if (c->state==REGISTERED) { reject(ctx,c,response,id,"already_registered",false); goto done; }
++    const char *app=bk_string(obj,"app_id"); json_object *filter=NULL;
++    bk_key keys[BK_FILTERS]; size_t count; bool all;
++    if (json_object_object_length(obj)!=5 || !bk_identifier(app) || !json_object_object_get_ex(obj,"filter",&filter) ||
++        !filter_parse(filter,keys,&count,&all)) { reject(ctx,c,response,id,"invalid_request",false); goto done; }
++    for (unsigned i=0;i<ctx->cfg.clients;++i) if (clients[i].fd>=0 && clients[i].state==REGISTERED && !strcmp(clients[i].app,app)) {
++      reject(ctx,c,response,id,"duplicate_app_id",false); goto done;
++    }
++    /* Worker commits cutoff before queueing status. Callback sequences are atomic. */
++    c->cutoff=atomic_load(&ctx->sequence); c->state=REGISTERED; strcpy(c->app,app);
++    snprintf(c->subscription,sizeof(c->subscription),"sub-%" PRIu64,++*next_sub);
++    c->all=all; c->filter_len=count; memcpy(c->filters,keys,count*sizeof(*keys));
++    json_object *reply=bk_envelope(ctx,response);
++    json_object_object_add(reply,"request_id",json_object_new_string(id));
++    json_object_object_add(reply,"status",json_object_new_string("registered"));
++    json_object_object_add(reply,"app_id",json_object_new_string(c->app));
++    json_object_object_add(reply,"subscription_id",json_object_new_string(c->subscription));
++    json_object_object_add(reply,"metric_names",bk_names_json());
++    json_object_object_add(reply,"report_period_ms",json_object_new_int(1000));
++    json_object_object_add(reply,"delivery",json_object_new_string("best_effort_no_replay"));
++    bk_add_u64(reply,"registration_cutoff_report_seq",c->cutoff); data_state(reply,c);
++    queue_json(ctx,c,reply); json_object_put(reply);
++  } else if (!strcmp(type,"ping") && json_object_object_length(obj)==3) {
++    json_object *reply=bk_envelope(ctx,"pong");
++    json_object_object_add(reply,"request_id",json_object_new_string(id)); data_state(reply,c);
++    queue_json(ctx,c,reply); json_object_put(reply);
++  } else if (!strcmp(type,"unregister") && c->state==REGISTERED && json_object_object_length(obj)==4) {
++    const char *sub=bk_string(obj,"subscription_id");
++    if (!sub || strcmp(sub,c->subscription)) { reject(ctx,c,"error",id,"invalid_request",false); goto done; }
++    json_object *reply=bk_envelope(ctx,"unregistration_status");
++    json_object_object_add(reply,"request_id",json_object_new_string(id));
++    json_object_object_add(reply,"subscription_id",json_object_new_string(c->subscription));
++    json_object_object_add(reply,"status",json_object_new_string("unregistered"));
++    if (queue_json(ctx,c,reply)) closing(c);
++    json_object_put(reply);
++  } else { reject(ctx,c,response,id,"invalid_request",false); goto done; }
++  c->activity=bk_mono_ms();
++done:
++  json_object_put(obj);
++}
++static void receive(bk_context *ctx, client clients[BK_CLIENTS], client *c, uint64_t *next_sub) {
++  /* Bound work per client per poll iteration to prevent request flooding starvation. */
++  char chunk[4096]; ssize_t n=recv(c->fd,chunk,sizeof(chunk),0);
++  if (!n) { remove_client(c,"eof"); return; }
++  if (n<0) { if (errno!=EAGAIN && errno!=EWOULDBLOCK && errno!=EINTR) remove_client(c,"read_error"); return; }
++  for (ssize_t i=0;i<n && c->fd>=0 && c->state!=CLOSING;++i) {
++    if (chunk[i]=='\n') {
++      request(ctx,clients,c,c->input,c->input_len,next_sub); c->input_len=0; c->partial_since=0;
++    } else if (c->input_len==BK_INPUT) {
++      reject(ctx,c,"error",NULL,"frame_too_large",true);
++    } else {
++      if (!c->input_len) c->partial_since=bk_mono_ms();
++      c->input[c->input_len++]=chunk[i];
++    }
++  }
++}
++static void transmit(bk_context *ctx, client *c) {
++  if (ctx->cfg.test_stall_app[0] && !strcmp(ctx->cfg.test_stall_app,c->app) && c->sent_frames) return;
++  frame *f=&c->output[c->head]; size_t remaining=f->len-f->offset;
++  if (ctx->cfg.write_chunk && remaining>ctx->cfg.write_chunk) remaining=ctx->cfg.write_chunk;
++  ssize_t n=send(c->fd,f->bytes+f->offset,remaining,MSG_NOSIGNAL);
++  if (n>0) {
++    f->offset+=n; c->progress=bk_mono_ms();
++    if (f->offset==f->len) { c->bytes-=f->len; free(f->bytes); *f=(frame){0}; c->head=(c->head+1)%BK_OUTPUT; --c->count; ++c->sent_frames; }
++  } else if (n<0 && errno!=EAGAIN && errno!=EWOULDBLOCK && errno!=EINTR) remove_client(c,"write_error");
++}
++static bool matches(const client *c, const bk_row *row) {
++  if (c->state!=REGISTERED || row->report_seq<=c->cutoff) return false;
++  if (c->all) return true;
++  for (size_t i=0;i<c->filter_len;++i) if (bk_key_equal(&c->filters[i],&row->key)) return true;
++  return false;
++}
++void *bk_server(void *arg) {
++  bk_context *ctx=arg; client clients[BK_CLIENTS];
++  memset(clients,0,sizeof(clients)); for (unsigned i=0;i<BK_CLIENTS;++i) clients[i].fd=-1;
++  int listener=socket(AF_INET,SOCK_STREAM|SOCK_NONBLOCK|SOCK_CLOEXEC,0);
++  int yes=1; if (listener>=0) setsockopt(listener,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes));
++  struct sockaddr_in address={.sin_family=AF_INET,.sin_port=htons(ctx->cfg.port),.sin_addr.s_addr=htonl(INADDR_LOOPBACK)};
++  if (listener<0 || bind(listener,(struct sockaddr*)&address,sizeof(address)) || listen(listener,16)) {
++    perror("broker listener"); if (listener>=0) close(listener); atomic_store(&ctx->failed,true); return NULL;
++  }
++  atomic_store(&ctx->ready,true);
++  printf("BROKER_READY bind=127.0.0.1 port=%u source=%s profile=base5 instance=%s\n",ctx->cfg.port,ctx->source,ctx->instance);
++  uint64_t next_sub=0, shutdown_at=0;
++  for (;;) {
++    uint64_t now=bk_mono_ms();
++    if (listener>=0 && atomic_load(&ctx->admission_closed)) { close(listener); listener=-1; }
++    if (atomic_load(&ctx->stop) && !shutdown_at) {
++      shutdown_at=now; if (listener>=0) close(listener); listener=-1;
++      for (unsigned i=0;i<ctx->cfg.clients;++i) if (clients[i].fd>=0) closing(&clients[i]);
++    }
++    struct pollfd fds[BK_CLIENTS+2]={{.fd=listener,.events=POLLIN},{.fd=ctx->wake,.events=POLLIN}};
++    for (unsigned i=0;i<ctx->cfg.clients;++i) {
++      client *c=&clients[i]; fds[i+2]=(struct pollfd){.fd=c->fd,
++        .events=(c->state==CLOSING ? 0 : POLLIN) | (c->count ? POLLOUT : 0)};
++    }
++    int rc=poll(fds,ctx->cfg.clients+2,20);
++    if (rc<0 && errno!=EINTR) { atomic_store(&ctx->failed,true); break; }
++    if (fds[1].revents&POLLIN) { uint64_t value; ssize_t n=read(ctx->wake,&value,sizeof(value)); (void)n; }
++    if (listener>=0 && (fds[0].revents&POLLIN)) {
++      int fd=accept4(listener,NULL,NULL,SOCK_NONBLOCK|SOCK_CLOEXEC);
++      if (fd>=0) {
++        unsigned i=0; while (i<ctx->cfg.clients && clients[i].fd>=0) ++i;
++        if (i==ctx->cfg.clients) {
++          ++ctx->admission_rejects;
++          const char rejection[]="{\"version\":1,\"type\":\"registration_status\",\"status\":\"rejected\",\"error_code\":\"too_many_clients\"}\n";
++          ssize_t n=send(fd,rejection,sizeof(rejection)-1,MSG_NOSIGNAL); (void)n; close(fd);
++        } else { clients[i].fd=fd; clients[i].opened=clients[i].activity=bk_mono_ms(); }
++      } else if (errno!=EAGAIN && errno!=EINTR) { atomic_store(&ctx->failed,true); break; }
++    }
++    for (unsigned i=0;i<ctx->cfg.clients;++i) {
++      client *c=&clients[i]; short ev=fds[i+2].revents;
++      /* A newly admitted client did not have this slot in the poll snapshot. */
++      if (c->fd<0 || c->fd!=fds[i+2].fd) continue;
++      if (ev&(POLLERR|POLLNVAL)) { remove_client(c,"socket_error"); continue; }
++      if ((ev&POLLIN) && c->state!=CLOSING) receive(ctx,clients,c,&next_sub);
++      if (c->fd>=0 && c->count && (ev&POLLOUT)) transmit(ctx,c);
++      if (c->fd>=0 && (ev&POLLHUP) && !(ev&POLLIN)) remove_client(c,"hangup");
++    }
++    /* Bounded batch; return to sockets even under continuous ingress. */
++    bk_row row;
++    for (unsigned batch=0;batch<64 && bk_pop(ctx,&row);++batch) {
++      bk_trace(ctx,&row);
++      for (unsigned i=0;i<ctx->cfg.clients;++i) {
++        client *c=&clients[i]; if (c->fd<0 || !matches(c,&row)) continue;
++        json_object *obj=bk_row_json(ctx,&row);
++        json_object_object_add(obj,"subscription_id",json_object_new_string(c->subscription));
++        bk_add_u64(obj,"delivery_seq",++c->delivery);
++        if (queue_json(ctx,c,obj)) c->matched=bk_mono_ms();
++        json_object_put(obj);
++      }
++    }
++    now=bk_mono_ms(); bool active=false;
++    for (unsigned i=0;i<ctx->cfg.clients;++i) {
++      client *c=&clients[i]; if (c->fd<0) continue;
++      const char *reason=NULL;
++      if (c->state==CLOSING && (!c->count || now-c->closing_since>=ctx->cfg.drain_ms)) reason="drained_or_drain_timeout";
++      else if (c->state==AWAITING && now-c->opened>=ctx->cfg.registration_ms) reason="registration_timeout";
++      else if (c->partial_since && now-c->partial_since>=ctx->cfg.incomplete_ms) reason="incomplete_timeout";
++      else if (c->state==REGISTERED && now-c->activity>=ctx->cfg.idle_ms) reason="idle_timeout";
++      else if (c->count && now-c->progress>=ctx->cfg.write_ms) reason="write_timeout";
++      if (reason) remove_client(c,reason); else active=true;
++    }
++    if (shutdown_at && (!active || now-shutdown_at>=ctx->cfg.drain_ms)) break;
++    if (atomic_load(&ctx->failed)) break;
++  }
++  for (unsigned i=0;i<ctx->cfg.clients;++i) remove_client(&clients[i],"shutdown");
++  if (listener>=0) close(listener);
++  pthread_mutex_lock(&ctx->mutex); size_t ingress_peak=ctx->peak; pthread_mutex_unlock(&ctx->mutex);
++  fprintf(stderr,"BROKER_STATS ingress_dropped=%" PRIuFAST64 " malformed=%" PRIuFAST64
++    " ingress_peak=%zu serialization_errors=%" PRIu64 " admission_rejects=%" PRIu64
++    " client_overflows=%" PRIu64 " evidence_rows=%u evidence_limited=%" PRIu64 "\n",
++    atomic_load(&ctx->dropped),atomic_load(&ctx->malformed),ingress_peak,ctx->serialization_errors,
++    ctx->admission_rejects,ctx->client_overflows,ctx->evidence_count,ctx->evidence_limited);
++  return NULL;
++}
+diff --git a/examples/xApp/c/monitor/kpm_broker/kpm_snapshot.c b/examples/xApp/c/monitor/kpm_broker/kpm_snapshot.c
+new file mode 100644
+index 00000000..eff8db30
+--- /dev/null
++++ b/examples/xApp/c/monitor/kpm_broker/kpm_snapshot.c
+@@ -0,0 +1,157 @@
++#define _GNU_SOURCE
++#include "kpm_broker.h"
++#include <errno.h>
++#include <inttypes.h>
++#include <math.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/eventfd.h>
++#include <sys/random.h>
++#include <time.h>
++#include <unistd.h>
++
++const char *const bk_names[BK_METRICS] = {
++  "DRB.RlcSduDelayDl", "DRB.UEThpDl", "DRB.UEThpUl", "RRU.PrbTotDl", "RRU.PrbTotUl"};
++const char *const bk_units[BK_METRICS] = {"0.1 ms", "kbit/s", "kbit/s", "%", "%"};
++uint64_t bk_mono_ms(void) {
++  struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts);
++  return (uint64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
++}
++uint64_t bk_unix_us(void) {
++  struct timespec ts; clock_gettime(CLOCK_REALTIME, &ts);
++  return (uint64_t)ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
++}
++bool bk_init(bk_context *ctx, const bk_config *cfg, const char *source, const char *evidence) {
++  memset(ctx, 0, sizeof(*ctx)); ctx->cfg = *cfg; ctx->source = source; ctx->wake = -1;
++  atomic_init(&ctx->sequence, 0); atomic_init(&ctx->dropped, 0); atomic_init(&ctx->malformed, 0);
++  atomic_init(&ctx->stop, false); atomic_init(&ctx->ready, false); atomic_init(&ctx->failed, false);
++  atomic_init(&ctx->admission_closed, false);
++  if (pthread_mutex_init(&ctx->mutex, NULL)) return false;
++  ctx->wake = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
++  unsigned char random[16];
++  if (ctx->wake < 0 || getrandom(random, sizeof(random), 0) != sizeof(random)) goto fail;
++  for (size_t i = 0; i < sizeof(random); ++i) snprintf(ctx->instance + i*2, 3, "%02x", random[i]);
++  if (evidence && !(ctx->evidence = fopen(evidence, "wx"))) goto fail;
++  ctx->accepting = true;
++  return true;
++fail:
++  if (ctx->wake >= 0) close(ctx->wake);
++  pthread_mutex_destroy(&ctx->mutex);
++  return false;
++}
++void bk_wake(bk_context *ctx) {
++  uint64_t one = 1;
++  ssize_t n = write(ctx->wake, &one, sizeof(one));
++  if (n < 0 && errno != EAGAIN && errno != EINTR) atomic_store(&ctx->failed, true);
++}
++void bk_disable(bk_context *ctx) {
++  pthread_mutex_lock(&ctx->mutex); ctx->accepting = false; pthread_mutex_unlock(&ctx->mutex);
++  atomic_store(&ctx->admission_closed,true); bk_wake(ctx);
++}
++void bk_destroy(bk_context *ctx) {
++  if (ctx->evidence && fclose(ctx->evidence)) atomic_store(&ctx->failed, true);
++  close(ctx->wake); pthread_mutex_destroy(&ctx->mutex);
++}
++bool bk_key_equal(const bk_key *a, const bk_key *b) {
++  return !strcmp(a->mcc, b->mcc) && !strcmp(a->mnc, b->mnc) && a->gnb == b->gnb &&
++    a->bits == b->bits && a->du == b->du && a->ue == b->ue;
++}
++bool bk_pop(bk_context *ctx, bk_row *row) {
++  pthread_mutex_lock(&ctx->mutex);
++  bool found = ctx->count != 0;
++  if (found) { *row = ctx->rows[ctx->head]; ctx->head = (ctx->head + 1) % BK_ROWS; --ctx->count; }
++  pthread_mutex_unlock(&ctx->mutex); return found;
++}
++void bk_enqueue_owned(bk_context *ctx, const bk_row *row) {
++  pthread_mutex_lock(&ctx->mutex);
++  if (ctx->accepting) {
++    if (ctx->count >= ctx->cfg.ingress_rows || (ctx->count + 1)*sizeof(*row) > ctx->cfg.ingress_bytes)
++      atomic_fetch_add(&ctx->dropped, 1);
++    else {
++      ctx->rows[(ctx->head + ctx->count) % BK_ROWS] = *row;
++      if (++ctx->count > ctx->peak) ctx->peak = ctx->count;
++    }
++  }
++  pthread_mutex_unlock(&ctx->mutex); bk_wake(ctx);
++}
++static bool node_key(const global_e2_node_id_t *node, bk_key *key) {
++  if (!node || node->type != e2ap_ngran_gNB_DU || !node->cu_du_id || node->nb_id.unused > 10 ||
++      node->plmn.mcc > 999 || (node->plmn.mnc_digit_len != 2 && node->plmn.mnc_digit_len != 3) ||
++      node->plmn.mnc > (node->plmn.mnc_digit_len == 2 ? 99 : 999)) return false;
++  key->bits = 32 - node->nb_id.unused;
++  if ((uint64_t)node->nb_id.nb_id >= (UINT64_C(1) << key->bits) || *node->cu_du_id >= (UINT64_C(1)<<36)) return false;
++  unsigned mcc=node->plmn.mcc, mnc=node->plmn.mnc, digits=node->plmn.mnc_digit_len;
++  for (int i=2;i>=0;--i) { key->mcc[i]='0'+mcc%10; mcc/=10; }
++  for (int i=(int)digits-1;i>=0;--i) { key->mnc[i]='0'+mnc%10; mnc/=10; }
++  key->mcc[3]=0; key->mnc[digits]=0;
++  key->gnb = node->nb_id.nb_id; key->du = *node->cu_du_id; return true;
++}
++static bool mapping(const kpm_ind_msg_format_1_t *rows, int indices[BK_METRICS]) {
++  if (!rows->meas_info_lst_len || rows->meas_info_lst_len > 64 || !rows->meas_info_lst ||
++      !rows->meas_data_lst_len || rows->meas_data_lst_len > 256 || !rows->meas_data_lst) return false;
++  for (unsigned k = 0; k < BK_METRICS; ++k) indices[k] = -1;
++  for (size_t j = 0; j < rows->meas_info_lst_len; ++j) {
++    const meas_type_t *type = &rows->meas_info_lst[j].meas_type;
++    if (type->type != NAME_MEAS_TYPE || !type->name.buf || !type->name.len || type->name.len > 150) return false;
++    for (size_t z = 0; z < j; ++z) {
++      const byte_array_t *previous = &rows->meas_info_lst[z].meas_type.name;
++      if (previous->len == type->name.len && !memcmp(previous->buf, type->name.buf, previous->len)) return false;
++    }
++    for (unsigned k = 0; k < BK_METRICS; ++k)
++      if (strlen(bk_names[k]) == type->name.len && !memcmp(bk_names[k], type->name.buf, type->name.len)) indices[k] = (int)j;
++  }
++  for (size_t j = 0; j < rows->meas_data_lst_len; ++j) {
++    const meas_data_lst_t *row = &rows->meas_data_lst[j];
++    if (row->meas_record_len != rows->meas_info_lst_len || !row->meas_record_lst ||
++        (row->incomplete_flag && *row->incomplete_flag != TRUE_ENUM_VALUE)) return false;
++  }
++  return true;
++}
++void bk_callback(bk_context *ctx, const sm_ag_if_rd_t *rd, const global_e2_node_id_t *node) {
++  /* Sequence is captured before normalization, including callbacks later rejected. */
++  uint64_t seq = atomic_fetch_add(&ctx->sequence, 1) + 1, received = bk_unix_us();
++  bk_key key = {0};
++  if (!rd || rd->type != INDICATION_MSG_AGENT_IF_ANS_V0 || rd->ind.type != KPM_STATS_V3_0 || !node_key(node, &key)) goto bad;
++  const kpm_ind_data_t *kpm = &rd->ind.kpm.ind;
++  if (kpm->hdr.type != FORMAT_1_INDICATION_HEADER || kpm->msg.type != FORMAT_3_INDICATION_MESSAGE) goto bad;
++  const kpm_ind_msg_format_3_t *msg = &kpm->msg.frm_3;
++  if (!msg->ue_meas_report_lst_len || msg->ue_meas_report_lst_len > 256 || !msg->meas_report_per_ue) goto bad;
++  /* Validate the whole indication before publishing any rows. */
++  for (size_t u = 0; u < msg->ue_meas_report_lst_len; ++u) {
++    const meas_report_per_ue_t *ue = &msg->meas_report_per_ue[u]; int indices[BK_METRICS];
++    if (ue->ue_meas_report_lst.type != GNB_DU_UE_ID_E2SM || !mapping(&ue->ind_msg_format_1, indices)) goto bad;
++    for (size_t z = 0; z < u; ++z)
++      if (msg->meas_report_per_ue[z].ue_meas_report_lst.gnb_du.gnb_cu_ue_f1ap == ue->ue_meas_report_lst.gnb_du.gnb_cu_ue_f1ap) goto bad;
++  }
++  for (size_t u = 0; u < msg->ue_meas_report_lst_len; ++u) {
++    const meas_report_per_ue_t *ue = &msg->meas_report_per_ue[u];
++    const kpm_ind_msg_format_1_t *rows = &ue->ind_msg_format_1; int indices[BK_METRICS];
++    mapping(rows, indices);
++    for (size_t j = 0; j < rows->meas_data_lst_len; ++j) {
++      bk_row row = {.key=key, .report_seq=seq, .received_us=received,
++        .header_us=kpm->hdr.kpm_ric_ind_hdr_format_1.collectStartTime, .sample_idx=j, .incomplete=-1};
++      row.key.ue = ue->ue_meas_report_lst.gnb_du.gnb_cu_ue_f1ap;
++      if (ue->ue_meas_report_lst.gnb_du.ran_ue_id) {
++        row.has_ran_ue = true; row.ran_ue = *ue->ue_meas_report_lst.gnb_du.ran_ue_id;
++      }
++      if (rows->meas_data_lst[j].incomplete_flag) row.incomplete = 1;
++      for (unsigned k = 0; k < BK_METRICS; ++k) {
++        bk_value *v = &row.values[k]; v->type = BK_ABSENT; v->status = BK_NOT_REPORTED;
++        if (indices[k] < 0) continue;
++        const meas_record_lst_t *r = &rows->meas_data_lst[j].meas_record_lst[indices[k]];
++        v->status = BK_OK;
++        if (r->value == INTEGER_MEAS_VALUE) { v->type = BK_INTEGER; v->integer = r->int_val; }
++        else if (r->value == REAL_MEAS_VALUE) {
++          v->type = BK_REAL; v->real = r->real_val;
++          if (!isfinite(v->real)) v->status = BK_INVALID;
++        } else if (r->value == NO_VALUE_MEAS_VALUE) { v->type = BK_NO_VALUE; v->status = BK_NO_DATA; }
++        else { v->type = BK_UNSUPPORTED; v->status = BK_INVALID; }
++      }
++      bk_enqueue_owned(ctx, &row);
++    }
++  }
++  return;
++bad:
++  atomic_fetch_add(&ctx->malformed, 1); /* Worker emits diagnostics; callback performs no I/O. */
++}
+diff --git a/examples/xApp/c/monitor/kpm_broker/kpm_source.c b/examples/xApp/c/monitor/kpm_broker/kpm_source.c
+new file mode 100644
+index 00000000..287de0b8
+--- /dev/null
++++ b/examples/xApp/c/monitor/kpm_broker/kpm_source.c
+@@ -0,0 +1,210 @@
++/* Style 4 builders retained from the reviewed Falcon identity collector. */
++#include "kpm_broker.h"
++#include "sm/kpm_sm/kpm_sm_id_wrapper.h"
++#include <assert.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++
++static
++kpm_event_trigger_def_t gen_kpm_ev_trig(uint64_t period)
++{
++  kpm_event_trigger_def_t dst = {0};
++
++  dst.type = FORMAT_1_RIC_EVENT_TRIGGER;
++  dst.kpm_ric_event_trigger_format_1.report_period_ms = period;
++
++  return dst;
++}
++
++static
++meas_info_format_1_lst_t gen_meas_info_format_1_lst(const act_name_id_t act)
++{
++  meas_info_format_1_lst_t dst = {0};
++
++  // use id
++  if (!strcasecmp(act.name, "null")) {
++    dst.meas_type.type = ID_MEAS_TYPE;
++    dst.meas_type.id = act.id;
++  } else { // use name
++    dst.meas_type.type = NAME_MEAS_TYPE;
++    // ETSI TS 128 552
++    dst.meas_type.name = cp_str_to_ba(act.name);
++  }
++
++  dst.label_info_lst_len = 1;
++  dst.label_info_lst = calloc(1, sizeof(label_info_lst_t));
++  assert(dst.label_info_lst != NULL && "Memory exhausted");
++
++  // No Label
++  dst.label_info_lst[0].noLabel = calloc(1, sizeof(enum_value_e));
++  assert(dst.label_info_lst[0].noLabel != NULL && "Memory exhausted");
++  *dst.label_info_lst[0].noLabel = TRUE_ENUM_VALUE;
++
++  return dst;
++}
++
++static
++kpm_act_def_format_1_t gen_kpm_act_def_frmt_1(const sub_oran_sm_t sub_sm, uint32_t period_ms)
++{
++  kpm_act_def_format_1_t dst = {0};
++
++  dst.gran_period_ms = period_ms;
++
++  dst.meas_info_lst_len = sub_sm.act_len;
++  dst.meas_info_lst = calloc(dst.meas_info_lst_len, sizeof(meas_info_format_1_lst_t));
++  assert(dst.meas_info_lst != NULL && "Memory exhausted");
++
++  for(size_t i = 0; i < dst.meas_info_lst_len; i++) {
++    dst.meas_info_lst[i] = gen_meas_info_format_1_lst(sub_sm.actions[i]);
++  }
++
++  return dst;
++}
++
++static
++kpm_act_def_format_4_t gen_kpm_act_def_frmt_4(const sub_oran_sm_t sub_sm, uint32_t period_ms)
++{
++  kpm_act_def_format_4_t dst = {0};
++
++  // [1, 32768]
++  dst.matching_cond_lst_len = 1;
++
++  dst.matching_cond_lst = calloc(dst.matching_cond_lst_len, sizeof(matching_condition_format_4_lst_t));
++  assert(dst.matching_cond_lst != NULL && "Memory exhausted");
++
++  test_info_lst_t* test_info_lst = &dst.matching_cond_lst[0].test_info_lst;
++  test_info_lst->test_cond_type = S_NSSAI_TEST_COND_TYPE;
++  test_info_lst->S_NSSAI = TRUE_TEST_COND_TYPE;
++
++  test_cond_e* test_cond = calloc(1, sizeof(test_cond_e));
++  assert(test_cond != NULL && "Memory exhausted");
++  *test_cond = EQUAL_TEST_COND;
++  test_info_lst->test_cond = test_cond;
++
++  test_cond_value_t* test_cond_value = calloc(1, sizeof(test_cond_value_t));
++  assert(test_cond_value != NULL && "Memory exhausted");
++  test_cond_value->type = INTEGER_TEST_COND_VALUE;
++  test_cond_value->int_value = calloc(1, sizeof(int64_t));
++  assert(test_cond_value->int_value != NULL && "Memory exhausted");
++  *test_cond_value->int_value = 1;
++  test_info_lst->test_cond_value = test_cond_value;
++
++  // Action definition Format 1
++  dst.action_def_format_1 = gen_kpm_act_def_frmt_1(sub_sm, period_ms);  // 8.2.1.2.1
++
++  return dst;
++}
++
++static
++kpm_act_def_t gen_kpm_act_def(const sub_oran_sm_t sub_sm, format_action_def_e act_frm, uint32_t period_ms)
++{
++  kpm_act_def_t dst = {0};
++
++  if (act_frm == FORMAT_1_ACTION_DEFINITION) {
++    dst.type = FORMAT_1_ACTION_DEFINITION;
++    dst.frm_1 = gen_kpm_act_def_frmt_1(sub_sm, period_ms);
++  } else if (act_frm == FORMAT_4_ACTION_DEFINITION) {
++    dst.type = FORMAT_4_ACTION_DEFINITION;
++    dst.frm_4 = gen_kpm_act_def_frmt_4(sub_sm, period_ms);
++  } else {
++    assert(0!=0 && "not support action definition type");
++  }
++
++  return dst;
++}
++
++
++
++static bk_context *callback_context;
++static void source_callback(const sm_ag_if_rd_t *rd, const global_e2_node_id_t *node) {
++  bk_callback(callback_context,rd,node);
++}
++static bool capability(const e2_node_connected_xapp_t *node) {
++  for (size_t f=0;f<node->len_rf;++f) {
++    const sm_ran_function_t *rf=&node->rf[f];
++    if (rf->id!=SM_KPM_ID || rf->defn.type!=KPM_RAN_FUNC_DEF_E) continue;
++    const kpm_ran_function_def_t *def=&rf->defn.kpm;
++    for (size_t s=0;s<def->sz_ric_report_style_list;++s) {
++      const ric_report_style_item_t *style=&def->ric_report_style_list[s];
++      if (style->act_def_format_type!=FORMAT_4_ACTION_DEFINITION ||
++          style->ind_msg_format_type!=FORMAT_3_INDICATION_MESSAGE) continue;
++      unsigned found=0;
++      for (unsigned k=0;k<BK_METRICS;++k) {
++        bool present=false;
++        for (size_t m=0;m<style->meas_info_for_action_lst_len;++m) {
++          const byte_array_t *name=&style->meas_info_for_action_lst[m].name;
++          if (name->buf && name->len==strlen(bk_names[k]) && !memcmp(name->buf,bk_names[k],name->len)) present=true;
++        }
++        if (present) ++found;
++      }
++      if (found==BK_METRICS) return true;
++    }
++  }
++  return false;
++}
++static bool valid_config(const fr_args_t *args) {
++  bool valid=args->sub_oran_sm_len==1 && args->sub_cust_sm_len==0 && !args->db_params.enable;
++  const sub_oran_sm_t *spec=&args->sub_oran_sm[0];
++  valid=valid && spec->name && !strcmp(spec->name,"KPM") && spec->ran_type &&
++    !strcmp(spec->ran_type,"ngran_gNB_DU") && spec->format==4 && spec->time==1000 && spec->act_len==BK_METRICS;
++  for (unsigned k=0;valid && k<BK_METRICS;++k)
++    valid=spec->actions[k].name && !strcmp(spec->actions[k].name,bk_names[k]);
++  return valid;
++}
++bool bk_source_check(int argc, char **argv) {
++  fr_args_t args=init_fr_args(argc,argv); bool valid=valid_config(&args);
++  if (valid) {
++    kpm_act_def_t action=gen_kpm_act_def(args.sub_oran_sm[0],FORMAT_4_ACTION_DEFINITION,1000);
++    const kpm_act_def_format_1_t *group=&action.frm_4.action_def_format_1;
++    valid=group->meas_info_lst_len==BK_METRICS && group->gran_period_ms==1000;
++    for (unsigned i=0;valid && i<BK_METRICS;++i) {
++      const meas_info_format_1_lst_t *metric=&group->meas_info_lst[i];
++      valid=metric->meas_type.type==NAME_MEAS_TYPE && metric->meas_type.name.len==strlen(bk_names[i]) &&
++        !memcmp(metric->meas_type.name.buf,bk_names[i],strlen(bk_names[i])) && metric->label_info_lst_len==1 &&
++        metric->label_info_lst[0].noLabel && *metric->label_info_lst[0].noLabel==TRUE_ENUM_VALUE;
++    }
++    free_kpm_action_def(&action);
++  }
++  free_fr_args(&args);
++  if (valid) puts("BASE5_CONFIG_VALID style=4 reporting_ms=1000 granularity_ms=1000 metrics=5");
++  return valid;
++}
++bool bk_source_run(bk_context *ctx, int argc, char **argv, volatile sig_atomic_t *stopping) {
++  fr_args_t args=init_fr_args(argc,argv);
++  bool valid=valid_config(&args);
++  const sub_oran_sm_t *spec=&args.sub_oran_sm[0];
++  if (!valid) { fprintf(stderr,"base5 requires exactly five DU Style 4 actions at 1000 ms, database OFF\n"); free_fr_args(&args); return false; }
++  callback_context=ctx;
++  struct sigaction before_int, before_term;
++  sigaction(SIGINT,NULL,&before_int); sigaction(SIGTERM,NULL,&before_term);
++  init_xapp_api(&args);
++  /* The SDK replaces SIGINT with an abrupt shutdown handler. Restore flags. */
++  sigaction(SIGINT,&before_int,NULL); sigaction(SIGTERM,&before_term,NULL);
++  e2_node_arr_xapp_t nodes=e2_nodes_xapp_api();
++  int handles[256]; size_t count=0; bool success=true;
++  for (size_t n=0;n<nodes.len && !*stopping;++n) {
++    e2_node_connected_xapp_t *node=&nodes.n[n];
++    if (node->id.type!=e2ap_ngran_gNB_DU) continue;
++    if (!node->id.cu_du_id || !capability(node)) { success=false; break; }
++    bool duplicate=false;
++    for (size_t j=0;j<n;++j) if (eq_global_e2_node_id(&nodes.n[j].id,&node->id)) duplicate=true;
++    if (duplicate) { success=false; break; }
++    kpm_sub_data_t sub={0}; sub.ev_trg_def=gen_kpm_ev_trig(1000); sub.sz_ad=1;
++    sub.ad=calloc(1,sizeof(*sub.ad)); assert(sub.ad);
++    sub.ad[0]=gen_kpm_act_def(*spec,FORMAT_4_ACTION_DEFINITION,1000);
++    sm_ans_xapp_t answer=report_sm_xapp_api(&node->id,SM_KPM_ID,&sub,source_callback);
++    free_kpm_sub_data(&sub);
++    if (!answer.success) { success=false; break; }
++    handles[count++]=answer.u.handle;
++  }
++  if (!count) success=false;
++  if (success) printf("E2_READY shared_du_subscriptions=%zu profile=base5 period_ms=1000\n",count);
++  else fprintf(stderr,"E2 source unavailable or base5 capability/subscription rejected\n");
++  while (success && !*stopping && !atomic_load(&ctx->failed)) usleep(10000);
++  bk_disable(ctx);
++  for (size_t i=0;i<count;++i) rm_report_sm_xapp_api(handles[i]);
++  free_e2_node_arr_xapp(&nodes);
++  while (!try_stop_xapp_api()) usleep(1000);
++  callback_context=NULL; free_fr_args(&args); return success;
++}
+diff --git a/examples/xApp/c/monitor/xapp_kpm_broker.c b/examples/xApp/c/monitor/xapp_kpm_broker.c
+new file mode 100644
+index 00000000..cab278b4
+--- /dev/null
++++ b/examples/xApp/c/monitor/xapp_kpm_broker.c
+@@ -0,0 +1,74 @@
++#define _GNU_SOURCE
++#include "kpm_broker/kpm_broker.h"
++#include <errno.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++
++static volatile sig_atomic_t stopping;
++static void stop_handler(int sig) { (void)sig; stopping=1; }
++static bool number(const char *s, unsigned *n) {
++  if (!s || !*s) return false;
++  char *end; errno=0; unsigned long parsed=strtoul(s,&end,10);
++  if (errno || *end || parsed<1 || parsed>3600000) return false;
++  *n=parsed; return true;
++}
++int main(int argc, char **argv) {
++  setvbuf(stdout,NULL,_IOLBF,0);
++  const char *source=NULL,*profile="base5",*config=NULL,*dir=NULL,*evidence=NULL;
++  const char *plugin="/usr/local/lib/flexric/libkpm_sm.so";
++  unsigned period=1000; bool repeat=false, check=false;
++  char **sdk_args=calloc(argc+1,sizeof(*sdk_args)); if (!sdk_args) return 2;
++  int sdk_argc=1; sdk_args[0]=argv[0];
++  for (int i=1;i<argc;++i) {
++    const char *arg=argv[i];
++    if (!strcmp(arg,"--fixture-repeat")) { repeat=true; continue; }
++    if (!strcmp(arg,"--check-config")) { check=true; continue; }
++    if (!strcmp(arg,"-c") || !strcmp(arg,"-p")) {
++      if (++i>=argc) goto usage;
++      sdk_args[sdk_argc++]=argv[i-1]; sdk_args[sdk_argc++]=argv[i]; continue;
++    }
++    if (++i>=argc) goto usage;
++    if (!strcmp(arg,"--source")) source=argv[i];
++    else if (!strcmp(arg,"--metric-profile")) profile=argv[i];
++    else if (!strcmp(arg,"--broker-config")) config=argv[i];
++    else if (!strcmp(arg,"--fixture-dir")) dir=argv[i];
++    else if (!strcmp(arg,"--fixture-plugin")) plugin=argv[i];
++    else if (!strcmp(arg,"--callback-evidence")) evidence=argv[i];
++    else if (!strcmp(arg,"--fixture-period-ms")) { if (!number(argv[i],&period)) goto usage; }
++    else goto usage;
++  }
++  if (!source || (strcmp(source,"e2") && strcmp(source,"fixture")) || strcmp(profile,"base5") ||
++      (!strcmp(source,"fixture") && (!dir || sdk_argc!=1)) ||
++      (!strcmp(source,"e2") && (dir || repeat || sdk_argc==1))) goto usage;
++  if (check) {
++    if (strcmp(source,"e2")) goto usage;
++    bool valid=bk_source_check(sdk_argc,sdk_args); free(sdk_args); return valid ? 0 : 1;
++  }
++  bk_config cfg; bk_defaults(&cfg);
++  if (config && !bk_config_load(&cfg,config)) { fprintf(stderr,"Invalid broker configuration\n"); free(sdk_args); return 2; }
++  if (!strcmp(source,"e2") && (cfg.write_chunk || cfg.test_stall_app[0])) {
++    fprintf(stderr,"Fixture I/O adapters cannot be used with E2\n"); free(sdk_args); return 2;
++  }
++  bk_context *ctx=calloc(1,sizeof(*ctx));
++  if (!ctx || !bk_init(ctx,&cfg,source,evidence)) { perror("broker context"); free(ctx); free(sdk_args); return 2; }
++  struct sigaction action={.sa_handler=stop_handler}; sigemptyset(&action.sa_mask);
++  sigaction(SIGINT,&action,NULL); sigaction(SIGTERM,&action,NULL); signal(SIGPIPE,SIG_IGN);
++  pthread_t worker;
++  if (pthread_create(&worker,NULL,bk_server,ctx)) { bk_destroy(ctx); free(ctx); free(sdk_args); return 2; }
++  while (!atomic_load(&ctx->ready) && !atomic_load(&ctx->failed) && !stopping) usleep(1000);
++  bool ok=!atomic_load(&ctx->failed);
++  if (ok && !stopping) {
++    ok=!strcmp(source,"fixture") ? bk_fixture_load(ctx,dir,plugin,period,repeat,&stopping) :
++      bk_source_run(ctx,sdk_argc,sdk_args,&stopping);
++    while (ok && !stopping && !atomic_load(&ctx->failed)) usleep(10000);
++  }
++  bk_disable(ctx); atomic_store(&ctx->stop,true); bk_wake(ctx); pthread_join(worker,NULL);
++  bk_destroy(ctx); ok=ok && !atomic_load(&ctx->failed) && !ctx->serialization_errors && !ctx->evidence_limited;
++  free(ctx); free(sdk_args); return ok ? 0 : 1;
++usage:
++  fprintf(stderr,"Usage: %s --source fixture|e2 --metric-profile base5 [--broker-config FILE] "
++    "[--callback-evidence NEW_FILE] (--fixture-dir DIR [--fixture-repeat] [--fixture-period-ms N] "
++    "[--fixture-plugin SO] | -c BASE5_CONFIG [-p SM_DIR] [--check-config])\n",argv[0]);
++  free(sdk_args); return 2;
++}

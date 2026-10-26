@@ -1,5 +1,14 @@
 # Falcomm
 
+**Bound KPM application subscriptions, 2026-10-26:** the existing 27-metric/
+100 ms identity xApp now accepts app registrations and pushes full matched
+link/UE/session/IP reports. The independent dummy saves TXT and timing evidence.
+Offline regressions and a paced archived-input/socket/TXT comparison pass; real
+E2 delivery and 30-minute live stability remain pending. See the
+[interface and commands](docs/kpm_app_interface.md),
+[implementation record](docs/reports/du27_app_subscription_2026-10-26.md) and
+[Plan 2](plans/xapp-kpm-app-subscription.md).
+
 **Dual UE live stability, 2026-10-25:** the
 [six-minute 27 KPM experiment report](docs/reports/dual_ue_27kpm_stability_report_2026-10-25.md)
 records six completed alternating/concurrent uplink phases, stable 100 ms DU

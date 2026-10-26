@@ -1,5 +1,21 @@
 # Development Handoff
 
+**2026-10-26 bound-report subscription implementation:** the current 27-metric,
+100 ms identity xApp now serves version-2 app registrations and pushes its full
+matched DU/UE/CU/Core/session/IP snapshots. The dummy owns TXT and receipt timing.
+Offline mandatory cases, prior identity/codec regressions and the one-minute
+paced input → actual service → two dummies → TXT comparison pass. Real E2 delivery,
+normal live cleanup and the 30-minute stability gate remain pending. Use the
+[interface guide](../kpm_app_interface.md),
+[verification record](../reports/du27_app_subscription_2026-10-26.md) and
+[active plan](../../plans/xapp-kpm-app-subscription.md).
+
+Build the collector to a separate path: subscription mode needs its callback-entry
+monotonic metadata and supports continuous `--duration 0`. Existing diagnostic
+mode retains its original output; subscription mode uses `--publish-config` and
+moves TXT to `dummy_subscriber.py`. The standalone base5 C prototype remains
+historical transport scaffolding rather than the new integration's E2 source.
+
 Current checkpoint, **2026-10-24**: dual-UE concurrent UL/KPM, experimental
 CU/DU/Core IP association, the two Spark TUNs, the MPTCP primary/backup video
 demo and two live UE2 automatic recoveries have retained evidence. The current
