@@ -8,8 +8,9 @@ reports at **1 second**. Follow sections 1–6 to prepare/start the testbed,
 then [section 7c](#7c-live-app-subscription-test-with-one-dummy) for the current
 application subscription test. Keep the Python matching/publisher implementation:
 one xApp service pushes both links to **one all-links dummy**, which writes TXT.
-Run a 120-second dummy session overlapping a 60-second dual uplink, then use the
-same procedure for a 30-minute session. Sections 7a/7b retain the earlier direct
+Use 7c for a 120-second dummy session overlapping a 60-second dual uplink. Use
+[7d](#7d-six-minute-alternating-ul-with-one-subscribed-dummy) for a 360-second dummy
+session covering six alternating/concurrent upload phases. Sections 7a/7b retain the earlier direct
 xApp-to-TXT diagnostic captures.
 
 | Source | Default period |
@@ -40,7 +41,7 @@ The xApp combines DU KPM, CU identity-bearing E2 reports and existing
 read-only AMF/SMF infoAPIs. Each matched report retains:
 gNB/DU/F1 UE ID, SUPI, NGAP IDs/GUAMI, PDU session/DNN/IP, then KPM. The commands
 in sections 7a/7b retain `--observed-unique` for legacy CU compatibility.
-Section 7c uses the current explicit CU scope and fresh-only matching. The updated CU
+Sections 7c/7d use the current explicit CU scope and fresh-only matching. The updated CU
 carries serving-DU scope in its optional RAN UE identity; the captured
 `local.json` admits `du36-cuue28-v1`. Updated records should show
 `assurance=cu_reported_du_scope` and a `CU scope:` line. Equal F1 IDs on the two
@@ -624,9 +625,11 @@ traffic idle. Keep both PDU paths active for the concurrent test in step 7.
 ## 7. Start the dual UE identity/RF xApp and save TXT results
 
 For the current **application subscription** test, use
-[7c](#7c-live-app-subscription-test-with-one-dummy). The 7a/7b commands below
+[7c](#7c-live-app-subscription-test-with-one-dummy) for the short run or
+[7d](#7d-six-minute-alternating-ul-with-one-subscribed-dummy) for the six-minute
+run. The 7a/7b commands below
 remain direct diagnostic captures: the xApp itself writes their TXT. Run one
-xApp mode at a time. Section 7c instead has the dummy own TXT and receipt timing.
+xApp mode at a time. Sections 7c/7d have the dummy own TXT and receipt timing.
 
 Use this section for the merged RIC/xApp/E2SM integration test. Finish steps
 1–6 and connect both Laptop UEs first. Keep Core, the identity-configured RIC,
@@ -875,9 +878,8 @@ report when generated, without another 100 ms transmission timer.
 #### 7c2. Spark dummy terminal
 
 In a new foreground terminal, paste the service directory. Variables do not
-cross terminals. The first run uses **120 seconds**; after it passes, change
-`DUMMY_SECONDS` to **1800** for a 30-minute single-client session. Run one session
-at a time and retain a new output directory for each session.
+cross terminals. This short run uses **120 seconds**. Use section 7d for the six-minute
+alternating/concurrent test. Retain a new output directory for each session.
 
 ```bash
 cd /home/nyu/Desktop/Falcon_repo/Falcon
@@ -906,165 +908,137 @@ the final acknowledgment/EOF, drains TXT and writes its summary. Leave the xApp
 running until the dummy finishes. Current dummy reconnect is manual: rerun this
 block with a new directory after the previous process exits.
 
-The **xApp terminal** now prints `APP_REGISTER_RECEIVED`, followed by
-`APP_REGISTERED` with the app/subscription IDs, filter and active registration
-count. A rejected registration prints `APP_REGISTER_REJECTED` with its reason.
-Normal completion prints `APP_UNREGISTER_RECEIVED`, `APP_UNREGISTERED`, then
-`APP_DISCONNECTED` with `reason: drained`; unexpected closure/timeout/slow-client
-removal carries its own reason. These UTC-stamped lines are retained in
-`xapp.log`. `acknowledgement: queued` means the server accepted the request and
-queued its response; check the dummy's received status below as well. Routine
-KPM reports and heartbeat do not print lifecycle lines.
-
-#### 7c3. Spark diagnostics terminal and Laptop traffic
-
-Paste both directories in a third Spark terminal while the dummy is running:
-
-```bash
-read -r -p 'Paste the subscription service directory: ' KPM_CHECK_SERVICE
-read -r -p 'Paste the single dummy directory: ' KPM_CHECK_DUMMY
-tail -n 30 "$KPM_CHECK_SERVICE/xapp.log"
-rg 'APP_(REGISTER|UNREGISTER|DISCONNECTED|REQUEST_REJECTED)' "$KPM_CHECK_SERVICE/xapp.log"
-head -n 1 "$KPM_CHECK_DUMMY/receipts.jsonl" | python3 -m json.tool
-tail -n 50 "$KPM_CHECK_DUMMY/bindings.txt"
-```
-
-Require the first JSON frame to be `registration_status`, `status: registered`,
-`data_source: e2`, `metric_profile: du27_bound_v1`, with the all-links filter.
-Both `DU_ID=1` and `DU_ID=2` must then appear in dummy TXT, currently matched to
-their own SUPI/DNN and actual Laptop IPv4. Initial binding waits are allowed;
-a successful listener/registration alone does not prove either link is receiving.
-To watch TXT continuously, use `tail -n 50 -f "$KPM_CHECK_DUMMY/bindings.txt"`;
-Ctrl+C there stops only `tail`.
-
-Once registration and both links are receiving, immediately run the existing
-Laptop upload command after its current-IP/route preflight:
+Expect `APP_REGISTER_RECEIVED`, then `APP_REGISTERED` in the xApp terminal.
+The dummy writes both links to `bindings.txt`. After registration, immediately
+run the 60-second upload on the **Laptop**, with both reconnect watchers active:
 
 ```bash
 python3 ~/falcon-ue-connect/run_dual_ul.py --seconds 60
 ```
 
-Run that command **on the Laptop**, retaining its evidence directory and both
-receiver summaries. Use the Laptop quick start's preflight and traffic commands;
-this subscription test uses **Spark 7c instead of its older 7a capture launch**.
-The xApp stays running after the 120-second dummy session. Low-traffic KPM
-`no_value` is valid; stale/unmatched identities are withheld and reported as
-binding state, without ending the app registration.
+Let the dummy finish all 120 seconds. Expect `status: passed`, equal
+`reports_received`/`text_reports_written`, `unregistered: true` and dummy exit 0.
+Keep its printed directory and the Laptop upload directory. The xApp remains
+running until Ctrl+C; its lifecycle log records normal unregister and disconnect.
 
-For the 30-minute session, keep the same single dummy connected for 1800 seconds.
-Retain the declared traffic/gain schedule and all Laptop watcher events. In a
-separate Spark terminal, sample Python service resources until it stops (Ctrl+C
-ends only this monitor):
+### 7d. Six-minute alternating UL with one subscribed dummy
 
-```bash
-read -r -p 'Paste the subscription service directory: ' KPM_RESOURCE_RUN
-KPM_RESOURCE_PID=$(cat "$KPM_RESOURCE_RUN/xapp.pid")
-while kill -0 "$KPM_RESOURCE_PID" 2>/dev/null; do
-  date -u '+%Y-%m-%dT%H:%M:%SZ'
-  ps -p "$KPM_RESOURCE_PID" -o pid=,etimes=,%cpu=,rss=,vsz=,nlwp=
-  sleep 5
-done | tee -a "$KPM_RESOURCE_RUN/resources.log"
-```
+Run this after the short 7c test. Keep Core, RIC, CU, both DUs, both logged iperf
+servers and both Laptop reconnect watchers running. Keep gains fixed. Finish
+previous traffic and the previous dummy; stop the previous xApp normally before
+starting this fresh service. Use one dummy for both links throughout this trial.
 
-RSS/VSZ are KiB and `%CPU` is the process lifetime average. Keep raw samples and
-queue/drop counters; elapsed time alone does not establish stability. For app
-reconnect checks, let this dummy exit, rerun 7c2 with a fresh output directory
-and the same app ID, and confirm a new subscription ID without restarting xApp
-or adding E2 subscriptions. Keep only one dummy process active at a time.
+First prepare the **Laptop** using its matching
+[section 7d](dual_ue_laptop_reconnect_quick_start.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy)
+until the traffic helper prints `READY`. Leave that prompt open before starting
+the Spark commands below.
 
-#### 7c4. Check the completed dummy session
-
-After dummy exit, in the diagnostics terminal:
+**Spark xApp terminal — prepare a fresh service directory:**
 
 ```bash
-cat "$KPM_CHECK_DUMMY/exit.txt"
-cat "$KPM_CHECK_DUMMY/summary.json"
-python3 - "$KPM_CHECK_SERVICE" "$KPM_CHECK_DUMMY" <<'PY_CHECK'
-from collections import Counter
-import json
-from pathlib import Path
-import struct
-import sys
-service, dummy = map(Path, sys.argv[1:])
-frames = [json.loads(line) for line in (dummy/'receipts.jsonl').read_text().splitlines()]
-registration, final = frames[0], frames[-1]
-assert registration['status'] == 'registered' and registration['data_source'] == 'e2'
-assert final['status'] == 'unregistered'
-reports = [f for f in frames if f['type'] == 'kpm_report']
-assert reports, 'No reports received'
-summary = json.loads((dummy/'summary.json').read_text())
-assert summary['status'] == 'passed' and summary['unregistered']
-assert not summary['interrupted'], 'Dummy session stopped before its planned duration'
-assert summary['reports_received'] == summary['text_reports_written'] == len(reports)
-cutoff = int(registration['cutoff_at_mono_us'])
-last = int(reports[-1]['report_seq'])
-# The xApp is still running: read only newline-complete source trace records.
-raw = (service/'source.jsonl').read_bytes().rsplit(b'\n', 1)[0]
-source = [json.loads(line) for line in raw.splitlines() if line]
-window = [t for t in source if int(t['callback_at_mono_us']) > cutoff
-          and t['report']['sequence'] <= last]
-assert all(t['ingress_admitted'] for t in window), 'Source handoff rejected'
-assert [str(t['report']['sequence']) for t in window] == [r['report_seq'] for r in reports], 'Source/receipt gap or reordering'
-text = (dummy/'bindings.txt').read_text()
-blocks = {b.split('report_seq=')[1].split()[0]: b for b in text.split('subscription=')[1:]}
-assert len(blocks) == len(reports), 'TXT count mismatch'
-counts = Counter()
-for frame, trace in zip(reports, window):
-    report = frame['report']
-    assert report == trace['report'], 'Changed binding or value'
-    assert frame['ingress_dropped_total'] == report['ingress_dropped_total'] == '0'
-    assert report['binding_status'] == 'matched' and report['row']['granularity_ms'] == 100
-    assert len(report['row']['metrics']) == 27
-    counts[report['node']['du_id']] += 1
-    block = blocks[frame['report_seq']]
-    assert f"UE_IPv4={report['ue_ipv4']}" in block and f"SUPI={report['binding']['supi']}" in block
-    for name, metric in report['row']['metrics'].items():
-        value = 'no_value' if metric['type'] == 'no_value' else json.dumps(metric['value'])
-        assert f"{name} = {value} [{metric['unit']}] ({metric['type']})" in block
-        if metric['type'] == 'real':
-            assert struct.pack('>d', metric['value']).hex() == trace['real_bits'][name]
-assert counts['1'] >= 100 and counts['2'] >= 100, counts
-for link, timing in summary['per_link_interval_ms'].items():
-    assert timing['p99'] <= 150 and timing['max'] <= 200, (link, timing)
-print(json.dumps({'source_receipt_txt_window': 'passed', 'reports_by_du': counts,
-                  'timing': summary['timing'], 'intervals': summary['per_link_interval_ms']}, indent=2))
-PY_CHECK
+cd /home/nyu/Desktop/Falcon_repo/Falcon
+KPM_SUB_RUN=$(mktemp -d /tmp/falcon-dual-subscriptions-6min.XXXXXXXX)
+printf 'Subscription service directory: %s\n' "$KPM_SUB_RUN"
+cp configs/ue_identity/local.json "$KPM_SUB_RUN/local.json"
+cp configs/ue_identity/subscriptions.json "$KPM_SUB_RUN/subscriptions.json"
+FALCON_IDENTITY_SM_DIR="$KPM_SUB_RUN/sm" \
+  bash scripts/ue_identity/build.sh "$KPM_SUB_RUN/collector" &&
+sed "s#^SM_DIR = .*#SM_DIR = \"$KPM_SUB_RUN/sm/\"#" \
+  configs/flexric/xapp_ue_identity_expanded.conf > "$KPM_SUB_RUN/xapp.conf" &&
+"$KPM_SUB_RUN/collector" --check-config "$KPM_SUB_RUN/xapp.conf" &&
+"$KPM_SUB_RUN/collector" --check-clock
 ```
 
-Require dummy exit 0, summary `passed`, equal receive/TXT counts, correct current
-IP/SUPI/DNN for each DU, and zero unexplained gaps. Compare the bindings with
-Laptop truth independently. The source comparison covers admission through the
-last delivered report; reports generated after unregister are outside that
-session. Review startup/invalid-binding periods and acquisition loss separately
-in `inputs.ndjson` and CU/Core logs. The retained JSONL contains binding-state and
-heartbeat frames in addition to KPM, so total JSONL lines are not the report count.
-
-`--check-timing` enforces ready→receipt p95 ≤ 10 ms, p99 ≤ 25 ms, max ≤ 100 ms,
-and callback→receipt p99 ≤ 100 ms. The additional check above requires per-link
-receipt-interval p99 ≤ 150 ms and max ≤ 200 ms. Receipt time precedes TXT work;
-writer delay is separate in `summary.json`. Preserve any missed budget or source
-outage with its timestamps. A 120-second pass is functional evidence; the longer
-run records **one-client** stability under its actual traffic/source conditions.
-
-Finish Laptop traffic and all dummy sessions, then press Ctrl+C in the **xApp
-terminal**. Keep CU, both DUs and RIC alive during E2 cleanup. In diagnostics:
+Stop on any build/config error. In the same terminal, start the Python service:
 
 ```bash
-cat "$KPM_CHECK_SERVICE/exit.txt"
-cat "$KPM_CHECK_SERVICE/publisher.json"
+git -C /home/nyu/Desktop/Falcon_repo/Falcon rev-parse HEAD > "$KPM_SUB_RUN/falcon-head.txt"
+git -C /home/nyu/Desktop/Falcon_repo/Falcon status --short > "$KPM_SUB_RUN/falcon-status.txt"
+git -C /home/nyu/flexric rev-parse HEAD > "$KPM_SUB_RUN/flexric-head.txt"
+git -C /home/nyu/ocudu rev-parse HEAD > "$KPM_SUB_RUN/ocudu-head.txt"
+sha256sum "$KPM_SUB_RUN/collector" "$KPM_SUB_RUN/sm/libkpm_sm.so" \
+  "$KPM_SUB_RUN/local.json" "$KPM_SUB_RUN/xapp.conf" \
+  "$KPM_SUB_RUN/subscriptions.json" scripts/ue_identity/*.py \
+  scripts/ue_identity/e2_collector.c > "$KPM_SUB_RUN/sha256.txt"
+set -o pipefail
+(
+  printf '%s\n' "$BASHPID" > "$KPM_SUB_RUN/xapp.pid"
+  exec python3 -B scripts/ue_identity/xapp_ue_identity.py \
+    --collector "$KPM_SUB_RUN/collector" \
+    --config "$KPM_SUB_RUN/local.json" --e2-config "$KPM_SUB_RUN/xapp.conf" \
+    --publish-config "$KPM_SUB_RUN/subscriptions.json" --fresh-only --duration 0 \
+    --capture-events "$KPM_SUB_RUN/inputs.ndjson" \
+    --report-evidence "$KPM_SUB_RUN/source.jsonl" \
+    --publisher-summary "$KPM_SUB_RUN/publisher.json"
+) 2>&1 | tee -i "$KPM_SUB_RUN/xapp.log"
+KPM_SUB_RC=${PIPESTATUS[0]}
+printf 'xApp exit=%s\n' "$KPM_SUB_RC" | tee "$KPM_SUB_RUN/exit.txt"
 ```
 
-Require xApp exit 0, `status: passed`, no failures, three normal E2 deletions,
-zero active connections/registrations and empty ingress. For a healthy run,
-`ingress_dropped`, `client_overflows`, `serialization_errors`, `invalid_reports`,
-`expired_reports` and unexpected disconnect counters must be zero (absent counters
-mean zero); normal `disconnect_drained` records completed unregisters. Retain
-all raw failures and both run directories. The full
-[interface guide](kpm_app_interface.md) documents lifecycle and bounds.
+Require `SUBSCRIPTION_READY ... source=e2`, three registered E2 nodes, three
+successful subscriptions and `identity collector: 3 KPM subscriptions, duration=0`.
+Keep this terminal running. The xApp runs continuously; the dummy below defines
+the six-minute receiving window.
+
+**Spark dummy terminal — paste the new service directory and receive for 360 seconds:**
+
+```bash
+cd /home/nyu/Desktop/Falcon_repo/Falcon
+read -r -p 'Paste the subscription service directory: ' KPM_SERVICE_RUN
+DUMMY_SECONDS=360
+KPM_DUMMY_RUN=$(mktemp -d /tmp/falcon-dual-dummy-6min.XXXXXXXX)
+printf 'Single dummy directory: %s\n' "$KPM_DUMMY_RUN"
+printf '%s\n' "$KPM_SERVICE_RUN" > "$KPM_DUMMY_RUN/service-directory.txt"
+printf '%s\n' "$DUMMY_SECONDS" > "$KPM_DUMMY_RUN/duration-seconds.txt"
+set -o pipefail
+python3 -B scripts/ue_identity/dummy_subscriber.py \
+  --host 127.0.0.1 --port 8765 --app-id dual-ue-dummy --all-links \
+  --expected-profile du27_bound_v1 --duration "$DUMMY_SECONDS" \
+  --text-output "$KPM_DUMMY_RUN/bindings.txt" \
+  --receipts-output "$KPM_DUMMY_RUN/receipts.jsonl" \
+  --summary "$KPM_DUMMY_RUN/summary.json" --check-timing \
+  2>&1 | tee -i "$KPM_DUMMY_RUN/dummy.log"
+KPM_DUMMY_RC=${PIPESTATUS[0]}
+printf 'dummy exit=%s\n' "$KPM_DUMMY_RC" | tee "$KPM_DUMMY_RUN/exit.txt"
+```
+
+Require `APP_REGISTERED` for `dual-ue-dummy` in the xApp terminal. Within
+**10 seconds of that registration**, enter the following at the waiting
+**Laptop traffic prompt**:
+
+```text
+START
+```
+
+| Phase | Duration | Laptop upload |
+| --- | --- | --- |
+| 1 | 50 s | UE1 / FR1 |
+| 2 | 50 s | UE2 / FR3 |
+| 3 | 50 s | UE1 + UE2 |
+| 4 | 50 s | UE1 / FR1 |
+| 5 | 50 s | UE2 / FR3 |
+| 6 | 50 s | UE1 + UE2 |
+
+The six phases contain 300 seconds of traffic. The helper allows up to
+335 seconds after `START` for traffic and path checks; starting within 10 seconds
+of dummy registration keeps the full run inside its 360-second connection.
+Both watchers keep checking/recovering throughout. Let the dummy finish all
+360 seconds after the traffic helper completes.
+
+Expected: Laptop `STATUS: completed`, six completed phases, all eight iperf
+client exits 0 and no allocation changes; dummy `status: passed`, equal
+receive/TXT counts, `unregistered: true` and exit 0. Keep the Spark service and
+dummy directories, Laptop `/tmp/falcon-dual-stability-*`, both watcher directories
+and both iperf server logs. This records the subscription/TXT path during the
+same alternating workload as 7b.
+
+After Laptop traffic and the dummy finish, press Ctrl+C in the xApp terminal
+and wait for three E2 subscription deletions and xApp exit 0. Keep CU, both DUs
+and RIC running until cleanup finishes; then use section 8 if ending the testbed.
 
 ## 8. Shutdown and retained evidence
 
-For section 7c, finish Laptop traffic, let the single dummy unregister and drain
+For sections 7c/7d, finish Laptop traffic, let the single dummy unregister and drain
 TXT, then press Ctrl+C in the xApp terminal. Require dummy and xApp exit 0,
 zero active registrations in the service summary, and all three E2 subscription
 delete responses while CU/DUs/RIC are still running. For sections 7a/7b, allow
@@ -1091,10 +1065,10 @@ Optional MongoDB shutdown preserves its container/data:
 sudo docker stop open5gs-mongo
 ```
 
-For section 7c retain the complete service and dummy directories: binary/plugin
+For sections 7c/7d retain the complete service and dummy directories: binary/plugin
 and configuration identities, `xapp.log`, `inputs.ndjson`, `source.jsonl`,
 `publisher.json`, both exit files, dummy `bindings.txt`, `receipts.jsonl`,
-`summary.json` and optional `resources.log`. Keep each sequential dummy session
+`summary.json` and `duration-seconds.txt`. Keep each sequential dummy session
 separately when checking reconnects.
 
 For sections 7a/7b retain each capture's `local.json`, `xapp.conf`, `exit.txt`, `inputs.ndjson`,

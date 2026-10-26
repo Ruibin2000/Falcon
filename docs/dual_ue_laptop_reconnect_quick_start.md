@@ -1,8 +1,15 @@
 # Dual UE Laptop Reconnect — Quick Commands and Expected Results
 
-Updated: 2026-10-25. Developer: Ruibin.
+Updated: 2026-10-26. Developer: Ruibin.
 
 **Spark target:** DU1/DU2 statistics and KPM **100 ms**; CU identity **1 second**.
+
+**Current application subscription tests:** use
+[7c](#7c-live-app-subscription-test-with-one-dummy) for the 120-second test or
+[7d](#7d-six-minute-alternating-ul-with-one-subscribed-dummy) for the six-minute
+alternating test. Their numbers match the Spark handbook. Both use one dummy
+on Spark, while Laptop runs the two UE watchers and traffic. Sections 6–7a retain
+the earlier direct xApp-to-TXT diagnostic workflow.
 
 [Full reference and troubleshooting](runbooks/dual_ue_laptop_reconnect_reference.md) ·
 [Spark startup and servers, sections 1–6](dual_ue_spark_quick_commands.md#1-check-radios-and-deploy-configuration-before-a-cold-start) ·
@@ -215,6 +222,128 @@ continuity, 27 metrics, cadence, gaps and radio warnings with the
 [full stability reference](runbooks/dual_ue_laptop_reconnect_reference.md#six-minute-reconnect-stability-test).
 The traffic summary alone does not certify the xApp or the absence of brief
 reconnect events between traffic snapshots.
+
+## 7c. Live app subscription test with one dummy
+
+Pair with [Spark 7c](dual_ue_spark_quick_commands.md#7c-live-app-subscription-test-with-one-dummy).
+The Spark dummy receives for 120 seconds; Laptop uploads concurrently for 60 seconds.
+
+Keep the existing UE1 and UE2 watchers running after both report `SUCCESS`.
+If they are not running, start each in its own Laptop terminal after Spark
+sections 1–6 are ready:
+
+**Laptop terminal 1 — UE1:**
+
+```bash
+sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 3 --verbose 2
+```
+
+**Laptop terminal 2 — UE2:**
+
+```bash
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 3 --verbose 2
+```
+
+Reuse healthy existing watchers; keep one owner per UE. Keep both Spark iperf
+servers listening at `10.45.0.1:5201` and `10.46.0.1:5202`.
+
+**Laptop terminal 3 — update the two traffic helpers:**
+
+```bash
+(
+  set -euo pipefail
+  mkdir -p ~/falcon-ue-connect
+  ssh -T nyu@10.20.44.26 \
+    'tar -C /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1 -czf - run_dual_ul.py run_dual_stability.py' |
+    tar -xzf - -C ~/falcon-ue-connect
+)
+```
+
+Check both current UE IPs and routes:
+
+```bash
+python3 ~/falcon-ue-connect/run_dual_ul.py --check-only
+```
+
+Require both role checks to pass. Start Spark 7c's xApp and single dummy, then
+wait for its three E2 subscriptions and `APP_REGISTERED` for `dual-ue-dummy`.
+Immediately run the upload in Laptop terminal 3:
+
+```bash
+python3 ~/falcon-ue-connect/run_dual_ul.py --seconds 60
+```
+
+Expected: both client exits 0, `STATUS: completed` and a printed
+`/tmp/falcon-dual-ul-*` directory. Keep that directory and both watcher logs.
+Let the Spark dummy finish 120 seconds and unregister; keep the watchers running
+if continuing with the six-minute test.
+
+## 7d. Six-minute alternating UL with one subscribed dummy
+
+Pair with [Spark 7d](dual_ue_spark_quick_commands.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy).
+Finish previous iperf clients before preparing this run. Spark's single dummy
+receives both links for 360 seconds; the six traffic phases each last 50 seconds.
+
+Keep the existing UE1 and UE2 watchers running after both report `SUCCESS`.
+If they are not running, start each in its own Laptop terminal after Spark
+sections 1–6 are ready:
+
+**Laptop terminal 1 — UE1:**
+
+```bash
+sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 3 --verbose 2
+```
+
+**Laptop terminal 2 — UE2:**
+
+```bash
+sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 3 --verbose 2
+```
+
+Reuse healthy existing watchers; keep one owner per UE. Keep both Spark iperf
+servers listening at `10.45.0.1:5201` and `10.46.0.1:5202`.
+
+**Laptop terminal 3 — update the traffic helpers and wait at READY:**
+
+```bash
+(
+  set -euo pipefail
+  mkdir -p ~/falcon-ue-connect
+  ssh -T nyu@10.20.44.26 \
+    'tar -C /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1 -czf - run_dual_ul.py run_dual_stability.py' |
+    tar -xzf - -C ~/falcon-ue-connect
+  python3 ~/falcon-ue-connect/run_dual_stability.py
+)
+```
+
+Require both current role summaries followed by `READY`. Leave this prompt
+open, then start Spark 7d's fresh xApp service and its single 360-second dummy.
+Within **10 seconds of `APP_REGISTERED`** in the Spark xApp terminal, enter this
+at the Laptop traffic prompt:
+
+```text
+START
+```
+
+| Phase | Duration | iperf upload |
+| --- | --- | --- |
+| 1 | 50 s | UE1 / FR1 |
+| 2 | 50 s | UE2 / FR3 |
+| 3 | 50 s | UE1 + UE2 |
+| 4 | 50 s | UE1 / FR1 |
+| 5 | 50 s | UE2 / FR3 |
+| 6 | 50 s | UE1 + UE2 |
+
+Keep both watchers running and gains fixed. The 300 seconds of scheduled traffic
+plus bounded path checks fit inside the 360-second dummy window when started
+on time. The xApp itself remains continuous (`duration=0`).
+
+Expected: six completed phases, eight successful iperf receivers, all client
+exits 0, no allocation changes, `STATUS: completed` and a printed
+`/tmp/falcon-dual-stability-*` directory. Retain `summary.json`, `events.ndjson`,
+`truth.json`, all eight `phaseN-ueM.json` files and both watcher directories.
+Let the Spark dummy finish all 360 seconds and unregister, then stop the xApp
+normally before following section 8 if ending the testbed.
 
 ## 8. Stop after iperf and the xApp have finished
 

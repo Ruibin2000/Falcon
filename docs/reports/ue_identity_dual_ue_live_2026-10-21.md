@@ -28,7 +28,7 @@ acceptance are outside the completed functional scope below.
 
 ## Matching topology and information supplied by each component
 
-![Compact landscape topology: RAN and 5G Core supply identities to xApp; matching runs inside xApp and saved output remains outside](../figures/ue_identity_topology.png)
+![Landscape topology: FlexRIC contains its platform and xApp; RAN and 5G Core supply identities, and xApp pushes IDs + IP + KPM to the external output](../figures/ue_identity_topology.png)
 
 [Full-size PNG](../figures/ue_identity_topology.png) ·
 [Scalable SVG](../figures/ue_identity_topology.svg) ·

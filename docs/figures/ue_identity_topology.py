@@ -14,7 +14,7 @@ from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 from matplotlib.path import Path as MplPath
 
 ROOT = Path(__file__).resolve().parent
-WIDTH, HEIGHT = 1550, 620
+WIDTH, HEIGHT = 1450, 780
 GROUP_FILL, GROUP_BORDER = "#fff9e6", "#b6ac8f"
 INK, BORDER = "#243247", "#627187"
 
@@ -26,23 +26,23 @@ plt.rcParams.update({
 })
 
 NODES = {
-    "ue1": (40, 400, 120, 90, "UE1", ["10.45.0.2"]),
-    "du1": (190, 390, 230, 110, "DU1", ["F1: 54 -> 55", "DU ID + KPM"]),
-    "ue2": (40, 250, 120, 90, "UE2", ["10.46.0.2"]),
-    "du2": (190, 240, 230, 110, "DU2", ["F1: 34 -> 35", "DU ID + KPM"]),
-    "cu": (190, 85, 230, 120, "CU-CP", ["NGAP + GUAMI", "F1 identities", "owned snapshot"]),
-    "ric": (520, 390, 240, 110, "FlexRIC", ["CU + DU1 + DU2", "KPM transport"]),
-    "amf": (520, 210, 240, 95, "AMF", ["NGAP IDs + SUPI", "gNB + state"]),
-    "smf": (520, 80, 240, 110, "SMF", ["SUPI + session", "DNN + UE IP"]),
-    "radio": (840, 380, 190, 130, "RAN cache", ["DU/F1 context", "NGAP + GUAMI"]),
-    "core": (840, 170, 190, 130, "Core cache", ["join by SUPI", "PDU + DNN + IP"]),
-    "join": (1080, 270, 160, 140, "UE binding", ["scoped IDs", "unique", "fresh"]),
-    "output": (1310, 275, 220, 130, "Saved output", ["bindings.txt", "rows.ndjson", "IDs + IP + KPM"]),
+    "ue1": (40, 595, 120, 90, "UE1", ["10.45.0.2"]),
+    "du1": (180, 585, 200, 110, "DU1", ["F1: 54 -> 55", "DU ID + KPM"]),
+    "ue2": (40, 435, 120, 90, "UE2", ["10.46.0.2"]),
+    "du2": (180, 425, 200, 110, "DU2", ["F1: 34 -> 35", "DU ID + KPM"]),
+    "cu": (180, 220, 200, 125, "CU-CP", ["NGAP + GUAMI", "F1 identities", "owned snapshot"]),
+    "ric": (480, 535, 200, 125, "RIC platform", ["CU + DU1 + DU2", "KPM transport"]),
+    "amf": (480, 65, 240, 120, "AMF", ["NGAP IDs + SUPI", "gNB + state"]),
+    "smf": (850, 65, 240, 120, "SMF", ["SUPI + session", "DNN + UE IP"]),
+    "radio": (750, 490, 190, 125, "RAN cache", ["DU/F1 context", "NGAP + GUAMI"]),
+    "core": (750, 350, 190, 110, "Core cache", ["join by SUPI", "PDU + DNN + IP"]),
+    "join": (990, 420, 160, 145, "UE binding", ["scoped IDs", "unique", "fresh"]),
+    "output": (1240, 427.5, 190, 130, "Output", ["IDs + IP + KPM"]),
 }
 
 
 def main():
-    fig = plt.figure(figsize=(15.5, 6.2), dpi=120, facecolor="white")
+    fig = plt.figure(figsize=(WIDTH / 100, HEIGHT / 100), dpi=120, facecolor="white")
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set(xlim=(0, WIDTH), ylim=(0, HEIGHT))
     ax.axis("off")
@@ -55,8 +55,8 @@ def main():
             facecolor=fill, edgecolor=border, linewidth=1.2, zorder=zorder,
         ))
 
-    def group(x, y, width, height, title):
-        rectangle(x, y, width, height, GROUP_FILL, GROUP_BORDER, radius=10)
+    def group(x, y, width, height, title, fill=GROUP_FILL):
+        rectangle(x, y, width, height, fill, GROUP_BORDER, radius=10)
         text = ax.text(x + width / 2, y + height - 25, title, ha="center",
                        va="center", fontsize=19, fontweight="bold", color=INK, zorder=4)
         bounded_text.append((text, (x, y, width, height), 12))
@@ -73,9 +73,11 @@ def main():
         ax.text(x, y, text, ha="center", va="center", fontsize=size, color=INK,
                 bbox=dict(facecolor="white", edgecolor="none", pad=1.5), zorder=6)
 
-    group(20, 55, 430, 530, "RAN")
-    group(500, 55, 280, 300, "5G Core")
-    group(820, 135, 440, 450, "Standalone xApp")
+    group(20, 180, 380, 570, "RAN")
+    group(460, 25, 730, 220, "5G Core")
+    # Logical FlexRIC scope; platform and xApp remain separate processes.
+    group(460, 300, 730, 450, "FlexRIC")
+    group(730, 330, 440, 360, "xApp", fill="#f1f5fb")
 
     for name, (x, y, width, height, title, body) in NODES.items():
         rectangle(x, y, width, height, "white", BORDER, zorder=3)
@@ -89,40 +91,40 @@ def main():
             )
             bounded_text.append((text, (x, y, width, height), 9))
 
-    edge([(160, 445), (190, 445)])
-    edge([(160, 295), (190, 295)])
-    label("NR", 175, 466, size=10.5)
-    label("NR", 175, 316, size=10.5)
+    edge([(160, 640), (180, 640)])
+    edge([(160, 480), (180, 480)])
+    label("NR", 170, 661, size=10.5)
+    label("NR", 170, 501, size=10.5)
 
     # F1/NGAP establish CU contexts; solid paths carry xApp input data.
-    edge([(305, 390), (305, 370), (435, 370), (435, 170), (420, 170)],
+    edge([(280, 585), (280, 565), (395, 565), (395, 305), (380, 305)],
          context=True, both=True)
-    edge([(305, 240), (305, 205)], context=True, both=True)
-    label("F1-C", 387, 370, size=10.5)
-    label("F1-C", 273, 222, size=10.5)
-    edge([(305, 85), (305, 25), (490, 25), (490, 257.5), (520, 257.5)],
+    edge([(280, 425), (280, 345)], context=True, both=True)
+    label("F1-C", 340, 565, size=10.5)
+    label("F1-C", 247, 385, size=10.5)
+    edge([(280, 220), (280, 125), (480, 125)],
          context=True, both=True)
-    label("N2 / NGAP", 396, 25)
+    label("N2 / NGAP", 375, 145)
 
     # Shared E2 transport, with CU and both DU identities retained by the RIC.
-    ax.plot([470, 470], [145, 445], color=INK, linewidth=1.35, zorder=2)
-    for y in (445, 295, 145):
-        edge([(420, y), (470, y)])
-    edge([(470, 445), (520, 445)])
-    label("E2 / KPM", 473, 477)
-    edge([(760, 445), (840, 445)])
-    label("3 subs", 800, 465)
+    ax.plot([435, 435], [282.5, 640], color=INK, linewidth=1.35, zorder=2)
+    for y in (640, 480, 282.5):
+        edge([(380, y), (435, y)])
+    edge([(435, 510), (580, 510), (580, 535)])
+    label("E2 / KPM", 535, 490)
+    edge([(680, 597.5), (710, 597.5), (710, 552.5), (750, 552.5)])
+    label("3 subs", 715, 625)
 
-    edge([(760, 257.5), (800, 257.5), (800, 260), (840, 260)])
-    edge([(760, 135), (800, 135), (800, 210), (840, 210)])
-    label("HTTP", 800, 280)
-    edge([(1030, 445), (1055, 445), (1055, 370), (1080, 370)])
-    edge([(1030, 235), (1055, 235), (1055, 315), (1080, 315)])
-    edge([(1240, 340), (1310, 340)])
-    label("save", 1275, 360)
+    edge([(600, 185), (600, 270), (790, 270), (790, 350)])
+    edge([(970, 185), (970, 270), (900, 270), (900, 350)])
+    label("HTTP", 845, 310)
+    edge([(940, 552.5), (965, 552.5), (965, 530), (990, 530)])
+    edge([(940, 405), (965, 405), (965, 465), (990, 465)])
+    edge([(1150, 492.5), (1240, 492.5)])
+    label("push", 1205, 515)
 
-    ax.text(870, 75, "Solid: E2 / API data", fontsize=11.5, color=INK, va="center")
-    ax.text(870, 45, "Dashed: F1 / NGAP context", fontsize=11.5, color=BORDER, va="center")
+    ax.text(40, 65, "Solid: E2 / API / report data", fontsize=11.5, color=INK, va="center")
+    ax.text(40, 40, "Dashed: F1 / NGAP context", fontsize=11.5, color=BORDER, va="center")
 
     # Fail generation if any label exceeds its node, including export padding.
     fig.canvas.draw()
@@ -138,15 +140,20 @@ def main():
     fig.savefig(png, dpi=180, facecolor="white")
     fig.savefig(svg, facecolor="white", metadata={
         "Date": None,
-        "Title": "Dual-UE xApp identity and IP binding",
+        "Title": "Dual-UE FlexRIC xApp identity and IP binding",
         "Description": "RAN and 5G Core supply E2 and read-only API inputs to xApp. "
-                       "Identity matching runs inside xApp; saved TXT/NDJSON output is outside.",
+                       "The logical FlexRIC group contains the RIC platform and xApp. "
+                       "The xApp pushes IDs, IP and KPM to the external output.",
     })
+    # Matplotlib leaves trailing spaces in multiline SVG path attributes.
+    svg.write_text("\n".join(line.rstrip() for line in svg.read_text(encoding="utf-8").splitlines()) + "\n",
+                   encoding="utf-8")
     plt.close(fig)
     parsed = ET.parse(svg)
     tags = {element.tag.rsplit("}", 1)[-1] for element in parsed.iter()}
     assert "text" not in tags and "foreignObject" not in tags
-    print("Generated landscape PNG (2790 x 1116) and self-contained SVG with outlined text.")
+    print(f"Generated landscape PNG ({round(WIDTH * 1.8)} x {round(HEIGHT * 1.8)}) "
+          "and self-contained SVG with outlined text.")
     print("All node/group labels fit inside their boxes; no HTML labels or live font dependency.")
 
 
