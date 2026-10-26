@@ -35,8 +35,8 @@ NODES = {
     "amf": (480, 65, 240, 120, "AMF", ["NGAP IDs + SUPI", "gNB + state"]),
     "smf": (850, 65, 240, 120, "SMF", ["SUPI + session", "DNN + UE IP"]),
     "radio": (750, 490, 190, 125, "RAN cache", ["DU/F1 context", "NGAP + GUAMI"]),
-    "core": (750, 350, 190, 110, "Core cache", ["join by SUPI", "PDU + DNN + IP"]),
-    "join": (990, 420, 160, 145, "UE binding", ["scoped IDs", "unique", "fresh"]),
+    "core": (750, 350, 190, 110, "Core cache", ["NGAP IDs + SUPI", "UE IP"]),
+    "join": (990, 420, 160, 145, "UE binding", ["DU / UE", "\u2195", "UE IP"]),
     "output": (1240, 427.5, 190, 130, "Output", ["IDs + IP + KPM"]),
 }
 
@@ -73,7 +73,7 @@ def main():
         ax.text(x, y, text, ha="center", va="center", fontsize=size, color=INK,
                 bbox=dict(facecolor="white", edgecolor="none", pad=1.5), zorder=6)
 
-    group(20, 180, 380, 570, "RAN")
+    group(20, 25, 380, 725, "RAN")
     group(460, 25, 730, 220, "5G Core")
     # Logical FlexRIC scope; platform and xApp remain separate processes.
     group(460, 300, 730, 450, "FlexRIC")
