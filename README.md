@@ -3,8 +3,10 @@
 **Bound KPM application subscriptions, 2026-10-26:** the existing 27-metric/
 100 ms identity xApp now accepts app registrations and pushes full matched
 link/UE/session/IP reports. The independent dummy saves TXT and timing evidence.
-Offline regressions and a paced archived-input/socket/TXT comparison pass; real
-E2 delivery and 30-minute live stability remain pending. See the
+Offline regressions and a paced archived-input/socket/TXT comparison pass. A
+subsequent [120-second live test](docs/reports/du27_app_subscription_live_2026-10-26.md)
+receives and writes all 2,400 reports, with push p99 2.314 ms and normal unregister.
+The planned 30-minute live stability run remains pending. See the
 [interface and commands](docs/kpm_app_interface.md),
 [implementation record](docs/reports/du27_app_subscription_2026-10-26.md) and
 [Plan 2](plans/xapp-kpm-app-subscription.md).

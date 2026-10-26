@@ -1,0 +1,11 @@
+{
+  "archive_reanalysis": "passed",
+  "original_tmp_runs_required": false,
+  "payload_and_txt_reports_compared": 2400,
+  "raw_metric_fields_compared": 64800,
+  "real_value_bits_compared": 27912,
+  "original_timing_summary_matches": true,
+  "example_frame_validation": "passed",
+  "examples_have_all_27_metrics": true,
+  "archive_member_hashes_checked": 24
+}

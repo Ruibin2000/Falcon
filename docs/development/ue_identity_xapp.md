@@ -558,15 +558,15 @@ missing the last resume phase is not accepted as a complete six-minute test.
    assert len(roles) == 2 and {r['ue'] for r in roles} == {1, 2}
    for r in roles:
        print(f"UE{r['ue']}: IMSI={r['imsi']} IP={r['source']} dev={r['interface']} -> {r['server']}:{r['port']}", flush=True)
-   print('READY: 启动 Spark 的360秒xApp，然后在10秒内回这里输入 START 并回车。', flush=True)
+   print('READY: Start the 360-second xApp run on Spark, then return here within 10 seconds, type START, and press Enter.', flush=True)
    with open('/dev/tty') as tty:
        while True:
            line = tty.readline()
            if not line:
-               raise SystemExit('终端已关闭')
+               raise SystemExit('Terminal closed')
            if line.strip() == 'START':
                break
-   assert helper.discover_roles() == roles, 'Bearer已变化，请重新检查'
+   assert helper.discover_roles() == roles, 'Bearers changed; check them again'
    helper.verify_routes(roles)
    
    out = Path(tempfile.mkdtemp(prefix='falcon-dual-idle-'))
@@ -665,7 +665,7 @@ missing the last resume phase is not accepted as a complete six-minute test.
    ```bash
    cd /home/nyu/Desktop/Falcon_repo/Falcon
    IDENTITY_BIDIR_RUN=$(mktemp -d /tmp/falcon-identity-bidir.XXXXXXXX)
-   printf 'Spark采集目录：%s\n' "$IDENTITY_BIDIR_RUN"
+   printf 'Spark capture directory: %s\n' "$IDENTITY_BIDIR_RUN"
    cp configs/ue_identity/local.json "$IDENTITY_BIDIR_RUN/local.json"
    sha256sum scripts/ue_identity/mapping.py scripts/ue_identity/xapp_ue_identity.py \
      configs/ue_identity/local.json > "$IDENTITY_BIDIR_RUN/source-sha256.txt"

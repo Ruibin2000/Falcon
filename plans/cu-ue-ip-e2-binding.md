@@ -26,7 +26,7 @@ UE-IP-to-radio associations. Integrate with Plan 2 only in a later task.
 | Core scope | Read existing interfaces; no Core source, session policy, subscriber or IP-allocation changes |
 | RAN scope | CU-CP context export and E2 reporting; preserve DU KPM and CU-UP packet processing |
 
-The later October 21 user instruction, **在Dual分支下开始实现**, authorizes
+The later October 21 user instruction, **start implementation on the Dual branch**, authorizes
 implementation and supersedes the earlier planning-only restriction. Both
 repositories are on `Dual-UE`. The root README and Plan 2 remain unchanged.
 The first local milestone is implemented and tested; no services were restarted

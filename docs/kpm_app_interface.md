@@ -8,8 +8,10 @@ actual 100 ms DU report stream; CU identity and Core polling remain at 1 second.
 
 This implements the revised [Plan 2](../plans/xapp-kpm-app-subscription.md).
 Offline mapper/codec/socket/TXT checks and a 60-second paced archived-input run
-pass. Real E2 application delivery and the planned 30-minute live stability run
-remain pending while equipment is stopped. See the
+pass. A subsequent [120-second live E2 test](reports/du27_app_subscription_live_2026-10-26.md)
+receives and writes all 2,400 dual-DU reports through one dummy, with normal
+unregister and push p99 2.314 ms. The planned 30-minute live stability run and
+live reconnect/slow-client scenarios remain pending. See the
 [implementation and verification record](reports/du27_app_subscription_2026-10-26.md).
 
 ## Start the service

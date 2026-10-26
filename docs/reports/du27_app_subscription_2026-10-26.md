@@ -12,9 +12,12 @@ The normal and ASan/UBSan collector runs both use Python debug allocation checks
 A separate 60-second paced archived-input experiment compares every eligible
 source report against independent socket receipts and all 27 TXT values.
 
-**Real E2 application delivery and 30-minute live stability remain pending.**
-The operator authorized offline work while the equipment is stopped. No RIC,
-Core, DU or radio service was started by this verification.
+The subsequent [October 26 live test](du27_app_subscription_live_2026-10-26.md)
+receives and writes all 2,400 dual-DU reports through one dummy over 120 seconds,
+with push p99 2.314 ms and normal unregister. **The planned 30-minute live
+stability and live fault scenarios remain pending.** The offline verification
+below was authorized while equipment was stopped and started no RIC, Core,
+DU or radio service.
 
 ## Code and behavior
 
@@ -131,9 +134,9 @@ dummy, full offline verification and paced reproduction commands.
 
 ## Remaining live acceptance
 
-Run the new collector/service against the operating RIC/CU/DUs/Core at the accepted
-100 ms setting and compare both physical links through the real socket/TXT path.
-Then run the planned 30-minute workload, app churn and slow-consumer scenarios,
+The linked 120-second live report verifies the real E2/socket/TXT path under
+stable dual-UE bindings. Run the planned 30-minute workload, app churn and
+slow-consumer scenarios,
 retaining source/receipt/TXT equality, latency/cadence outliers, source freshness,
 CPU/RSS/queue trends and normal E2 subscription deletion. Historical acquisition
 success and this replay result remain separate from those live gates.
