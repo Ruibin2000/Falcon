@@ -252,7 +252,7 @@ NAT. Interface state alone does not prove UE connectivity.
 `[SPARK]` Only while CU/DU are stopped, preserve previous logs instead of deleting them. These archives remain local and may contain security material:
 
 ```bash
-RAN_ARCHIVE=$(mktemp -d /tmp/falcomm-ran-logs.XXXXXX)
+RAN_ARCHIVE=$(mktemp -d /tmp/falcon-ran-logs.XXXXXX)
 sudo chmod 700 "$RAN_ARCHIVE"
 for logfile in /tmp/cu.log /tmp/du.log; do
   if sudo test -f "$logfile"; then
