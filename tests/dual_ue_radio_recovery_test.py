@@ -223,17 +223,17 @@ class RadioRecoveryTest(unittest.TestCase):
         self.assertEqual(evidence["lock_action"], "reused")
 
     def test_saved_matching_lock_avoids_a_rejected_duplicate_write(self):
-        command = 'AT+QNWLOCK="common/5g",2,639648,30,78'
+        command = 'AT+QNWLOCK="common/5g",2,638976,30,78'
         with FakeAT(correct_settings=True, reject=command).port() as modem:
             evidence = {}
             WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence)
         self.assertNotIn(command, modem.commands)
-        self.assertEqual(evidence["verified_lock"], ["2", "639648", "30", "78"])
+        self.assertEqual(evidence["verified_lock"], ["2", "638976", "30", "78"])
 
     def test_902_without_matching_readback_stops_before_registration(self):
         self.wrong_cell()
         watcher = self.auto()
-        with FakeAT(reject='AT+QNWLOCK="common/5g",2,639648,30,78').port():
+        with FakeAT(reject='AT+QNWLOCK="common/5g",2,638976,30,78').port():
             watcher.attempt()
         evidence = json.loads((watcher.directory / "attempts.jsonl").read_text())["radio_recovery"]
         self.assertEqual(evidence["status"], "failed")
@@ -248,14 +248,14 @@ class RadioRecoveryTest(unittest.TestCase):
             original = modem.reply
             def reply(command):
                 response = original(command)
-                if command == 'AT+QNWLOCK="common/5g",2,639648,30,78':
+                if command == 'AT+QNWLOCK="common/5g",2,638976,30,78':
                     return "\r\n+CME ERROR: 902\r\n"
                 return response
             evidence = {}
             with patch.object(modem, "reply", reply):
                 WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence)
         self.assertEqual(evidence["lock_action"], "verified_after_902")
-        self.assertEqual(evidence["verified_lock"], ["2", "639648", "30", "78"])
+        self.assertEqual(evidence["verified_lock"], ["2", "638976", "30", "78"])
         self.assertEqual(evidence["lock_write_error"]["cme_code"], 902)
 
     def lost_connected_ue(self):
@@ -484,7 +484,7 @@ class RadioRecoveryTest(unittest.TestCase):
             original = modem.reply
             def reply(command):
                 if command == 'AT+QENG="servingcell"':
-                    return '\r\n+QENG: "servingcell","NOCONN","NR5G-SA","TDD",001,01,00066C001,2,7,639648,78,1,-93,-11,19,1,37\r\nOK\r\n'
+                    return '\r\n+QENG: "servingcell","NOCONN","NR5G-SA","TDD",001,01,00066C001,2,7,638976,78,1,-93,-11,19,1,37\r\nOK\r\n'
                 if command == "AT+C5GREG?":
                     return "\r\n+C5GREG: 0,1\r\nOK\r\n"
                 return original(command)
@@ -578,7 +578,7 @@ class RadioRecoveryTest(unittest.TestCase):
             watcher.attempt()
         result = json.loads((watcher.directory / "attempts.jsonl").read_text())
         self.assertEqual(result["radio_recovery"]["status"], "failed")
-        self.assertEqual(result["radio_recovery"]["verified_lock"], ["2", "639648", "30", "78"])
+        self.assertEqual(result["radio_recovery"]["verified_lock"], ["2", "638976", "30", "78"])
         self.assertTrue(result["radio_recovery"]["registration_requested"])
         self.assertFalse(watcher.healthy)
         self.assertFalse(self.network.changes)

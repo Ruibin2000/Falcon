@@ -4,6 +4,8 @@
 Requires PyYAML. This checks offline identities and topology, not RF authorization,
 SSB/CORESET derivation, connected hardware, subscriber records, or live acceptance.
 OCUDU's pinned defaults are gNB 411/22 bits and sector 0 for a one-cell DU.
+Frequency checks describe the logical USRP-side n78 carriers. DU2's external
+Pi-Radio conversion to 9250 MHz is outside these OCUDU configuration checks.
 """
 
 import argparse
@@ -89,12 +91,14 @@ def validate(cu, du1, du2):
         require(0 <= pci <= 1007, f"{label}: invalid PCI")
         require(cell.get("plmn") == "00101", f"{label}: PLMN must be the string 00101")
         require(cell.get("tac") == 7, f"{label}: expected TAC 7")
+        bandwidth = integer(cell.get("channel_bandwidth_MHz"), f"{label} bandwidth")
+        expected_bandwidth, expected_srate = (20, 23.04) if label == "DU1" else (40, 46.08)
         require(cell.get("band") == 78 and cell.get("common_scs") == 30
-                and cell.get("channel_bandwidth_MHz") == 20,
-                f"{label}: expected explicit n78 / 20 MHz / 30 kHz")
+                and bandwidth == expected_bandwidth,
+                f"{label}: expected explicit n78 / {expected_bandwidth} MHz / 30 kHz")
         arfcn = integer(cell.get("dl_arfcn"), f"{label} ARFCN")
         center = 3000 + 0.015 * (arfcn - 600000)
-        interval = (center - 10, center + 10)
+        interval = (center - bandwidth / 2, center + bandwidth / 2)
         require(arfcn % 2 == 0, f"{label}: ARFCN is off the n78 30-kHz channel raster")
         require(3550 <= interval[0] and interval[1] <= 3700,
                 f"{label}: full nominal channel is outside 3550-3700 MHz")
@@ -106,7 +110,8 @@ def validate(cu, du1, du2):
                 and not re.search(r"REPLACE|PLACEHOLDER|TODO", serial, re.I),
                 f"{label}: missing actual B210 serial; discover hardware before startup")
         require("type=b200" in args.split(","), f"{label}: expected B210 device type=b200")
-        require(radio.get("srate") == 23.04, f"{label}: expected sample rate 23.04 MS/s")
+        require(radio.get("srate") == expected_srate,
+                f"{label}: expected sample rate {expected_srate} MS/s")
         f1 = section(config, "f1ap")
         bind = address(f1.get("bind_addrs"), f"{label} F1-C bind")
         require(address(f1.get("addrs"), f"{label} CU destination") == cu_f1,
@@ -142,7 +147,7 @@ def validate(cu, du1, du2):
         rows.append(dict(label=label, serial=serial, du_id=du_id, pci=pci,
                          cgi=(cell.get("plmn"), (gnb << (36 - bits)) | sector),
                          f1=bind, f1u=f1u, log=str(logfile), interval=interval,
-                         center_mhz=center))
+                         center_mhz=center, bandwidth_mhz=bandwidth, srate=radio.get("srate")))
     for key in ["serial", "du_id", "pci", "cgi", "f1", "f1u", "log"]:
         require(rows[0][key] != rows[1][key], f"Duplicate {key} across DU1 and DU2")
     left, right = sorted(rows, key=lambda row: row["interval"][0])
@@ -154,7 +159,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cu", type=Path, default=Path("/home/nyu/ocudu/configs/cu.yml"))
     parser.add_argument("--du1", type=Path, default=REPO / "configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml")
-    parser.add_argument("--du2", type=Path, default=REPO / "configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml")
+    parser.add_argument("--du2", type=Path, default=REPO / "configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml")
     parser.add_argument("--du2-e2", type=Path, default=REPO / "configs/ocudu/dual_fr1/du2_flexric.yml")
     args = parser.parse_args()
     try:
@@ -164,7 +169,8 @@ def main():
         return 1
     for row in rows:
         print(f'{row["label"]}: DU {row["du_id"]}, PCI {row["pci"]}, '
-              f'NCI {row["cgi"][1]}, {row["center_mhz"]:.0f} MHz, F1 {row["f1"]}')
+              f'NCI {row["cgi"][1]}, {row["center_mhz"]:.0f} MHz, '
+              f'BW {row["bandwidth_mhz"]} MHz, {row["srate"]} MS/s, F1 {row["f1"]}')
     for error in errors:
         print(f"FAIL: {error}", file=sys.stderr)
     if errors:

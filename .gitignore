@@ -1,2 +1,5 @@
 # Local SIM authentication credentials and copies or backups.
 sim_du*_credentials.txt*
+
+# Local editor workspace.
+/Falcon.code-workspace

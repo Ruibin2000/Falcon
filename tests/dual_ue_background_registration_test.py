@@ -104,8 +104,8 @@ class BackgroundRegistrationTest(unittest.TestCase):
         record = json.loads((watcher.directory / "attempts.jsonl").read_text())
         evidence = record["radio_recovery"]
         self.assertEqual(evidence["trigger"], "startup")
-        self.assertEqual(evidence["verified_lock"], ["2", "639648", "30", "78"])
-        self.assertIn('AT+QNWLOCK="common/5g",2,639648,30,78', modem.commands)
+        self.assertEqual(evidence["verified_lock"], ["2", "638976", "30", "78"])
+        self.assertIn('AT+QNWLOCK="common/5g",2,638976,30,78', modem.commands)
         self.assertEqual(len(self.jobs), 1)
         self.assertIn("--timeout=5", self.jobs[0].command)
         self.assertEqual(watcher.startup_radio["status"], "completed")
@@ -148,7 +148,7 @@ class BackgroundRegistrationTest(unittest.TestCase):
         with radio.FakeAT(registered=True).port() as modem:
             watcher.attempt()
         self.assertTrue(watcher.healthy)
-        self.assertIn('AT+QNWLOCK="common/5g",2,639648,30,78', modem.commands)
+        self.assertIn('AT+QNWLOCK="common/5g",2,638976,30,78', modem.commands)
         self.assertFalse(self.jobs)
         self.assertFalse(self.network.changes)  # Serial repair alone needs no PDU or host reset.
 

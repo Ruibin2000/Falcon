@@ -14,7 +14,7 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 | Task | `dual-ue-du-fr1-channels` |
 | Status | Current dual-UE functional scope verified; cold start, full repeatability and bidirectional disturbance/survivor experiments are follow-up work, excluded from current acceptance and merge criteria; integrations retain their separate scope |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 2026-10-24, acceptance scope revision |
+| Last updated at | 2026-10-29, DU2 40-MHz and Pi-Radio profile update |
 | Time zone | `America/New_York` |
 | Developer | Ruibin |
 | Reviewer | To be assigned |
@@ -28,6 +28,23 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 Maintain one plan for this task. Complete checkboxes only after the stated exit
 criteria pass and the reviewer can inspect the retained evidence. Plan numbers
 identify tasks; they do not require executing Plan 1 before this baseline.
+
+## 2026-10-29 DU2 Radio Profile Update
+
+The maintained DU2 configuration is now `du2_b210_n78_40mhz.yml`: 40 MHz
+bandwidth, 46.08 MS/s, TX 45 / RX 20 and offline-derived SSB ARFCN `638976`.
+DU1 remains at 20 MHz, 23.04 MS/s and TX 70 / RX 35. DU2 keeps its logical
+3600-MHz n78 carrier; Pi-Radio converts it to the intended 9250-MHz OTA
+center. OCUDU and E2/RIC retain the logical n78 cell information. The nominal
+DU2 channel is 3580–3620 MHz at the USRP and 9230–9270 MHz OTA.
+
+Earlier pass records and lock readbacks in this plan used DU2's 20-MHz profile
+and SSB `639648`. They remain historical evidence; live validation of the new
+40-MHz converted path is pending. Use the maintained
+[Spark startup handbook](../docs/dual_ue_spark_quick_commands.md) and refresh
+the [Laptop scripts](../docs/dual_ue_laptop_reconnect_quick_start.md#2-copy-or-update-scripts--laptop-terminal-watchers-stopped)
+before running the new profile. The CBRS channel-selection discussion below
+describes the original unconverted baseline rather than the converted OTA band.
 
 ## 2026-10-24 Acceptance Scope Revision
 
@@ -287,13 +304,14 @@ for current commands and explicit preparation-versus-live acceptance status.
 | Band | n78, explicitly configured | n78, explicitly configured |
 | Carrier NR-ARFCN | `644000` | `640000` |
 | Carrier center | 3660 MHz | 3600 MHz |
-| Channel bandwidth | 20 MHz | 20 MHz |
+| Channel bandwidth | 20 MHz | 40 MHz |
 | Common SCS | 30 kHz | 30 kHz |
-| Nominal channel interval | 3650–3670 MHz | 3590–3610 MHz |
-| SSB NR-ARFCN | `643680` confirmed in startup and 2026-10-13 UE1 lock/serving-cell readback | `639648` confirmed in startup and 2026-10-13 UE2 lock/serving-cell readback |
+| Nominal USRP-side channel interval | 3650–3670 MHz | 3580–3620 MHz |
+| Intended OTA center / interval | 3660 MHz / 3650–3670 MHz | 9250 MHz / 9230–9270 MHz via Pi-Radio |
+| SSB NR-ARFCN | `643680` confirmed in startup and 2026-10-13 UE1 lock/serving-cell readback | `638976` derived offline for 40 MHz; live confirmation pending |
 | Radio | B210 serial `3271233`, USB 3 at `2-1.3` / controller `NVDA8000:00`; rediscover before use | B210 serial `328B021`, USB 3 at `6-1.1` / controller `NVDA8000:02`; rediscover before use |
-| Sample rate | 23.04 MS/s | Start from 23.04 MS/s and validate the actual selected radio |
-| Gain | Choose/record low-power gain and attenuation; historical TX 70 / RX 35 is a reference | Choose/record independently for the second RF path and verify low-power operation |
+| Sample rate | 23.04 MS/s | 46.08 MS/s |
+| Configured TX / RX gain | 70 / 35 dB | 45 / 20 dB |
 
 Both complete nominal channels lie within the US CBRS range, 3550–3700 MHz.
 Use this pair only when the applicable operating authorization covers both
@@ -306,13 +324,14 @@ different authorized pair if necessary. Indoor shielding and a configured
 For this range, the NR mapping is
 `F_REF_MHz = 3000 + 0.015 × (N_REF − 600000)`. n78 covers 3300–3800 MHz;
 its 30 kHz channel raster accepts these two ARFCNs. The proposed centers are
-60 MHz apart, leaving 40 MHz between nominal channel edges. This is a
+60 MHz apart, leaving 30 MHz between the current USRP-side nominal channel edges. This is a
 non-overlapping channel proposal, conditional on the actual lab spectrum and
 coexistence results. [ETSI / 3GPP TS 38.104, Sections 5.2 and 5.4](https://www.etsi.org/deliver/etsi_ts/138100_138199/138104/16.20.00_60/ts_138104v162000p.pdf).
 
 Set `band: 78` explicitly: both candidates overlap other NR bands, and automatic
 band inference is unsuitable. Validate against the pinned OCUDU band helper and
-SSB/CORESET0 derivation, including the 51-PRB, 20-MHz/30-kHz configuration.
+SSB/CORESET0 derivation: 51 PRBs for DU1's 20 MHz and 106 PRBs for DU2's
+40 MHz, both at 30 kHz.
 Rederive both SSB values. Historical SSB `649632` belongs to the 3750-MHz
 configuration and must not be used for the new DU1 carrier. Never use a carrier
 ARFCN as the modem's SSB lock or translate a historical carrier-to-SSB offset.
@@ -395,7 +414,7 @@ they already exist:
 | Location | Purpose |
 | --- | --- |
 | `configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml` | Deployed and verified for single-link UL functionality; underflow remediation deferred |
-| `configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml` | Prepared/deployed DU2 radio/cell/F1 configuration for B210 328B021; offline checks and actual radio/F1/E2 plus UE2 solo UL passed; full dual-link acceptance pending |
+| `configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml` | Current 40-MHz DU2 radio/cell/F1 configuration for B210 328B021; offline preparation complete, live 40-MHz operation pending; earlier pass records used 20 MHz |
 | `configs/ocudu/dual_fr1/du2_flexric.yml` | Prepared DU2 E2/KPM overlay and 1000-ms scheduler/RLC metrics |
 | `configs/flexric/xapp_du_kpm_base5.conf` | One DU-only five-metric subscription, shared with Plan 2 when available |
 | `patches/flexric/dual-fr1-kpm-diagnostics.patch` | Minimal monitor attribution, missing-value, and lifecycle changes |
@@ -539,8 +558,8 @@ cell_cfg:
   common_scs: 30
 ```
 
-DU2 review template; replace the radio placeholder and historical gain examples
-with the reviewed low-power settings before any executable test:
+DU2 review template for the current 40-MHz profile; replace the radio placeholder
+with the discovered physical serial before any executable test:
 
 ```yaml
 gnb_id: 411
@@ -555,16 +574,16 @@ f1u:
 ru_sdr:
   device_driver: uhd
   device_args: type=b200,serial=REPLACE_WITH_ACTUAL_DU2_SERIAL,num_recv_frames=64,num_send_frames=64
-  srate: 23.04
+  srate: 46.08
   clock: internal
   clock_ppm: 0.0
   freq_offset: 0
-  tx_gain: 70
-  rx_gain: 35
+  tx_gain: 45
+  rx_gain: 20
 cell_cfg:
   dl_arfcn: 640000
   band: 78
-  channel_bandwidth_MHz: 20
+  channel_bandwidth_MHz: 40
   common_scs: 30
   plmn: "00101"
   tac: 7
@@ -572,8 +591,8 @@ cell_cfg:
   sector_id: 1
 ```
 
-The template gains are historical reference values, not validated low-power
-settings or a calibrated power prescription. Step 2 must select the actual
+The template gains are current configuration values, not calibrated transmit
+powers or proof of live RF performance. Step 2 must review the actual
 gain/attenuation. The runtime log overlay is mandatory.
 
 ```yaml
@@ -632,7 +651,7 @@ cp "$FALCON_REPO/configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml" \
   -c "$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml" \
   --dryrun log --filename "$DUAL_FR1_EVIDENCE/radio/du1.log"
 "$OCUDU_SOURCE/build/apps/du_split_8/odu" \
-  -c "$FALCON_REPO/configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml" \
+  -c "$FALCON_REPO/configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml" \
   -c "$FALCON_REPO/configs/ocudu/dual_fr1/du2_flexric.yml" \
   -c "$DUAL_FR1_EVIDENCE/configs/du2_logs.yml" --dryrun
 ```
@@ -725,7 +744,7 @@ DU2 launch recipe for its own Spark terminal:
 
 ```bash
 sudo "$OCUDU_SOURCE/build/apps/du_split_8/odu" \
-  -c "$FALCON_REPO/configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml" \
+  -c "$FALCON_REPO/configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml" \
   -c "$FALCON_REPO/configs/ocudu/dual_fr1/du2_flexric.yml" \
   -c "$DUAL_FR1_EVIDENCE/configs/du2_logs.yml"
 ```

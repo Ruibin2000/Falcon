@@ -1,6 +1,6 @@
 # Dual UE Laptop Quick Commands — UE IP Binding and UL
 
-Updated: 2026-10-24. Developer: Ruibin Chen. Pair this booklet with the updated
+Updated: 2026-10-29. Developer: Ruibin Chen. Pair this booklet with the updated
 [Spark Quick Commands](dual_ue_spark_quick_commands.md) to reproduce the October 21
 CU/DU/Core UE IP binding. Spark now starts RIC with the identity plugin, then
 CU with its identity E2 overlay, both DUs and the new three-subscription xApp.
@@ -341,7 +341,9 @@ reports incomplete; address-removal failures retain the existing guards.
 | Parameter | UE1 / DU1 | UE2 / DU2 |
 | --- | --- | --- |
 | Carrier / ARFCN | 3660 MHz / `644000` | 3600 MHz / `640000` |
-| PCI / SSB / SCS / band | `1` / `643680` / 30 kHz / n78 | `2` / `639648` / 30 kHz / n78 |
+| Channel bandwidth | 20 MHz | 40 MHz |
+| Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
+| PCI / SSB / SCS / band | `1` / `643680` / 30 kHz / n78 | `2` / `638976` / 30 kHz / n78 |
 | DU ID / sector / expected NCI | `1` / `0` / `6733824` | `2` / `1` / `6733825` |
 | Intended modem IMEI | `863305041978437` | `863305041980706` |
 | Intended SIM IMSI | `001010000000101` | `001010000000102` |
@@ -966,14 +968,14 @@ AT+QNWPREFCFG="mode_pref"
 AT+QNWPREFCFG="nr5g_disable_mode",2
 AT+QNWPREFCFG="nr5g_disable_mode"
 AT+QNWPREFCFG="nr5g_band"
-AT+QNWLOCK="common/5g",2,639648,30,78
+AT+QNWLOCK="common/5g",2,638976,30,78
 AT+QNWLOCK="common/5g"
 AT+QENG="servingcell"
 AT+C5GREG?
 ```
 
-Require writes `OK`, lock `2,639648,30,78`, NR5G-SA / `001,01` / TAC 7,
-PCI `2`, NCI `00066C001`, SSB `639648`, n78 and `+C5GREG: 0,1`.
+Require writes `OK`, lock `2,638976,30,78`, NR5G-SA / `001,01` / TAC 7,
+PCI `2`, NCI `00066C001`, SSB `638976`, n78 and `+C5GREG: 0,1`.
 Exit minicom with Ctrl+A, then X. A correct APN/IP or lock tuple alone does not
 prove the actual serving cell. Recheck this cell after PDU establishment and
 before UL; stop this role's setup/test if identity or cell differs.

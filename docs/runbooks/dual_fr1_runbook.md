@@ -1,5 +1,14 @@
 # DU2 Bring-up and Dual-FR1 UL Acceptance
 
+**Radio profile update, 2026-10-29:** the maintained DU2 startup configuration
+is now `du2_b210_n78_40mhz.yml`, with 40 MHz bandwidth, 46.08 MS/s,
+TX 45 / RX 20 and logical SSB ARFCN `638976`. Pi-Radio converts the
+3600-MHz USRP interface to the intended 9250-MHz OTA center; OCUDU/E2 retain
+the logical n78 cell configuration. Refresh Laptop connection scripts before
+starting UE2. The October measurements below used the earlier 20-MHz profile;
+they do not validate the new 40-MHz radio path. Use the
+[current Spark startup checks](../dual_ue_spark_quick_commands.md#5-start-du1-and-du2-in-separate-terminals-and-keep-both-running).
+
 Network update, 2026-10-23: Spark now uses `ogstun_1 / 10.45.0.1/16` for UE1
 and `ogstun_2 / 10.46.0.1/16` for UE2, both MTU 1400, sharing the same UPF.
 The [TUN split guide](../networking/dual_ue_tun_split.md) records the applied migration,
@@ -12,7 +21,7 @@ and bidirectional disturbance/survivor tests are
 [supplemental experiments](../development/dual_ue_supplemental_experiments.md),
 not current Dual UE acceptance criteria or merge prerequisites.
 
-Updated: 2026-10-23. The radio checkpoints below follow the October 13
+Updated: 2026-10-29. The historical radio checkpoints below follow the October 13
 [Plan 3](../../plans/dual-ue-du-fr1-channels.md) scope.
 The current operator priority is DU2 implementation and UL-only acceptance.
 Underflow remediation is deferred; record counts without using count/growth
@@ -78,25 +87,33 @@ derivation. A successful preparation check is not live acceptance.
 | Item | DU1 | DU2 |
 | --- | --- | --- |
 | Carrier / NR-ARFCN | 3660 MHz / 644000 | 3600 MHz / 640000 |
-| Band / bandwidth / common SCS | n78 / 20 MHz / 30 kHz | n78 / 20 MHz / 30 kHz |
+| Band / bandwidth / common SCS | n78 / 20 MHz / 30 kHz | n78 / 40 MHz / 30 kHz |
+| USRP sample rate / TX / RX gain | 23.04 MS/s / 70 / 35 dB | 46.08 MS/s / 45 / 20 dB |
+| Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
 | Radio serial / USB path | 3271233 / 2-1.3 / NVDA8000:00 | 328B021 / 6-1.1 / NVDA8000:02 |
 | gNB / width / DU ID | 411 / 22 / 1 | 411 / 22 / 2 |
 | PCI / sector / expected NCI | 1 / 0 / 6733824 | 2 / 1 / 6733825 |
 | F1-C / F1-U local bind | 127.0.10.2 | 127.0.10.3 |
 | E2 local bind / shared destination | 127.0.0.1 / 127.0.0.1:36421 | 127.0.10.3 / 127.0.0.1:36421 |
-| SSB lock | 643680 from accepted startup | 639648 confirmed in startup and UE2 lock/serving-cell readback |
+| SSB lock | 643680 from accepted startup | 638976 derived offline for the current 40-MHz profile; live confirmation pending |
 | Intended new subscriber | 001010000000101 | 001010000000102 |
 
-DU2 preserves the initial sample rate 23.04 MS/s, internal clock, TX 70/RX 35,
-and scheduler/RLC reporting at 1000 ms. Record actual gains/attenuation and the
+At the October 13 checkpoint, DU2 used 23.04 MS/s, internal clock, TX 70/RX 35,
+and scheduler/RLC reporting at 1000 ms. The current profile uses 46.08 MS/s,
+TX 45/RX 20 and 100-ms scheduler/RLC reporting. Record actual gains/attenuation and the
 operating conditions for each run. The existing CU defaults to gNB 411/22 and
 six-DU capacity; no CU capacity or core-address change is required.
 
-The offline RAN helper uses 51 PRBs, 30-kHz common/SSB SCS, SS0 index 0 and
+The historical offline RAN helper used 51 PRBs, 30-kHz common/SSB SCS, SS0 index 0 and
 maximum CORESET0 duration 2. It derives DU2 SSB 639648, offsetToPointA 0,
 kSSB 20 and CORESET0 index 0. The same helper reproduces DU1 SSB 643680.
 Recompute after changing the carrier/cell parameters or OCUDU version; use the
 actual live startup/readback as the modem-lock confirmation.
+
+For the current 40-MHz DU2 profile, the same OCUDU library uses 106 PRBs
+and derives SSB `638976`. The carrier remains ARFCN `640000`; its nominal
+USRP-side interval is 3580–3620 MHz and its intended converted OTA interval
+is 9230–9270 MHz.
 
 ## Bind the second radio and validate configuration
 
@@ -109,7 +126,7 @@ uhd_find_devices --args type=b200
 ```
 
 Retain both physical serials. The maintained
-[DU2 radio configuration](../../configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml)
+[DU2 radio configuration](../../configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml)
 already binds `328B021`, different from DU1 `3271233`. If changing the radio,
 replace this serial with the independently discovered replacement identity.
 Keep the [E2/KPM overlay](../../configs/ocudu/dual_fr1/du2_flexric.yml) as the second
@@ -131,19 +148,19 @@ export DUAL_FR1_EVIDENCE
 DUAL_FR1_EVIDENCE=$(mktemp -d /tmp/falcon-dual-fr1.XXXXXXXX)
 
 python3 "$FALCON_REPO/scripts/dual_fr1/check_config.py"
-cp "$FALCON_REPO/configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml" \
-  "$OCUDU_SOURCE/configs/du2_b210_n78_20mhz.yml"
+cp "$FALCON_REPO/configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml" \
+  "$OCUDU_SOURCE/configs/du2_b210_n78_40mhz.yml"
 cp "$FALCON_REPO/configs/ocudu/dual_fr1/du2_flexric.yml" \
   "$OCUDU_SOURCE/configs/du2_flexric.yml"
 python3 "$FALCON_REPO/scripts/dual_fr1/check_config.py" \
   --du1 "$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml" \
-  --du2 "$OCUDU_SOURCE/configs/du2_b210_n78_20mhz.yml" \
+  --du2 "$OCUDU_SOURCE/configs/du2_b210_n78_40mhz.yml" \
   --du2-e2 "$OCUDU_SOURCE/configs/du2_flexric.yml"
 "$OCUDU_SOURCE/build/apps/du_split_8/odu" \
-  -c "$OCUDU_SOURCE/configs/du2_b210_n78_20mhz.yml" \
+  -c "$OCUDU_SOURCE/configs/du2_b210_n78_40mhz.yml" \
   -c "$OCUDU_SOURCE/configs/du2_flexric.yml" \
   --dryrun log --filename "$DUAL_FR1_EVIDENCE/du2.log"
-sha256sum "$OCUDU_SOURCE/configs/du2_b210_n78_20mhz.yml" \
+sha256sum "$OCUDU_SOURCE/configs/du2_b210_n78_40mhz.yml" \
   "$OCUDU_SOURCE/configs/du2_flexric.yml"
 ```
 
@@ -167,7 +184,7 @@ prerequisites separately, covering both full channels.
    bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
      "${DUAL_FR1_EVIDENCE:?Use the prepared run directory}/du2_startup.log" \
      sudo stdbuf -oL -eL build/apps/du_split_8/odu \
-     -c configs/du2_b210_n78_20mhz.yml \
+     -c configs/du2_b210_n78_40mhz.yml \
      -c configs/du2_flexric.yml \
      log --filename "${DUAL_FR1_EVIDENCE:?Use the prepared run directory}/du2.log"
    ```

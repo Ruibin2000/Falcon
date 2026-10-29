@@ -1,6 +1,6 @@
 # Dual UE Spark Quick Commands — 100 ms DU / 1 s CU and app subscriptions
 
-Updated: 2026-10-26. Developer: Ruibin Chen.
+Updated: 2026-10-29. Developer: Ruibin Chen.
 
 This is the complete Spark startup and experiment procedure for two UEs,
 using the first expanded **27-measurement** DU profile at **100 ms** and CU identity
@@ -99,8 +99,11 @@ not current Dual UE acceptance criteria or merge prerequisites.
 | Parameter | UE1 / DU1 | UE2 / DU2 |
 | --- | --- | --- |
 | B210 serial | `3271233` | `328B021` |
+| Configured TX / RX gain | 70 / 35 dB | 45 / 20 dB |
 | Carrier / ARFCN | 3660 MHz / `644000` | 3600 MHz / `640000` |
-| PCI / SSB / SCS / band | `1` / `643680` / 30 kHz / n78 | `2` / `639648` / 30 kHz / n78 |
+| Channel bandwidth / sample rate | 20 MHz / 23.04 MS/s | 40 MHz / 46.08 MS/s |
+| Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
+| PCI / SSB / SCS / band | `1` / `643680` / 30 kHz / n78 | `2` / `638976` / 30 kHz / n78 |
 | DU ID / sector / expected NCI | `1` / `0` / `6733824` | `2` / `1` / `6733825` |
 | DU F1 bind | `127.0.10.2` | `127.0.10.3` |
 | Intended modem IMEI | `863305041978437` | `863305041980706` |
@@ -118,7 +121,8 @@ The reviewed dual-subnet migration is complete. Preserve bundle
 the migrated core. The old two-address `ogstun` was subsequently split;
 use the [current layout, archived scripts and rollback](networking/dual_ue_tun_split.md).
 See [Dual UE Subnets](networking/dual_ue_subnets.md) for the historical DNN migration. Both cells use
-PLMN `00101`, TAC 7, SST 1 and n78 / 20 MHz / SCS 30 kHz. Keep K/OPc private
+PLMN `00101`, TAC 7, SST 1 and n78 / SCS 30 kHz, with DU1 at 20 MHz and DU2
+at 40 MHz. Keep K/OPc private
 and preserve the baseline subscriber; do not blindly reset SQN.
 
 ## 1. Check radios and deploy configuration before a cold start
@@ -154,18 +158,33 @@ Deploy and check the maintained configs before the cold-start launch:
 ```bash
 FALCON_REPO=/home/nyu/Desktop/Falcon_repo/Falcon
 cp "$FALCON_REPO/configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml" /home/nyu/ocudu/configs/
-cp "$FALCON_REPO/configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml" /home/nyu/ocudu/configs/
+cp "$FALCON_REPO/configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml" /home/nyu/ocudu/configs/
 cp "$FALCON_REPO/configs/ocudu/dual_fr1/du2_flexric.yml" /home/nyu/ocudu/configs/
 python3 "$FALCON_REPO/scripts/dual_fr1/check_config.py" \
   --du1 /home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml \
-  --du2 /home/nyu/ocudu/configs/du2_b210_n78_20mhz.yml \
+  --du2 /home/nyu/ocudu/configs/du2_b210_n78_40mhz.yml \
   --du2-e2 /home/nyu/ocudu/configs/du2_flexric.yml
 ```
 
 Require `PASS`: both deployed DU configs must enable scheduler/RLC metrics
 with `metrics.periodicity.du_report_period: 100`. Keep the actual recorded RF
-conditions from Plan 3. The current
-configs use TX 70 / RX 35 and 23.04 MS/s; these gains are not calibrated dBm.
+conditions for the run. DU1 uses 20 MHz, 23.04 MS/s and TX 70 / RX 35;
+DU2 uses 40 MHz, 46.08 MS/s and TX 45 / RX 20. These gains are not calibrated dBm.
+DU2's USRP-side carrier remains 3600 MHz / n78 / ARFCN `640000`;
+Pi-Radio translates it to the intended 9250 MHz OTA center. Its nominal
+40-MHz channel spans 3580–3620 MHz at the USRP and 9230–9270 MHz OTA.
+OCUDU and E2/RIC continue to describe the logical n78 cell; they do not
+automatically learn Pi-Radio's external frequency conversion.
+
+The 40-MHz configuration uses 106 PRBs at 30 kHz and derives SSB ARFCN
+`638976`; the former 20-MHz setup used `639648`. Before starting Laptop UE2,
+copy the updated connection scripts using the
+[Laptop script update block](dual_ue_laptop_reconnect_quick_start.md#2-copy-or-update-scripts--laptop-terminal-watchers-stopped).
+The bandwidth/sample-rate changes and SSB derivation are checked offline;
+live 40-MHz USRP/Pi-Radio operation still requires startup and UE/traffic checks.
+With the default over-the-wire format, this OCUDU implementation selects `sc12`
+for a B2xx radio above 30.72 MS/s; keep the actual startup stream settings in
+the new run's evidence.
 Host performance restoration, when needed after reboot, is in
 [step 2](#2-restore-performance-settings-after-reboot).
 
@@ -199,7 +218,7 @@ bash scripts/ue_identity/build.sh &&
 /home/nyu/ocudu/build-integrated/apps/du_split_8/odu \
   -c /home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml --dryrun &&
 /home/nyu/ocudu/build-integrated/apps/du_split_8/odu \
-  -c /home/nyu/ocudu/configs/du2_b210_n78_20mhz.yml \
+  -c /home/nyu/ocudu/configs/du2_b210_n78_40mhz.yml \
   -c /home/nyu/ocudu/configs/du2_flexric.yml --dryrun
 ```
 
@@ -397,6 +416,40 @@ flushes output and propagates the child exit status. It also records
 DU, so gain replies can be correlated with DU/CU events; see
 [script(1)](https://man7.org/linux/man-pages/man1/script.1.html).
 
+**Spark diagnostics terminal — check gains, bandwidth and sample rate before starting either DU:**
+
+```bash
+cd /home/nyu/ocudu
+python3 -B - <<'PY'
+from pathlib import Path
+import yaml
+
+checks = [
+    ("DU1", "configs/du1_b210_n78_3660mhz.yml", (70, 35, 20, 23.04)),
+    ("DU2", "configs/du2_b210_n78_40mhz.yml", (45, 20, 40, 46.08)),
+]
+failed = False
+for label, filename, expected in checks:
+    config = yaml.safe_load(Path(filename).read_text())
+    radio = config["ru_sdr"]
+    actual = (radio["tx_gain"], radio["rx_gain"],
+              config["cell_cfg"]["channel_bandwidth_MHz"], radio["srate"])
+    passed = actual == expected
+    failed |= not passed
+    print(f'{"PASS" if passed else "FAIL"}: {label}: '
+          f'TX gain={actual[0]} dB, RX gain={actual[1]} dB, '
+          f'BW={actual[2]} MHz, sample rate={actual[3]} MS/s '
+          f'(expected TX/RX/BW/rate={expected}; {filename})')
+raise SystemExit(1 if failed else 0)
+PY
+```
+
+Require `PASS` for both DUs: DU1 **TX 70 / RX 35 dB**, DU2 **TX 45 / RX 20 dB**.
+Also require DU1 **20 MHz / 23.04 MS/s** and DU2 **40 MHz / 46.08 MS/s**.
+The command reads the actual OCUDU startup YAML files. Each DU applies these
+gains when started with the commands below; no runtime console adjustment is
+needed for this setup. Resolve any `FAIL` before starting either DU.
+
 ### 5a. Spark DU1 terminal
 
 **Normal startup:**
@@ -437,7 +490,7 @@ printf 'DU2 run directory: %s\n' "$DU2_RUN"
 bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/run_du_console.sh \
   "$DU2_RUN/startup.log" \
   sudo stdbuf -oL -eL build-integrated/apps/du_split_8/odu \
-  -c configs/du2_b210_n78_20mhz.yml -c configs/du2_flexric.yml \
+  -c configs/du2_b210_n78_40mhz.yml -c configs/du2_flexric.yml \
   log --filename "$DU2_RUN/du.log"
 ```
 
@@ -451,7 +504,8 @@ Expected: `DU2 debug directory: /tmp/falcon-du2-crash.XXXXXXXX`. This uses the
 same integrated DU binary, DU2 config and DU2 E2 overlay under GDB.
 Start only one launcher for this DU.
 
-Require radio `328B021` / USB 3, PCI 2 / carrier `640000` / SSB `639648`,
+Require radio `328B021` / USB 3, 40 MHz / 46.08 MS/s,
+PCI 2 / carrier `640000` / SSB `638976`,
 F1/E2 completed, `==== DU started ===`, and RIC accepted gNB 411 / DU ID 2.
 Leave this terminal running.
 
@@ -490,7 +544,7 @@ and press Enter. Require an `Available commands` response:
 
 The current OCUDU console splits commands on semicolons and removes newlines.
 Send one command at a time with surrounding semicolons so queued lines do not
-merge. In the selected DU's terminal, temporarily reduce its RX gain to 30 dB:
+merge. In the selected DU's terminal, temporarily set its RX gain to 30 dB:
 
 ```text
 ;rx_gain 0 30;
@@ -498,12 +552,28 @@ merge. In the selected DU's terminal, temporarily reduce its RX gain to 30 dB:
 
 Require `Rx gain set to 30 dB for port 0.` (numeric formatting may differ).
 Port `0` is local to that DU process and is not its DU ID. This changes its
-radio's uplink reception gain. Restore the configured 35 dB with a separate
-command:
+radio's uplink reception gain. Restore the configured value in the corresponding
+DU terminal with a separate command.
+
+**DU1 — restore RX gain to 35 dB:**
 
 ```text
 ;rx_gain 0 35;
 ```
+
+**DU2 — apply the configured TX gain of 45 dB and RX gain of 20 dB:**
+
+Enter each command separately in the DU2 terminal:
+
+```text
+;tx_gain 0 45;
+```
+
+```text
+;rx_gain 0 20;
+```
+
+Require a successful gain acknowledgement after each command.
 
 Runtime gain changes do not rewrite YAML; restart reads the configuration
 again. The new launcher is stored in the repository and is used on each
@@ -522,10 +592,16 @@ directory. Continue entering gain commands normally in the DU terminal:
 ;tx_gain 0 40;
 ```
 
-Restore it with a separate command:
+Restore DU1's configured TX gain with a separate command in the DU1 terminal:
 
 ```text
 ;tx_gain 0 70;
+```
+
+For DU2, restore its configured TX gain in the DU2 terminal:
+
+```text
+;tx_gain 0 45;
 ```
 
 In another **Spark** terminal, display the gain acknowledgement times for the

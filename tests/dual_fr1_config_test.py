@@ -17,7 +17,7 @@ class DualConfigTest(unittest.TestCase):
         self.cu = {"cu_cp": {"f1ap": {"bind_addrs": "127.0.10.1"}}}
         self.du1 = checker.load(REPO / "configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml")
         self.du2 = checker.merge(
-            checker.load(REPO / "configs/ocudu/dual_fr1/du2_b210_n78_20mhz.yml"),
+            checker.load(REPO / "configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml"),
             checker.load(REPO / "configs/ocudu/dual_fr1/du2_flexric.yml"))
         # Avoid dependence on an operator-owned /tmp log file's permissions.
         self.du1["log"]["filename"] = "/tmp/falcon-config-fixture-du1.log"
@@ -74,6 +74,19 @@ class DualConfigTest(unittest.TestCase):
     def test_old_one_second_source_cannot_pass_the_100ms_preflight(self):
         self.du2["metrics"]["periodicity"]["du_report_period"] = 1000
         self.assertIn("DU2: scheduler/RLC metrics and 100-ms reporting are required", self.errors())
+
+    def test_stale_20mhz_du2_config_cannot_pass_current_preflight(self):
+        self.du2["cell_cfg"]["channel_bandwidth_MHz"] = 20
+        self.assertIn("DU2: expected explicit n78 / 40 MHz / 30 kHz", self.errors())
+
+    def test_old_sampling_rate_cannot_pass_for_40mhz_du2(self):
+        self.du2["ru_sdr"]["srate"] = 23.04
+        self.assertIn("DU2: expected sample rate 46.08 MS/s", self.errors())
+
+    def test_40mhz_channel_edges_are_used_for_overlap_detection(self):
+        # At 3635.01 MHz, the old 20-MHz interval would not overlap DU1.
+        self.du2["cell_cfg"]["dl_arfcn"] = 642334
+        self.assertIn("Nominal DU channels overlap", self.errors())
 
 
 if __name__ == "__main__":

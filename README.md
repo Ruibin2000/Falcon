@@ -100,15 +100,15 @@ flowchart LR
         Host[UE Host<br/>MPTCP client<br/>Two IP interfaces]
         UE1[Quectel UE<br/>FR1 path]
         UE3[Quectel UE<br/>FR3 path]
-        Up[Pi-Radio<br/>3.5 to 7 GHz]
+        Up[Pi-Radio<br/>3.6 GHz IF to 9.25 GHz RF]
         Host <-->|IP interface 1| UE1
         Host <-->|IP interface 2| UE3
-        UE3 <-->|RF, 3.5 GHz| Up
+        UE3 <-->|IF, 3.6 GHz| Up
     end
 
     subgraph OTA[Over-the-Air Links]
-        Link1[FR1 link<br/>3.5 GHz]
-        Link3[FR3 link<br/>approximately 7 GHz]
+        Link1[FR1 link<br/>3.66 GHz]
+        Link3[FR3 link<br/>9.25 GHz]
         Motion[Motion and blockage<br/>UE movement and blockers]
         Interference[Interference transmitter<br/>controlled lab test]
         Motion -.-> Link1
@@ -118,7 +118,7 @@ flowchart LR
 
     subgraph Network[Network Side]
         Cell1[USRP FR1 cell]
-        Down[Pi-Radio<br/>7 to 3.5 GHz]
+        Down[Pi-Radio<br/>9.25 GHz RF to 3.6 GHz IF]
         Cell3[USRP FR3 cell]
         RAN[Two-cell RAN and 5G core<br/>OAI or OCUDU RAN]
         RIC[Near-RT RIC<br/>FlexRIC xApps]
@@ -126,7 +126,7 @@ flowchart LR
         Server[MPTCP server<br/>RIC-assisted path steering]
         Cell1 <-->|FR1 radio link| Link1
         Link3 <-->|FR3 radio link| Down
-        Down <-->|RF, 3.5 GHz| Cell3
+        Down <-->|IF, 3.6 GHz| Cell3
         Cell1 <-->|Radio unit interface| RAN
         Cell3 <-->|Radio unit interface| RAN
         RAN <-->|E2 measurements and control| RIC
@@ -135,15 +135,15 @@ flowchart LR
         App <-->|Application traffic| Server
     end
 
-    UE1 <-->|3.5 GHz OTA| Link1
-    Up <-->|approximately 7 GHz OTA| Link3
+    UE1 <-->|3.66 GHz OTA| Link1
+    Up <-->|9.25 GHz OTA| Link3
 ```
 
-The future FR1/FR3 diagram uses nominal 3.5 GHz equipment interfaces and an approximately 7 GHz converted OTA path. The verified dual-UE radios operate at **3660 MHz and 3600 MHz**, both within n78. Pi-Radio frequency conversion and RIC/AI-assisted steering remain future work. FlexRIC and the KPM xApps receive actual measurements from both DUs. The working RAN is OCUDU with Open5GS; the OAI label in the concept diagram is an alternative implementation, not part of the current deployment.
+The FR3 path uses a **3600-MHz USRP/modem interface and an intended 9250-MHz OTA center through Pi-Radio conversion**. The October 29 configuration sets DU2 to **40 MHz / 46.08 MS/s / TX 45 / RX 20**, while DU1 remains at **3660 MHz / 20 MHz / 23.04 MS/s / TX 70 / RX 35**. Both OCUDU cells retain logical n78 configurations, and E2/RIC do not automatically learn the external RF conversion. Earlier dual-UE pass results used DU2 at 20 MHz; live validation of the new 40-MHz converted path is pending. FlexRIC and the KPM xApps receive measurements from both DUs. RIC/AI-assisted steering remains future work. The working RAN is OCUDU with Open5GS; the OAI label in the concept diagram is an alternative implementation, not part of the current deployment.
 
 ### Network-Side Implementation: OCUDU, Open5GS, and FlexRIC
 
-The following diagram expands the planned network-side implementation on the DGX Spark. The FR1 and FR3 radio branches terminate at separate OCUDU DUs. The FR3 Pi-Radio unit downconverts the approximately 7 GHz OTA signal to the 3.5 GHz interface used by the network-side radio chain.
+The following diagram expands the network-side design on the DGX Spark. The FR1 and FR3 radio branches terminate at separate OCUDU DUs. The FR3 Pi-Radio unit translates between the 9250-MHz OTA signal and the 3600-MHz interface used by the network-side USRP.
 
 ```mermaid
 flowchart LR
@@ -174,11 +174,11 @@ flowchart LR
 
     subgraph RF[Radio Front Ends and OTA Interface]
         B1[USRP B210<br/>FR1 cell]
-        OTA3[FR3 OTA<br/>approximately 7 GHz]
-        PR[Pi-Radio<br/>7 to 3.5 GHz]
+        OTA3[FR3 OTA<br/>9.25 GHz / 40 MHz]
+        PR[Pi-Radio<br/>9.25 GHz RF / 3.6 GHz IF]
         B2[USRP B210<br/>FR3 cell]
         OTA3 <-->|RF| PR
-        PR <-->|RF, 3.5 GHz| B2
+        PR <-->|IF, 3.6 GHz / 40 MHz| B2
     end
 
     B1 <-->|USB 3 and UHD| DU1
@@ -316,7 +316,7 @@ The current Falcon over-the-air chain uses **UHD and a USRP B210**. ZeroMQ setti
 - The verified configuration now includes two DUs, two B210s and two RM500Q modems with concurrent 60-second TCP UL functionality. Cold-start/new-laptop reproduction, repeated comparative UL/UDP measurements and bidirectional disturbance/survivor trials remain supplemental experiments, not current acceptance or merge requirements. The October 23 MPTCP video trial passed with one measured rebuffering event.
 - Both intended SIM/modem identities, registered IPv4/private-ping paths and concurrent UL/KPM checkpoints are verified. The MPTCP primary/backup video demo and UE2 recovery with changed IPs passed in separate experiments. The complete symmetric disturbance/survivor experiment remains follow-up work, excluded from current acceptance and merging.
 - FlexRIC E2 Setup, real two-DU UE KPM, the repaired report-age display and normal subscription/deletion are verified. The October 13 application/KPM timeline retains its approximate retrospective clock correction. Both hosts were synchronized to external NTP before the October 24 recovery trial; this does not recalibrate historical traces. Protocol-explicit identity correlation and sustained stability remain validation tasks.
-- The 30.72 MS/s, 20-s UHD benchmark is a radio/USB stress test. The current OCUDU configuration uses a 23.04 MS/s sample rate.
+- The 30.72 MS/s, 20-s UHD benchmark is a historical radio/USB stress test. The current profiles use 23.04 MS/s for DU1 and 46.08 MS/s for DU2; that benchmark does not validate the new DU2 streaming rate.
 - The NVIDIA kernel, PREEMPT_RT status, and system-default GCC configuration are retained to preserve the reproducible baseline.
 - `ocudu_performance` and privileged RAN launch were applied. Recurring RF failures improved; long-duration stability is still open.
 - Runtime modem/bearer/AT/QMI/WWAN identifiers and UE IPv4 can change. Query them rather than reusing example IDs or addresses.

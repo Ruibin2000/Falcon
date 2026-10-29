@@ -32,9 +32,10 @@ ROLES = {
     2: dict(imei="863305041980706", imsi="001010000000102", apn="internet2",
             pool="10.46.0.0/16", server="10.46.0.1", table=152,
             priorities=(10161, 10162, 10163, 10164), block=20152,
-            pci=2, nci=0x66C001, ssb=639648, carrier=640000, label="FR3"),
+            pci=2, nci=0x66C001, ssb=638976, carrier=640000, label="FR3"),
 }
-# FR1/FR3 are the demo path labels; both current radio configurations use n78.
+# Both modem/USRP interfaces use logical n78 frequencies; Pi-Radio converts
+# the DU2 / FR3 path to its intended 9250-MHz OTA center.
 NETWORK_LOCK = "/run/lock/falcon-ue-connect.lock"
 PDU_DISCONNECT_TIMEOUT_SECONDS = 2
 

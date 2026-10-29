@@ -1,6 +1,6 @@
 # Dual UE Laptop Automation — One-shot Startup and Self-check
 
-Updated: 2026-10-24. Developer: Ruibin.
+Updated: 2026-10-29. Developer: Ruibin.
 
 Run these scripts on the **UE laptop**. Start the core, CU and both DUs on
 **Spark first**, following [Spark quick commands](dual_ue_spark_quick_commands.md).
@@ -86,7 +86,7 @@ Check the NR record marked `serving: yes` against these targets:
 | Role | PCI | NCI (hex) | SSB NR-ARFCN / SCS / band |
 | --- | --- | --- | --- |
 | UE1 / FR1 | `1` | `66C000` | `643680` / 30 kHz / n78 |
-| UE2 / FR3 | `2` | `66C001` | `639648` / 30 kHz / n78 |
+| UE2 / FR3 | `2` | `66C001` | `638976` / 30 kHz / n78 |
 
 Both radios use n78. A matching serving cell lets you continue to section 2.
 GetCellInfo shows the current serving cell; the stored lock is read back with
@@ -161,7 +161,7 @@ AT+QNWPREFCFG="mode_pref"
 AT+QNWPREFCFG="nr5g_disable_mode",2
 AT+QNWPREFCFG="nr5g_disable_mode"
 AT+QNWPREFCFG="nr5g_band"
-AT+QNWLOCK="common/5g",2,639648,30,78
+AT+QNWLOCK="common/5g",2,638976,30,78
 AT+QNWLOCK="common/5g"
 AT+QENG="servingcell"
 AT+C5GREG?
@@ -204,11 +204,17 @@ sudo systemctl enable --now ModemManager
 | Policy table | `151` | `152` |
 | Serving PCI | `1` | `2` |
 | Serving NCI, hex | `66C000` | `66C001` |
-| SSB NR-ARFCN / SCS | `643680` / 30 kHz | `639648` / 30 kHz |
+| SSB NR-ARFCN / SCS | `643680` / 30 kHz | `638976` / 30 kHz |
 | Carrier NR-ARFCN | `644000` | `640000` |
+| Channel bandwidth / USRP sample rate | 20 MHz / 23.04 MS/s | 40 MHz / 46.08 MS/s |
+| Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
 | Independent reset block | priority `20151` | priority `20152` |
 
-FR1 and FR3 are the existing demo path labels; **both current DUs use n78**.
+FR1 and FR3 identify the two paths. Both DUs use logical n78 configurations;
+DU2's 3600-MHz USRP interface is translated by Pi-Radio to the intended
+9250-MHz OTA center. OCUDU, E2 and modem locks retain the logical n78 frequency.
+After updating Spark for the 40-MHz DU2 profile, copy the current Laptop
+scripts before reconnecting UE2; its SSB changes from `639648` to `638976`.
 The common PLMN is `00101`, TAC is `7`, and access must be NR SA. The scripts
 discover current modem/SIM/bearer object paths and the actual IPv4 address,
 prefix, MTU and interface on each run. Historical modem indices, `ttyUSB`
@@ -690,4 +696,3 @@ sudo python3 ~/falcon-ue-connect/reset_ue_network.py --ue 2 --shutdown
 The automation has offline tests with simulated ModemManager/kernel state and
 the archived QENG readbacks. **A fresh end-to-end run on the two physical laptop
 modems is still required.** No new live ping or MPTCP result is asserted here.
-

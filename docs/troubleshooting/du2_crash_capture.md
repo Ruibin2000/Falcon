@@ -30,7 +30,7 @@ No DU rebuild is needed. The existing binary is
 | Role | Source configuration | Printed evidence directory |
 | --- | --- | --- |
 | DU1 / FR1 | `configs/du1_b210_n78_3660mhz.yml` (includes its E2 settings), radio `3271233` | `/tmp/falcon-du1-crash.XXXXXXXX` |
-| DU2 / FR3 | `configs/du2_b210_n78_20mhz.yml` plus `configs/du2_flexric.yml`, radio `328B021` | `/tmp/falcon-du2-crash.XXXXXXXX` |
+| DU2 / FR3 | `configs/du2_b210_n78_40mhz.yml` plus `configs/du2_flexric.yml`, radio `328B021` | `/tmp/falcon-du2-crash.XXXXXXXX` |
 
 The fixed-role wrappers share `debug_du.sh` and `capture_du_crash.gdb`.
 Configuration snapshots, logs and debugger output remain separate per DU and

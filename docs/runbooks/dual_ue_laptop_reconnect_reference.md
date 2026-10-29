@@ -1,6 +1,6 @@
 # Dual UE Laptop Automatic Reconnect — Full Reference
 
-Updated: 2026-10-25. Developer: Ruibin.
+Updated: 2026-10-29. Developer: Ruibin.
 
 The detailed reconnect instructions are archived here from the original Quick Start.
 For the command-only experiment sequence, use the
@@ -97,11 +97,17 @@ sudo systemctl enable --now ModemManager
 | Policy table | `151` | `152` |
 | Serving PCI | `1` | `2` |
 | Serving NCI, hex | `66C000` | `66C001` |
-| SSB NR-ARFCN / SCS | `643680` / 30 kHz | `639648` / 30 kHz |
+| SSB NR-ARFCN / SCS | `643680` / 30 kHz | `638976` / 30 kHz |
 | Carrier NR-ARFCN | `644000` | `640000` |
+| Channel bandwidth / USRP sample rate | 20 MHz / 23.04 MS/s | 40 MHz / 46.08 MS/s |
+| Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
 | Independent reset block | priority `20151` | priority `20152` |
 
-FR1 and FR3 are the existing demo path labels; **both current DUs use n78**.
+FR1 and FR3 identify the two paths. Both DUs use logical n78 configurations;
+DU2's 3600-MHz USRP interface is translated by Pi-Radio to the intended
+9250-MHz OTA center. OCUDU, E2 and modem locks retain the logical n78 frequency.
+The current 40-MHz DU2 profile uses SSB `638976`; refresh Laptop scripts before
+reconnecting. Historical 20-MHz experiment readbacks below retain `639648`.
 The common PLMN is `00101`, TAC is `7`, and access must be NR SA. The scripts
 discover current modem/SIM/bearer object paths and the actual IPv4 address,
 prefix, MTU and interface on each run. Historical modem indices, `ttyUSB`
@@ -685,7 +691,7 @@ cooldown gate, each eligible radio recovery does the following:
    | Role | Lock command |
    | --- | --- |
    | UE1 / FR1 | `AT+QNWLOCK="common/5g",1,643680,30,78` |
-   | UE2 / FR3 | `AT+QNWLOCK="common/5g",2,639648,30,78` |
+   | UE2 / FR3 | `AT+QNWLOCK="common/5g",2,638976,30,78` |
 
    If a lock write returns `+CME ERROR: 902`, read the lock again and retain both
    the error and readback in evidence. Continue only if that independent readback

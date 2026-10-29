@@ -29,7 +29,7 @@ class DebugLauncherTest(unittest.TestCase):
         self.configs = self.source / "configs"
         self.configs.mkdir()
         self.values = {"du1_b210_n78_3660mhz.yml": "DU1 radio 3271233\n",
-                       "du2_b210_n78_20mhz.yml": "DU2 radio 328B021\n",
+                       "du2_b210_n78_40mhz.yml": "DU2 radio 328B021\n",
                        "du2_flexric.yml": "DU2 E2 overlay\n"}
         for name, value in self.values.items():
             (self.configs / name).write_text(value)
@@ -90,7 +90,7 @@ PY
                     expected += ["-c", str(root / "e2.yml")]
                 expected += ["log", "--filename", str(root / "du.log")]
                 self.assertEqual(duargs, expected)
-                source = "du1_b210_n78_3660mhz.yml" if role == 1 else "du2_b210_n78_20mhz.yml"
+                source = "du1_b210_n78_3660mhz.yml" if role == 1 else "du2_b210_n78_40mhz.yml"
                 self.assertEqual((root / f"du{role}.yml").read_text(), self.values[source])
                 self.assertEqual((root / "e2.yml").exists(), role == 2)
                 if role == 2:

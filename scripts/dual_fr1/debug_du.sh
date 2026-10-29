@@ -27,7 +27,7 @@ DU_DEBUG_BINARY=$DU_DEBUG_SOURCE/build-integrated/apps/du_split_8/odu
 DU_DEBUG_GDB=$(command -v gdb) || { printf 'Missing gdb\n' >&2; exit 1; }
 case "$DU_DEBUG_ROLE" in
   1) DU_DEBUG_CONFIGS=(configs/du1_b210_n78_3660mhz.yml) ;;
-  2) DU_DEBUG_CONFIGS=(configs/du2_b210_n78_20mhz.yml configs/du2_flexric.yml) ;;
+  2) DU_DEBUG_CONFIGS=(configs/du2_b210_n78_40mhz.yml configs/du2_flexric.yml) ;;
 esac
 for DU_DEBUG_REQUIRED in "$DU_DEBUG_BINARY" "$DU_DEBUG_SCRIPT_DIR/capture_du_crash.gdb" \
   "$DU_DEBUG_SCRIPT_DIR/run_du_console.sh"; do

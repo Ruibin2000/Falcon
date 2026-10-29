@@ -1,8 +1,14 @@
 # Dual UE Laptop Reconnect — Quick Commands and Expected Results
 
-Updated: 2026-10-26. Developer: Ruibin.
+Updated: 2026-10-29. Developer: Ruibin.
 
 **Spark target:** DU1/DU2 statistics and KPM **100 ms**; CU identity **1 second**.
+
+**Current radio profile:** DU1 uses 3660 MHz / 20 MHz / SSB `643680`;
+DU2 uses a 3600-MHz n78 USRP interface, 40 MHz and SSB `638976`, with
+Pi-Radio conversion to the intended 9250-MHz OTA center. Refresh the scripts
+in section 2 before starting UE2: the earlier 20-MHz profile used SSB `639648`.
+The modem lock and OCUDU/E2 cell information use the logical n78 frequency.
 
 **Current application subscription tests:** use
 [7c](#7c-live-app-subscription-test-with-one-dummy) for the 120-second test or
