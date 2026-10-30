@@ -14,6 +14,11 @@ excluded from current acceptance and merging.
 
 ## Historical two-subnet migration — 2026-10-13
 
+For the current 20/40-MHz radio profiles and direct/converted RF arrangements,
+see the [two-link design](../dual_link_radio_design.md). The subnet assignments
+above are retained across those arrangements. The designed Pi-Radio OTA path
+does not introduce a third subscriber, subnet or PDU session.
+
 The sections below preserve the earlier single-TUN migration and its evidence.
 Their apply/rollback commands target the old `ogstun` layout; do not run them
 against the current split layout. TUN rollback now uses the separate guide above.

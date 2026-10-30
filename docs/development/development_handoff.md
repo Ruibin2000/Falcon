@@ -1,5 +1,17 @@
 # Development Handoff
 
+**Current radio design, 2026-10-29:** use the
+[two-link specification](../dual_link_radio_design.md) and current Spark/Laptop
+handbooks. DU1 is 3660 MHz / 20 MHz / 23.04 MS/s / TX 70 / RX 35 / SSB `643680`;
+DU2 is a 3600-MHz n78 interface / 40 MHz / 46.08 MS/s / TX 45 / RX 20 /
+SSB `638976`. Both UEs connected in the operator's direct-radio test without
+Pi-Radio. Link 2's designed 9250-MHz converted OTA path and sustained 40-MHz
+traffic/KPM require separate validation. Refresh Laptop scripts to use the new
+DU2 SSB. Older lock readbacks and bandwidths below belong to dated checkpoints.
+The October 26 [six-minute live subscription report](../reports/du27_app_subscription_6min_live_2026-10-26.md)
+records successful app delivery and normal cleanup on the earlier 20-MHz DU2
+profile; the 30-minute stability run remains pending.
+
 **2026-10-26 bound-report subscription implementation:** the current 27-metric,
 100 ms identity xApp now serves version-2 app registrations and pushes its full
 matched DU/UE/CU/Core/session/IP snapshots. The dummy owns TXT and receipt timing.
@@ -16,7 +28,7 @@ mode retains its original output; subscription mode uses `--publish-config` and
 moves TXT to `dummy_subscriber.py`. The standalone base5 C prototype remains
 historical transport scaffolding rather than the new integration's E2 source.
 
-Current checkpoint, **2026-10-24**: dual-UE concurrent UL/KPM, experimental
+Historical checkpoint, **2026-10-24**: dual-UE concurrent UL/KPM, experimental
 CU/DU/Core IP association, the two Spark TUNs, the MPTCP primary/backup video
 demo and two live UE2 automatic recoveries have retained evidence. The current
 reconnect optimization stage is complete by operator decision. Use
@@ -98,7 +110,11 @@ Phase 5 preparation has advanced: Open Cells `OC011830` is personalized as IMSI 
 
 This completes SIM/modem preparation, not new-subscriber registration. Matching Open5GS records, SQN representation checks, DU2/radio deployment and simultaneous end-to-end links remain pending. The intended SIM1 → modem #1 → DU1 and SIM2 → modem #2 → DU2 paths share CU/Open5GS, then expose two laptop WWAN/IP paths for MPTCP. Shared PLMN `00101` does not automatically enforce those SIM-to-DU associations; verify cell selection and the actual serving cell.
 
-## Stable infrastructure facts
+## Recorded Infrastructure Facts (October 12–24 Baselines)
+
+Pinned revisions, gains and single-link identities in this section describe
+the recorded baselines. Use the October 29 specification above for current
+two-link radio values; current DU reporting is 100 ms with 1-second CU identity.
 
 - Spark `spark-7c40`: Ubuntu 24.04.5, aarch64, 20 cores, 121 GiB, NVIDIA GB10; kernel `7.0.0-1019-nvidia`, PREEMPT_DYNAMIC.
 - OCUDU `/home/nyu/ocudu`, `release_26_04` / `050a2bb`, Clang 18.1.3. CU executable `build/apps/cu/ocu`, DU `build/apps/du_split_8/odu`.
@@ -147,7 +163,7 @@ Private QSCAN and PUSCH CRC OK at 20–33 dB SINR established usable downlink ac
 12. Documentation maintenance does not authorize starting services, RF, benchmarking, committing or pushing. The operator requested no automatic push/merge for this update.
 13. Write all documentation in US English, including comments and operator prompts in documented commands.
 
-## Next session
+## Historical October 13 Next-Session Notes
 
 First identify UE2 by its actual modem/SIM, verify the matching Open5GS subscriber, lock PCI 2 / observed SSB 639648, and validate registration/PDU/UL using the [DU2 procedure](../runbooks/dual_fr1_runbook.md). Hardware reconnection on 2026-10-13 identified both B210s simultaneously in two successive discovery runs: DU1 `3271233` at `2-1.3` / `NVDA8000:00`, DU2 `328B021` at `6-1.1` / `NVDA8000:02`, both USB 3 / 5000 Mb/s. The deployed DU2 config binds `328B021` and passes offline checks. Concurrent streaming remains unverified. The operator then started MongoDB, all ten SA services, CU and RIC; actual DU2 F1/E2 completed and RIC accepted gNB 411 / DU ID 2 / KPM ID 2. Live startup evidence is retained in [the manifest](../evidence/2026-10-13_du2_startup/manifest.json). Preserve DU1's working 3660-MHz carrier and SSB lock.
 

@@ -1,5 +1,11 @@
 # UE2 FR3 Automatic Recovery Experiment Report
 
+> Radio scope: this experiment used direct n78 radio paths with DU2 at
+> 20 MHz. Its measurements, gains, lock readbacks and figures retain that
+> configuration. See the [current radio design](../dual_link_radio_design.md)
+> for the October 29 20/40-MHz profiles and the separately designed Pi-Radio
+> 9250-MHz OTA path. This report does not validate either later RF arrangement.
+
 Experiment date: **2026-10-24**. Author: **Ruibin**.
 Local observation window: **18:09:15.370–18:25:39.768 America/New_York, EDT**.
 Event tables and figures use **UTC** to align the two hosts.

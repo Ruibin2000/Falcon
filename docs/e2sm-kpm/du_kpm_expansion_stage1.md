@@ -1,12 +1,23 @@
 # First DU KPM expansion: 100 ms UE profile
 
-Developer: Ruibin. Updated: October 25, 2026.
+Developer: Ruibin. Updated: October 29, 2026.
+
+Deployment context: the [current radio design](../dual_link_radio_design.md)
+uses DU1 3660 MHz / 20 MHz / 51 PRBs and DU2 3600-MHz n78 interface / 40 MHz /
+106 PRBs. DU2's designed Pi-Radio OTA path is 9250 MHz. Both UEs connected
+in the October 29 direct test without converters. The
+[October 25 expanded-profile experiment](../reports/dual_ue_27kpm_stability_report_2026-10-25.md)
+and October 26 subscription experiments used the earlier 20-MHz DU2 profile;
+they retain that validation scope. A new sustained 40-MHz capture and converted
+RF tests require separate evidence. Measurement names, units and cadence are
+unchanged; PRB normalization uses the capacity of the corresponding cell.
 
 This stage adds 14 scheduler measurements and six sample-count/age fields
 to the accepted seven: **27 raw E2 measurements**. DU source/subscription
 periods remain **100 ms**, CU identity **1000 ms**, Core polling **1 s** and
-freshness **3 s**. Offline verification does not establish live expanded
-delivery; a new operator-run dual-UE capture remains required.
+freshness **3 s**. Offline verification alone does not establish live delivery;
+the dated live reports above establish expanded delivery on their recorded
+radio profiles.
 
 ## Profiles and deployment
 

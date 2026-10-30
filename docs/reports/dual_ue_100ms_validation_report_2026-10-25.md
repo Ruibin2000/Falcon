@@ -1,5 +1,11 @@
 # Dual UE 100 ms KPM reporting validation
 
+> Radio scope: this experiment used direct n78 radio paths with DU2 at
+> 20 MHz. Its measurements, gains, lock readbacks and figures retain that
+> configuration. See the [current radio design](../dual_link_radio_design.md)
+> for the October 29 20/40-MHz profiles and the separately designed Pi-Radio
+> 9250-MHz OTA path. This report does not validate either later RF arrangement.
+
 Operator: Ruibin. Experiment date: October 25, 2026.
 Observed collection window: **17:00:39.435323–17:02:37.238531 EDT**
 (21:00:39.435323–21:02:37.238531 UTC).

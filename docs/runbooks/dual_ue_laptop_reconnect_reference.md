@@ -2,6 +2,12 @@
 
 Updated: 2026-10-29. Developer: Ruibin.
 
+**Current radio design:** [profiles and validation scope](../dual_link_radio_design.md).
+DU1 uses 3660 MHz / 20 MHz; DU2 uses a 3600-MHz n78 interface / 40 MHz,
+with a designed Pi-Radio OTA path at 9250 MHz. The October 29 test has no
+converters, and the operator confirmed that both UEs connected directly.
+Earlier recovery experiments retain their original 20-MHz DU2 configuration.
+
 The detailed reconnect instructions are archived here from the original Quick Start.
 For the command-only experiment sequence, use the
 [Laptop reconnect Quick Start](../dual_ue_laptop_reconnect_quick_start.md); it pairs
@@ -100,12 +106,16 @@ sudo systemctl enable --now ModemManager
 | SSB NR-ARFCN / SCS | `643680` / 30 kHz | `638976` / 30 kHz |
 | Carrier NR-ARFCN | `644000` | `640000` |
 | Channel bandwidth / USRP sample rate | 20 MHz / 23.04 MS/s | 40 MHz / 46.08 MS/s |
+| Configured TX / RX gain | 70 / 35 dB | 45 / 20 dB |
+| Current direct-test OTA center | 3660 MHz | 3600 MHz, no converters |
 | Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
 | Independent reset block | priority `20151` | priority `20152` |
 
-FR1 and FR3 identify the two paths. Both DUs use logical n78 configurations;
-DU2's 3600-MHz USRP interface is translated by Pi-Radio to the intended
-9250-MHz OTA center. OCUDU, E2 and modem locks retain the logical n78 frequency.
+FR1 and FR3 identify the two paths. Both DUs use logical n78 configurations.
+The designed Pi-Radio branch translates DU2's 3600-MHz USRP/modem interfaces
+to a 9250-MHz OTA center. During the current direct test, UE2 operates at
+3600 MHz without converters. OCUDU, E2 and modem locks retain logical n78
+information in either arrangement.
 The current 40-MHz DU2 profile uses SSB `638976`; refresh Laptop scripts before
 reconnecting. Historical 20-MHz experiment readbacks below retain `639648`.
 The common PLMN is `00101`, TAC is `7`, and access must be NR SA. The scripts
@@ -515,7 +525,9 @@ After a timeout/busy response the watcher conservatively observes until at least
 65 seconds from that request's start before issuing another request; the normal
 cooldown also applies. These gates only suppress repeated recovery requests.
 Connection checks continue, and a verified connection can succeed during either
-window. No CFUN reset or global ModemManager restart is introduced.
+window. The guarded CME 902 fallback described below may change the selected
+modem's CFUN mode only after confirming that it has no active PDU. It does not
+restart ModemManager.
 
 A timed-out PDU-disconnect client likewise does not prove that the modem
 finished disconnecting. The watcher continues checking modem/bearer state;
@@ -694,8 +706,18 @@ cooldown gate, each eligible radio recovery does the following:
    | UE2 / FR3 | `AT+QNWLOCK="common/5g",2,638976,30,78` |
 
    If a lock write returns `+CME ERROR: 902`, read the lock again and retain both
-   the error and readback in evidence. Continue only if that independent readback
-   exactly matches this UE's target. A `0` or other tuple remains a failure.
+   the error and readback in evidence. An exact target readback can continue
+   without changing CFUN. Otherwise, when a fresh modem/bearer check found no
+   active PDU and a stable `disabled`, `enabled`, `searching` or `registered`
+   state, permit one retry: read `AT+CFUN?`, require mode `0`, `1` or `4`, set
+   `AT+CFUN=0` and verify it, write/read the target lock, then set `AT+CFUN=1`
+   and verify it. Recheck the target lock after returning to full functionality.
+   A rejected write is accepted only with an independent exact target readback.
+   Failure, timeout or interruption after entering the retry still attempts
+   `CFUN=1` restoration before leaving the serial context. Restoration failures
+   are reported explicitly and block registration. The attempt records all mode
+   changes, lock readbacks and restoration results under `radio_recovery.cfun_retry`.
+   A retained active PDU prevents this CFUN retry; healthy locks do not enter it.
 5. Record `AT+QENG="servingcell"` and `AT+C5GREG?`, restore serial settings and
    close the port. Once radio registration recovers, reread the current bearer/IP
    and verify its data path. An existing PDU may resume with its original IP;
@@ -751,8 +773,10 @@ registration checks. Changing the file does not alter the running CU.
 
 Serial/registration work never holds the shared host-network lock. UE1 and UE2
 retain separate ownership and cooldown state. Healthy checks never write AT
-configuration. No CFUN reset or ModemManager restart is performed. Ctrl+C still
-closes the serial context and runs the selected UE's normal shutdown cleanup.
+configuration. A guarded CME 902 retry can temporarily disable only the selected
+radio using `CFUN=0` and return it to `CFUN=1`; it does not reboot the modem or
+restart ModemManager. Ctrl+C first attempts to restore functionality if a retry
+is in progress, then closes the serial context and runs the selected UE's normal shutdown cleanup.
 An unverified write/readback leaves the attempt failed; earlier successful
 writes may already have taken effect and are recorded in `attempts.jsonl`.
 
@@ -800,10 +824,25 @@ configuration mismatch can enter that radio-repair disconnect branch. Restored
 radio service is followed by current bearer/IP and traffic verification, with
 suspended/ping-failure recovery handled separately. Copy the updated seven files and restart the
 watcher using the commands above. These cases pass offline regression tests;
-the modem's precise reason for 902 and which recovery branch resolves it on the
-testbed remain unverified. If 902 persists and the lock still reads `0`, retain `run.log` and
-`attempts.jsonl`; the script will keep reporting failure rather than dialing
-with an unverified cell lock. No CFUN reset or ModemManager restart is added.
+the modem's precise reason for 902 remains unverified on this testbed.
+
+On 2026-10-29, both UE roles reported startup lock-write rejection with 902.
+The shared recovery flow now adds the guarded CFUN retry described above.
+Quectel support states that X55-based modules should enter `CFUN=0` before
+`QNWLOCK`; this motivates the fallback without assigning a universal meaning
+to error 902. See the
+[Quectel support explanation](https://forums.quectel.com/t/cell-lock-not-working-on-rm502q-ae-after-upgrade-to-the-last-firmware-rm502qaeaar11a04m4g/12928/23).
+Both-role retries, persistent rejection, lock-readback mismatch, mode restoration
+failure, interruption cleanup and active-PDU/peer isolation are covered offline.
+Successful physical recovery with this fallback is not yet established.
+
+Copy the current seven Laptop files with both watchers stopped, then restart
+the selected watcher. If a manual session remains in minimum functionality,
+send `AT+CFUN=1` to that verified modem and exit minicom first. `CFUN=0`
+temporarily disables cellular operation; a board LED may change during this
+step. Full-functionality readback is `+CFUN: 1`, which does not itself prove
+registration. If 902 persists or restoration fails, retain `run.log` and
+`attempts.jsonl`; an unverified lock still blocks PDU setup.
 
 ### Registration times out with a correct saved lock
 

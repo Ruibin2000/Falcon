@@ -1,5 +1,12 @@
 # Bound KPM application subscription interface
 
+Deployment update, October 29: the [two-link design](dual_link_radio_design.md)
+uses DU1 at 3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz,
+with a designed 9250-MHz Pi-Radio OTA path. The operator confirmed both direct
+connections without converters. The October 26 delivery results below used
+the earlier 20-MHz DU2 profile. Frequency conversion is deployment metadata;
+the version-2 IDs + IP + KPM contract and 100-ms DU cadence are unchanged.
+
 For MPTCP/MPX client adaptation, use the [version 2 interface definition](interface/README.md),
 including message examples, IP-to-path association, lifecycle handling, migration
 from the older draft, and the successful dummy application use case.

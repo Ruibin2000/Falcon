@@ -1,5 +1,11 @@
 # UE Laptop Quick Commands
 
+Radio scope, October 29: this booklet uses DU1's 3660-MHz / 20-MHz profile
+and SSB `643680`. The [current two-link design](../dual_link_radio_design.md)
+sets DU2 to a 3600-MHz n78 interface / 40 MHz / SSB `638976`, designed for
+9250-MHz OTA through Pi-Radio. Both UEs connected in the direct test without
+converters. Use the dual-UE handbooks for that deployment.
+
 Updated: 2026-10-13. Run these steps in order in **one Bash terminal per UE on the laptop** and keep that UE's variables in its terminal. Continue only after each step succeeds. For full instructions, see [Runbook stages 10–14](../runbooks/full_reproduction_runbook.md#10-prepare-a-new-ubuntulinux-laptop); start Spark using [Spark Quick Commands](spark_quick_commands.md).
 
 For simultaneous UE1/UE2 and the current UL-only scope, use
@@ -128,7 +134,14 @@ For a SIM swap: finish traffic and bearer cleanup, disable the selected modem wi
 
 ## 2 Configure NR SA and lock the private cell
 
-The lock in this stage is **DU1 only**. DU2's actual startup confirmed PCI 2 / SSB 639648 / 3600 MHz; its modem procedure is in [Dual UE laptop quick commands](../dual_ue_laptop_quick_commands.md). An IMSI does not select a DU automatically. Check that the current startup cell line in [Spark step 5](spark_quick_commands.md#5-start-du-with-e2-enabled) matches carrier `644000` / 3660 MHz, PCI `1`, and SSB `643680`. After a carrier migration, replace the old lock even if the modem still displays registration. Skip configuration only when the readback and serving cell already match the current DU.
+The lock in this stage is **DU1 only**. Current DU2 startup uses PCI 2 / SSB
+`638976` / 3600 MHz / 40 MHz; its earlier 20-MHz profile used SSB `639648`.
+Use [Dual UE laptop quick commands](../dual_ue_laptop_quick_commands.md) for
+that modem. An IMSI does not select a DU automatically. Check that the current
+startup cell line in [Spark step 5](spark_quick_commands.md#5-start-du-with-e2-enabled)
+matches carrier `644000` / 3660 MHz, PCI `1`, and SSB `643680`. After a carrier
+migration, replace the old lock even if the modem still displays registration.
+Skip configuration only when the readback and serving cell already match the DU.
 
 SSB `643680` is deterministic for the current cell configuration and derivation logic; restarting DU or reconnecting UE does not select a random SSB. Recheck it after changing the carrier, band, bandwidth, SCS, SSB/CORESET parameters, or OCUDU version. If startup differs from the recorded tuple, update the lock from the actual output before using it.
 

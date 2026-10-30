@@ -1,5 +1,11 @@
 # Dual UE six minute stability and 27 KPM reporting experiment
 
+> Radio scope: this experiment used direct n78 radio paths with DU2 at
+> 20 MHz. Its measurements, gains, lock readbacks and figures retain that
+> configuration. See the [current radio design](../dual_link_radio_design.md)
+> for the October 29 20/40-MHz profiles and the separately designed Pi-Radio
+> 9250-MHz OTA path. This report does not validate either later RF arrangement.
+
 Operator: Ruibin. Experiment date: October 25, 2026.
 Collection window: **18:53:38.060–18:59:38.032 EDT**
 (22:53:38.060–22:59:38.032 UTC), 359.972 seconds.

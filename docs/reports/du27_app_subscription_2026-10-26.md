@@ -1,5 +1,11 @@
 # Bound 27 KPM application subscription implementation
 
+> Historical scope: this record retains its dated implementation, test
+> configuration and results. The [current two-link design](../dual_link_radio_design.md)
+> defines DU1 3660 MHz / 20 MHz, DU2 3600-MHz n78 interface / 40 MHz, and
+> the designed Pi-Radio 9250-MHz OTA path. Those later radio changes are
+> outside this record's validation.
+
 The existing 27-metric identity xApp now serves application registrations and
 pushes each new currently matched DU/UE report, including its full CU/Core/session
 and current IP binding. The independent dummy saves the received report to TXT

@@ -1,12 +1,15 @@
-# DU2 Bring-up and Dual-FR1 UL Acceptance
+# DU2 Bring-up and Dual-Link UL Acceptance
 
 **Radio profile update, 2026-10-29:** the maintained DU2 startup configuration
 is now `du2_b210_n78_40mhz.yml`, with 40 MHz bandwidth, 46.08 MS/s,
-TX 45 / RX 20 and logical SSB ARFCN `638976`. Pi-Radio converts the
-3600-MHz USRP interface to the intended 9250-MHz OTA center; OCUDU/E2 retain
-the logical n78 cell configuration. Refresh Laptop connection scripts before
-starting UE2. The October measurements below used the earlier 20-MHz profile;
-they do not validate the new 40-MHz radio path. Use the
+TX 45 / RX 20 and logical SSB ARFCN `638976`. The designed Pi-Radio branch
+converts its 3600-MHz interfaces to a 9250-MHz OTA center; OCUDU/E2 retain
+logical n78 information. DU1 stays at 3660 MHz / 20 MHz / TX 70 / RX 35.
+The current test has no converters. DU2 startup confirms the new profile,
+and the operator confirmed both direct-radio UE connections on October 29.
+Sustained 40-MHz traffic/KPM and converted-path operation remain to be recorded.
+Refresh Laptop scripts before starting UE2. Earlier measurements below used
+the 20-MHz DU2 profile. See the [radio design](../dual_link_radio_design.md) and
 [current Spark startup checks](../dual_ue_spark_quick_commands.md#5-start-du1-and-du2-in-separate-terminals-and-keep-both-running).
 
 Network update, 2026-10-23: Spark now uses `ogstun_1 / 10.45.0.1/16` for UE1
@@ -62,7 +65,7 @@ traffic tests and concurrent UL/KPM.
 This runbook retains checkpoint
 details and the full Plan 3 acceptance context.
 
-## Preparation status
+## Historical October 13 Preparation and Current Profile
 
 DU1's 3660-MHz UL result remains the verified reference. DU2 configuration is
 prepared for actual B210 `328B021` and parses with the installed OCUDU DU binary.
@@ -89,13 +92,14 @@ derivation. A successful preparation check is not live acceptance.
 | Carrier / NR-ARFCN | 3660 MHz / 644000 | 3600 MHz / 640000 |
 | Band / bandwidth / common SCS | n78 / 20 MHz / 30 kHz | n78 / 40 MHz / 30 kHz |
 | USRP sample rate / TX / RX gain | 23.04 MS/s / 70 / 35 dB | 46.08 MS/s / 45 / 20 dB |
+| Current direct-test OTA center | 3660 MHz | 3600 MHz, no converters |
 | Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
 | Radio serial / USB path | 3271233 / 2-1.3 / NVDA8000:00 | 328B021 / 6-1.1 / NVDA8000:02 |
 | gNB / width / DU ID | 411 / 22 / 1 | 411 / 22 / 2 |
 | PCI / sector / expected NCI | 1 / 0 / 6733824 | 2 / 1 / 6733825 |
 | F1-C / F1-U local bind | 127.0.10.2 | 127.0.10.3 |
 | E2 local bind / shared destination | 127.0.0.1 / 127.0.0.1:36421 | 127.0.10.3 / 127.0.0.1:36421 |
-| SSB lock | 643680 from accepted startup | 638976 derived offline for the current 40-MHz profile; live confirmation pending |
+| SSB lock | 643680 from accepted startup | 638976 derived for 40 MHz and confirmed in October 29 startup |
 | Intended new subscriber | 001010000000101 | 001010000000102 |
 
 At the October 13 checkpoint, DU2 used 23.04 MS/s, internal clock, TX 70/RX 35,

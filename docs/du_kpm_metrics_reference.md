@@ -1,6 +1,14 @@
 # DU KPM metric reference
 
-Updated: October 25, 2026.
+Updated: October 29, 2026.
+
+The [current two-link deployment](dual_link_radio_design.md) uses DU1 at
+3660 MHz / 20 MHz (51 PRBs) and DU2 at a 3600-MHz n78 interface / 40 MHz
+(106 PRBs), both at 30-kHz SCS and 100-ms DU reporting. Link 2 is designed
+for Pi-Radio conversion to 9250-MHz OTA; the current direct test has no
+converters. This does not change the measurement names or units. Normalize
+PRB usage using each cell's reported capacity; do not assume 51 PRBs for both
+links or interpret the `FR3` label as an E2 physical-frequency measurement.
 
 The following table defines the **27 raw DU KPM measurements** in the
 expanded UE profile. Scheduler fields refer to `scheduler_ue_metrics`; RLC fields refer

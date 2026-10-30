@@ -1,5 +1,11 @@
 # Dual DU single dummy 120 second live KPM subscription test
 
+> Radio scope: this experiment used direct n78 radio paths with DU2 at
+> 20 MHz. Its measurements, gains, lock readbacks and figures retain that
+> configuration. See the [current radio design](../dual_link_radio_design.md)
+> for the October 29 20/40-MHz profiles and the separately designed Pi-Radio
+> 9250-MHz OTA path. This report does not validate either later RF arrangement.
+
 This test verified live E2 KPM delivery with two DUs, one subscribing application, and established IP bindings. **All 2400 reports in the subscription window were received and written to TXT, with all 27 metrics preserved. The p99 latency from report readiness to dummy receipt was 2.314 ms, and the receive interval for each DU remained approximately 100 ms.** Registration, heartbeats, unregistration, and normal shutdown completed.
 
 The test ran on October 26, 2026. Analysis data, plots, two complete message examples, and an archive of the original records are retained in the

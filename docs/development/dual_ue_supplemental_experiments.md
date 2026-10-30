@@ -1,6 +1,14 @@
 # Dual UE Supplemental Experiments
 
-Updated: 2026-10-24. Developer: Ruibin.
+Updated: 2026-10-29. Developer: Ruibin.
+
+Use the [current radio design](../dual_link_radio_design.md): DU1 at
+3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz. Record whether
+link 2 is direct n78 or converted to the designed 9250-MHz OTA path; the
+October 29 connection checkpoint used direct radio without Pi-Radio. Keep
+RF mode, gains and bandwidths explicit in comparisons. The two cells have
+different capacities (51 / 106 PRBs), so equal raw throughput is not an
+acceptance expectation. Earlier dual-20-MHz results retain their original scope.
 
 Cold-start reproduction, full repeatability/comparative testing and bidirectional
 link-loss/recovery are follow-up experimental requirements. By operator decision,

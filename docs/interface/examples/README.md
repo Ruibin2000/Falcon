@@ -1,5 +1,11 @@
 # Version 2 application message examples
 
+Radio scope: these October 26 captures used direct n78 links with DU2 at
+20 MHz. Their values and provenance are retained unchanged. See the
+[current design](../../dual_link_radio_design.md) for DU1 3660 MHz / 20 MHz,
+DU2 3600-MHz interface / 40 MHz and its designed Pi-Radio 9250-MHz OTA path.
+The version-2 message format is unchanged by that radio-profile update.
+
 The `client-*.json` files are illustrative requests. Supply your own `app_id`, request IDs, current exact radio keys if used, and the subscription ID returned by registration. Use only one register example per connection.
 
 The `server-*.json` files are complete server frames extracted from the successful six-minute live dummy experiment on October 26, 2026. They retain the captured app ID `dual-ue-dummy`, broker instance, subscription, clocks, and KPM values. They do not represent responses to a newly run client request. The two KPM examples are independent samples from their respective paths.

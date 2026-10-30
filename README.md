@@ -1,5 +1,14 @@
 # Falcon
 
+**Two-link radio design, 2026-10-29:** DU1 uses **3660 MHz / 20 MHz / TX 70 / RX 35**;
+DU2 uses a **3600-MHz n78 interface / 40 MHz / TX 45 / RX 20**.
+The operator confirmed that both UEs connected in the current direct n78 test,
+without Pi-Radio. The designed second OTA path is **9250 MHz / 40 MHz via
+Pi-Radio**; converted-path operation and sustained traffic/KPM with the new
+40-MHz profile remain to be recorded. The
+[radio design and validation scope](docs/dual_link_radio_design.md) defines
+the complete profiles, SSB locks, IP paths and distinction from earlier runs.
+
 **Bound KPM application subscriptions, 2026-10-26:** the existing 27-metric/
 100 ms identity xApp now accepts app registrations and pushes full matched
 link/UE/session/IP reports. The independent dummy saves TXT and timing evidence.
@@ -107,8 +116,8 @@ flowchart LR
     end
 
     subgraph OTA[Over-the-Air Links]
-        Link1[FR1 link<br/>3.66 GHz]
-        Link3[FR3 link<br/>9.25 GHz]
+        Link1[FR1 link<br/>3.66 GHz / 20 MHz]
+        Link3[FR3 link<br/>9.25 GHz / 40 MHz]
         Motion[Motion and blockage<br/>UE movement and blockers]
         Interference[Interference transmitter<br/>controlled lab test]
         Motion -.-> Link1
@@ -121,7 +130,7 @@ flowchart LR
         Down[Pi-Radio<br/>9.25 GHz RF to 3.6 GHz IF]
         Cell3[USRP FR3 cell]
         RAN[Two-cell RAN and 5G core<br/>OAI or OCUDU RAN]
-        RIC[Near-RT RIC<br/>FlexRIC xApps]
+        RIC[FlexRIC<br/>KPM xApp]
         App[Server application<br/>Control and video]
         Server[MPTCP server<br/>RIC-assisted path steering]
         Cell1 <-->|FR1 radio link| Link1
@@ -139,7 +148,7 @@ flowchart LR
     Up <-->|9.25 GHz OTA| Link3
 ```
 
-The FR3 path uses a **3600-MHz USRP/modem interface and an intended 9250-MHz OTA center through Pi-Radio conversion**. The October 29 configuration sets DU2 to **40 MHz / 46.08 MS/s / TX 45 / RX 20**, while DU1 remains at **3660 MHz / 20 MHz / 23.04 MS/s / TX 70 / RX 35**. Both OCUDU cells retain logical n78 configurations, and E2/RIC do not automatically learn the external RF conversion. Earlier dual-UE pass results used DU2 at 20 MHz; live validation of the new 40-MHz converted path is pending. FlexRIC and the KPM xApps receive measurements from both DUs. RIC/AI-assisted steering remains future work. The working RAN is OCUDU with Open5GS; the OAI label in the concept diagram is an alternative implementation, not part of the current deployment.
+The FR3 design uses a **3600-MHz USRP/modem interface and an intended 9250-MHz OTA center through Pi-Radio conversion**. DU2 uses **40 MHz / 46.08 MS/s / TX 45 / RX 20**, while DU1 uses **3660 MHz / 20 MHz / 23.04 MS/s / TX 70 / RX 35**. Both OCUDU cells retain logical n78 configurations, and E2/RIC do not automatically learn the external RF conversion. On October 29 both UEs connected with these profiles in the direct test, with no Pi-Radio installed. Earlier dual-UE experiment results used DU2 at 20 MHz; neither those results nor this connection checkpoint validate the converted 9250-MHz path or sustained 40-MHz traffic/KPM. See the [current radio design](docs/dual_link_radio_design.md). FlexRIC and the KPM xApp receive measurements from both DUs. RIC/AI-assisted steering remains future work. The working RAN is OCUDU with Open5GS; the OAI label in the concept diagram is an alternative implementation.
 
 ### Network-Side Implementation: OCUDU, Open5GS, and FlexRIC
 
@@ -153,30 +162,32 @@ flowchart LR
         CU[OCUDU CU]
         Core[Open5GS 5G Core<br/>AMF and SMF]
         UPF[Open5GS UPF]
-        RIC[FlexRIC Near-RT RIC]
-        XAPP[KPM xApp]
+        subgraph RIC[FlexRIC]
+            XAPP[KPM identity and subscription xApp]
+        end
         App[Server application]
         MPTCP[MPTCP server]
         DN[External data network]
 
         DU1 <-->|F1-C / F1-U| CU
         DU2 <-->|F1-C / F1-U| CU
-        DU1 <-->|E2 measurements / control| RIC
-        DU2 <-->|E2 measurements / control| RIC
+        DU1 -->|E2 KPM, 100 ms| XAPP
+        DU2 -->|E2 KPM, 100 ms| XAPP
+        CU -->|E2 identity, 1 s| XAPP
         CU <-->|N2| Core
         CU <-->|N3| UPF
         UPF <-->|N6 user plane| DN
         DN <-->|IP connectivity| MPTCP
-        RIC <-->|RIC API| XAPP
-        XAPP -->|path-steering input| App
+        Core -->|AMF/SMF infoAPI, 1 s| XAPP
+        XAPP -->|IDs + IP + KPM subscription push| App
         App <-->|application traffic| MPTCP
     end
 
     subgraph RF[Radio Front Ends and OTA Interface]
-        B1[USRP B210<br/>FR1 cell]
+        B1[USRP B210<br/>3660 MHz / 20 MHz]
         OTA3[FR3 OTA<br/>9.25 GHz / 40 MHz]
         PR[Pi-Radio<br/>9.25 GHz RF / 3.6 GHz IF]
-        B2[USRP B210<br/>FR3 cell]
+        B2[USRP B210<br/>3600 MHz / 40 MHz]
         OTA3 <-->|RF| PR
         PR <-->|IF, 3.6 GHz / 40 MHz| B2
     end
@@ -185,16 +196,17 @@ flowchart LR
     B2 <-->|USB 3 and UHD| DU2
 ```
 
-In the target system, E2 carries DU/RAN measurements to FlexRIC, and the xApp provides path-steering input to the server application and MPTCP controller. The diagram describes the future two-path implementation. The single-DU chain has now been verified through SA registration, IPv4 PDU setup and initial application traffic, as described below.
+E2 carries DU measurements and CU identity to FlexRIC. Its xApp matches these with Core IP context and pushes IDs + IP + KPM to subscribed applications. Subscription delivery is verified by the October 26 direct-radio experiments; MPTCP adaptation and RIC/AI steering retain their own scope. The RF diagram shows the designed Pi-Radio branch; the October 29 connection test used a direct 3600-MHz UE2 path instead.
 
-Both DUs' E2 connections and simultaneous actual UE KPM collection are verified, with stable DU/F1AP attribution in the latest capture. The [October 21 identity report](docs/reports/ue_identity_dual_ue_live_2026-10-21.md) verifies experimental CU/DU/Core IP association during simultaneous traffic and bidirectional idle/resume. Explicit serving-DU/context-generation transport and the RIC/AI steering connections remain future work.
+Both DUs' E2 connections and simultaneous actual UE KPM collection are verified, with stable DU/F1AP attribution in the retained captures. The [October 21 identity report](docs/reports/ue_identity_dual_ue_live_2026-10-21.md) verifies experimental CU/DU/Core IP association during simultaneous traffic and bidirectional idle/resume. Explicit serving-DU scope was subsequently accepted on October 25. Shared lifecycle-generation proof and RIC/AI steering remain follow-up work. These experiments used the earlier direct-radio profiles.
 
 ## Current Status
 
-Current dual-UE results are the October 13 concurrent UL/KPM checkpoint,
+Dual-UE results include the October 13 concurrent UL/KPM checkpoint,
 the October 21 identity association trials, the October 23 TUN/MPTCP video
-experiment and the October 24 UE2 recovery report linked above. The following
-single-link bring-up records retain their original dates.
+experiment, October 24 UE2 recovery, October 25–26 100-ms/27-KPM subscription
+experiments, and the October 29 direct-radio 20/40-MHz connection checkpoint.
+The following single-link bring-up records retain their original dates.
 
 The reported **2026-10-05** session verified private SSB detection, PRACH/PUSCH with CRC OK and strong uplink SINR, SA registration/authentication, attached packet service, IPv4 PDU/IP allocation, a connected bearer and manually configured WWAN. The first 10-second TCP uplink test reported **6.29 Mbit/s sender, 5.09 Mbit/s receiver, 0 sender retransmissions**. This is a functional user-plane result; throughput and sustained real-time operation are not yet characterized.
 
@@ -234,6 +246,7 @@ Versions and runtime results above are drawn from the deployment records. FlexRI
 ```text
 README.md
 docs/
+├── dual_link_radio_design.md
 ├── dual_ue_laptop_quick_commands.md
 ├── dual_ue_spark_quick_commands.md
 ├── dual_ue_automation.md

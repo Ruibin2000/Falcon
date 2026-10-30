@@ -1,5 +1,12 @@
 # Software Installation, Drivers, and OCUDU Environment
 
+Deployment context, October 29: use the [current two-link design](../dual_link_radio_design.md)
+and paired Spark/Laptop handbooks for DU1 3660 MHz / 20 MHz and DU2
+3600-MHz n78 interface / 40 MHz, designed for 9250-MHz OTA through Pi-Radio.
+Both UEs connected in the direct test without converters. The software-build
+records below retain their original dates and single-link preparation scope;
+their pending dual-UE statements describe those checkpoints.
+
 Updated: 2026-10-12. This document records software dependencies, device drivers and builds for DGX Spark and the UE laptop. The OCUDU/Open5GS baseline comes from the 2026-10-05 deployment; section 8 records the FlexRIC build and installation completed on 2026-10-07. Section 7.4 adds the completed Open Cells PC/SC provisioning environment and Quectel card checks for the two new UE SIMs.
 
 For experiment startup, modem registration, PDU sessions, traffic, and shutdown, use the [Full Reproduction Runbook](../runbooks/full_reproduction_runbook.md). Executable CU/DU and core configuration values are recorded in [Project Progress](../project_progress_and_configuration.md#configuration-records); registration and data-session failures are in the [2026-10-05 debug record](../troubleshooting/2026-10-05_sa_bringup.md).

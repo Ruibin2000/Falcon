@@ -1,5 +1,12 @@
 # Full Reproduction Runbook: Single-Link 5G SA
 
+Scope update, October 29: this runbook retains the DU1 single-link baseline.
+The [current dual-link design](../dual_link_radio_design.md) uses DU1 at
+3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz, designed for
+9250-MHz OTA through Pi-Radio. Both UE connections were operator-confirmed
+in the direct test without converters. Use the paired dual-UE handbooks for
+that deployment; historical single-link measurements below retain their scope.
+
 Network update, 2026-10-23: this installed Spark now uses `ogstun_1` for UE1
 `10.45.0.1/16` and `ogstun_2` for UE2 `10.46.0.1/16`, both MTU 1400. The
 Spark commands below use UE1's new interface. The
@@ -24,7 +31,7 @@ Execute one numbered stage at a time. Check the stated evidence before advancing
 
 The current functional uplink configuration is n78, carrier ARFCN **644000 / 3660 MHz**, SSB ARFCN **643680**, 20 MHz, 30 kHz SCS, PCI 1, PLMN `00101`, TAC 7, SST 1, DNN `internet`, and IPv4. B210 serial is `3271233`, sample rate 23.04 MS/s, and the actual new file uses **TX 70 / RX 35**. It includes E2/KPM and scheduler/RLC metrics in one file. Historical carrier 650000 / 3750 MHz and SSB 649632 remain documented in the [configuration history](../project_progress_and_configuration.md#configuration-records); the old files are preserved. Record actual gains per run; gain is not calibrated dBm or EIRP.
 
-`[SPARK]` Connect B210 through USB 3; do not place the working DU on a 480M USB 2 path. Attach the verified RF antenna path before enabling transmission. Use the authorized laboratory frequency and power conditions. B210 frequency conversion for FR3 is future work.
+`[SPARK]` Connect B210 through USB 3; do not place the working DU on a 480M USB 2 path. Attach the verified RF antenna path before enabling transmission. Use the recorded laboratory frequency and power conditions. The designed DU2 FR3 branch adds external Pi-Radio conversion between 3600-MHz interfaces and 9250-MHz OTA; it is not present in the current direct test.
 
 `[LAPTOP]` Connect RMU500EK with RM500Q-GL, the test USIM, antennas, and the tested data/auxiliary-power USB connections. USB IDs and port numbers must be rediscovered after reboot or movement to a new laptop. For two modems, use one Bash terminal per UE and verify the modem IMEI/device identity and inserted SIM before acting. Do not overwrite the first UE's variables by selecting a second modem in its active terminal. The two terminals share Linux routing tables; separate WWAN/IP paths and MPTCP remain preparation work.
 

@@ -1,5 +1,14 @@
 # E2SM-KPM DU RF Metrics Implementation Plan
 
+Deployment context, October 29: the [current two-link design](../docs/dual_link_radio_design.md)
+uses DU1 at 3660 MHz / 20 MHz / 51 PRBs and DU2 at a 3600-MHz n78 interface /
+40 MHz / 106 PRBs. Both use 30-kHz SCS and 100-ms DU reporting. Link 2 is
+designed for 9250-MHz OTA through Pi-Radio; both UE connections were confirmed
+in the current direct test without converters. Use each cell's capacity for
+PRB normalization. Dated implementation and experiment records below retain
+their original radio profiles; they do not validate sustained 40-MHz KPM or
+converted-path operation.
+
 The current seven-metric PUSCH RF baseline now targets 100 ms DU production
 and reporting, with 1000 ms CU identity and 1-second Core polling. The operator's
 October 25 request supersedes the earlier expansion-before-frequency order.

@@ -1,5 +1,13 @@
 # xApp subscription and bound KPM report push plan
 
+Deployment context, October 29: the [current radio design](../docs/dual_link_radio_design.md)
+uses DU1 at 3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz,
+designed for 9250-MHz OTA through Pi-Radio. Both UEs connected in the current
+direct test without converters. The 120/360-second delivery evidence used
+the earlier 20-MHz DU2 profile. Radio changes retain the version-2 wire
+contract, current-IP matching and 100-ms DU cadence; path labels do not
+identify actual RF conversion or substitute for UE identity.
+
 Extend the existing **27-metric identity xApp at 100 ms** with an application
 subscription service. An application such as the MPTCP server registers with the
 xApp. Each newly generated, successfully matched KPM report is offered to every

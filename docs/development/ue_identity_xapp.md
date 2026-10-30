@@ -1,5 +1,15 @@
 # Standalone CU/DU identity xApp
 
+Deployment update, October 29: the [current two-link design](../dual_link_radio_design.md)
+uses DU1 3660 MHz / 20 MHz and DU2 3600-MHz n78 interface / 40 MHz. Both UE
+connections were operator-confirmed in the direct test without Pi-Radio;
+the designed link-2 OTA path is 9250 MHz through converters. E2 identities
+remain logical n78, and AMF/SMF remain the source of current UE IP context.
+The identity rules in this document apply to either RF arrangement. Earlier
+experiment records retain their 20-MHz DU2 configuration. The integrated
+[subscription mode](../interface/README.md) now pushes IDs + IP + KPM;
+the standalone diagnostic mode described below remains available.
+
 Developer: Ruibin Chen. Implementation started on October 21, 2026 on both
 repositories' `Dual-UE` branches. This is the first implementation milestone of
 [Plan 4](../../plans/cu-ue-ip-e2-binding.md). Real single/dual-UE observational
@@ -12,7 +22,8 @@ validation remain follow-up work outside this acceptance.
 The application combines CU-CP identity-bearing KPM, DU KPM with seven
 measurements by default, and read-only Open5GS AMF/SMF queries. It emits
 diagnostic NDJSON on stdout; SDK and error messages go to stderr. It has no
-Plan 2 broker or MPX dependency.
+MPX dependency. Subscription mode adds the Plan 2 broker to the same coordinator;
+diagnostic mode can run without the application service.
 
 ## Implemented path and current boundary
 

@@ -24,9 +24,10 @@ import reconnect_ue as WATCH
 
 class FakeAT:
     def __init__(self, ue=2, wrong_identity=None, reject=None, wrong_lock=False, correct_settings=False,
-                 registered=False):
+                 registered=False, require_cfun_zero=False, cfun=1):
         self.role = CONNECT.ROLES[ue]
         self.registered = registered
+        self.require_cfun_zero, self.cfun = require_cfun_zero, cfun
         self.wrong_identity, self.reject, self.wrong_lock = wrong_identity, reject, wrong_lock
         self.settings = dict(mode_pref="NR5G" if correct_settings else "LTE",
                              nr5g_disable_mode="2" if correct_settings else "1",
@@ -38,11 +39,18 @@ class FakeAT:
         self.commands.append(command)
         if command == self.reject:
             return "\r\n+CME ERROR: 902\r\n"
+        if command.startswith('AT+QNWLOCK="common/5g",') and self.require_cfun_zero and self.cfun != 0:
+            return "\r\n+CME ERROR: 902\r\n"
         if command in ("AT+CGSN", "AT+CIMI"):
             value = self.role["imei"] if command == "AT+CGSN" else self.role["imsi"]
             if command == self.wrong_identity:
                 value = "000000000000000"
             response = value
+        elif command == "AT+CFUN?":
+            response = f"+CFUN: {self.cfun}"
+        elif command in ("AT+CFUN=0", "AT+CFUN=1"):
+            self.cfun = int(command[-1])
+            response = ""
         elif command.startswith("AT+QNWPREFCFG="):
             name, _, value = command.split("=", 1)[1].partition(",")
             name = name.strip('"')
@@ -216,11 +224,12 @@ class RadioRecoveryTest(unittest.TestCase):
                 self.assertEqual(modem.commands[-2:], ['AT+QENG="servingcell"', "AT+C5GREG?"])
 
     def test_matching_saved_preferences_and_lock_are_reused_without_writes(self):
-        with FakeAT(correct_settings=True).port():
+        with FakeAT(correct_settings=True).port() as modem:
             evidence = {}
-            WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence)
+            WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence, allow_cfun_retry=True)
         self.assertFalse(evidence.get("writes"))
         self.assertEqual(evidence["lock_action"], "reused")
+        self.assertNotIn("AT+CFUN?", modem.commands)
 
     def test_saved_matching_lock_avoids_a_rejected_duplicate_write(self):
         command = 'AT+QNWLOCK="common/5g",2,638976,30,78'
@@ -257,6 +266,108 @@ class RadioRecoveryTest(unittest.TestCase):
         self.assertEqual(evidence["lock_action"], "verified_after_902")
         self.assertEqual(evidence["verified_lock"], ["2", "638976", "30", "78"])
         self.assertEqual(evidence["lock_write_error"]["cme_code"], 902)
+
+    def test_both_roles_retry_902_in_minimum_functionality_and_restore_full_functionality(self):
+        for ue in (1, 2):
+            with self.subTest(ue=ue), FakeAT(ue, require_cfun_zero=True, cfun=4).port() as modem:
+                evidence = {}
+                WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[ue], evidence, allow_cfun_retry=True)
+            role = CONNECT.ROLES[ue]
+            command = f'AT+QNWLOCK="common/5g",{ue},{role["ssb"]},30,78'
+            self.assertEqual(modem.commands.count(command), 2)
+            self.assertEqual(modem.cfun, 1)
+            self.assertLess(modem.commands.index("AT+CFUN=0"), modem.commands.index(command, modem.commands.index("AT+CFUN=0")))
+            self.assertEqual(evidence["verified_lock"], [str(ue), str(role["ssb"]), "30", "78"])
+            self.assertEqual(evidence["cfun_retry"]["status"], "completed")
+            self.assertTrue(evidence["cfun_retry"]["functionality_restored"])
+            self.assertEqual(evidence["lock_action"], "verified_after_cfun_retry")
+
+    def test_rejected_cfun_retry_still_restores_functionality_and_keeps_failure(self):
+        command = 'AT+QNWLOCK="common/5g",2,638976,30,78'
+        with FakeAT(reject=command).port() as modem:
+            evidence = {}
+            with self.assertRaises(CONNECT.ATCommandError):
+                WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence, allow_cfun_retry=True)
+        self.assertEqual(modem.commands.count(command), 2)
+        self.assertEqual(modem.cfun, 1)
+        self.assertEqual(evidence["cfun_retry"]["status"], "failed")
+        self.assertTrue(evidence["cfun_retry"]["functionality_restored"])
+        self.assertNotIn("verified_lock", evidence)
+
+    def test_mismatching_lock_readback_after_retry_restores_functionality_and_fails(self):
+        with FakeAT(require_cfun_zero=True, wrong_lock=True).port() as modem:
+            evidence = {}
+            with self.assertRaisesRegex(CONNECT.CellError, "readback mismatch after CFUN retry"):
+                WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence, allow_cfun_retry=True)
+        self.assertEqual(modem.cfun, 1)
+        self.assertTrue(evidence["cfun_retry"]["functionality_restored"])
+        self.assertNotIn("verified_lock", evidence)
+
+    def test_cfun_restore_failure_blocks_recovery(self):
+        with FakeAT(require_cfun_zero=True, reject="AT+CFUN=1").port() as modem:
+            evidence = {}
+            with self.assertRaisesRegex(CONNECT.CellError, "could not restore CFUN=1"):
+                WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence, allow_cfun_retry=True)
+        self.assertEqual(modem.cfun, 0)
+        self.assertEqual(evidence["cfun_retry"]["status"], "restore_failed")
+        self.assertFalse(evidence["cfun_retry"]["functionality_restored"])
+        self.assertNotIn("verified_lock", evidence)
+
+    def test_lock_must_survive_restoring_full_functionality(self):
+        with FakeAT(require_cfun_zero=True).port() as modem:
+            original = modem.reply
+            def reply(command):
+                response = original(command)
+                if command == "AT+CFUN=1":
+                    modem.lock = "0"
+                return response
+            evidence = {}
+            with patch.object(modem, "reply", side_effect=reply), self.assertRaisesRegex(CONNECT.CellError, "readback mismatch after CFUN=1"):
+                WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence, allow_cfun_retry=True)
+        self.assertEqual(modem.cfun, 1)
+        self.assertTrue(evidence["cfun_retry"]["functionality_restored"])
+        self.assertEqual(evidence["cfun_retry"]["lock_after_restore"], ["0"])
+        self.assertNotIn("verified_lock", evidence)
+
+    def test_interrupted_retry_restores_full_functionality_before_leaving_serial_port(self):
+        command = 'AT+QNWLOCK="common/5g",2,638976,30,78'
+        with FakeAT(require_cfun_zero=True).port() as modem:
+            original = CONNECT.at_reply
+            def reply(fd, request):
+                if request == command and modem.cfun == 0:
+                    raise CONNECT.StopRequested(signal.SIGTERM)
+                return original(fd, request)
+            evidence = {}
+            with patch.object(CONNECT, "at_reply", side_effect=reply), self.assertRaises(CONNECT.StopRequested):
+                WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence, allow_cfun_retry=True)
+        self.assertEqual(modem.cfun, 1)
+        self.assertEqual(evidence["cfun_retry"]["status"], "interrupted")
+        self.assertTrue(evidence["cfun_retry"]["functionality_restored"])
+
+    def test_cfun_zero_applied_but_reply_timed_out_still_restores_functionality(self):
+        with FakeAT(require_cfun_zero=True).port() as modem:
+            original = CONNECT.at_reply
+            def reply(fd, request):
+                response = original(fd, request)
+                if request == "AT+CFUN=0":
+                    raise subprocess.TimeoutExpired(request, 5)
+                return response
+            evidence = {}
+            with patch.object(CONNECT, "at_reply", side_effect=reply), self.assertRaises(subprocess.TimeoutExpired):
+                WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence, allow_cfun_retry=True)
+        self.assertEqual(modem.cfun, 1)
+        self.assertEqual(evidence["cfun_retry"]["status"], "failed")
+        self.assertTrue(evidence["cfun_retry"]["functionality_restored"])
+        self.assertNotIn("verified_lock", evidence)
+
+    def test_unexpected_cfun_mode_is_observed_without_mode_changes(self):
+        with FakeAT(require_cfun_zero=True, cfun=7).port() as modem:
+            evidence = {}
+            with self.assertRaisesRegex(CONNECT.CellError, "unexpected CFUN mode 7"):
+                WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence, allow_cfun_retry=True)
+        self.assertEqual(modem.cfun, 7)
+        self.assertFalse(any(command.startswith("AT+CFUN=") for command in modem.commands))
+        self.assertEqual(evidence["cfun_retry"]["status"], "refused")
 
     def lost_connected_ue(self):
         self.connect(1)
@@ -655,7 +766,7 @@ class RadioRecoveryTest(unittest.TestCase):
     def test_radio_io_and_registration_do_not_hold_shared_network_lock(self):
         self.wrong_cell()
         watcher = self.auto()
-        def radio(*args):
+        def radio(*args, **kwargs):
             with open(WATCH.SHARED_LOCK, "a") as lock:
                 CONNECT.fcntl.flock(lock, CONNECT.fcntl.LOCK_EX | CONNECT.fcntl.LOCK_NB)
             # The independent peer can complete its startup while FR3 repairs.

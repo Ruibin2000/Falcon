@@ -1,12 +1,13 @@
-# Dual UE and Dual DU FR1 Channel Implementation Plan
+# Dual UE and Dual DU Radio Link Implementation Plan
 
-Extend the existing single FR1 link into two independent n78 links, each with
-its own UE, modem, radio, and OCUDU DU. Move DU1 into an authorized CBRS-range
-channel and select a separate CBRS-range channel for DU2. First revalidate DU1
-at its new carrier, then validate both links with the existing FlexRIC RIC and
-five-metric KPM xApp, with application acceptance focused on uplink (UL).
-Integrate the RF metrics and application broker when their
-respective Plan 1 and Plan 2 acceptance gates pass.
+Maintain two independent UE/modem/B210/OCUDU DU paths with a shared CU,
+Open5GS and FlexRIC. DU1 uses 3660 MHz / 20 MHz. DU2 uses a 3600-MHz n78
+interface / 40 MHz, designed for a 9250-MHz OTA path through Pi-Radio.
+The current setup tests both paths directly in n78, without converters.
+The [radio design](../docs/dual_link_radio_design.md) defines current profiles,
+IP mapping and validation scope. This plan retains the original dual-n78
+bring-up steps and dated acceptance records. Expanded 27-metric reporting
+and app subscriptions have their own Plan 1/2 records.
 
 | Field | Value |
 | --- | --- |
@@ -23,7 +24,7 @@ respective Plan 1 and Plan 2 acceptance gates pass.
 | FlexRIC inspection baseline | `736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8`, with the existing local timestamp repair |
 | Prerequisites | Baseline: authorization covering both selected channels and actual lab conditions, two independently tunable radios, two prepared UE/modem/SIM paths, and the existing five-metric E2 path. Integration: accepted dual-link baseline and the applicable Plan 1/2 stage |
 | Execution order | Steps 1–9 cover the functional baseline; Step 10 tracks nonblocking supplemental experiments; Step 11 integrates accepted features while preserving Plan 2 Stage A → Plan 1 → Plan 2 Stage B |
-| Initial deployment | Indoor, short-range, low-power testbed with partial shielding; shared CU/Open5GS/two DUs/FlexRIC on Spark and two RM500Q modems on one laptop; both carriers within the CBRS frequency range |
+| Initial deployment | Direct n78 lab baseline; shared CU/Open5GS/two DUs/FlexRIC on Spark and two RM500Q modems on one laptop. Current profiles are 20/40 MHz; the designed converted 9250-MHz OTA path is separate from this baseline |
 
 Maintain one plan for this task. Complete checkboxes only after the stated exit
 criteria pass and the reviewer can inspect the retained evidence. Plan numbers
@@ -33,14 +34,18 @@ identify tasks; they do not require executing Plan 1 before this baseline.
 
 The maintained DU2 configuration is now `du2_b210_n78_40mhz.yml`: 40 MHz
 bandwidth, 46.08 MS/s, TX 45 / RX 20 and offline-derived SSB ARFCN `638976`.
-DU1 remains at 20 MHz, 23.04 MS/s and TX 70 / RX 35. DU2 keeps its logical
-3600-MHz n78 carrier; Pi-Radio converts it to the intended 9250-MHz OTA
-center. OCUDU and E2/RIC retain the logical n78 cell information. The nominal
-DU2 channel is 3580–3620 MHz at the USRP and 9230–9270 MHz OTA.
+DU1 remains at 3660 MHz / 20 MHz, 23.04 MS/s and TX 70 / RX 35. DU2 keeps its
+logical 3600-MHz n78 carrier. Its designed Pi-Radio branch converts this to a
+9250-MHz OTA center. OCUDU and E2/RIC retain logical n78 cell information.
+The nominal DU2 channel is 3580–3620 MHz at the USRP and, with conversion,
+9230–9270 MHz OTA. The current test has no Pi-Radio; DU2 startup confirms
+40 MHz / 46.08 MS/s / SSB `638976`, and the operator confirmed both direct-radio
+UE connections on October 29.
 
 Earlier pass records and lock readbacks in this plan used DU2's 20-MHz profile
-and SSB `639648`. They remain historical evidence; live validation of the new
-40-MHz converted path is pending. Use the maintained
+and SSB `639648`. They remain historical evidence. Sustained traffic/KPM with
+the new 40-MHz profile and converted 9250-MHz operation remain to be recorded.
+Use the maintained
 [Spark startup handbook](../docs/dual_ue_spark_quick_commands.md) and refresh
 the [Laptop scripts](../docs/dual_ue_laptop_reconnect_quick_start.md#2-copy-or-update-scripts--laptop-terminal-watchers-stopped)
 before running the new profile. The CBRS channel-selection discussion below
@@ -299,7 +304,7 @@ for current commands and explicit preparation-versus-live acceptance status.
 
 ## Carrier Selection and RF Contract
 
-| Parameter | DU1 current carrier, uplink functionality passed | DU2 proposed configuration |
+| Parameter | DU1 current profile | DU2 current profile |
 | --- | --- | --- |
 | Band | n78, explicitly configured | n78, explicitly configured |
 | Carrier NR-ARFCN | `644000` | `640000` |
@@ -308,12 +313,14 @@ for current commands and explicit preparation-versus-live acceptance status.
 | Common SCS | 30 kHz | 30 kHz |
 | Nominal USRP-side channel interval | 3650–3670 MHz | 3580–3620 MHz |
 | Intended OTA center / interval | 3660 MHz / 3650–3670 MHz | 9250 MHz / 9230–9270 MHz via Pi-Radio |
-| SSB NR-ARFCN | `643680` confirmed in startup and 2026-10-13 UE1 lock/serving-cell readback | `638976` derived offline for 40 MHz; live confirmation pending |
+| SSB NR-ARFCN | `643680` confirmed in startup and 2026-10-13 UE1 lock/serving-cell readback | `638976` derived for 40 MHz and confirmed in October 29 startup |
 | Radio | B210 serial `3271233`, USB 3 at `2-1.3` / controller `NVDA8000:00`; rediscover before use | B210 serial `328B021`, USB 3 at `6-1.1` / controller `NVDA8000:02`; rediscover before use |
 | Sample rate | 23.04 MS/s | 46.08 MS/s |
 | Configured TX / RX gain | 70 / 35 dB | 45 / 20 dB |
 
-Both complete nominal channels lie within the US CBRS range, 3550–3700 MHz.
+For the direct n78 test, both complete nominal channels lie within the US
+CBRS frequency range, 3550–3700 MHz. The designed 9250-MHz converted OTA path
+is a separate RF arrangement; the CBRS discussion here applies to direct n78.
 Use this pair only when the applicable operating authorization covers both
 full intervals and the actual location/power/emission conditions. A grant
 restricted to 3550–3650 MHz does not cover the proposed DU1 channel; select a
@@ -353,35 +360,42 @@ them; repeat the affected cases afterward.
 
 ## Topology and Identity Contract
 
+This diagram shows the current direct n78 test. The designed converted
+9250-MHz link-2 branch is shown in the [radio specification](../docs/dual_link_radio_design.md).
+
 ```mermaid
 flowchart LR
-    U1[UE1 modem and SIM1] <-->|FR1 3660 MHz candidate| R1[B210 serial 3271233]
-    U2[UE2 modem and SIM2] <-->|FR1 3600 MHz candidate| R2[Second B210]
+    U1[UE1 modem and SIM1] <-->|3660 MHz / 20 MHz| R1[B210 serial 3271233]
+    U2[UE2 modem and SIM2] <-->|3600 MHz / 40 MHz direct test| R2[B210 serial 328B021]
     R1 <--> D1[OCUDU DU1]
     R2 <--> D2[OCUDU DU2]
     D1 <-->|F1| CU[Shared OCUDU CU]
     D2 <-->|F1| CU
     CU <--> CORE[Open5GS and UPF]
-    D1 -->|E2| RIC[Existing FlexRIC RIC]
-    D2 -->|E2| RIC
-    RIC --> X[Existing five-metric KPM monitor]
-    X -. later accepted features .-> B[RF metrics and application broker]
+    subgraph RIC[FlexRIC]
+        X[Identity and subscription xApp]
+    end
+    D1 -->|E2 KPM, 100 ms| X
+    D2 -->|E2 KPM, 100 ms| X
+    CU -->|E2 identity, 1 s| X
+    CORE -->|AMF/SMF IP context, 1 s| X
+    X -->|IDs + IP + KPM| B[Subscribed MPTCP app / dummy]
 ```
 
 | Item | DU1 / UE1 | DU2 / UE2 |
 | --- | --- | --- |
 | Shared PLMN / gNB | `00101`, gNB ID `411`, 22 bits | Same shared gNB identity; confirm in F1/E2 |
-| DU ID | `1` | Proposed `2` |
-| Cell sector ID | Current first-cell default `0`; confirm | Explicit proposed `1` |
-| PCI | `1` | Proposed `2` |
-| NR cell identity | Expected `6733824` | Proposed `6733825` |
-| TAC / SST / DNN | `7` / `1` / `internet` | `7` / `1` / `internet2` after subnet migration |
-| UE IPv4 pool / Spark endpoint | `10.45.0.0/16` / `10.45.0.1` | `10.46.0.0/16` / `10.46.0.1` after subnet migration |
-| DU F1-C bind | `127.0.10.2` | Proposed `127.0.10.3` |
-| DU F1-U bind | `127.0.10.2:2152` | Proposed `127.0.10.3:2152` |
+| DU ID | `1` | `2` |
+| Cell sector ID | `0` | `1` |
+| PCI | `1` | `2` |
+| NR cell identity | `6733824` | `6733825` |
+| TAC / SST / DNN | `7` / `1` / `internet` | `7` / `1` / `internet2` |
+| UE IPv4 pool / Spark endpoint | `10.45.0.0/16` / `10.45.0.1` | `10.46.0.0/16` / `10.46.0.1` |
+| DU F1-C bind | `127.0.10.2` | `127.0.10.3` |
+| DU F1-U bind | `127.0.10.2:2152` | `127.0.10.3:2152` |
 | CU F1 endpoints | `127.0.10.1:38472` SCTP and `127.0.10.1:2152` UDP | Shared CU listeners |
 | RIC E2 destination | `127.0.0.1:36421` | Same RIC destination |
-| DU E2 local bind | Current `127.0.0.1` | Proposed `127.0.10.3`; local SCTP port is ephemeral |
+| DU E2 local bind | `127.0.0.1` | `127.0.10.3`; local SCTP port is ephemeral |
 | Intended new IMSI | `001010000000101` / OC011830 | `001010000000102` / OC011831 |
 | Recorded modem IMEI | `863305041978437` | `863305041980706` |
 | WWAN interface / UE IP / UE F1AP ID | Discover during each run | Discover during each run |
@@ -414,8 +428,8 @@ they already exist:
 | Location | Purpose |
 | --- | --- |
 | `configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml` | Deployed and verified for single-link UL functionality; underflow remediation deferred |
-| `configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml` | Current 40-MHz DU2 radio/cell/F1 configuration for B210 328B021; offline preparation complete, live 40-MHz operation pending; earlier pass records used 20 MHz |
-| `configs/ocudu/dual_fr1/du2_flexric.yml` | Prepared DU2 E2/KPM overlay and 1000-ms scheduler/RLC metrics |
+| `configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml` | Current 40-MHz DU2 radio/cell/F1 configuration for B210 328B021; startup and operator-confirmed direct UE connection on October 29; sustained 40-MHz traffic/KPM and converted operation pending; earlier experiment records used 20 MHz |
+| `configs/ocudu/dual_fr1/du2_flexric.yml` | Current DU2 E2/KPM overlay and 100-ms scheduler/RLC metrics |
 | `configs/flexric/xapp_du_kpm_base5.conf` | One DU-only five-metric subscription, shared with Plan 2 when available |
 | `patches/flexric/dual-fr1-kpm-diagnostics.patch` | Minimal monitor attribution, missing-value, and lifecycle changes |
 | `scripts/dual_fr1/check_config.py` | Implemented offline identities, F1/E2, nominal channels, missing serial, metrics and writable log checks; operating authorization and SSB derivation remain separate |
@@ -502,11 +516,13 @@ from the proposed CBRS deployment. New-carrier acceptance remains pending.
   test conditions. Treat the runbook's 3750-MHz/gain settings as historical
   references; the following checks select this deployment's authorized settings.
 - [ ] Confirm the existing authorization covers DU1 3650–3670 MHz and DU2
-  3590–3610 MHz, the actual lab location, operating power/emissions, and validity
+  3580–3620 MHz for the current direct test, the actual lab location,
+  operating power/emissions, and validity
   period. Record the applicable authorization/reference locally; do not infer
   coverage from indoor operation or partial shielding.
 - [ ] Evaluate DU1 ARFCN 644000 / 3660 MHz and DU2 ARFCN 640000 / 3600 MHz,
-  each at 20 MHz. If either is unsuitable or outside the actual authorization,
+  at 20 and 40 MHz respectively. If either is unsuitable or outside the
+  actual authorization,
   select another authorized n78 pair with both full channels inside CBRS,
   recompute intervals/separation, and review the new configs before proceeding.
 - [ ] Establish the indoor low-power RF path using measured output, reviewed
@@ -536,8 +552,10 @@ pending until DU1 revalidation and live coexistence pass.
 - [ ] Use DU2 F1 bind `127.0.10.3` and E2 destination `127.0.0.1:36421` with its
   own local bind. Keep DU1 network/identity settings, CU listeners, and N2/N3/
   core addresses unchanged while migrating DU1's RF carrier.
-- [ ] Enable scheduler/RLC metrics and a 1000-ms report period on both DUs.
-  Leave CU E2 disabled for the initial two-DU inventory.
+- [ ] Enable scheduler/RLC metrics and a 100-ms report period on both DUs.
+  The original five-metric inventory omitted CU E2. The current identity and
+  subscription workflow also needs the CU identity overlay at 1000 ms;
+  deploy it using the current Spark handbook.
 - [ ] Generate CU/DU2 log overlays and set DU1's log using `log --filename`,
   with absolute paths under this run's evidence directory; use distinct pcap
   paths if capture is enabled.
@@ -607,7 +625,7 @@ metrics:
     enable_sched: true
     enable_rlc: true
   periodicity:
-    du_report_period: 1000
+    du_report_period: 100
 ```
 
 **Exit criteria:** reviewed configs have unique radios, DU/cell identities,

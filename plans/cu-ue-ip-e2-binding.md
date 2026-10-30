@@ -1,5 +1,12 @@
 # Standalone CU/DU Identity xApp and Core IP Correlation Plan
 
+Deployment context, October 29: the [current radio design](../docs/dual_link_radio_design.md)
+uses DU1 at 3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz,
+designed for 9250-MHz OTA through Pi-Radio. Both UEs connected in the direct
+test without converters. CU/DU identities remain logical n78, and AMF/SMF
+remain the UE IP source. The October 21–25 identity evidence below retains
+its original 20-MHz DU2 profile; it is not converted-path validation.
+
 Develop a new standalone `xapp_ue_identity` that receives CU-CP identity reports
 and existing DU KPM, queries Open5GS SMF/AMF infoAPI, and emits diagnostic
 UE-IP-to-radio associations. Integrate with Plan 2 only in a later task.

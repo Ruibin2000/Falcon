@@ -5,8 +5,10 @@ Updated: 2026-10-29. Developer: Ruibin.
 **Spark target:** DU1/DU2 statistics and KPM **100 ms**; CU identity **1 second**.
 
 **Current radio profile:** DU1 uses 3660 MHz / 20 MHz / SSB `643680`;
-DU2 uses a 3600-MHz n78 USRP interface, 40 MHz and SSB `638976`, with
-Pi-Radio conversion to the intended 9250-MHz OTA center. Refresh the scripts
+DU2 uses a 3600-MHz n78 USRP interface, 40 MHz and SSB `638976`. Its designed
+Pi-Radio path has a 9250-MHz OTA center. The current test has no converters;
+the operator confirmed both direct-radio connections on October 29. See the
+[radio design and evidence scope](dual_link_radio_design.md). Refresh the scripts
 in section 2 before starting UE2: the earlier 20-MHz profile used SSB `639648`.
 The modem lock and OCUDU/E2 cell information use the logical n78 frequency.
 
@@ -44,6 +46,21 @@ sudo systemctl enable --now ModemManager
 ```
 
 **Expected:** seven files listed; one SSH login; no intermediate archive file.
+
+**CME 902 recovery, updated 2026-10-29:** both UE watchers now retry a rejected
+cell-lock write once with `CFUN=0`, then restore `CFUN=1`, when the lock readback
+still differs and the selected modem has no active PDU. A correct saved lock is
+reused. An active PDU prevents this CFUN retry. The selected radio temporarily
+goes offline during the retry; the script attempts to restore `CFUN=1` even if
+the lock fails or Ctrl+C interrupts it. Lock readback is checked again after
+functionality is restored. Registration, serving-cell, PDU and ping checks
+must still pass before `SUCCESS`. This path has offline regression coverage;
+physical recovery on the current firmware still requires a live test.
+
+If a manual AT session was left at `AT+CFUN=0`, restore `AT+CFUN=1` in that
+modem's AT terminal, then exit minicom before starting its watcher. The watcher
+must be able to verify the modem and SIM before it can make radio changes.
+See [CME 902 details](runbooks/dual_ue_laptop_reconnect_reference.md#cme-902-after-a-du-gain-drop).
 
 ## 3. Check USB wiring — Laptop terminal
 

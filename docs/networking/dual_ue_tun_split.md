@@ -13,6 +13,12 @@ not a prerequisite for current acceptance or merging.
 
 ## Current layout
 
+The [current radio design](../dual_link_radio_design.md) uses DU1 at
+3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz, with a
+designed Pi-Radio 9250-MHz OTA path. The October 29 direct-radio test has no
+converters. The radio bandwidth/conversion changes retain the DNN, subnet,
+TUN and policy-table assignments below; always rediscover the allocated UE IP.
+
 | Role | DNN / APN | UE IPv4 pool | Spark interface | Spark service endpoint |
 | --- | --- | --- | --- | --- |
 | UE1 / DU1 | `internet` | `10.45.0.0/16` | `ogstun_1` | `10.45.0.1:5201` |

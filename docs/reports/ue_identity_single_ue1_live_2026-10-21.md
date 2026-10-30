@@ -1,5 +1,11 @@
 # UE1 live CU/DU/Core association: October 21, 2026
 
+> Historical scope: this record retains its dated implementation, test
+> configuration and results. The [current two-link design](../dual_link_radio_design.md)
+> defines DU1 3660 MHz / 20 MHz, DU2 3600-MHz n78 interface / 40 MHz, and
+> the designed Pi-Radio 9250-MHz OTA path. Those later radio changes are
+> outside this record's validation.
+
 Developer: Ruibin Chen. Branch: Dual-UE in Falcon and OCUDU.
 
 The real single-UE observational association passed: 57 consecutive DU1 rows

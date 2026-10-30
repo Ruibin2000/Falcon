@@ -2,6 +2,11 @@
 
 Updated: 2026-10-29. Developer: Ruibin.
 
+The [current two-link design](dual_link_radio_design.md) uses DU1 at
+3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz. The current
+test is direct n78 with both UE connections operator-confirmed on October 29;
+the designed Pi-Radio 9250-MHz OTA path remains to be validated.
+
 Run these scripts on the **UE laptop**. Start the core, CU and both DUs on
 **Spark first**, following [Spark quick commands](dual_ue_spark_quick_commands.md).
 This guide covers one-shot modem enable/registration, live serving-cell checks,
@@ -207,12 +212,16 @@ sudo systemctl enable --now ModemManager
 | SSB NR-ARFCN / SCS | `643680` / 30 kHz | `638976` / 30 kHz |
 | Carrier NR-ARFCN | `644000` | `640000` |
 | Channel bandwidth / USRP sample rate | 20 MHz / 23.04 MS/s | 40 MHz / 46.08 MS/s |
+| Configured TX / RX gain | 70 / 35 dB | 45 / 20 dB |
+| Current direct-test OTA center | 3660 MHz | 3600 MHz, no converters |
 | Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
 | Independent reset block | priority `20151` | priority `20152` |
 
-FR1 and FR3 identify the two paths. Both DUs use logical n78 configurations;
-DU2's 3600-MHz USRP interface is translated by Pi-Radio to the intended
-9250-MHz OTA center. OCUDU, E2 and modem locks retain the logical n78 frequency.
+FR1 and FR3 identify the two paths. Both DUs use logical n78 configurations.
+The designed Pi-Radio branch translates DU2's 3600-MHz USRP/modem interfaces
+to a 9250-MHz OTA center. During the current direct test, UE2 operates at
+3600 MHz without converters. OCUDU, E2 and modem locks retain logical n78
+information in either arrangement.
 After updating Spark for the 40-MHz DU2 profile, copy the current Laptop
 scripts before reconnecting UE2; its SSB changes from `639648` to `638976`.
 The common PLMN is `00101`, TAC is `7`, and access must be NR SA. The scripts

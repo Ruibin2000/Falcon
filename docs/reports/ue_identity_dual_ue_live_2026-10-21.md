@@ -1,5 +1,11 @@
 # Dual UE IP binding: final implementation and live validation
 
+> Radio scope: this experiment used direct n78 radio paths with DU2 at
+> 20 MHz. Its measurements, gains, lock readbacks and figures retain that
+> configuration. See the [current radio design](../dual_link_radio_design.md)
+> for the October 29 20/40-MHz profiles and the separately designed Pi-Radio
+> 9250-MHz OTA path. This report does not validate either later RF arrangement.
+
 Developer: Ruibin Chen. Experiment date: October 21, 2026,
 America/New_York. Falcon and OCUDU branch: `Dual-UE`.
 

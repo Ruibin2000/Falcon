@@ -3,6 +3,12 @@
 Plan 1, Step 2 source trace, recorded on October 19, 2026 (America/New_York).
 Developer: Hao Ding.
 
+Deployment reference: the [current two-link design](../dual_link_radio_design.md)
+specifies DU1 at 3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface /
+40 MHz, designed for 9250-MHz OTA through Pi-Radio. The current test is direct
+n78 without converters. This October 19 source trace retains its recorded
+DU1 configuration and does not validate the later radio profiles.
+
 ## Scope, revisions, and evidence
 
 | Repository | Branch and inspected revision | Role in this step |

@@ -1,5 +1,11 @@
 # Spark Quick Commands
 
+Radio scope, October 29: this booklet operates DU1 at 3660 MHz / 20 MHz.
+Use the [two-link design](../dual_link_radio_design.md) and dual-UE handbooks
+for DU2's 3600-MHz n78 interface / 40-MHz profile and designed Pi-Radio
+9250-MHz OTA path. Both UEs connected in the current direct test without
+converters; dated single-link results below retain their original scope.
+
 Network update, 2026-10-23: the installed Spark uses `ogstun_1 / 10.45.0.1`
 for UE1 and `ogstun_2 / 10.46.0.1` for UE2. The checks below use UE1's current
 interface. See the [TUN split and script archive](../networking/dual_ue_tun_split.md) and
@@ -25,7 +31,12 @@ The new Open Cells cards OC011830 / IMSI `001010000000101` and OC011831 / IMSI `
 
 Before using either new card, prepare its own matching core subscriber from protected `~/sim_du1_credentials.txt` or `~/sim_du2_credentials.txt`, SST 1 and IPv4 type 1. The migrated deployment uses UE1 `internet` and UE2 `internet2`; use the paired dual-UE booklets for that topology. Keep K/OPc private. The programming tool's recommended SQN reference `96` requires verification of the installed core's representation/current state; do not blindly insert or reset decimal 96. See [SIM assignments](../setup/sim_provisioning_and_dual_ue.md#sim-assignments) and [Open5GS preparation](../setup/sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers).
 
-These launch commands cover **DU1 only**. The supplied DU2 config, actual B210 `328B021`, PCI 2 / SSB 639648, and distinct DU/network identities are covered by [Dual UE Spark quick commands](../dual_ue_spark_quick_commands.md). IMSI does not automatically bind a UE to a DU; verify serving-cell readback. Both registered WWAN/IP paths have now passed private ping; concurrent UL/KPM acceptance and MPTCP remain pending; see [dual-UE validation](../setup/sim_provisioning_and_dual_ue.md#validate-two-ue-paths).
+These launch commands cover **DU1 only**. The current DU2 config uses B210
+`328B021`, 40 MHz, PCI 2 and SSB `638976`; its distinct DU/network identities
+are covered by [Dual UE Spark quick commands](../dual_ue_spark_quick_commands.md).
+The earlier 20-MHz DU2 startup used SSB `639648`. IMSI does not automatically
+bind a UE to a DU; verify the actual serving cell. The current radio design
+above links later dual-UE traffic, KPM and MPTCP results with their dated scope.
 
 ## 1 Check before startup
 

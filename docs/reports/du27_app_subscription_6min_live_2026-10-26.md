@@ -1,5 +1,11 @@
 # Six minute live KPM subscription delivery and stability report
 
+> Radio scope: this experiment used direct n78 radio paths with DU2 at
+> 20 MHz. Its measurements, gains, lock readbacks and figures retain that
+> configuration. See the [current radio design](../dual_link_radio_design.md)
+> for the October 29 20/40-MHz profiles and the separately designed Pi-Radio
+> 9250-MHz OTA path. This report does not validate either later RF arrangement.
+
 **The xApp successfully delivered every captured DU KPM report to an independent subscribing application throughout this six minute workload.** The dummy received and wrote all 7,200 reports, preserving the UE IP association and all 27 raw metrics. Report readiness to application receipt had a p99 of **3.595 ms** and a maximum of **7.349 ms**. Both links maintained approximately 100 ms receive intervals during alternating and concurrent uplink traffic. Registration, heartbeats, unregistration, and subsequent xApp/E2 shutdown completed successfully.
 
 This establishes successful and stable delivery for the measured 360 second, two-DU, one-subscriber workload on Spark. Longer operation, application/UE reconnection, slow consumers, and integration with the actual MPX/MPTCP client require their own acceptance runs.

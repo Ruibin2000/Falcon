@@ -65,7 +65,7 @@ class RadioSettingsMismatch(connect.CellError):
     """An owned active PDU needs a real configuration change, not just RF recovery."""
 
 
-def restore_cell_lock(at_port, info, role, evidence, *, read_only=False):
+def restore_cell_lock(at_port, info, role, evidence, *, read_only=False, allow_cfun_retry=False):
     """Inspect or restore verified NR SA settings; OK is not serving proof."""
     def query(fd, command):
         return radio_query(fd, command, evidence)
@@ -90,6 +90,80 @@ def restore_cell_lock(at_port, info, role, evidence, *, read_only=False):
         # taken effect. Never report the operation as an atomic rollback.
         evidence.setdefault("writes", []).append(command)
         query(fd, command)
+
+    def functionality(fd):
+        reply = query(fd, "AT+CFUN?")
+        modes = re.findall(r"(?m)^\s*\+CFUN:\s*(\d+)\s*$", reply.replace("\r", ""))
+        if len(modes) != 1:
+            raise connect.CellError("Missing/ambiguous AT+CFUN? readback")
+        return int(modes[0])
+
+    def retry_lock_in_minimum_functionality(fd, command, target):
+        # The caller must have verified that this modem has no active PDU.
+        # Quectel's X55 guidance requires CFUN=0 for some QNWLOCK firmware.
+        retry = dict(status="checking", trigger_cme=902)
+        evidence["cfun_retry"] = retry
+        try:
+            retry["initial_mode"] = functionality(fd)
+        except ERRORS as error:
+            retry.update(status="failed", error=str(error))
+            raise
+        if retry["initial_mode"] not in (0, 1, 4):
+            retry["status"] = "refused"
+            raise connect.CellError(f"Refusing cell-lock retry from unexpected CFUN mode {retry['initial_mode']}")
+        connect.status("Radio recovery: lock rejected with 902; no active PDU, retry with CFUN=0, then restore CFUN=1")
+        actual = None
+        try:
+            try:
+                # Enter the finally block before sending CFUN=0: a timeout or
+                # interruption cannot prove that the command had no effect.
+                retry["status"] = "started"
+                write(fd, "AT+CFUN=0")
+                retry["minimum_mode"] = functionality(fd)
+                if retry["minimum_mode"] != 0:
+                    raise connect.CellError("CFUN=0 readback mismatch; refusing lock retry")
+                try:
+                    write(fd, command)
+                except connect.ATCommandError as error:
+                    retry["lock_write_error"] = dict(cme_code=error.cme_code, reply=error.reply)
+                    if error.cme_code != 902:
+                        raise
+                    actual = fields(fd, 'AT+QNWLOCK="common/5g"', "+QNWLOCK", "common/5g")
+                    retry["lock_after_error"] = actual
+                    if actual != target:
+                        raise
+                else:
+                    actual = fields(fd, 'AT+QNWLOCK="common/5g"', "+QNWLOCK", "common/5g")
+                retry["lock_readback"] = actual
+                if actual != target:
+                    raise connect.CellError(f"Cell-lock readback mismatch after CFUN retry: expected {target}, got {actual}")
+            except BaseException as error:
+                retry.update(status="interrupted" if isinstance(error, KeyboardInterrupt) else "failed", error=str(error))
+                raise
+        finally:
+            # Restore functionality after success, rejection, timeout or Ctrl+C.
+            # A second terminal signal must not interrupt this bounded cleanup.
+            try:
+                with connect.ignore_stop_signals():
+                    write(fd, "AT+CFUN=1")
+                    retry["restored_mode"] = functionality(fd)
+                    if retry["restored_mode"] != 1:
+                        raise connect.CellError("CFUN=1 readback mismatch")
+                retry["functionality_restored"] = True
+            except ERRORS as error:
+                retry.update(status="restore_failed", functionality_restored=False, restore_error=str(error))
+                raise connect.CellError(f"Cell-lock retry could not restore CFUN=1; inspect this UE's AT port: {error}") from error
+        try:
+            actual = fields(fd, 'AT+QNWLOCK="common/5g"', "+QNWLOCK", "common/5g")
+            retry["lock_after_restore"] = actual
+            if actual != target:
+                raise connect.CellError(f"Cell-lock readback mismatch after CFUN=1: expected {target}, got {actual}")
+        except ERRORS as error:
+            retry.update(status="failed", error=str(error))
+            raise
+        retry["status"] = "completed"
+        connect.status("Radio recovery: cell lock verified after CFUN retry; CFUN=1 restored")
+        return actual
 
     with connect.serial_modem(at_port, info, role, query=query) as fd:
         # Read the saved lock before deciding whether a live PDU needs any
@@ -125,9 +199,13 @@ def restore_cell_lock(at_port, info, role, evidence, *, read_only=False):
                 actual = fields(fd, lock_query, "+QNWLOCK", "common/5g")
                 evidence["lock_after_error"] = actual
                 if actual != target:
-                    raise
-                evidence["lock_action"] = "verified_after_902"
-                connect.status("Radio recovery: lock write returned 902; exact target lock read back independently")
+                    if not allow_cfun_retry or read_only:
+                        raise
+                    actual = retry_lock_in_minimum_functionality(fd, lock_query + "," + ",".join(target), target)
+                    evidence["lock_action"] = "verified_after_cfun_retry"
+                else:
+                    evidence["lock_action"] = "verified_after_902"
+                    connect.status("Radio recovery: lock write returned 902; exact target lock read back independently")
             else:
                 actual = fields(fd, lock_query, "+QNWLOCK", "common/5g")
         else:
@@ -307,9 +385,11 @@ class Recovery(connect.Connection):
             self.host_preflight(dict(interface=interface))
         connect.status(f"Radio recovery: UE{self.ue} / {self.role['label']}; check saved NR SA settings / "
                        f"PCI={self.role['pci']} SSB={self.role['ssb']} and PLMN 00101 registration")
+        cfun_allowed = not active and info.get("modem.generic.state") in ("disabled", "enabled", "searching", "registered")
+        evidence.update(modem_state_before=info.get("modem.generic.state"), cfun_retry_allowed=cfun_allowed)
         try:
             restore_cell_lock(self.at_port, info, self.role, evidence,
-                              **({"read_only": True} if active else {}))
+                              allow_cfun_retry=cfun_allowed, **({"read_only": True} if active else {}))
         except RadioSettingsMismatch:
             # Only a proven configuration mismatch can justify releasing an
             # active PDU during radio repair. A correct lock + lost coverage
@@ -317,13 +397,15 @@ class Recovery(connect.Connection):
             live = serial_registration(evidence, self.role)
             if not live["registered"]:
                 self.release_radio_pdu(evidence, serial_lost=live["radio_lost"])
-                info, remaining = self.active()
-                connect.require(not remaining, "Radio settings differ but the active PDU is retained; retry live radio checks")
+                info, active = self.active()
+                connect.require(not active, "Radio settings differ but the active PDU is retained; retry live radio checks")
             else:
                 # Already on the correct live cell: install missing preferences
                 # or a saved lock without needlessly releasing a working PDU.
-                info = self.checked_modem()
-            restore_cell_lock(self.at_port, info, self.role, evidence)
+                info, active = self.active()
+            cfun_allowed = not active and info.get("modem.generic.state") in ("disabled", "enabled", "searching", "registered")
+            evidence.update(modem_state_before=info.get("modem.generic.state"), cfun_retry_allowed=cfun_allowed)
+            restore_cell_lock(self.at_port, info, self.role, evidence, allow_cfun_retry=cfun_allowed)
         live = serial_registration(evidence, self.role)
         info, active = self.active()
         if active and not live["registered"]:

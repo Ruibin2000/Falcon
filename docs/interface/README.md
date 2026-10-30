@@ -1,10 +1,21 @@
 # xApp and MPTCP application interface
 
-Updated October 26, 2026. Protocol version **2**; metric profile **`du27_bound_v1`**.
+Updated October 29, 2026. Protocol version **2**; metric profile **`du27_bound_v1`**.
 
 This document defines the implemented Falcon interface for an MPTCP/MPX application to subscribe to KPM reports. The xApp pushes each newly generated, currently matched report with its DU/UE identity, current UE IPv4, and 27 raw KPM metrics. The MPTCP application uses that IPv4 to associate the report with its own current path. The same interface has been exercised by an independent dummy application in successful 120 second and 360 second live experiments.
 
 This is Falcon's local application protocol. Its version is independent of the E2 service model and of the `v1` suffix in the metric profile or inner report schema. The earlier MPX version-1 draft is a migration reference; a version-1 registration is rejected by the current service.
+
+The [current radio design](../dual_link_radio_design.md) uses DU1 at
+3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz, designed for
+9250-MHz OTA through Pi-Radio. The current direct test has no converters;
+both UE connections were operator-confirmed on October 29. `FR1`/`FR3` are
+deployment path labels. E2 retains logical n78 information, and this protocol
+does not add a physical-frequency field or infer conversion from a DU ID.
+Associate reports with the application's current UE IP/path table. The
+October 26 dummy examples and timing results retain their original direct
+n78 setup with DU2 at 20 MHz; they do not validate the new 40-MHz radio profile
+or converted OTA path. The wire contract and 100-ms DU cadence are unchanged.
 
 ## 1. Integration at a glance
 

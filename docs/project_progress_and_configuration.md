@@ -1,5 +1,16 @@
 # Project Progress and System Configuration
 
+**Radio design and connection checkpoint, 2026-10-29:** the
+[current two-link specification](dual_link_radio_design.md) uses DU1 at
+3660 MHz / 20 MHz / 23.04 MS/s / TX 70 / RX 35 / SSB `643680`, and DU2 at
+3600 MHz / 40 MHz / 46.08 MS/s / TX 45 / RX 20 / SSB `638976`.
+Both retain logical n78. The operator confirmed that both UEs connected in
+the current direct-radio setup, without Pi-Radio. The designed link-2 OTA
+path is 9250 MHz / 40 MHz through Pi-Radio. Sustained traffic/KPM with the
+new 40-MHz profile and converted-path operation remain to be recorded.
+Use the current Spark/Laptop handbooks linked from that specification.
+The checkpoints below preserve their dated configurations and evidence.
+
 **First KPM expansion, 2026-10-25:** the operator authorized the next stage.
 The [27-measurement UE profile](e2sm-kpm/du_kpm_expansion_stage1.md) adds CQI,
 PHR, DL/UL MCS, HARQ/CRC outcomes, BSR, DL buffer and MAC rates, with sample
@@ -102,7 +113,7 @@ flowchart LR
         UPF[Open5GS UPF]
         TUN[ogstun_1: 10.45.0.1]
         App[Local Spark application]
-        RIC[FlexRIC Near-RT RIC]
+        RIC[FlexRIC]
         XAPP[C KPM xApp]
         DU <-->|F1-C / F1-U| CU
         CU <-->|N2| AMF
@@ -116,7 +127,7 @@ flowchart LR
     B210 <-->|USB 3 / UHD| DU
 ```
 
-The tested application path is **laptop ↔ Spark over private 5G**. Management Wi-Fi (observed Spark address `10.20.44.26` on `wlP9s9`) is separate. Public Internet connectivity, NAT and a replacement laptop default route are outside this baseline. FlexRIC receives actual UE telemetry from DU1; the two-path FR1/FR3, AI and MPTCP design remains in the [README target architecture](../README.md#target-architecture).
+The tested application path in this October 13 single-link baseline is **laptop ↔ Spark over private 5G**. Management Wi-Fi (observed Spark address `10.20.44.26` on `wlP9s9`) is separate. Public Internet connectivity, NAT and a replacement laptop default route are outside this baseline. FlexRIC receives actual UE telemetry from DU1. For the later two-path deployment and its validation scope, use the [current radio design](dual_link_radio_design.md); AI-assisted steering remains future work.
 
 ## Phase status
 
@@ -151,13 +162,19 @@ Follow the [DU2 procedure](runbooks/dual_fr1_runbook.md) to start the shared inf
 | UHD / B210 | UHD 4.6.0.0, serial `3271233`, name MyB210, type b200, USB 3 / 5000M |
 | UE | Quectel RMU500EK / RM500QGL_VH, firmware `RM500QGLABR13A03M4G`, USB `2c7c:0800` |
 
-CU `build/apps/cu/ocu` and DU `build/apps/du_split_8/odu` exist. Monolithic `gnb_split_8` was built for a smoke check and is not the deployment topology. Earlier `band_helper_test` passed. The earlier 30.72 MS/s, 20-second RX USB benchmark had no drops, overruns, sequence errors or timeouts; it was not an NR throughput test. Current NR sample rate is 23.04 MS/s.
+CU `build/apps/cu/ocu` and DU `build/apps/du_split_8/odu` were built for this baseline. Monolithic `gnb_split_8` was built for a smoke check and is not the deployment topology. Earlier `band_helper_test` passed. The earlier 30.72 MS/s, 20-second RX USB benchmark had no drops, overruns, sequence errors or timeouts; it was not an NR throughput test. Current radio profiles use 23.04 MS/s for DU1 and 46.08 MS/s for DU2; that historical benchmark does not validate DU2 at the higher rate.
 
 The NVIDIA kernel supports `CONFIG_MPTCP=y`, `CONFIG_MPTCP_IPV6=y` and `net.mptcp.enabled=1`; no MPTCP endpoints or steering are part of this single-link result. FlexRIC and the C xApp were built with GCC 13.3. Python/CUDA AI work remains pending.
 
 ## Configuration records
 
-The current standalone configuration is maintained in Falcon and deployed to `/home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml`. It includes radio, cell, F1, E2/KPM, and metrics settings. The preserved `du1_b210_n78_20mhz.yml` and `du1_flexric.yml` files are historical references. Editing this document does not deploy configuration.
+The maintained current profiles are `configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml`
+and `configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml`, deployed under
+`/home/nyu/ocudu/configs/`. DU1 includes E2/KPM in its base file; DU2 also
+loads `du2_flexric.yml`. The [current design](dual_link_radio_design.md)
+defines both profiles and SSB locks. The preserved `du1_b210_n78_20mhz.yml`
+and `du1_flexric.yml` are historical references. Editing documentation does
+not deploy configuration. The records below retain their dated values.
 
 ### DU1 3660 MHz uplink checkpoint — 2026-10-12
 

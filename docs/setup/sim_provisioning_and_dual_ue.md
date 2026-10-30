@@ -1,6 +1,17 @@
 # Open Cells SIM Provisioning and Dual UE Preparation
 
-Updated: **2026-10-07**. This record combines the completed SIM personalization, local Milenage tests, and Quectel readouts with instructions for reproducing them on an Ubuntu laptop. The two new cards have **not completed end-to-end 5G registration or PDU-session validation against the project's Open5GS deployment**.
+Provisioning record: **2026-10-07**; deployment context updated **2026-10-29**.
+This record combines SIM personalization, local Milenage tests and Quectel
+readouts with reproduction instructions. At the original October 7 checkpoint,
+the two new cards had not completed end-to-end registration or PDU validation.
+
+Both subscriber paths subsequently passed registration and IPv4 traffic in the
+dated dual-UE reports. The [current radio design](../dual_link_radio_design.md)
+assigns SIM `...101` to the intended DU1 3660-MHz / 20-MHz path and SIM `...102`
+to the intended DU2 3600-MHz n78 interface / 40-MHz path. Link 2 is designed
+for 9250-MHz OTA through Pi-Radio. On October 29 the operator confirmed both
+UE connections in the direct test without converters. SIM credentials and
+PLMN do not themselves enforce cell selection; verify the actual serving cell.
 
 The existing single-link baseline used IMSI **`001010000000001`**. Its registration, IPv4 session, initial application traffic, and later FlexRIC measurements remain historical evidence for that subscriber; they do not establish registration of the new `...101` and `...102` cards. Preserve that baseline and its [configuration record](../project_progress_and_configuration.md#configuration-records).
 
@@ -27,7 +38,11 @@ Both cards now use MCC `001`, two-digit MNC `01`, and PLMN `00101`. Preserve lea
 | Tool's post-authentication HSS SQN reference | `96` | `96` |
 | Intended physical path | Quectel #1 → DU1 | Quectel #2 → DU2 |
 
-The intended topology is two independent UEs/subscribers, two modems attached to one laptop, DU1 and DU2, a shared CU, and Open5GS/UPF. Later, two Linux WWAN interfaces and separate IP paths will support one MPTCP application. SIM personalization is complete; this topology and MPTCP behavior are not yet validated.
+The topology uses two independent UEs/subscribers and modems on one laptop,
+DU1 and DU2, a shared CU and Open5GS/UPF. Separate WWAN/IP paths support the
+MPTCP application. These were future validation tasks at the original October 7
+provisioning checkpoint; later dual-UE and MPTCP experiments are linked from
+the current radio design above.
 
 **Sharing PLMN `00101` does not enforce IMSI-to-DU assignment.** `...101 → DU1` and `...102 → DU2` are intended mappings that require validated cell selection and observed attachment to the correct cells. SIM2 also worked in the original modem, demonstrating that its credentials are not bound to one modem's IMEI.
 
@@ -327,7 +342,10 @@ A reported reconnect sequence changed modem numbers from `Modem/5` to `Modem/6`,
 
 ## Prepare Open5GS subscribers
 
-The two new subscribers have **not completed end-to-end registration**. Provision each through the project's verified administrative workflow after checking the installed schema and SQN handling:
+At the original October 7 checkpoint, the two new subscribers had not
+completed end-to-end registration. For a fresh installation, provision or
+verify each through the project's administrative workflow after checking
+the installed schema and SQN handling:
 
 | Subscriber | IMSI | Authentication source | Post-test SQN reference |
 |---|---|---|---|
@@ -340,12 +358,18 @@ Version-specific upstream evidence: Open5GS **v2.8.0** defines `security.sqn` as
 
 ## Validate two UE paths
 
-The next acceptance work is sequential:
+The reproduction sequence below originated at the October 7 checkpoint.
+Use the current dual-UE handbooks for deployed values and commands:
 
 1. Create or confirm the exact two subscribers with their matching saved pairs and verified SQN representation. Preserve the single-link baseline subscriber separately.
-2. Prepare and validate CU + DU1 + DU2 configuration and the two B210 RF paths. DU2's frequency, PCI, serial, addresses, and other configuration have not been established in this record; do not copy invented values or assume the existing DU1 settings produce an independent cell.
+2. Prepare and validate CU + DU1 + DU2 configuration and both B210 RF paths
+   using the [current profiles](../dual_link_radio_design.md). Keep radio
+   serials, PCI, SSB and DU identities distinct; do not reuse DU1's settings for DU2.
 3. Select the intended cell for each physical modem and verify actual `...101 → DU1` and `...102 → DU2` attachment. A common PLMN alone cannot prove this mapping.
-4. For each selected modem, require successful registration, the private operator identity, `5gnr` access technology, and attached packet service. Then create and verify an IPv4 `internet` PDU session using dynamically discovered modem/bearer identifiers.
+4. For each selected modem, require successful registration, the private
+   operator identity, `5gnr` access technology and attached packet service.
+   Create and verify an IPv4 PDU session with UE1 DNN `internet` or UE2
+   DNN `internet2`, using dynamically discovered modem/bearer identifiers.
 5. Discover both actual WWAN interfaces and allocated IP parameters. Apply each bearer configuration to its own interface, retain management Wi-Fi, and verify independent private data paths; do not assume historical interface names or UE addresses.
 6. Measure each path separately, then validate concurrent traffic and expose the two IP paths to MPTCP. Record direction, duration, throughput, errors, and routing before asserting transport aggregation.
 7. Extend FlexRIC/xApp observation to the actual per-DU/per-UE paths, then evaluate MPTCP path steering. Existing single-DU KPM reception does not establish dual-DU telemetry or proactive steering.
@@ -370,4 +394,10 @@ The reported newer modem with SIM2 was `state: searching`, `registration: search
 
 The newer Quectel session showed carrier configuration `Volte_OpenMkt-Commercial-CMCC`, while another earlier configuration/session showed `ROW_Commercial`. This difference is a future investigation item, not an established cause of registration failure. No carrier-profile change was reported or is required by the successful UICC checks. Investigate it only after the private cell is running, band/frequency/cell selection is correct, and the exact Open5GS subscriber credentials and SQN handling are verified.
 
-Completed work covers two readable Open Cells cards, the ACR39U/PCSC environment, the rebuilt PCSC utility, independent protected authentication pairs, both personalization/Milenage tests, Quectel readouts, and SIM2 specifically in the second physical modem. The remaining work is subscriber/SQN preparation, validated DU1/DU2 cell assignment, registration, two PDU/WWAN paths, measured concurrent data traffic, MPTCP integration, and later per-path telemetry and steering.
+The October 7 work completed two readable Open Cells cards, the ACR39U/PCSC
+environment, the rebuilt utility, independent protected authentication pairs,
+both personalization/Milenage tests, Quectel readouts and SIM2 verification in
+the second modem. Registration, dual PDU/WWAN paths, concurrent traffic and
+MPTCP were follow-up tasks at that checkpoint; later reports record their
+results. The current radio design above distinguishes direct connection,
+sustained-traffic evidence and the still-unvalidated converted OTA path.

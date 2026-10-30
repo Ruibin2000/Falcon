@@ -1,5 +1,12 @@
 # E2SM Metrics for Uplink MPTCP Video
 
+Current deployment reference: the [October 29 radio design](../dual_link_radio_design.md)
+defines DU1 3660 MHz / 20 MHz and DU2 3600-MHz n78 interface / 40 MHz,
+with a designed Pi-Radio OTA path at 9250 MHz. The current test is direct
+n78 without converters. `FR1`/`FR3` are deployment labels, and application
+IP/path accounting remains necessary in either arrangement. This dated
+metric inventory retains its original implementation checkpoint.
+
 The video data direction is Laptop to Spark. Use per-UE uplink radio quality,
 reliability, power margin, backlog, and delivered service as the main radio
 inputs to MPTCP decisions on the Laptop. Retain selected downlink measurements

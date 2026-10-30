@@ -1,5 +1,11 @@
 # FR1/FR3 MPTCP Video and Switching Experiment Report
 
+> Radio scope: this experiment used direct n78 radio paths with DU2 at
+> 20 MHz. Its measurements, gains, lock readbacks and figures retain that
+> configuration. See the [current radio design](../dual_link_radio_design.md)
+> for the October 29 20/40-MHz profiles and the separately designed Pi-Radio
+> 9250-MHz OTA path. This report does not validate either later RF arrangement.
+
 Experiment date: **2026-10-23**. All wall-clock times use
 **America/New_York, EDT (UTC−04:00)**.
 

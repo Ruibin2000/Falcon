@@ -6,6 +6,12 @@ CU/DU/Core UE IP binding. Spark now starts RIC with the identity plugin, then
 CU with its identity E2 overlay, both DUs and the new three-subscription xApp.
 Laptop still prepares each intended modem/SIM/cell/PDU/route independently.
 
+**Radio design:** DU1 is 3660 MHz / 20 MHz / SSB `643680`; DU2 is
+3600 MHz / 40 MHz / SSB `638976`. Both use logical n78 locks. The designed
+DU2 OTA path uses Pi-Radio at 9250 MHz; the current test has no converters,
+and the operator confirmed both direct-radio connections on October 29.
+See the [complete profiles and evidence scope](dual_link_radio_design.md).
+
 Spark's October 23 [TUN split](networking/dual_ue_tun_split.md) is applied: `ogstun_1`
 serves `10.45.0.1` and `ogstun_2` serves `10.46.0.1`. Laptop APNs, service IPs
 and policy tables are retained; WWAN names and bearer parameters still require
@@ -342,6 +348,9 @@ reports incomplete; address-removal failures retain the existing guards.
 | --- | --- | --- |
 | Carrier / ARFCN | 3660 MHz / `644000` | 3600 MHz / `640000` |
 | Channel bandwidth | 20 MHz | 40 MHz |
+| USRP sample rate | 23.04 MS/s | 46.08 MS/s |
+| Configured TX / RX gain | 70 / 35 dB | 45 / 20 dB |
+| Current direct-test OTA center | 3660 MHz | 3600 MHz, no converters |
 | Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
 | PCI / SSB / SCS / band | `1` / `643680` / 30 kHz / n78 | `2` / `638976` / 30 kHz / n78 |
 | DU ID / sector / expected NCI | `1` / `0` / `6733824` | `2` / `1` / `6733825` |

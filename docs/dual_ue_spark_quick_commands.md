@@ -2,6 +2,11 @@
 
 Updated: 2026-10-29. Developer: Ruibin Chen.
 
+**Radio design:** [current profiles and validation scope](dual_link_radio_design.md).
+DU1 is 3660 MHz / 20 MHz; DU2 is a 3600-MHz n78 interface / 40 MHz,
+designed for 9250-MHz OTA through Pi-Radio. The current test has no converters;
+the operator confirmed both UE connections on October 29 in direct n78 mode.
+
 This is the complete Spark startup and experiment procedure for two UEs,
 using the first expanded **27-measurement** DU profile at **100 ms** and CU identity
 reports at **1 second**. Follow sections 1–6 to prepare/start the testbed,
@@ -170,9 +175,9 @@ Require `PASS`: both deployed DU configs must enable scheduler/RLC metrics
 with `metrics.periodicity.du_report_period: 100`. Keep the actual recorded RF
 conditions for the run. DU1 uses 20 MHz, 23.04 MS/s and TX 70 / RX 35;
 DU2 uses 40 MHz, 46.08 MS/s and TX 45 / RX 20. These gains are not calibrated dBm.
-DU2's USRP-side carrier remains 3600 MHz / n78 / ARFCN `640000`;
-Pi-Radio translates it to the intended 9250 MHz OTA center. Its nominal
-40-MHz channel spans 3580–3620 MHz at the USRP and 9230–9270 MHz OTA.
+DU2's USRP-side carrier remains 3600 MHz / n78 / ARFCN `640000`.
+The designed Pi-Radio path translates it to a 9250-MHz OTA center. Its nominal
+40-MHz channel spans 3580–3620 MHz at the USRP and, with conversion, 9230–9270 MHz OTA.
 OCUDU and E2/RIC continue to describe the logical n78 cell; they do not
 automatically learn Pi-Radio's external frequency conversion.
 
@@ -180,8 +185,10 @@ The 40-MHz configuration uses 106 PRBs at 30 kHz and derives SSB ARFCN
 `638976`; the former 20-MHz setup used `639648`. Before starting Laptop UE2,
 copy the updated connection scripts using the
 [Laptop script update block](dual_ue_laptop_reconnect_quick_start.md#2-copy-or-update-scripts--laptop-terminal-watchers-stopped).
-The bandwidth/sample-rate changes and SSB derivation are checked offline;
-live 40-MHz USRP/Pi-Radio operation still requires startup and UE/traffic checks.
+The DU2 startup confirms 40 MHz, 46.08 MS/s and SSB `638976`; both UE
+connections were confirmed by the operator in the October 29 direct test.
+Sustained traffic/KPM with this profile and the converted 9250-MHz path
+require separate run evidence.
 With the default over-the-wire format, this OCUDU implementation selects `sc12`
 for a B2xx radio above 30.72 MS/s; keep the actual startup stream settings in
 the new run's evidence.

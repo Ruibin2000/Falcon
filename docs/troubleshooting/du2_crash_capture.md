@@ -1,5 +1,12 @@
 # Capture a DU1 or DU2 runtime crash
 
+The [current radio profiles](../dual_link_radio_design.md) are DU1
+3660 MHz / 20 MHz / TX 70 / RX 35 and DU2 3600 MHz / 40 MHz / TX 45 / RX 20.
+Link 2 is designed for Pi-Radio conversion to 9250-MHz OTA; the current
+direct-radio test has no converters. Retain the actual RF arrangement with
+the configuration snapshots so that a historical crash is not attributed to
+a later bandwidth, gain or converter setup.
+
 Both DUs can use temporary GDB capture during the six-minute reconnect
 stability test. Select the optional commands in
 [Spark sections 5a/5b](../dual_ue_spark_quick_commands.md#5a-spark-du1-terminal)

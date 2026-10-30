@@ -141,6 +141,43 @@ class BackgroundRegistrationTest(unittest.TestCase):
                 self.assertFalse(self.network.changes)
                 self.assertEqual(self.network.survivor(ue), peer)
 
+    def test_startup_902_retry_restores_radio_before_registration_and_preserves_peer(self):
+        self.connect(1)
+        peer = self.network.survivor(2)
+        self.network.changes.clear()
+        self.lose_registration()
+        watcher = self.auto(startup=True)
+        with radio.FakeAT(require_cfun_zero=True, cfun=4).port() as modem:
+            watcher.attempt()
+        evidence = json.loads((watcher.directory / "attempts.jsonl").read_text())["radio_recovery"]
+        self.assertTrue(evidence["cfun_retry_allowed"])
+        self.assertEqual(evidence["cfun_retry"]["status"], "completed")
+        self.assertEqual(modem.cfun, 1)
+        self.assertEqual(evidence["verified_lock"], ["2", "638976", "30", "78"])
+        self.assertEqual(len(self.jobs), 1)
+        self.assertEqual(watcher.startup_radio["status"], "completed")
+        self.assertFalse(watcher.healthy)
+        self.assertEqual(self.network.survivor(2), peer)
+        self.assertFalse(any("--simple-connect=" in argument for cmd in self.network.changes for argument in cmd))
+
+    def test_startup_902_with_live_pdu_never_cycles_cfun_or_disconnects(self):
+        self.connect(1)
+        self.connect(2)
+        peer = self.network.survivor(2)
+        active_before = dict(self.network.bearers[list(self.network.modems)[1]])
+        self.network.changes.clear()
+        watcher = self.auto(startup=True)
+        with radio.FakeAT(registered=True, require_cfun_zero=True).port() as modem:
+            watcher.attempt()
+        evidence = json.loads((watcher.directory / "attempts.jsonl").read_text())["radio_recovery"]
+        self.assertFalse(evidence["cfun_retry_allowed"])
+        self.assertNotIn("cfun_retry", evidence)
+        self.assertFalse(any(command.startswith("AT+CFUN") for command in modem.commands))
+        self.assertFalse(self.jobs)
+        self.assertFalse(self.network.changes)
+        self.assertEqual(self.network.bearers[list(self.network.modems)[1]], active_before)
+        self.assertEqual(self.network.survivor(2), peer)
+
     def test_startup_repairs_missing_lock_even_when_modem_is_already_registered(self):
         self.connect(2)
         self.network.changes.clear()
