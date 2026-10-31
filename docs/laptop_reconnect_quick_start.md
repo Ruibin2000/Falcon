@@ -1,14 +1,19 @@
 # Dual UE Laptop Reconnect — Quick Commands and Expected Results
 
-Updated: 2026-10-29. Developer: Ruibin.
+Updated: 2026-10-30. Developer: Ruibin.
 
 **Spark target:** DU1/DU2 statistics and KPM **100 ms**; CU identity **1 second**.
 
+**Current Spark startup gains:** DU1 TX 70 / RX 35 dB; DU2 TX 60 / RX 10 dB,
+following the actual OCUDU startup YAML after live tuning. DU2's values apply
+to its modified 9250-MHz FR3 hardware path. See the
+[Spark gain check](spark_quick_commands.md#5-start-du1-and-du2-in-separate-terminals-and-keep-both-running).
+
 **Current radio profile:** DU1 uses 3660 MHz / 20 MHz / SSB `643680`;
-DU2 uses a 3600-MHz n78 USRP interface, 40 MHz and SSB `638976`. Its designed
-Pi-Radio path has a 9250-MHz OTA center. The current test has no converters;
-the operator confirmed both direct-radio connections on October 29. See the
-[radio design and evidence scope](dual_link_radio_design.md). Refresh the scripts
+DU2 uses a 3600-MHz logical n78 USRP interface, 40 MHz and SSB `638976`.
+Its current Pi-Radio path has a 9250-MHz OTA center. The October 29 direct-radio
+connections are historical; DU2 uses the modified FR3 path going forward. See the
+[radio design and evidence scope](project_design_and_progress.md). Refresh the scripts
 in section 2 before starting UE2: the earlier 20-MHz profile used SSB `639648`.
 The modem lock and OCUDU/E2 cell information use the logical n78 frequency.
 
@@ -19,9 +24,9 @@ alternating test. Their numbers match the Spark handbook. Both use one dummy
 on Spark, while Laptop runs the two UE watchers and traffic. Sections 6–7a retain
 the earlier direct xApp-to-TXT diagnostic workflow.
 
-[Full reference and troubleshooting](runbooks/dual_ue_laptop_reconnect_reference.md) ·
-[Spark startup and servers, sections 1–6](dual_ue_spark_quick_commands.md#1-check-radios-and-deploy-configuration-before-a-cold-start) ·
-[Spark xApp capture and inspection, section 7](dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)
+[Full reference and troubleshooting](operations/reconnect_reference.md) ·
+[Spark startup and servers, sections 1–6](spark_quick_commands.md#1-check-radios-and-deploy-configuration-before-a-cold-start) ·
+[Spark xApp capture and inspection, section 7](spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)
 
 ## 1. Laptop dependencies — once
 
@@ -60,7 +65,7 @@ physical recovery on the current firmware still requires a live test.
 If a manual AT session was left at `AT+CFUN=0`, restore `AT+CFUN=1` in that
 modem's AT terminal, then exit minicom before starting its watcher. The watcher
 must be able to verify the modem and SIM before it can make radio changes.
-See [CME 902 details](runbooks/dual_ue_laptop_reconnect_reference.md#cme-902-after-a-du-gain-drop).
+See [CME 902 details](operations/reconnect_reference.md#cme-902-after-a-du-gain-drop).
 
 ## 3. Check USB wiring — Laptop terminal
 
@@ -74,7 +79,7 @@ ls -l /dev/serial/by-path/pci-0000:00:14.0-usb-0:{4,3}:1.2-port0
 their assigned sockets and close minicom. The watchers verify USB ownership
 and IMEI/IMSI; a listing alone does not prove modem identity. For swapped
 cables or a port-ownership error, use the
-[AT port reference](runbooks/dual_ue_laptop_reconnect_reference.md#at-port-mapping).
+[AT port reference](operations/reconnect_reference.md#at-port-mapping).
 
 ## 4. Connect both UEs — Spark sections 1–6 already running
 
@@ -128,7 +133,7 @@ Both current bearer/host routes checked; no iperf traffic started
 ## 6. Start Spark section 7a, then upload for 60 seconds
 
 **Spark terminal:** run
-[section 7a's 120-second xApp capture](dual_ue_spark_quick_commands.md#7a-start-the-xapp-and-write-a-120-second-txt-capture).
+[section 7a's 120-second xApp capture](spark_quick_commands.md#7a-start-the-xapp-and-write-a-120-second-txt-capture).
 
 **Expected before starting traffic:** three E2 nodes, three successful
 subscriptions, and `identity collector: 3 KPM subscriptions, duration=120`.
@@ -157,9 +162,9 @@ tail -n 12 "$LAPTOP_UL_RUN/ue1.log" "$LAPTOP_UL_RUN/ue2.log"
 IP, IMSI and APN are recorded for each role. Retain `summary.json` and both logs.
 
 **Spark terminal:** after the 120-second capture exits, retain the
-[section 7a capture](dual_ue_spark_quick_commands.md#7a-start-the-xapp-and-write-a-120-second-txt-capture)
+[section 7a capture](spark_quick_commands.md#7a-start-the-xapp-and-write-a-120-second-txt-capture)
 and compare `bindings.txt` with the current Laptop summary. Detailed analysis
-commands are in the [development reference](development/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
+commands are in the [development reference](reference/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
 
 | Expected Spark result | UE1 / FR1 | UE2 / FR3 |
 | --- | --- | --- |
@@ -182,7 +187,7 @@ watcher commands, their `--interval 3`, and the 60-second upload stay the same.
 ## 7a. Six-minute stability test — both reconnect watchers stay running
 
 **Spark preparation:** for this diagnostic trial, select the optional temporary
-stack-capture commands for [both DUs](dual_ue_spark_quick_commands.md#5a-spark-du1-terminal).
+stack-capture commands for [both DUs](spark_quick_commands.md#5a-spark-du1-terminal).
 Keep both DU debug directories with the Spark capture; the Laptop commands
 below are unchanged.
 
@@ -206,7 +211,7 @@ are updated. Keep each watcher's printed evidence directory. Do not start
 another watcher for a UE that already has one running.
 
 **Spark terminal:** start
-[section 7b's full 360-second xApp command](dual_ue_spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul).
+[section 7b's full 360-second xApp command](spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul).
 
 **Expected:** three subscriptions and
 `identity collector: 3 KPM subscriptions, duration=360`.
@@ -242,13 +247,13 @@ all eight client exits 0. Keep `events.ndjson`, `truth.json`, the eight client
 JSON files, and both watchers' evidence directories. Let the Spark xApp finish
 its full 360 seconds and require exit 0. Interpret reconnect events, identity
 continuity, 27 metrics, cadence, gaps and radio warnings with the
-[full stability reference](runbooks/dual_ue_laptop_reconnect_reference.md#six-minute-reconnect-stability-test).
+[full stability reference](operations/reconnect_reference.md#six-minute-reconnect-stability-test).
 The traffic summary alone does not certify the xApp or the absence of brief
 reconnect events between traffic snapshots.
 
 ## 7c. Live app subscription test with one dummy
 
-Pair with [Spark 7c](dual_ue_spark_quick_commands.md#7c-live-app-subscription-test-with-one-dummy).
+Pair with [Spark 7c](spark_quick_commands.md#7c-live-app-subscription-test-with-one-dummy).
 The Spark dummy receives for 120 seconds; Laptop uploads concurrently for 60 seconds.
 
 Keep the existing UE1 and UE2 watchers running after both report `SUCCESS`.
@@ -303,7 +308,7 @@ if continuing with the six-minute test.
 
 ## 7d. Six-minute alternating UL with one subscribed dummy
 
-Pair with [Spark 7d](dual_ue_spark_quick_commands.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy).
+Pair with [Spark 7d](spark_quick_commands.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy).
 Finish previous iperf clients before preparing this run. Spark's single dummy
 receives both links for 360 seconds; the six traffic phases each last 50 seconds.
 
@@ -386,5 +391,5 @@ UE2 shutdown: SUCCESS
 
 **Expected:** both UEs are shut down; management Wi-Fi remains available;
 the experiment destinations remain blocked from Wi-Fi fallback. Then follow
-[Spark section 8](dual_ue_spark_quick_commands.md#8-shutdown-and-retained-evidence)
+[Spark section 8](spark_quick_commands.md#8-shutdown-and-retained-evidence)
 to stop the servers, DUs, CU, RIC and Core.

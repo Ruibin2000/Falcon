@@ -3,3 +3,35 @@ sim_du*_credentials.txt*
 
 # Local editor workspace.
 /Falcon.code-workspace
+
+# Local experiment reports, evidence, records and relocation manifests.
+# Keep only the archive policy/index and reusable experiment instructions.
+/docs/experiments/*
+!/docs/experiments/README.md
+!/docs/experiments/supplemental_experiments.md
+
+# Former experiment archive locations; prevent accidental reintroduction.
+/docs/evidence/
+/docs/reports/
+/docs/e2sm-kpm/2026-*
+/docs/troubleshooting/2026-*
+/docs/notes/e2sm_kpm_du_rf_metrics_semantics.md
+/docs/networking/dual_ue_subnets.md
+
+# Local runtime/verification output directories, if created inside this repo.
+/artifacts/
+/captures/
+/evidence/
+/logs/
+/outputs/
+/results/
+/runs/
+/tmp/
+*.log
+*.log.*
+*.pcap
+*.pcapng
+
+# Python runtime caches; source fixtures and interface examples remain tracked.
+__pycache__/
+*.py[cod]

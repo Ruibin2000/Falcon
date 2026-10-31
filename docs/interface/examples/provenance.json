@@ -1,5 +1,5 @@
 {
-  "source_archive": "../../evidence/2026-10-26_du27_app_subscription_6min_live/live-artifacts.tar.gz",
+  "source_archive": "../../experiments/evidence/2026-10-26_du27_app_subscription_6min_live/live-artifacts.tar.gz",
   "source_archive_sha256": "8f762d8d69f1f872b17220f76ef2313f3391d300a9e9ac6bcd8e59cdd1ede219",
   "receipt_member": "dummy/receipts.jsonl",
   "captured_server_frames": [

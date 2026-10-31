@@ -1,19 +1,22 @@
-# Dual UE Laptop Automation — One-shot Startup and Self-check
+# Laptop Single Connection Quick Start — One-shot Startup and Self-check
 
-Updated: 2026-10-29. Developer: Ruibin.
+Updated: 2026-10-31. Developer: Ruibin.
 
-The [current two-link design](dual_link_radio_design.md) uses DU1 at
-3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz. The current
-test is direct n78 with both UE connections operator-confirmed on October 29;
-the designed Pi-Radio 9250-MHz OTA path remains to be validated.
+The [current two-link design](project_design_and_progress.md) uses DU1 at
+3660 MHz / 20 MHz OTA and DU2 at 9250 MHz / 40 MHz OTA through Pi-Radio,
+with a 3600-MHz logical n78 interface. DU2 TX 60 / RX 10 applies to this
+modified FR3 path. The October 29 direct n78 connection test is historical;
+completed integrated FR3 connectivity still requires retained evidence.
 
 Run these scripts on the **UE laptop**. Start the core, CU and both DUs on
-**Spark first**, following [Spark quick commands](dual_ue_spark_quick_commands.md).
+**Spark first**, following [Spark quick commands](spark_quick_commands.md).
+Here, "single" means one startup and self-check sequence for each selected UE;
+UE1 and UE2 can each run in a separate terminal.
 This guide covers one-shot modem enable/registration, live serving-cell checks,
 IPv4 PDU connection, WWAN/policy routing and ping. After success the launcher
 **stays in the terminal, blocking until Ctrl+C**. It performs no further status
 queries or ping during that wait. For ongoing monitoring/recovery use the
-[laptop automatic reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md).
+[laptop automatic reconnect Quick Start](laptop_reconnect_quick_start.md).
 **Use `connect_ue1.sh` / `connect_ue2.sh` for this guide.** The separate
 `reconnect_ue*.sh` entry scripts run continuous recovery and include their own
 AT port/automatic cell-lock options. Those options are not added to the one-shot
@@ -21,7 +24,7 @@ entry scripts. Both modes use the same per-UE lock to reject simultaneous owners
 
 **Acceptance scope, 2026-10-24:** cold-start reproduction, full repeatability
 and bidirectional disturbance/survivor testing are
-[supplemental experiments](development/dual_ue_supplemental_experiments.md).
+[supplemental experiments](experiments/supplemental_experiments.md).
 They are not current Dual UE acceptance criteria or merge prerequisites.
 
 ## 1. Before every start: check the cell lock
@@ -176,8 +179,8 @@ Read back UE2's lock tuple and actual serving cell. Exit this minicom session
 with **Ctrl+A, then X** before starting UE2's automation.
 
 Port-selection details remain in the full manual for
-[UE1](dual_ue_laptop_quick_commands.md#12-verify-the-at-port-and-restore-the-du1-lock)
-and [UE2](dual_ue_laptop_quick_commands.md#22-verify-the-at-port-and-restore-the-du2-lock).
+[UE1](operations/manual_laptop_startup.md#12-verify-the-at-port-and-restore-the-du1-lock)
+and [UE2](operations/manual_laptop_startup.md#22-verify-the-at-port-and-restore-the-du2-lock).
 After completing the selected role's block, continue to section 2. If the modem
 is disabled after the previous Ctrl+C shutdown, the automation handles enabling
 it and waiting for registration.
@@ -186,7 +189,7 @@ it and waiting for registration.
 
 The script performs the modem/SIM, enable/registration, serving-cell, PDU,
 interface/routing and ping self-checks. Start Spark's core, CU and both DUs first
-using [Spark quick commands](dual_ue_spark_quick_commands.md). Keep ModemManager
+using [Spark quick commands](spark_quick_commands.md). Keep ModemManager
 running and close minicom before launching the script.
 
 ### Laptop dependencies (install once)
@@ -212,16 +215,14 @@ sudo systemctl enable --now ModemManager
 | SSB NR-ARFCN / SCS | `643680` / 30 kHz | `638976` / 30 kHz |
 | Carrier NR-ARFCN | `644000` | `640000` |
 | Channel bandwidth / USRP sample rate | 20 MHz / 23.04 MS/s | 40 MHz / 46.08 MS/s |
-| Configured TX / RX gain | 70 / 35 dB | 45 / 20 dB |
-| Current direct-test OTA center | 3660 MHz | 3600 MHz, no converters |
-| Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
+| Configured TX / RX gain | 70 / 35 dB | 60 / 10 dB |
+| Physical OTA center | 3660 MHz, direct | 9250 MHz via Pi-Radio conversion |
 | Independent reset block | priority `20151` | priority `20152` |
 
 FR1 and FR3 identify the two paths. Both DUs use logical n78 configurations.
-The designed Pi-Radio branch translates DU2's 3600-MHz USRP/modem interfaces
-to a 9250-MHz OTA center. During the current direct test, UE2 operates at
-3600 MHz without converters. OCUDU, E2 and modem locks retain logical n78
-information in either arrangement.
+Pi-Radio translates DU2's 3600-MHz USRP/modem interfaces to its current
+9250-MHz OTA center. OCUDU, E2 and modem locks retain logical n78 information.
+Earlier direct n78 tests remain historical records.
 After updating Spark for the 40-MHz DU2 profile, copy the current Laptop
 scripts before reconnecting UE2; its SSB changes from `639648` to `638976`.
 The common PLMN is `00101`, TAC is `7`, and access must be NR SA. The scripts
@@ -307,7 +308,7 @@ checks. Waiting uses `signal.pause()`, with no periodic wakeup, modem queries,
 health probes, ping or automatic redial. The Python process and a few open file
 handles remain; it does not busy-wait. No shared network lock is held while
 idle; the other UE can prepare, monitor and stop independently. For ongoing monitoring, use the separate
-[laptop automatic reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md).
+[laptop automatic reconnect Quick Start](laptop_reconnect_quick_start.md).
 
 These are self-checking connection launchers: they perform checks and prepare
 the selected UE through successful ping. Without extra options, the terminal
@@ -526,7 +527,7 @@ seconds in the base file and identity overlay. It takes effect at the next CU
 start. The earlier 3-second window released a newly connected UE before the
 laptop requested a PDU during a measured startup. Faster polling and the longer
 CU window reduce this race; they do not guarantee a specific registration time.
-Use the [Spark CU launch sequence](dual_ue_spark_quick_commands.md#4-start-identity-ric-then-identity-enabled-cu-in-separate-terminals).
+Use the [Spark CU launch sequence](spark_quick_commands.md#4-start-identity-ric-then-identity-enabled-cu-in-separate-terminals).
 
 For a bounded read-only diagnosis, use the current modem path/index printed by
 the IMEI check; indices can change after USB reconnect:
@@ -548,8 +549,8 @@ the serving-cell procedure below when manual serial checks are required.
 ### Serving-cell mismatch or unavailable GetCellInfo
 
 Follow the script's expected identifiers and the manual's
-[UE1 serving-cell steps](dual_ue_laptop_quick_commands.md#12-verify-the-at-port-and-restore-the-du1-lock)
-or [UE2 serving-cell steps](dual_ue_laptop_quick_commands.md#22-verify-the-at-port-and-restore-the-du2-lock) to identify
+[UE1 serving-cell steps](operations/manual_laptop_startup.md#12-verify-the-at-port-and-restore-the-du1-lock)
+or [UE2 serving-cell steps](operations/manual_laptop_startup.md#22-verify-the-at-port-and-restore-the-du2-lock) to identify
 this modem's AT port. Confirm `AT+CIMI` before any manual configuration.
 If necessary, set NR SA preferences and the correct lock in minicom, read back
 `AT+QNWLOCK="common/5g"`, `AT+QENG="servingcell"` and `AT+C5GREG?`, then exit
@@ -578,7 +579,7 @@ Keep ModemManager running; do not interrupt the other UE to obtain an AT port.
 
 For automatic lock restoration and a PLMN registration request after radio
 failure, use the separate reconnect watcher, whose role entry scripts include the
-[`--auto-cell-lock --at-port ...` option](runbooks/dual_ue_laptop_reconnect_reference.md#automatic-cell-lock-and-registration-after-radio-failure).
+[`--auto-cell-lock --at-port ...` option](operations/reconnect_reference.md#automatic-cell-lock-and-registration-after-radio-failure).
 This one-shot launcher keeps its read-only AT fallback.
 With those built-in options, the watcher immediately verifies/restores the serial cell lock
 and checks/requests registration on startup. Later radio failures get a 10-second
@@ -593,7 +594,7 @@ that the modem's backend disconnect has completed; incomplete shutdown is report
 
 ### Recover a dropped or stuck UE PDU
 
-The [laptop automatic reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md) covers
+The [laptop automatic reconnect Quick Start](laptop_reconnect_quick_start.md) covers
 continuous recovery, including guarded suspended-PDU and repeated-ping-failure
 redials. This section describes **manual recovery with a one-shot verification**. Stop any watcher for the
 selected role before running it.
@@ -647,7 +648,7 @@ role-table source route and source/destination policy rules. Refresh shell
 variables and restart ordinary traffic commands explicitly bound to an old UE IP.
 For MPX subnet matching, automatic address tracking, subflow recovery and the
 retained experiment evidence, see
-[IP changes and MPX in the laptop reconnect reference](runbooks/dual_ue_laptop_reconnect_reference.md#which-ip-bindings-change-and-how-mpx-follows-them).
+[IP changes and MPX in the laptop reconnect reference](operations/reconnect_reference.md#which-ip-bindings-change-and-how-mpx-follows-them).
 
 ### Recheck, logs and failure handling
 

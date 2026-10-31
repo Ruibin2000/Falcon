@@ -1,15 +1,15 @@
 # Capture a DU1 or DU2 runtime crash
 
-The [current radio profiles](../dual_link_radio_design.md) are DU1
-3660 MHz / 20 MHz / TX 70 / RX 35 and DU2 3600 MHz / 40 MHz / TX 45 / RX 20.
-Link 2 is designed for Pi-Radio conversion to 9250-MHz OTA; the current
-direct-radio test has no converters. Retain the actual RF arrangement with
+The [current radio profiles](../project_design_and_progress.md) are DU1
+3660 MHz OTA / 20 MHz / TX 70 / RX 35 and DU2 9250 MHz OTA / 40 MHz /
+TX 60 / RX 10 through Pi-Radio. DU2 retains a 3600-MHz logical n78 interface;
+its gain values were tuned for the modified FR3 hardware. Retain the RF arrangement with
 the configuration snapshots so that a historical crash is not attributed to
 a later bandwidth, gain or converter setup.
 
 Both DUs can use temporary GDB capture during the six-minute reconnect
 stability test. Select the optional commands in
-[Spark sections 5a/5b](../dual_ue_spark_quick_commands.md#5a-spark-du1-terminal)
+[Spark sections 5a/5b](../spark_quick_commands.md#5a-spark-du1-terminal)
 in place of their normal startup commands. Start each DU in its own interactive
 terminal with the existing Core/RIC/CU running. Each selected old DU must have
 exited before its replacement starts. These launchers start a new process;
@@ -30,7 +30,7 @@ bash /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1/debug_du2.sh
 Enter sudo's password if requested. Wait for each radio/F1/E2 startup and
 `==== DU started ===`. Keep both terminals open. Then verify both Laptop
 reconnect watchers report `SUCCESS` and run
-[Spark section 7b](../dual_ue_spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul).
+[Spark section 7b](../spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul).
 No DU rebuild is needed. The existing binary is
 `/home/nyu/ocudu/build-integrated/apps/du_split_8/odu` for both roles.
 

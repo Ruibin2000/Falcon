@@ -1,19 +1,19 @@
 # Open Cells SIM Provisioning and Dual UE Preparation
 
-Provisioning record: **2026-10-07**; deployment context updated **2026-10-29**.
+Provisioning record: **2026-10-07**; deployment context updated **2026-10-30**.
 This record combines SIM personalization, local Milenage tests and Quectel
 readouts with reproduction instructions. At the original October 7 checkpoint,
 the two new cards had not completed end-to-end registration or PDU validation.
 
 Both subscriber paths subsequently passed registration and IPv4 traffic in the
-dated dual-UE reports. The [current radio design](../dual_link_radio_design.md)
+dated dual-UE reports. The [current radio design](../../project_design_and_progress.md)
 assigns SIM `...101` to the intended DU1 3660-MHz / 20-MHz path and SIM `...102`
-to the intended DU2 3600-MHz n78 interface / 40-MHz path. Link 2 is designed
-for 9250-MHz OTA through Pi-Radio. On October 29 the operator confirmed both
-UE connections in the direct test without converters. SIM credentials and
+to the intended DU2 3600-MHz logical n78 interface / 40-MHz path. Link 2 now
+uses 9250-MHz OTA through Pi-Radio, with TX 60 / RX 10 tuned for the modified
+FR3 hardware. The October 29 direct-radio connections are historical. SIM credentials and
 PLMN do not themselves enforce cell selection; verify the actual serving cell.
 
-The existing single-link baseline used IMSI **`001010000000001`**. Its registration, IPv4 session, initial application traffic, and later FlexRIC measurements remain historical evidence for that subscriber; they do not establish registration of the new `...101` and `...102` cards. Preserve that baseline and its [configuration record](../project_progress_and_configuration.md#configuration-records).
+The existing single-link baseline used IMSI **`001010000000001`**. Its registration, IPv4 session, initial application traffic, and later FlexRIC measurements remain historical evidence for that subscriber; they do not establish registration of the new `...101` and `...102` cards. Preserve that baseline and its [configuration record](../../project_design_and_progress.md#configuration-ownership).
 
 The commands labeled **tested** below reproduce the reported operations. Acquisition, credential-handling, and device-selection helpers labeled **new convenience commands** were assembled for this guide and were not part of the reported hardware tests.
 
@@ -301,7 +301,7 @@ Both cards were verified through Quectel `RM500QGL_VH`. SIM2 was first checked i
 
 The differing IMEIs establish two physical modems. ModemManager numbers, SIM paths, QMI/AT ports, and WWAN names can change after power cycles and when both modems are connected. The second modem's observed `wwan0` is not an allocation plan for two simultaneous interfaces.
 
-Use the [UE quick-command selection functions](../single_ue/ue_laptop_quick_commands.md#1-install-tools-and-select-the-modem) and choose the intended device when multiple RM500Q units are listed. For dual-modem work, also verify the selected unit's equipment identifier against the table. The reported one-modem shortcut selected the first `Modem/...` entry; do not carry that shortcut into a two-modem setup.
+Use the [UE quick-command selection functions](../legacy_single_ue.md#10-prepare-a-new-ubuntulinux-laptop) and choose the intended device when multiple RM500Q units are listed. For dual-modem work, also verify the selected unit's equipment identifier against the table. The reported one-modem shortcut selected the first `Modem/...` entry; do not carry that shortcut into a two-modem setup.
 
 After `MODEM` identifies the intended device, the following SIM and proxy-QMI query pattern was **tested**:
 
@@ -333,7 +333,7 @@ Both low-level readouts reported `Card state: present`, `Application type: usim`
 
 Do not hot-swap the cards in an operating modem. Follow this procedure for the intended device:
 
-1. Stop that UE's traffic and release any active PDU/interface configuration using the [UE shutdown procedure](../single_ue/ue_laptop_quick_commands.md#6-shut-down-the-ue).
+1. Stop that UE's traffic and release any active PDU/interface configuration using the [UE shutdown procedure](../legacy_single_ue.md#16-shutdown).
 2. Disable the selected modem with `sudo mmcli -m "$MODEM" --disable`.
 3. Physically power off or disconnect the RMU500EK/Quectel unit before removing and inserting the card.
 4. Reapply power, run `mmcli -L`, and rediscover the intended modem, SIM, QMI/AT port, and WWAN interface. Confirm its IMEI and inserted IMSI before continuing.
@@ -352,7 +352,7 @@ the installed schema and SQN handling:
 | UE1 | `001010000000101` | `~/sim_du1_credentials.txt`, matching `K1`/`OPc1` | Tool recommended `96` |
 | UE2 | `001010000000102` | `~/sim_du2_credentials.txt`, matching `K2`/`OPc2` | Tool recommended `96` |
 
-Do not exchange the pairs between subscribers, and do not overwrite the working `001010000000001` subscriber. The existing baseline uses PLMN `00101`, SST 1, DNN `internet`, and subscriber session type **1 / IPv4**; consult the [Open5GS configuration record](../project_progress_and_configuration.md#open5gs-identity-sessions-and-interfaces) when preparing the new subscribers.
+Do not exchange the pairs between subscribers, and do not overwrite the working `001010000000001` subscriber. The existing baseline uses PLMN `00101`, SST 1, DNN `internet`, and subscriber session type **1 / IPv4**; consult the [Open5GS configuration record](../../project_design_and_progress.md#core-and-ip-paths) when preparing the new subscribers.
 
 Version-specific upstream evidence: Open5GS **v2.8.0** defines `security.sqn` as Mongoose `Schema.Types.Long` in its [subscriber model](https://github.com/open5gs/open5gs/blob/v2.8.0/webui/server/models/subscriber.js), and its [subscription DB code](https://github.com/open5gs/open5gs/blob/v2.8.0/lib/dbi/subscription.c) reads BSON int64 and writes `BCON_INT64`. SQN is therefore not a K-like hexadecimal secret string in those upstream paths. The installed administrative UI/API, local database representation, and correct handling of the tool's `96` reference still need verification before provisioning.
 
@@ -363,7 +363,7 @@ Use the current dual-UE handbooks for deployed values and commands:
 
 1. Create or confirm the exact two subscribers with their matching saved pairs and verified SQN representation. Preserve the single-link baseline subscriber separately.
 2. Prepare and validate CU + DU1 + DU2 configuration and both B210 RF paths
-   using the [current profiles](../dual_link_radio_design.md). Keep radio
+   using the [current profiles](../../project_design_and_progress.md). Keep radio
    serials, PCI, SSB and DU identities distinct; do not reuse DU1's settings for DU2.
 3. Select the intended cell for each physical modem and verify actual `...101 → DU1` and `...102 → DU2` attachment. A common PLMN alone cannot prove this mapping.
 4. For each selected modem, require successful registration, the private

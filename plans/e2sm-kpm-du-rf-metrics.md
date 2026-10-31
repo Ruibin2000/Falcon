@@ -1,10 +1,11 @@
 # E2SM-KPM DU RF Metrics Implementation Plan
 
-Deployment context, October 29: the [current two-link design](../docs/dual_link_radio_design.md)
+Deployment context, October 30: the [current two-link design](../docs/project_design_and_progress.md)
 uses DU1 at 3660 MHz / 20 MHz / 51 PRBs and DU2 at a 3600-MHz n78 interface /
 40 MHz / 106 PRBs. Both use 30-kHz SCS and 100-ms DU reporting. Link 2 is
-designed for 9250-MHz OTA through Pi-Radio; both UE connections were confirmed
-in the current direct test without converters. Use each cell's capacity for
+using 9250-MHz OTA through Pi-Radio, with TX 60 / RX 10 tuned for the modified
+FR3 hardware. Both UE connections were confirmed in the historical October 29
+direct test without converters. Use each cell's capacity for
 PRB normalization. Dated implementation and experiment records below retain
 their original radio profiles; they do not validate sustained 40-MHz KPM or
 converted-path operation.
@@ -40,7 +41,7 @@ after their exit criteria pass and their evidence has been retained.
 ## October 25 First Expansion
 
 The operator authorized the first expansion after accepting the seven-metric
-100 ms baseline. The [stage-one contract](../docs/e2sm-kpm/du_kpm_expansion_stage1.md)
+100 ms baseline. The [stage-one contract](../docs/reference/kpm_metrics.md)
 defines 27 raw E2 measurements: the original seven, 14 added UE measurements
 and six sample-count/age fields. The added `PRB.UsageDl.Percent` and
 `PRB.UsageUl.Percent` retain fractional percentages as REAL alongside the
@@ -53,7 +54,7 @@ premature percentage truncation. The expanded profile is explicit; the
 seven-metric launcher default and five-metric legacy backup remain available.
 DU periods stay 100 ms, CU identity 1000 ms and Core polling 1 s. This
 supersedes the earlier 1000 -> 200 -> 100 ms sequence for this first batch.
-The [Spark procedure](../docs/dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)
+The [Spark procedure](../docs/spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)
 now targets expanded live validation. Offline results do not close that live
 step. RI/OLLA/TA, additional RLC, cell and RU-health metrics remain later work.
 The source-snapshot concurrency deferral is unchanged.
@@ -71,14 +72,14 @@ Do not include provider locks, collection guards, E2 receive confinement or
 cleanup relocation in this rate change. Native 100 ms APER, throughput
 normalization, and mixed-rate IP mapping checks pass; no concurrent-snapshot
 guarantee is claimed.
-The [October 25 live report](../docs/reports/dual_ue_100ms_validation_report_2026-10-25.md)
+The [October 25 live report](../docs/experiments/reports/dual_ue_100ms_validation_report_2026-10-25.md)
 verifies 1,179 reports per DU with receive-interval medians of 99.988 / 99.999 ms,
 no reversed headers and no reported collector ingress loss. RF and PRB values
 are available in every UL sample above 1 Mbit/s. The run keeps steady F1
 contexts; it does not validate the separate PRB-index defect after replacement,
 full radio health or source-snapshot synchronization. Source-generation
 trace/header correlation remains unimplemented.
-Use [the default Spark startup and 100 ms inspection commands](../docs/dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
+Use [the default Spark startup and 100 ms inspection commands](../docs/spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
 
 The operator requested more DL/UL measurements before any frequency increase.
 This decision extends the original two-RF-metric scope and supersedes its
@@ -95,7 +96,7 @@ scope and order. No new implementation or timing result is implied by this revis
 | Increase frequency | Verify the same accepted coverage and actual producer periods under controlled load | 200 ms first, then 100 ms |
 | Application forwarding | Plan 2 preserves the expanded typed values and tests its bounded queues at each claimed rate | Separate gate; monitor reception does not establish forwarding |
 
-The [coverage inventory and reporting contract](../docs/e2sm-kpm/2026-10-24_du_metric_expansion_and_reporting_periods.md)
+The [coverage inventory and reporting contract](../docs/experiments/records/kpm/2026-10-24_du_metric_expansion_and_reporting_periods.md)
 defines the candidate families and source paths. "All DU metrics" means all
 usable fields in published DU metric reports, with explicit disposition of
 conditional/unavailable fields. It does not mean subscribing to every name
@@ -290,13 +291,13 @@ until Step 7 so the staging runner can test the candidate.
 - [x] Remove generic dummy RSRP/RSRQ registrations; advertise the exact two vendor
   names through the production RAN-function description.
 - [ ] **Deferred by reviewer decision 2026-10-21 (known limitation: unsynchronized
-  metrics-strand writes vs E2 reads; see [design doc](../docs/e2sm-kpm/2026-10-19_du_rf_metrics_patch_review_and_snapshot_design.md#decision)).**
+  metrics-strand writes vs E2 reads; see [design doc](../docs/experiments/records/kpm/2026-10-19_du_rf_metrics_patch_review_and_snapshot_design.md#decision)).**
   Establish safe scheduler snapshot replacement and reads. Metrics and E2
   can run on different executor strands; the existing vector replacement does
   not by itself establish safe concurrent access. Use reviewed executor
   confinement or consistent immutable/locked snapshots across affected readers.
 - [ ] **Deferred by reviewer decision 2026-10-21 (known limitation: unsynchronized
-  metrics-strand writes vs E2 reads; see [design doc](../docs/e2sm-kpm/2026-10-19_du_rf_metrics_patch_review_and_snapshot_design.md#decision)).**
+  metrics-strand writes vs E2 reads; see [design doc](../docs/experiments/records/kpm/2026-10-19_du_rf_metrics_patch_review_and_snapshot_design.md#decision)).**
   Design an opt-in RF trace with a monotonically increasing scheduler
   snapshot generation, requested UE, internal UE index, selected float-to-double
   values, and counts. Capture generation and values in the same safe getter
@@ -307,7 +308,7 @@ Step 3 static candidate review completed on 2026-10-21 under the reviewer-deferr
 scope above. The five checked implementation items record source/patch review;
 offline acceptance remains pending Steps 5-6. The RF-only Style 3 admission fix,
 reviewed patch hash, commands, and limitations are recorded in the
-[contract review](../docs/e2sm-kpm/2026-10-21_du_rf_metrics_contract_review.md).
+[contract review](../docs/experiments/records/kpm/2026-10-21_du_rf_metrics_contract_review.md).
 Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step3-review-20261021-6e3yqixn/`.
 
 **Exit criteria:** the reviewed candidate implements the contract without
@@ -346,12 +347,12 @@ Preserve the already applied timestamp repair; do not apply it again.
 Step 4 implementation static review completed on 2026-10-21. The eight checked
 items record completed implementation review. Staged callback/codec/action
 acceptance passed on 2026-10-23 in Step 6; see the
-[offline acceptance record](../docs/e2sm-kpm/2026-10-23_du_rf_metrics_offline_acceptance.md).
+[offline acceptance record](../docs/experiments/records/kpm/2026-10-23_du_rf_metrics_offline_acceptance.md).
 The scratch monitor and callback harness also passed syntax-only compilation
 with zero warnings/errors. Actual SIGINT/SIGTERM delivery, connected
 subscription deletion, and SDK shutdown remain **Not run**. The reviewed patch
 hash, commands, and implementation limitations are recorded in the
-[monitor review](../docs/e2sm-kpm/2026-10-21_flexric_du_rf_monitor_review.md).
+[monitor review](../docs/experiments/records/kpm/2026-10-21_flexric_du_rf_monitor_review.md).
 Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step4-review-20261021-7738r6e1/syntax-check-0qdfmi9v/`.
 
 **Exit criteria:** subscription names/types match the DU contract, the callback
@@ -391,7 +392,7 @@ the reviewed baseline deviations. The 53 required names comprise 17 offline
 and 36 native cases; native application and execution remain **Not run**.
 The original 13 standalone cases were retained, with four additions. Commands,
 hashes, coverage, and limitations are recorded in the
-[harness handoff](../docs/e2sm-kpm/2026-10-21_du_rf_metrics_validation_harness.md).
+[harness handoff](../docs/experiments/records/kpm/2026-10-21_du_rf_metrics_validation_harness.md).
 Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step5-harness-20261021-vhst0vi4/`.
 The later trace-framing correction and successful offline execution are
 recorded in Step 6; no native execution pass is implied by these checkboxes.
@@ -434,7 +435,7 @@ Required coverage:
 | UE mapping | Sparse/reordered identifiers, removed/missing UEs, wrong UE type, stable order and cardinality. |
 | Admission | Correct `NO_LABEL`; reject missing/duplicate/expanded labels and unsupported cell/node scope. |
 | Scheduler path | Count reset, absent sample, measured zero, two-sample mean, and RF samples on failed TB CRCs. |
-| Snapshot consistency | Deferred by reviewer decision 2026-10-21 (known limitation: unsynchronized metrics-strand writes vs E2 reads; see [design doc](../docs/e2sm-kpm/2026-10-19_du_rf_metrics_patch_review_and_snapshot_design.md#decision)). No concurrent-snapshot or generation-consistency pass is claimed. |
+| Snapshot consistency | Deferred by reviewer decision 2026-10-21 (known limitation: unsynchronized metrics-strand writes vs E2 reads; see [design doc](../docs/experiments/records/kpm/2026-10-19_du_rf_metrics_patch_review_and_snapshot_design.md#decision)). No concurrent-snapshot or generation-consistency pass is claimed. |
 | Adapter boundaries | Production missing-value sentinels, RSRP 0.1 dB and SINR 0.002 dB quantization, saturation, and valid zero through conversion. |
 | Codec integration | Actual Style 4 admission, Format 3 APER encoding, FlexRIC decoding, seven-metric action encoding, and OCUDU admission of that action. |
 | Monitor robustness | Incorrect RF integers, invalid REAL values, missing mappings, incomplete reports, DU identity, local RSRQ notice, and stop handling. |
@@ -471,7 +472,7 @@ trace rows. There were zero compiler warnings and two inherited
 executable-stack linker warnings; their baseline comparison is documented.
 Native suites, deployment builds, connected signal/SDK lifecycle checks,
 and hardware/live acceptance remain **Not run**. See the
-[offline acceptance record](../docs/e2sm-kpm/2026-10-23_du_rf_metrics_offline_acceptance.md).
+[offline acceptance record](../docs/experiments/records/kpm/2026-10-23_du_rf_metrics_offline_acceptance.md).
 Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step6-offline-20261023-1ied7v8n/verification-summary.json`;
 the four command/log/status records and generated artifacts are retained in
 its parent run directory. Frozen manifest and XML-gate hashes were preserved.
@@ -722,7 +723,7 @@ OCUDU source changes remain uncommitted; FlexRIC source/build and the installed
 plugin remain unchanged. The DU/native build emitted no warnings; the monitor
 link retained the known executable-stack warning. Exact paths, binary hashes,
 commands, results, limits, and operator commands are recorded in the
-[Step 7 build and Step 8 handoff](../docs/e2sm-kpm/2026-10-23_du_rf_metrics_step7_build_and_step8_handoff.md).
+[Step 7 build and Step 8 handoff](../docs/experiments/records/kpm/2026-10-23_du_rf_metrics_step7_build_and_step8_handoff.md).
 Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step7-deploy-20261023-chi6rf4p/`
 and its `build-native-20261023-rurw2gh0/` child, plus the run root's
 `monitor-live/monitor-summary.json`.
@@ -759,7 +760,7 @@ names are captured and decoded. The xApp snapshot contains zero RF trace rows;
 the operator confirmed that the UE is not attached or lacks an established
 data session. The DU snapshot has 52 complete underflow and 18 complete late
 warnings; this is not a stability pass or a causal diagnosis. See the
-[operator log review](../docs/e2sm-kpm/2026-10-23_du_rf_metrics_step8_operator_log_review.md).
+[operator log review](../docs/experiments/records/kpm/2026-10-23_du_rf_metrics_step8_operator_log_review.md).
 Evidence: `/home/nyu/verification/e2sm-kpm/run-TQcKveEB/step8-live-review-20261023-ltlwu4i6/`.
 No service control, packet capture, build, radio action or traffic generation
 was performed by the agent during the review.
@@ -770,7 +771,7 @@ was performed by the agent during the review.
   `/usr/local/lib/flexric/` with the existing timestamp-repaired KPM plugin.
 - [x] Give the operator the exact launch commands and evidence paths. The
   operator starts CU/core as required by the
-  [runbook](../docs/runbooks/full_reproduction_runbook.md), then RIC before DU, then the
+  [runbook](../docs/operations/legacy_single_ue.md), then RIC before DU, then the
   staged monitor. A RIC restart requires a DU restart for fresh E2 Setup.
   The agent does not run `sudo`, start/stop services, touch the B210, or generate
   traffic. Retain operator logs before judging the live gates.
@@ -848,10 +849,10 @@ check does not pass. Do not relax it to one decimal or enable/add an output
 without further approval.
 
 - [ ] Have the operator establish the existing single-UE private IPv4 session
-  using the [UE command booklet](../docs/single_ue/ue_laptop_quick_commands.md).
+  using the [UE command booklet](../docs/operations/legacy_single_ue.md#10-prepare-a-new-ubuntulinux-laptop).
 - [ ] Have the operator run a controlled 30–60 second uplink test using the
   current private endpoints and
-  [traffic procedure](../docs/runbooks/full_reproduction_runbook.md). Record actual UE
+  [traffic procedure](../docs/operations/legacy_single_ue.md). Record actual UE
   identity, direction, duration, application results, and RF errors.
 - [ ] Identify and retain existing DU output containing both per-UE
   scheduler-window RSRP/SNR with at least two decimal places or sufficient raw
@@ -952,10 +953,10 @@ slice filter, so this task does not validate slice isolation.
 - [ ] Hash the patches, scripts, tests, configuration, binaries, and fresh fixtures.
   Keep raw run artifacts outside source repositories; commit only selected
   sanitized evidence summaries and reviewed source artifacts.
-- [ ] Create a new dated RF verification/handoff document under `docs/e2sm-kpm/`
+- [ ] Create a new dated RF verification/handoff document under `docs/experiments/records/kpm/`
   with current revisions, commands, results, estimator semantics, and remaining
   limits. Link the historical
-  [RF verification record](../docs/troubleshooting/2026-10-07_flexric_bringup.md#du-rf-metrics-extension-offline-package-2026-10-09)
+  [RF verification record](../docs/experiments/records/bringup/2026-10-07_flexric_bringup.md#du-rf-metrics-extension-offline-package-2026-10-09)
   as context; preserve that existing document under the root repository rules.
 - [ ] Check that final commits separate the existing FlexRIC timestamp repair
   from RF work and contain no unrelated configuration changes or secrets.
@@ -1137,7 +1138,7 @@ the historical RSRP-only patches.
 - [OCUDU regression cases](../tests/ocudu_du_rf_metrics_test.cpp)
   and [FlexRIC regression cases](../tests/flexric_du_rf_metrics_test.c).
 - [Seven-metric configuration](../configs/flexric/xapp_du_rf_metrics.conf).
-- [Existing RF package record](../docs/troubleshooting/2026-10-07_flexric_bringup.md#du-rf-metrics-extension-offline-package-2026-10-09).
-- [Timestamp repair](../docs/troubleshooting/2026-10-07_flexric_latency_fix.md),
-  [full runbook](../docs/runbooks/full_reproduction_runbook.md), and
-  [Spark command booklet](../docs/single_ue/spark_quick_commands.md).
+- [Existing RF package record](../docs/experiments/records/bringup/2026-10-07_flexric_bringup.md#du-rf-metrics-extension-offline-package-2026-10-09).
+- [Timestamp repair](../docs/experiments/records/bringup/2026-10-07_flexric_latency_fix.md),
+  [full runbook](../docs/operations/legacy_single_ue.md), and
+  [Spark command booklet](../docs/operations/legacy_single_ue.md#1-baseline-and-physical-connections).

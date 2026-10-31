@@ -1,9 +1,11 @@
 # Standalone CU/DU Identity xApp and Core IP Correlation Plan
 
-Deployment context, October 29: the [current radio design](../docs/dual_link_radio_design.md)
+Deployment context, October 30: the [current radio design](../docs/project_design_and_progress.md)
 uses DU1 at 3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz,
-designed for 9250-MHz OTA through Pi-Radio. Both UEs connected in the direct
-test without converters. CU/DU identities remain logical n78, and AMF/SMF
+now operating as the logical interface for 9250-MHz OTA through Pi-Radio.
+DU2 TX 60 / RX 10 applies to this modified FR3 hardware. Both UEs connected
+in the historical October 29 direct test without converters. CU/DU identities
+remain logical n78, and AMF/SMF
 remain the UE IP source. The October 21–25 identity evidence below retains
 its original 20-MHz DU2 profile; it is not converted-path validation.
 
@@ -40,8 +42,8 @@ The first local milestone is implemented and tested; no services were restarted
 or candidate binaries/plugins deployed during that initial milestone.
 Subsequent operator-started single/dual-UE trials validate the experimental
 association and live TXT output. See the
-[implementation record](../docs/reports/ue_identity_implementation_2026-10-21.md)
-and [dual-UE live report](../docs/reports/ue_identity_dual_ue_live_2026-10-21.md).
+[implementation record](../docs/experiments/reports/ue_identity_implementation_2026-10-21.md)
+and [dual-UE live report](../docs/experiments/reports/ue_identity_dual_ue_live_2026-10-21.md).
 
 Checked items below record local implementation evidence only. Compound/live
 gates remain pending when any required evidence is missing. The detailed target
@@ -64,7 +66,7 @@ historical lifecycle-proof requirements below remain. Cross-DU equality alone
 no longer taints a verified scope. E2 SCTP now enables NODELAY to remove the
 verified small-message buffering mechanism; source periods remain DU 100 ms,
 CU 1000 ms and Core 1 s. The
-[new live report](../docs/reports/dual_ue_100ms_validation_report_2026-10-25.md)
+[new live report](../docs/experiments/reports/dual_ue_100ms_validation_report_2026-10-25.md)
 retains 2,358 DU rows: after 20 startup rows without a verified IP, all 2,338
 remaining rows match their current CU/AMF/SMF relations. Both DUs keep F1 ID 1;
 receive intervals remain near 100 ms with no reversed headers or reported
@@ -156,7 +158,7 @@ satisfy this read-only prerequisite. No deployment occurs in this revision.
 
 ## 2. Established State and Source Anchors
 
-The [retained dual-UE report](../docs/reports/dual_ue_ul_experiment_report_2026-10-13.md)
+The [retained dual-UE report](../docs/experiments/reports/dual_ue_ul_experiment_report_2026-10-13.md)
 contains actual `(gNB 411, DU1, CU UE F1AP ID 11)` and
 `(gNB 411, DU2, CU UE F1AP ID 7)` KPM. Laptop records contain historical IPs
 `10.45.0.6` and `10.46.0.5`. Rediscover current values; that run did not prove the
@@ -170,7 +172,7 @@ complete automatic Core/CU/DU association.
 | Standard E2 UEID | Includes AMF UE NGAP ID, GUAMI and CU UE F1AP ID list | Verify DU association, semantics and end-to-end decoder support |
 | Existing monitor | Enumerates nodes at startup; supports multiple subscriptions | Retain as regression tool; new independent app/config |
 | Core packages | AMF/SMF `2.8.0~noble5`; binaries contain infoAPI endpoint strings | Actual running API and schema validation |
-| Core probe | After Core startup, actual AMF/SMF empty responses pass the new app probe; see `docs/evidence/2026-10-21_ue_identity_live/01_core_empty_probe.json` | Validate populated UE/session fields, state, pagination and endpoint/GUAMI scope during single-UE access |
+| Core probe | After Core startup, actual AMF/SMF empty responses pass the new app probe; see `docs/experiments/evidence/2026-10-21_ue_identity_live/01_core_empty_probe.json` | Validate populated UE/session fields, state, pagination and endpoint/GUAMI scope during single-UE access |
 | HTTP/JSON toolchain | `pkg-config` did not find `libcurl`/`json-c` | Freeze dependencies instead of assuming they are installed |
 
 Source anchors for future changes:
@@ -217,7 +219,7 @@ its own identity, subscription and freshness. CU-UP E2 is unnecessary here.
 | Falcon `configs/ocudu/cu_identity_e2.yml` | Candidate opt-in CU-CP E2 overlay |
 | OCUDU CU-CP collection/E2 interfaces | Proposed `get_ue_identity_snapshot()` or equivalent, owned records, lifecycle validity and reporting |
 | Falcon `tests/ue_identity/` | Independent Core/E2 fixtures, correlation and lifecycle tests |
-| Falcon `docs/development/ue_identity_xapp.md` | Frozen standalone schema, build/start commands and limitations |
+| Falcon `docs/reference/ue_identity_xapp.md` | Frozen standalone schema, build/start commands and limitations |
 | Falcon `patches/ocudu/`, optionally `patches/flexric/` | Separate reviewed patches and exact baseline manifests |
 
 Freeze file boundaries and HTTP/JSON dependencies in Step 2. Reuse existing
@@ -485,7 +487,7 @@ The next operator-run trial completed a single six-minute capture with sequentia
 UE1 and UE2 150-second traffic quiet periods and the peer transmitting
 continuously. The 335-second Laptop schedule leaves capture margin and checks
 both independence directions using fresh-only output. See the
-[bidirectional idle/resume procedure](../docs/development/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test)
+[bidirectional idle/resume procedure](../docs/reference/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test)
 and inline foreground Laptop command (no script-file transfer). Live evidence
 is retained in `16_bidirectional_idle_live`: one xApp instance, 648 original
 KPM outputs, 645 current matches and three own startup/resume boundary rows.
@@ -567,7 +569,7 @@ real UL trial then records receiver 13.8 Mbit/s, 117 matched rows out of 118,
 and 60 consecutive matched rows with positive UL throughput. UL KPM peaks at
 20.97 Mbit/s and UL PRB at 86%. The strict-DU, transition, clock-alignment
 and comparative-performance gates remain open. See the
-[real single-UE report](../docs/reports/ue_identity_single_ue1_live_2026-10-21.md).
+[real single-UE report](../docs/experiments/reports/ue_identity_single_ue1_live_2026-10-21.md).
 
 The subsequent real dual-UE trial receives three node subscriptions, 111 CU
 reports and 111/112 DU1/DU2 reports plus 120 Core snapshots. Of 223 DU outputs,
@@ -577,7 +579,7 @@ remain unresolved. Both Laptop concurrent iperf clients exit 0 with receiver
 are retained. A file-only audit checks all raw DU metric payloads, output TXT,
 scoped identities and AMF-reported NCI. This passes current-observation dual
 association, not the absent strict wire/lifecycle proof. See the
-[dual-UE live report](../docs/reports/ue_identity_dual_ue_live_2026-10-21.md).
+[dual-UE live report](../docs/experiments/reports/ue_identity_dual_ue_live_2026-10-21.md).
 
 The later 360-second capture passes one UE2 ordinary idle/resume round with
 unchanged IP and new F1/NGAP IDs, without restarting the xApp. It records 637
@@ -587,7 +589,7 @@ new CU/Core prerequisite. The all-DU freshness requirement also withholds UE1
 IP enrichment during DU2's idle reporting gap. UE1's 300-second TCP connection
 exits 0, but four one-second zero-throughput intervals prevent a stall-free
 traffic claim. See the report's idle/resume section and
-[retained transition audit](../docs/evidence/2026-10-21_ue_identity_live/13_ue2_idle_resume/audit.json).
+[retained transition audit](../docs/experiments/evidence/2026-10-21_ue_identity_live/13_ue2_idle_resume/audit.json).
 PDU reconnect, repeated recovery, exact reuse and strict transport remain open.
 
 The later live bidirectional six-minute trial validates the independent-link
@@ -595,7 +597,7 @@ correction with fresh-only output: 645 matches / 648 rows, zero cached,
 30 consecutive peer matches during each actual Core idle interval, and no
 observed cross-UE assignment. Both UE IPs survive the F1/NGAP context changes.
 The three unknown-IP rows are own startup/resume boundaries, not peer failures.
-See the [live bidirectional audit](../docs/evidence/2026-10-21_ue_identity_live/16_bidirectional_idle_live/audit.json).
+See the [live bidirectional audit](../docs/experiments/evidence/2026-10-21_ue_identity_live/16_bidirectional_idle_live/audit.json).
 This is one round per UE, not completion of the repeated/strict recovery gates.
 
 | Gate | Required retained evidence |
@@ -616,11 +618,11 @@ outside this plan's completion criteria.
 - [Plan 3: dual UE/DU setup](dual-ue-du-fr1-channels.md).
 - [Plan 2: later integration reference only](xapp-kpm-app-subscription.md).
 - [Plan 1: optional RF extension, not a base5 prerequisite](e2sm-kpm-du-rf-metrics.md).
-- [Actual dual-UE UL/KPM report](../docs/reports/dual_ue_ul_experiment_report_2026-10-13.md).
-- [CU identity excerpts](../docs/evidence/2026-10-13_dual_kpm_reports/cu_identity_excerpt.log)
-  and [Laptop truth](../docs/evidence/2026-10-13_dual_kpm_reports/operator_inputs.json).
-- [Spark workflow](../docs/dual_ue_spark_quick_commands.md) and
-  [Laptop workflow](../docs/dual_ue_laptop_quick_commands.md).
+- [Actual dual-UE UL/KPM report](../docs/experiments/reports/dual_ue_ul_experiment_report_2026-10-13.md).
+- [CU identity excerpts](../docs/experiments/evidence/2026-10-13_dual_kpm_reports/cu_identity_excerpt.log)
+  and [Laptop truth](../docs/experiments/evidence/2026-10-13_dual_kpm_reports/operator_inputs.json).
+- [Spark workflow](../docs/spark_quick_commands.md) and
+  [Laptop workflow](../docs/operations/manual_laptop_startup.md).
 - [Open5GS infoAPI documentation](https://open5gs.org/open5gs/docs/tutorial/07-infoAPI-UE-gNB-session-data/).
 - [OCUDU E2 metrics](https://docs.ocudu.org/knowledge_base/e2sm_kpm_metrics/).
 - [O-RAN E2SM UEID, ETSI TS 104 040](https://www.etsi.org/deliver/etsi_ts/104000_104099/104040/04.00.00_60/ts_104040v040000p.pdf).

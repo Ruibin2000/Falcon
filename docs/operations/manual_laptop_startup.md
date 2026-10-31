@@ -1,42 +1,47 @@
-# Dual UE Laptop Quick Commands — UE IP Binding and UL
+# Manual Laptop Startup and IP Path Reference
 
-Updated: 2026-10-29. Developer: Ruibin Chen. Pair this booklet with the updated
-[Spark Quick Commands](dual_ue_spark_quick_commands.md) to reproduce the October 21
+For daily startup use the [one-shot](../laptop_single_quick_start.md) or
+[reconnect](../laptop_reconnect_quick_start.md) quick guide. This reference retains
+the complete manual modem, bearer, route and shutdown procedures.
+
+Updated: 2026-10-30. Developer: Ruibin Chen. Pair this booklet with the updated
+[Spark Quick Commands](../spark_quick_commands.md) to reproduce the October 21
 CU/DU/Core UE IP binding. Spark now starts RIC with the identity plugin, then
 CU with its identity E2 overlay, both DUs and the new three-subscription xApp.
 Laptop still prepares each intended modem/SIM/cell/PDU/route independently.
 
 **Radio design:** DU1 is 3660 MHz / 20 MHz / SSB `643680`; DU2 is
-3600 MHz / 40 MHz / SSB `638976`. Both use logical n78 locks. The designed
-DU2 OTA path uses Pi-Radio at 9250 MHz; the current test has no converters,
-and the operator confirmed both direct-radio connections on October 29.
-See the [complete profiles and evidence scope](dual_link_radio_design.md).
+3600-MHz logical interface / 40 MHz / SSB `638976`. Both use logical n78 locks.
+DU2's current physical OTA path uses Pi-Radio at 9250 MHz after the hardware
+modification, with TX 60 / RX 10 dB. The October 29 direct-radio connections
+are a historical checkpoint.
+See the [complete profiles and evidence scope](../project_design_and_progress.md).
 
-Spark's October 23 [TUN split](networking/dual_ue_tun_split.md) is applied: `ogstun_1`
+Spark's October 23 [TUN split](networking.md) is applied: `ogstun_1`
 serves `10.45.0.1` and `ogstun_2` serves `10.46.0.1`. Laptop APNs, service IPs
 and policy tables are retained; WWAN names and bearer parameters still require
 fresh discovery. After the SMF/UPF restart, re-enable each selected modem and
 repeat its complete sequence below. Post-split traffic is retained in the
-[October 23 MPTCP report](reports/mptcp_video_experiment_report_2026-10-23.md);
+[October 23 MPTCP report](../experiments/reports/mptcp_video_experiment_report_2026-10-23.md);
 fresh UE2 PDU/IP recovery and both ping modes passed in the
-[October 24 report](reports/ue2_fr3_recovery_experiment_report_2026-10-24.md).
+[October 24 report](../experiments/reports/ue2_fr3_recovery_experiment_report_2026-10-24.md).
 
 **Acceptance scope, 2026-10-24:** cold-start, full repeatability/comparative
 and bidirectional disturbance/survivor testing are
-[supplemental experiments](development/dual_ue_supplemental_experiments.md),
+[supplemental experiments](../experiments/supplemental_experiments.md),
 excluded from current acceptance criteria and merge prerequisites.
 
-The [live report](reports/ue_identity_dual_ue_live_2026-10-21.md) describes the
+The [live report](../experiments/reports/ue_identity_dual_ue_live_2026-10-21.md) describes the
 final implementation and six-minute bidirectional idle/resume validation
 (645 matched / 648, zero cached). The new run must verify its own
 current identities/IPs. Strict serving-DU/lifecycle proof, restart/reuse and
-remaining performance gates are separate in [Plan 4](../plans/cu-ue-ip-e2-binding.md).
-The [October 13 UL/KPM results](evidence/2026-10-13_dual_kpm_reports/manifest.json)
-remain historical [Plan 3](../plans/dual-ue-du-fr1-channels.md) evidence.
+remaining performance gates are separate in [Plan 4](../../plans/cu-ue-ip-e2-binding.md).
+The [October 13 UL/KPM results](../experiments/evidence/2026-10-13_dual_kpm_reports/manifest.json)
+remain historical [Plan 3](../../plans/dual-ue-du-fr1-channels.md) evidence.
 
 Run all commands in this file on the UE laptop. Use Bash, one terminal per UE
 for modem/bearer/path variables, and stop at failed checks. Spark startup, servers
-and KPM capture are in [Dual UE Spark Quick Commands](dual_ue_spark_quick_commands.md).
+and KPM capture are in [Dual UE Spark Quick Commands](../spark_quick_commands.md).
 
 ## Manual startup order
 
@@ -86,7 +91,7 @@ sudo systemctl enable --now ModemManager
 ### 0.1. Install the role reset helper once on the laptop
 
 Copy the following block once. It creates the same self-contained helper as
-[`reset_ue_network.py`](../scripts/dual_fr1/reset_ue_network.py); a Falcon checkout
+[`reset_ue_network.py`](../../scripts/dual_fr1/reset_ue_network.py); a Falcon checkout
 on the laptop is optional. The two role sequences then use short commands with
 no previous IP, CIDR, modem index, interface name or run-directory variables.
 The helper reads current modem ownership by IMEI, plus kernel addresses/rules/
@@ -349,9 +354,8 @@ reports incomplete; address-removal failures retain the existing guards.
 | Carrier / ARFCN | 3660 MHz / `644000` | 3600 MHz / `640000` |
 | Channel bandwidth | 20 MHz | 40 MHz |
 | USRP sample rate | 23.04 MS/s | 46.08 MS/s |
-| Configured TX / RX gain | 70 / 35 dB | 45 / 20 dB |
-| Current direct-test OTA center | 3660 MHz | 3600 MHz, no converters |
-| Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
+| Configured TX / RX gain | 70 / 35 dB | 60 / 10 dB |
+| Physical OTA center | 3660 MHz, direct | 9250 MHz via Pi-Radio conversion |
 | PCI / SSB / SCS / band | `1` / `643680` / 30 kHz / n78 | `2` / `638976` / 30 kHz / n78 |
 | DU ID / sector / expected NCI | `1` / `0` / `6733824` | `2` / `1` / `6733825` |
 | Intended modem IMEI | `863305041978437` | `863305041980706` |
@@ -393,7 +397,7 @@ serving DU. The October 21 xApp supplies the separate CU/Core/DU association.
 
 Treat locks as needing restoration after modem power/reconnection: the
 operator reported a lock query of `0`, with affected role unspecified. See the
-[power-cycle observation](evidence/2026-10-13_modem_lock_power_cycle/manifest.json).
+[power-cycle observation](../experiments/evidence/2026-10-13_modem_lock_power_cycle/manifest.json).
 A generic [Quectel support response](https://forums.quectel.com/t/rmu500-ek-to-prevent-from-handover/11554)
 describes NV saving, but this device's actual readback is the operational gate.
 A correct APN/subnet does not bind a SIM to a DU in the shared PLMN. Require the
@@ -504,7 +508,7 @@ select_ue || printf 'FAIL: modem/SIM selection; stop here.\n'
 
 Stop at a failed identity/SIM check. If the selected modem is disabled,
 run `sudo mmcli -m "$MODEM" --enable` and repeat identity validation. For USIM
-readiness, use its actual QMI port and the [USIM check](single_ue/ue_laptop_quick_commands.md#1a-read-the-inserted-sim-and-usim-state).
+readiness, use its actual QMI port and the [USIM check](legacy_single_ue.md#10-prepare-a-new-ubuntulinux-laptop).
 
 <a id="ue1-cell-lock"></a>
 
@@ -923,7 +927,7 @@ select_ue || printf 'FAIL: modem/SIM selection; stop here.\n'
 
 Stop at a failed identity/SIM check. If the selected modem is disabled,
 run `sudo mmcli -m "$MODEM" --enable` and repeat identity validation. For USIM
-readiness, use its actual QMI port and the [USIM check](single_ue/ue_laptop_quick_commands.md#1a-read-the-inserted-sim-and-usim-state).
+readiness, use its actual QMI port and the [USIM check](legacy_single_ue.md#10-prepare-a-new-ubuntulinux-laptop).
 
 <a id="ue2-cell-lock"></a>
 
@@ -1279,7 +1283,7 @@ to edit. Actual serving-cell/DU checks still come from 1.2/2.2; an IP/APN does
 not prove the serving DU.
 
 Save the updated launcher once on the laptop. This is the same self-contained
-file as [`run_dual_ul.py`](../scripts/dual_fr1/run_dual_ul.py):
+file as [`run_dual_ul.py`](../../scripts/dual_fr1/run_dual_ul.py):
 
 ```bash
 cat > ~/falcon-dual-ul.py <<'FALCON_DUAL_UL_PY'
@@ -1514,7 +1518,7 @@ address or wrong ordinary route needs the affected role's guarded reset,
 rebuild and verification (1.4–1.6 / 2.4–2.6). Do not substitute an old address
 to bypass a failed preflight.
 
-Then start [Spark step 7a](dual_ue_spark_quick_commands.md#7a-first-verify-both-ip-bindings-during-a-60-second-dual-upload)'s
+Then start [Spark step 7a](../spark_quick_commands.md#7a-first-verify-both-ip-bindings-during-a-60-second-dual-upload)'s
 120-second identity capture and check its log in a separate Spark terminal.
 Require `Registered E2 Nodes = 3`, three successful subscription responses and
 `identity collector: 3 KPM subscriptions, duration=120`. Keep both Spark
@@ -1569,7 +1573,7 @@ may shift these nominal boundaries. The full traffic run must finish within
 Paste this command directly; it reuses `~/falcon-dual-ul.py`, creates logs and
 runs no traffic until `START`. No additional script file or transfer is needed.
 Leave it at `READY`, start the separate 360-second xApp from the
-[idle/resume reference](development/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test),
+[idle/resume reference](../reference/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test),
 then return here within ten seconds and enter `START`. This manual idle test
 is separate from Spark 7b's reconnect stability test.
 
@@ -1707,7 +1711,7 @@ print(json.dumps({key: s[key] for key in ('status', 'error', 'elapsed_seconds', 
 PY_SUMMARY
 ```
 
-Using the [full idle/resume analysis](development/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test),
+Using the [full idle/resume analysis](../reference/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test),
 verify each UE actually enters Core idle then reconnects. During each silent-DU
 window, its active peer must continue current `matched` bindings using its own
 fresh CU/Core data; this `--fresh-only` test must have zero cached rows. On
@@ -1856,7 +1860,7 @@ disabled modem as shown there, restore the cell lock after power/reconnection
 and read fresh bearer/IP/interface values before creating routes.
 
 After both laptop modems are shut down, use
-[Spark step 8](dual_ue_spark_quick_commands.md#8-shutdown-and-retained-evidence)
+[Spark step 8](../spark_quick_commands.md#8-shutdown-and-retained-evidence)
 for server/RAN/core shutdown. Retain identity/cell/bearer/path/UL/KPM correlation
 as current functional evidence. Record cold-start, full repeatability and
 bidirectional disturbance/survivor observations in the separate supplemental

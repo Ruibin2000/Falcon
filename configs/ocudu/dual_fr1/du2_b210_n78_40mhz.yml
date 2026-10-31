@@ -1,11 +1,12 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-# DU2 / FR3 path: 3600 MHz / n78 / 40 MHz / 30 kHz, nominal interval 3580-3620 MHz.
+# DU2 / FR3: 9250 MHz OTA via Pi-Radio; logical interface 3600 MHz / n78 / 40 MHz.
+# At 30 kHz SCS, nominal channels are 3580-3620 MHz (interface), 9230-9270 MHz (OTA).
 # Default SSB ARFCN at this bandwidth is 638976; use the matching UE2 lock.
 # B210 328B021 was independently discovered on Spark on 2026-10-13.
 # Rediscover both physical radios before live dual-DU startup.
-# TX/RX gains are 45/20 dB; record the actual RF setup per run.
+# TX/RX gains are 60/10 dB after tuning the modified 9250-MHz FR3 hardware path.
 # Load du2_flexric.yml as the second configuration file.
 gnb_id: 411
 gnb_id_bit_length: 22
@@ -26,8 +27,8 @@ ru_sdr:
   clock: internal
   clock_ppm: 0.0
   freq_offset: 0
-  tx_gain: 45
-  rx_gain: 20
+  tx_gain: 60
+  rx_gain: 10
 
 cell_cfg:
   dl_arfcn: 640000

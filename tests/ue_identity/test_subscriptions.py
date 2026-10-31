@@ -601,14 +601,20 @@ class SubscriptionTests(unittest.TestCase):
                 if directory:
                     directory.cleanup()
 
-    def test_real_coordinator_cli_archived_replay_and_no_txt_sink(self):
+    def test_real_coordinator_cli_fixture_replay_and_no_txt_sink(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             settings = root/"settings.json"
             settings.write_text('{"port":0}')
+            # Generate synthetic Core/CU/27-metric input without local experiment data.
+            events = [core_event(), scoped_cu()]
+            for index in range(20):
+                events.extend(du(du_id, 11_000_000 + index*100_000) for du_id in (1, 2))
+            replay = root/"inputs.ndjson"
+            replay.write_text("".join(json.dumps(event) + "\n" for event in events))
             command = [sys.executable, "-B", str(ROOT/"scripts/ue_identity/xapp_ue_identity.py"),
                        "--publish-config", str(settings), "--duration", "0", "--replay-speed", "2",
-                       "--replay", str(ROOT/"docs/evidence/2026-10-25_dual_ue_27kpm_stability/xapp/inputs.ndjson.gz"),
+                       "--replay", str(replay),
                        "--publisher-summary", str(root/"publisher.json")]
             with (root/"service.err").open("w") as err:
                 process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=err, text=True)
@@ -621,6 +627,10 @@ class SubscriptionTests(unittest.TestCase):
                         "--port", str(port), "--app-id", "cli", "--all-links", "--reports", "10", "--timeout", "10",
                         "--text-output", str(root/"dummy.txt")], capture_output=True, text=True, timeout=15)
                     self.assertEqual(dummy.returncode, 0, (dummy.stderr, dummy.stdout, (root/"service.err").read_text()))
+                    text = (root/"dummy.txt").read_text()
+                    self.assertEqual(text.count("\nrecord="), 10)
+                    self.assertIn("UE_IPv4=10.45.0.10", text)
+                    self.assertIn("UE_IPv4=10.46.0.10", text)
                     process.terminate()
                     self.assertEqual(process.wait(timeout=5), 0, (root/"service.err").read_text())
                     self.assertEqual(process.stdout.read(), "")  # No per-report stdout/TXT in publisher mode.

@@ -1,16 +1,17 @@
 # xApp and MPTCP application interface
 
-Updated October 29, 2026. Protocol version **2**; metric profile **`du27_bound_v1`**.
+Updated October 30, 2026. Protocol version **2**; metric profile **`du27_bound_v1`**.
 
 This document defines the implemented Falcon interface for an MPTCP/MPX application to subscribe to KPM reports. The xApp pushes each newly generated, currently matched report with its DU/UE identity, current UE IPv4, and 27 raw KPM metrics. The MPTCP application uses that IPv4 to associate the report with its own current path. The same interface has been exercised by an independent dummy application in successful 120 second and 360 second live experiments.
 
 This is Falcon's local application protocol. Its version is independent of the E2 service model and of the `v1` suffix in the metric profile or inner report schema. The earlier MPX version-1 draft is a migration reference; a version-1 registration is rejected by the current service.
 
-The [current radio design](../dual_link_radio_design.md) uses DU1 at
-3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz, designed for
-9250-MHz OTA through Pi-Radio. The current direct test has no converters;
-both UE connections were operator-confirmed on October 29. `FR1`/`FR3` are
-deployment path labels. E2 retains logical n78 information, and this protocol
+The [current radio design](../project_design_and_progress.md) uses DU1 at
+3660 MHz / 20 MHz OTA and DU2 at 9250 MHz / 40 MHz OTA through Pi-Radio,
+with a 3600-MHz logical n78 interface and TX 60 / RX 10 tuned for the modified
+FR3 hardware. This is DU2's ongoing deployment. The October 29 direct-radio
+connection test is historical. `FR1`/`FR3` are application path labels; FR3
+now corresponds to the physical 9250-MHz path. E2 retains logical n78 information, and this protocol
 does not add a physical-frequency field or infer conversion from a DU ID.
 Associate reports with the application's current UE IP/path table. The
 October 26 dummy examples and timing results retain their original direct
@@ -262,7 +263,7 @@ Each metric has exactly the required semantics of `type`, `value`, and `unit`. E
 
 Divide `kbit/s` by 1000 for decimal Mbit/s. The additional `DL.HARQ.FailureRatio` and `UL.CRC.FailureRatio` entries live in `report.derived_metrics`, each in `%`, calculated as `100 × NOK / (OK + NOK)`. Zero-denominator windows remain `no_value`.
 
-Full source/statistical semantics are in the [27 KPM reference](../du_kpm_metrics_reference.md). Scheduler fields, RLC aggregates, and latest-indication fields do not necessarily share the same observation window. In particular, a 100 ms reporting period does not reset PHR/BSR/Buffer age to zero. INTEGER and REAL PRB getters can read separate snapshots; do not require their representations to match exactly.
+Full source/statistical semantics are in the [27 KPM reference](../reference/kpm_metrics.md). Scheduler fields, RLC aggregates, and latest-indication fields do not necessarily share the same observation window. In particular, a 100 ms reporting period does not reset PHR/BSR/Buffer age to zero. INTEGER and REAL PRB getters can read separate snapshots; do not require their representations to match exactly.
 
 ## 5. Associate reports with MPTCP paths
 
@@ -359,7 +360,7 @@ The independent [dummy_subscriber.py](../../scripts/ue_identity/dummy_subscriber
 
 ### Run the reference consumer
 
-First start the xApp and its existing RIC/CU/DUs/Core using the [Spark subscription commands](../dual_ue_spark_quick_commands.md#7c-live-app-subscription-test-with-one-dummy). Once the service and collector are ready, run **one dummy** in another Spark terminal:
+First start the xApp and its existing RIC/CU/DUs/Core using the [Spark subscription commands](../spark_quick_commands.md#7c-live-app-subscription-test-with-one-dummy). Once the service and collector are ready, run **one dummy** in another Spark terminal:
 
 ```bash
 cd /home/nyu/Desktop/Falcon_repo/Falcon
@@ -377,7 +378,7 @@ DUMMY_RC=${PIPESTATUS[0]}
 printf 'dummy exit=%s\n' "$DUMMY_RC" | tee "$DUMMY_RUN/exit.txt"
 ```
 
-For the exact six-phase traffic workload, follow the matching [Spark section 7d](../dual_ue_spark_quick_commands.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy) and [Laptop section 7d](../dual_ue_laptop_reconnect_quick_start.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy). Finish the dummy before stopping xApp; keep RIC/CU/DUs running until all E2 deletion responses arrive.
+For the exact six-phase traffic workload, follow the matching [Spark section 7d](../spark_quick_commands.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy) and [Laptop section 7d](../laptop_reconnect_quick_start.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy). Finish the dummy before stopping xApp; keep RIC/CU/DUs running until all E2 deletion responses arrive.
 
 | Output | Contents |
 | --- | --- |
@@ -403,7 +404,7 @@ For the exact six-phase traffic workload, follow the matching [Spark section 7d]
 
 Both runs used one all-links dummy on Spark. The six-minute run preserved all 7,200 raw DU rows in the subscription window, with no duplicate, missing, or reordered delivered report. Both IP bindings stayed constant, and each DU delivered exactly 100 reports in every 10 s bin. It completed registration, 35 pongs, unregistration, and final service shutdown with zero active connections/registrations, empty ingress, no recorded service failures, and dummy/xApp exit code 0.
 
-Detailed [120 second results](../reports/du27_app_subscription_live_2026-10-26.md), [six minute results with UL/DL plots](../reports/du27_app_subscription_6min_live_2026-10-26.md), and the [six minute raw archive](../evidence/2026-10-26_du27_app_subscription_6min_live/live-artifacts.tar.gz) are retained. These runs validate the broker-to-independent-application path. Actual MPTCP client parsing, path-cache behavior, and dashboard integration still need joint testing; 30 minute operation and live reconnect/slow-consumer workloads remain separate acceptance work. The implemented lifecycle/isolation behavior also has offline coverage in the [implementation record](../reports/du27_app_subscription_2026-10-26.md).
+Detailed [120 second results](../experiments/reports/du27_app_subscription_live_2026-10-26.md), [six minute results with UL/DL plots](../experiments/reports/du27_app_subscription_6min_live_2026-10-26.md), and the [six minute raw archive](../experiments/evidence/2026-10-26_du27_app_subscription_6min_live/live-artifacts.tar.gz) are retained. These runs validate the broker-to-independent-application path. Actual MPTCP client parsing, path-cache behavior, and dashboard integration still need joint testing; 30 minute operation and live reconnect/slow-consumer workloads remain separate acceptance work. The implemented lifecycle/isolation behavior also has offline coverage in the [implementation record](../experiments/reports/du27_app_subscription_2026-10-26.md).
 
 The timed dummy's `status: passed` alone does not establish an expected report count: a duration-based run can finish without enforcing a minimum count. For integration acceptance, also require nonzero expected links/counts and reconcile raw source, received JSON, and TXT as done in these archived tests.
 
@@ -418,4 +419,122 @@ The timed dummy's `status: passed` alone does not establish an expected report c
 - On normal shutdown, consume queued frames, the unregister acknowledgement, and EOF.
 - Compare both paths against the reference dummy under the same live workload before relying on KPM in application transport decisions.
 
-The defining implementation is [subscription_protocol.py](../../scripts/ue_identity/subscription_protocol.py), [subscription.py](../../scripts/ue_identity/subscription.py), [subscription_feed.py](../../scripts/ue_identity/subscription_feed.py), and [metrics.py](../../scripts/ue_identity/metrics.py). The existing [service/operator guide](../kpm_app_interface.md) remains the launch and offline verification reference.
+The defining implementation is [subscription_protocol.py](../../scripts/ue_identity/subscription_protocol.py), [subscription.py](../../scripts/ue_identity/subscription.py), [subscription_feed.py](../../scripts/ue_identity/subscription_feed.py), and [metrics.py](../../scripts/ue_identity/metrics.py). Service launch and offline verification are included below.
+
+## 10. Service operation and offline verification
+
+### Start the service
+
+Build a separate collector and isolated plugin, preserving the earlier binary:
+
+```bash
+cd /home/nyu/Desktop/Falcon_repo/Falcon
+SUB_RUN=$(mktemp -d /tmp/falcon-bound-kpm-XXXXXXXX)
+FALCON_IDENTITY_SM_DIR="$SUB_RUN/sm" \
+  bash scripts/ue_identity/build.sh "$SUB_RUN/collector"
+sed "s#^SM_DIR = .*#SM_DIR = \"$SUB_RUN/sm/\"#" \
+  configs/flexric/xapp_ue_identity_expanded.conf > "$SUB_RUN/xapp.conf"
+printf 'Run directory: %s\n' "$SUB_RUN"
+```
+
+With the existing RIC/CU/DUs/Core already running, start the subscription-mode
+coordinator and leave it running:
+
+```bash
+python3 -B scripts/ue_identity/xapp_ue_identity.py \
+  --collector "$SUB_RUN/collector" --e2-config "$SUB_RUN/xapp.conf" \
+  --config configs/ue_identity/local.json \
+  --publish-config configs/ue_identity/subscriptions.json \
+  --duration 0 --publisher-summary "$SUB_RUN/service-summary.json"
+```
+
+`SUBSCRIPTION_READY` identifies the bound listener at `127.0.0.1:8765`, the
+instance, source kind and profile `du27_bound_v1`. It means application admission
+is available; registration may wait for source initialization or a valid match.
+The existing collector's subscription log remains a separate source-readiness
+check. All intended RIC/DU membership must be present at acquisition startup.
+
+Application lifecycle events are printed immediately to stderr, and appear in
+the xApp terminal/log when stderr is captured:
+
+| Event | Meaning |
+| --- | --- |
+| `APP_REGISTER_RECEIVED` | A decoded registration request arrived; validation is next |
+| `APP_REGISTERED` | Registry admission succeeded and the success response was queued |
+| `APP_REGISTER_REJECTED` | Admission failed; `reason` gives the error code |
+| `APP_UNREGISTER_RECEIVED`, `APP_UNREGISTERED` | A valid unregister was received, publication stopped for this client, and its final response was queued |
+| `APP_DISCONNECTED` | The connection and registry entry were cleaned up; `reason` distinguishes normal drain, EOF, timeout, overflow or shutdown |
+| `APP_REQUEST_REJECTED` | A malformed or invalid non-registration request was rejected |
+
+Each line contains a UTC timestamp, broker/source identity, peer, app/subscription
+IDs when known, and event details. Reconnecting creates a new registration and
+subscription ID in these same logs. `acknowledgement: queued` describes server
+admission; the dummy's received `registration_status` confirms the acknowledgment
+reached the client. KPM pushes and routine heartbeat do not generate console
+lines. Log-write errors are counted as `lifecycle_log_errors`.
+
+Subscription mode selects 27 metrics by default and forces fresh-only matching.
+It checks DU Style 4/100 ms and CU identity/1000 ms configuration, with 1-second
+Core polling. It does not start a new E2 subscription per app. Acquisition and
+matching continue with no registered apps. The same admitted CU allocation and
+existing ambiguity/reuse guards apply.
+
+`--duration 0` runs until SIGINT/SIGTERM. A finite duration up to 3600 seconds
+is also supported. On shutdown the listener stops admission, the collector
+removes its shared handles and stops SDK dispatch, then the publisher drains
+clients within its bound. Source membership changes and SDK/E2 reconnect remain
+outside the app reconnect mechanism.
+
+Production subscription mode writes no routine report TXT or per-report stdout.
+`--text-output` and `--last-known` are rejected in this mode. Existing diagnostic
+commands without `--publish-config` retain their previous behavior. Optional
+`--capture-events NEW_FILE` captures raw inputs; `--report-evidence NEW_FILE`
+enables a bounded asynchronous source trace with independent REAL bit strings.
+Both are explicit verification tools, not required delivery paths.
+
+### Evidence bounds and timing
+
+Source evidence is opt-in, bounded to 100,000 records with 256 queued items/4 MiB,
+and reports writer/capacity failures. A 30-minute two-DU run can produce about
+36,000 source rows; size all receipt/measurement storage accordingly. Dummy
+timing arrays have a 200,000-report limit and fail visibly when exceeded.
+
+Time measurements distinguish callback → ready, ready → publish, publish →
+receipt, and receipt → TXT written. `published` means enqueued, not successfully
+received. Replayed callback time is projected from captured arrival/age onto the
+shared monotonic clock and labelled by `data_source: replay`; it is not a new
+radio measurement. Header age is not PHY sample age or pure transport latency.
+
+### Reproduce offline validation
+
+With a rebuilt collector and isolated plugin, run the full mandatory suite:
+
+```bash
+PYTHONMALLOC=debug python3 -B scripts/ue_identity/verify_subscriptions.py \
+  --collector "$SUB_RUN/collector" --plugin "$SUB_RUN/sm/libkpm_sm.so" \
+  --output-dir "$SUB_RUN/verification"
+```
+
+The runner requires native inputs, disallows skipped required gates, and retains
+case manifests/results, source hashes, two actual dummy TXT/JSONL files and source
+snapshots. It includes the previous identity/profile/codec regressions.
+
+For a locally retained archived input at its original 100 ms pace (experiment
+archives are ignored by Git and must be supplied separately):
+
+```bash
+python3 -B scripts/ue_identity/benchmark_subscriptions.py \
+  --source-events docs/experiments/evidence/2026-10-25_dual_ue_27kpm_stability/xapp/inputs.ndjson.gz \
+  --seconds 60 --output-dir "$SUB_RUN/paced-replay"
+```
+
+This starts the real coordinator and all/exact dummy processes, captures
+independent source bit strings, compares every eligible record and all TXT
+values, checks timing/cadence budgets, and records RSS/CPU samples. It requires
+local sockets but no RIC/Core/DU services. This is offline replay. The completed
+120/360-second live results are recorded in section 8; the 30-minute live
+stability and live fault scenarios remain separate acceptance work.
+
+The earlier standalone base5/version-1 prototype and its reproduction commands
+are preserved in the [historical reference](../experiments/evidence/2026-10-26_kpm_app_subscription/base5_interface_reference.txt).
+They are not a dependency of this bound-report service.

@@ -2,9 +2,10 @@
 
 Maintain two independent UE/modem/B210/OCUDU DU paths with a shared CU,
 Open5GS and FlexRIC. DU1 uses 3660 MHz / 20 MHz. DU2 uses a 3600-MHz n78
-interface / 40 MHz, designed for a 9250-MHz OTA path through Pi-Radio.
-The current setup tests both paths directly in n78, without converters.
-The [radio design](../docs/dual_link_radio_design.md) defines current profiles,
+interface / 40 MHz and a 9250-MHz OTA path through Pi-Radio. DU2 TX 60 /
+RX 10 was tuned for the modified FR3 hardware; this is its ongoing deployment.
+Earlier direct n78 tests remain historical checkpoints.
+The [radio design](../docs/project_design_and_progress.md) defines current profiles,
 IP mapping and validation scope. This plan retains the original dual-n78
 bring-up steps and dated acceptance records. Expanded 27-metric reporting
 and app subscriptions have their own Plan 1/2 records.
@@ -15,7 +16,7 @@ and app subscriptions have their own Plan 1/2 records.
 | Task | `dual-ue-du-fr1-channels` |
 | Status | Current dual-UE functional scope verified; cold start, full repeatability and bidirectional disturbance/survivor experiments are follow-up work, excluded from current acceptance and merge criteria; integrations retain their separate scope |
 | Created at | 14 : 50: 09 Oct 11, 2026 EDT |
-| Last updated at | 2026-10-29, DU2 40-MHz and Pi-Radio profile update |
+| Last updated at | 2026-10-30, startup gains synchronized with deployed OCUDU YAML after live tuning |
 | Time zone | `America/New_York` |
 | Developer | Ruibin |
 | Reviewer | To be assigned |
@@ -24,21 +25,33 @@ and app subscriptions have their own Plan 1/2 records.
 | FlexRIC inspection baseline | `736508123fe4b5dc3db83fb5baf5f0a8e9b04fe8`, with the existing local timestamp repair |
 | Prerequisites | Baseline: authorization covering both selected channels and actual lab conditions, two independently tunable radios, two prepared UE/modem/SIM paths, and the existing five-metric E2 path. Integration: accepted dual-link baseline and the applicable Plan 1/2 stage |
 | Execution order | Steps 1–9 cover the functional baseline; Step 10 tracks nonblocking supplemental experiments; Step 11 integrates accepted features while preserving Plan 2 Stage A → Plan 1 → Plan 2 Stage B |
-| Initial deployment | Direct n78 lab baseline; shared CU/Open5GS/two DUs/FlexRIC on Spark and two RM500Q modems on one laptop. Current profiles are 20/40 MHz; the designed converted 9250-MHz OTA path is separate from this baseline |
+| Current deployment | DU1 3660-MHz OTA / 20 MHz; DU2 9250-MHz OTA / 40 MHz through Pi-Radio with a 3600-MHz logical interface; shared CU/Open5GS/FlexRIC on Spark and two RM500Q modems on one laptop |
 
 Maintain one plan for this task. Complete checkboxes only after the stated exit
 criteria pass and the reviewer can inspect the retained evidence. Plan numbers
 identify tasks; they do not require executing Plan 1 before this baseline.
 
+## 2026-10-30 Current Startup Gains
+
+Use the actual OCUDU startup YAML after operator-reported live tuning:
+DU1 TX 70 / RX 35 dB in `configs/du1_b210_n78_3660mhz.yml` and
+DU2 TX 60 / RX 10 dB in `configs/du2_b210_n78_40mhz.yml`. DU2's values apply
+to the modified 9250-MHz FR3 hardware path confirmed as its ongoing deployment.
+Falcon's
+maintained DU2 template, the current tables and the YAML example below match
+those values. The retired 3750-MHz DU1 runtime configuration has been removed.
+Dated checkpoints below retain their original gains; historical configuration
+capture uses the committed file from Git rather than a live startup path.
+
 ## 2026-10-29 DU2 Radio Profile Update
 
-The maintained DU2 configuration is now `du2_b210_n78_40mhz.yml`: 40 MHz
+At this checkpoint, DU2 migrated to `du2_b210_n78_40mhz.yml`: 40 MHz
 bandwidth, 46.08 MS/s, TX 45 / RX 20 and offline-derived SSB ARFCN `638976`.
 DU1 remains at 3660 MHz / 20 MHz, 23.04 MS/s and TX 70 / RX 35. DU2 keeps its
 logical 3600-MHz n78 carrier. Its designed Pi-Radio branch converts this to a
 9250-MHz OTA center. OCUDU and E2/RIC retain logical n78 cell information.
 The nominal DU2 channel is 3580–3620 MHz at the USRP and, with conversion,
-9230–9270 MHz OTA. The current test has no Pi-Radio; DU2 startup confirms
+9230–9270 MHz OTA. At that checkpoint Pi-Radio was not connected; DU2 startup confirmed
 40 MHz / 46.08 MS/s / SSB `638976`, and the operator confirmed both direct-radio
 UE connections on October 29.
 
@@ -46,8 +59,8 @@ Earlier pass records and lock readbacks in this plan used DU2's 20-MHz profile
 and SSB `639648`. They remain historical evidence. Sustained traffic/KPM with
 the new 40-MHz profile and converted 9250-MHz operation remain to be recorded.
 Use the maintained
-[Spark startup handbook](../docs/dual_ue_spark_quick_commands.md) and refresh
-the [Laptop scripts](../docs/dual_ue_laptop_reconnect_quick_start.md#2-copy-or-update-scripts--laptop-terminal-watchers-stopped)
+[Spark startup handbook](../docs/spark_quick_commands.md) and refresh
+the [Laptop scripts](../docs/laptop_reconnect_quick_start.md#2-copy-or-update-scripts--laptop-terminal-watchers-stopped)
 before running the new profile. The CBRS channel-selection discussion below
 describes the original unconverted baseline rather than the converted OTA band.
 
@@ -55,7 +68,7 @@ describes the original unconverted baseline rather than the converted OTA band.
 
 The operator moved **cold-start reproduction, full repeatability/comparative
 experiments, and bidirectional link-loss/recovery with survivor traffic** to
-[supplemental experiments](../docs/development/dual_ue_supplemental_experiments.md).
+[supplemental experiments](../docs/experiments/supplemental_experiments.md).
 They are follow-up experimental requirements, **not acceptance criteria or
 merge prerequisites for the current Dual UE development scope**. Their status
 remains not completed; this scope change does not turn them into passed tests.
@@ -76,7 +89,7 @@ retain their separate requirements.
 
 ## Historical Checkpoints through 2026-10-13
 
-The [single-link runbook](../docs/runbooks/full_reproduction_runbook.md) records successful
+The [single-link runbook](../docs/operations/legacy_single_ue.md) records successful
 SA registration and application traffic with IMSI `001010000000001`, followed
 by real five-metric KPM reception from DU1. This is historical evidence, not a
 claim that those services or radios are running now.
@@ -88,7 +101,7 @@ Single-UE uplink functionality and five-metric KPM reception passed. Underflow
 remediation is deferred by the operator's 2026-10-13 instruction; the dual-link
 UL acceptance requirements remain pending.
 
-The [SIM preparation record](../docs/setup/sim_provisioning_and_dual_ue.md) identifies
+The [SIM preparation record](../docs/operations/setup/sim_provisioning_and_dual_ue.md) identifies
 two provisioned cards and two physical RM500Q modems. Both new subscribers have now registered on their intended cells. Two DU/radios
 have started; both private IP paths and concurrent TCP UL functionality have
 passed. At that checkpoint full repeatability was pending; the October 24
@@ -103,7 +116,7 @@ at `2-1.3`; DU2 uses `NVDA8000:02` at `6-1.1`. DU2 subsequently started at
 DU ID 2 and accepted KPM RAN function ID 2. UE2 registration and single-link UL subsequently passed as recorded below;
 concurrent TCP UL and real two-DU KPM subsequently passed the checkpoint below,
 while full acceptance remains pending. See the
-[live startup evidence](../docs/evidence/2026-10-13_du2_startup/manifest.json).
+[live startup evidence](../docs/experiments/evidence/2026-10-13_du2_startup/manifest.json).
 
 The inspected DU1 file uses TX gain **70** and RX gain **35**. Historical records
 include RX 40 and an earlier TX 80. Preserve the actual current file, record its
@@ -122,12 +135,12 @@ per-UE KPM attribution. Pi-Radio/FR3 conversion, MPTCP steering, AI prediction,
 and calibrated RF measurement work have separate acceptance requirements.
 
 The operator subsequently requested separate UE/server subnets. The prepared
-[migration](../docs/networking/dual_ue_subnets.md) retains UE1 `internet / 10.45.0.0/16`
+[migration](../docs/experiments/records/networking/dual_ue_subnets_2026-10-13.md) retains UE1 `internet / 10.45.0.0/16`
 and assigns UE2 `internet2 / 10.46.0.0/16`, with Spark endpoints `10.45.0.1`
 and `10.46.0.1` on the shared `ogstun`. The operator applied the migration:
 SMF/UPF were active, UE2 read back `internet2`, and both gateway addresses/routes
 were present. Deployed files independently match the prepared bundle. See the
-[core migration evidence](../docs/evidence/2026-10-13_dual_subnet_migration/manifest.json).
+[core migration evidence](../docs/experiments/evidence/2026-10-13_dual_subnet_migration/manifest.json).
 UE2 was disabled/detached before application; the subsequent identity/PDU/ping
 checkpoint below now passed, followed by single-link UL/KPM smoke; cold-start
 persistence remains pending. Core migration alone
@@ -138,13 +151,13 @@ After the migration, UE2 modem 5 / IMEI `863305041980706` / IMSI
 DU2 NCI `00066C001` (decimal `6733825`), PCI 2, TAC 7, SSB `639648` and n78,
 with C5GREG `0,1`. The initial 902 lock failure was followed by a successful
 write/readback `2,639648,30,78`; its exact earlier failure cause is not proven.
-See [UE2 registration evidence](../docs/evidence/2026-10-13_du2_registration/manifest.json).
+See [UE2 registration evidence](../docs/experiments/evidence/2026-10-13_du2_registration/manifest.json).
 UE2 subsequently established bearer 3: connected yes, suspended no, APN
 `internet2`, IPv4/static `10.46.0.2/30`, `wwan0`, gateway `10.46.0.1`, MTU 1400.
 Old `internet` bearer 2 was disconnected. The laptop route lookup resolved
 through `wwan0 / table 152`; ping received 5/5 with zero loss, RTT
 min/avg/max/mdev 37.127/116.899/422.149/152.655 ms, and Wi-Fi remained the default
-route. See [IPv4 path evidence](../docs/evidence/2026-10-13_du2_ipv4_path/manifest.json).
+route. See [IPv4 path evidence](../docs/experiments/evidence/2026-10-13_du2_ipv4_path/manifest.json).
 Full dual-link UL/KPM, path-loss/survivor checks, restart retention, and lock enforcement with
 both DUs present remain pending; Steps 7/8's two-UE acceptance is not complete.
 
@@ -157,23 +170,23 @@ single-DU checkpoints remain historical evidence; full acceptance stays pending.
 
 ## 2026-10-13 UE2 / DU2 Single-Link UL Checkpoint
 
-[Evidence](../docs/evidence/2026-10-13_du2_ul/manifest.json) retains the operator's
+[Evidence](../docs/experiments/evidence/2026-10-13_du2_ul/manifest.json) retains the operator's
 client/server output, actual Spark KPM log, parsed rows and current artifact hashes.
 
 - [x] Verify UE2 IMSI `001010000000102` / IMEI `863305041980706`, SA on DU2 PCI 2 / NCI `6733825` / SSB `639648`, and successful lock write/readback.
 - [x] Establish `internet2` IPv4 bearer 3 / `10.46.0.2/30` / `wwan0`; route over table 152 and private ping 5/5 with zero loss while preserving Wi-Fi defaults.
 - [x] Complete 60-second TCP UL: receiver **15.5 Mbit/s over 60.34 s**, sender **15.8 Mbit/s / Retr 1**; client and server summaries agree.
 - [x] Receive **12 complete five-metric KPM reports for UE F1AP 67** with numeric `DRB.UEThpUl` / `RRU.PrbTotUl`, successful subscription/delete responses and the stock success marker. Only DU2 was active; report age 574–896 us.
-- [x] Start DU1 alongside DU2: actual serial `3271233` / USB 3 / PCI 1 / SSB `643680`, F1/E2 completed and RIC accepted DU ID 1; both DU processes observed. See [startup evidence](../docs/evidence/2026-10-13_dual_du_startup/manifest.json).
+- [x] Start DU1 alongside DU2: actual serial `3271233` / USB 3 / PCI 1 / SSB `643680`, F1/E2 completed and RIC accepted DU ID 1; both DU processes observed. See [startup evidence](../docs/experiments/evidence/2026-10-13_dual_du_startup/manifest.json).
 - [x] Recheck UE2 after DU1 joins: intended DU2 NCI/PCI/SSB and SA retained; private ping 5/5, zero loss. This is idle coexistence, not deliberate path-loss testing.
-- [x] Verify UE1 IMEI `863305041978437` / active SIM IMSI `001010000000101`, AT port `/dev/ttyUSB6`, NR5G-SA on DU1 PCI 1 / NCI `6733824` / SSB `643680`; lock write/readback `1,643680,30,78` passed. IPv4 `internet` simple-connect succeeded and listed bearer 4; subsequent actual metadata/path checks are recorded below. See [UE1 registration and UE2 coexistence evidence](../docs/evidence/2026-10-13_du1_registration/manifest.json).
-- [x] Read connected, non-suspended UE1 `internet` bearer 4 / `10.45.0.2/30` / `wwan1` / gateway `10.45.0.1` / MTU 1400. UE1 lookup resolved to table 151 / wwan1, private ping was 5/5 with zero loss, both role lookup/guard rules read back, and UE2 returned echo sequences 1–5 after UE1 configuration. Latest Wi-Fi default-route output was not included. See [dual IPv4 path evidence](../docs/evidence/2026-10-13_dual_ipv4_paths/manifest.json).
-- [x] Complete new UE1 60-second TCP UL / UE2 test traffic idle: receiver **10.5 Mbit/s over 60.23 s**, sender **10.9 Mbit/s / Retr 0**, pipeline exit **0**, timestamped 19:15:26–19:16:27 EDT. Wi-Fi default route read back unchanged. Both DUs had been instructed to remain running; no UE1 KPM capture was supplied. Sender one-second transfer varied, including four zero-transfer intervals, so only UL functionality passes. See [UE1 UL evidence](../docs/evidence/2026-10-13_du1_ul/manifest.json).
-- [x] Verify both DU nodes in the diagnostic xApp and two KPM subscription/delete responses with pipeline exit 0. The 19:29:23–19:30:14 EDT probe received **zero UE callback blocks**; this is subscription/lifecycle evidence, not two-link KPM data. See [subscription evidence](../docs/evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
+- [x] Verify UE1 IMEI `863305041978437` / active SIM IMSI `001010000000101`, AT port `/dev/ttyUSB6`, NR5G-SA on DU1 PCI 1 / NCI `6733824` / SSB `643680`; lock write/readback `1,643680,30,78` passed. IPv4 `internet` simple-connect succeeded and listed bearer 4; subsequent actual metadata/path checks are recorded below. See [UE1 registration and UE2 coexistence evidence](../docs/experiments/evidence/2026-10-13_du1_registration/manifest.json).
+- [x] Read connected, non-suspended UE1 `internet` bearer 4 / `10.45.0.2/30` / `wwan1` / gateway `10.45.0.1` / MTU 1400. UE1 lookup resolved to table 151 / wwan1, private ping was 5/5 with zero loss, both role lookup/guard rules read back, and UE2 returned echo sequences 1–5 after UE1 configuration. Latest Wi-Fi default-route output was not included. See [dual IPv4 path evidence](../docs/experiments/evidence/2026-10-13_dual_ipv4_paths/manifest.json).
+- [x] Complete new UE1 60-second TCP UL / UE2 test traffic idle: receiver **10.5 Mbit/s over 60.23 s**, sender **10.9 Mbit/s / Retr 0**, pipeline exit **0**, timestamped 19:15:26–19:16:27 EDT. Wi-Fi default route read back unchanged. Both DUs had been instructed to remain running; no UE1 KPM capture was supplied. Sender one-second transfer varied, including four zero-transfer intervals, so only UL functionality passes. See [UE1 UL evidence](../docs/experiments/evidence/2026-10-13_du1_ul/manifest.json).
+- [x] Verify both DU nodes in the diagnostic xApp and two KPM subscription/delete responses with pipeline exit 0. The 19:29:23–19:30:14 EDT probe received **zero UE callback blocks**; this is subscription/lifecycle evidence, not two-link KPM data. See [subscription evidence](../docs/experiments/evidence/2026-10-13_dual_kpm_subscriptions/manifest.json).
 - [ ] Complete streaming and deliberate path-survivor checks. Concurrent TCP UL subsequently passed in the checkpoint below. The earlier concurrent launcher's `wait`/`printf` lost variable expansions; its printed zero statuses and end timestamp remain invalid historical records.
 - [x] Accumulate at least 30 real UL-active rows per DU with explicit DU/F1AP attribution, subscription/deletion responses and normal xApp exit. The latest completed capture has 63/61 complete five-metric UL-active rows, approximately 62/61 inside the clock-corrected laptop window; see the checkpoint below.
 - [ ] Complete the full cross-layer modem/SIM/cell/F1AP/bearer ledger under its own scope. Repeated/comparative UDP, cold-start and bidirectional disturbance/survivor work is now tracked as supplemental experiments under the October 24 revision.
-- [ ] Restore and verify connections after modem power cycle: the operator reported `AT+QNWLOCK="common/5g"` readback `0` (affected role unspecified). Treat locks as requiring boot restoration, reselect by IMEI/SIM, reapply each intended lock and require actual PCI/NCI/SSB/SA before PDU; refresh bearer/path and recheck cell before UL. Prior live mappings do not certify restored connections. See [power-cycle observation](../docs/evidence/2026-10-13_modem_lock_power_cycle/manifest.json).
+- [ ] Restore and verify connections after modem power cycle: the operator reported `AT+QNWLOCK="common/5g"` readback `0` (affected role unspecified). Treat locks as requiring boot restoration, reselect by IMEI/SIM, reapply each intended lock and require actual PCI/NCI/SSB/SA before PDU; refresh bearer/path and recheck cell before UL. Prior live mappings do not certify restored connections. See [power-cycle observation](../docs/experiments/evidence/2026-10-13_modem_lock_power_cycle/manifest.json).
 
 This checkpoint is **DU2 Single-Link UL Functionality / KPM Smoke Passed**.
 It does not complete the dual-link baseline or certify RF stability. Underflow
@@ -186,15 +199,15 @@ still used `10.46.0.2`; the new-path preflight correctly refused the collision.
 That allocation and its failed rebinding are historical; subsequent dynamic
 preflight and concurrent UL/KPM are recorded below. A repeatable full cold-start
 workflow remains pending. See
-[UE2 reattachment evidence](../docs/evidence/2026-10-13_ue2_reattach/manifest.json).
+[UE2 reattachment evidence](../docs/experiments/evidence/2026-10-13_ue2_reattach/manifest.json).
 
 ## 2026-10-13 Concurrent TCP UL and Two-DU KPM Checkpoint
 
-[Experiment results report](../docs/reports/dual_ue_ul_experiment_report_2026-10-13.md)
+[Experiment results report](../docs/experiments/reports/dual_ue_ul_experiment_report_2026-10-13.md)
 records the setup, concurrent UL/KPM results, clock alignment, PHY observations
 and the distinction between path separation and unverified fault/access isolation.
 
-[Retained evidence](../docs/evidence/2026-10-13_dual_kpm_reports/manifest.json)
+[Retained evidence](../docs/experiments/evidence/2026-10-13_dual_kpm_reports/manifest.json)
 contains both full Spark KPM logs, 492 parsed rows, RIC lifecycle, selected CU
 identity records, operator laptop metadata/receiver intervals, PHY aggregates
 and the throughput/CRC plot. Laptop values come from the operator transcript;
@@ -242,7 +255,7 @@ while full Plan 3 acceptance and underflow remediation remain pending/deferred.
 The operator requested **uplink-only** acceptance for this checkpoint. The
 frequency migration succeeded within n78; the band itself did not change.
 [Today's log](../dev_logs/2026-10-12_ruibin.md) and the
-[retained evidence manifest](../docs/evidence/2026-10-12_du1_3660mhz/manifest.json)
+[retained evidence manifest](../docs/experiments/evidence/2026-10-12_du1_3660mhz/manifest.json)
 record startup, UE correlation, traffic, telemetry, and configuration hashes.
 
 - [x] Deploy the complete DU1 file at `/home/nyu/ocudu/configs/du1_b210_n78_3660mhz.yml`, preserving the historical base/E2 files; maintained/deployed hashes matched.
@@ -298,8 +311,8 @@ Preparation completed in this revision:
 - [ ] Verify UE2 identity, registration, IPv4 PDU and UL. Repeat discovery after
   reconnecting hardware before the later dual-DU test.
 
-See the [DU2 bring-up procedure](../docs/runbooks/dual_fr1_runbook.md) and
-[preparation evidence](../docs/evidence/2026-10-13_du2_preparation/manifest.json)
+See the [DU2 bring-up procedure](../docs/spark_quick_commands.md#5-start-du1-and-du2-in-separate-terminals-and-keep-both-running) and
+[preparation evidence](../docs/experiments/evidence/2026-10-13_du2_preparation/manifest.json)
 for current commands and explicit preparation-versus-live acceptance status.
 
 ## Carrier Selection and RF Contract
@@ -308,19 +321,21 @@ for current commands and explicit preparation-versus-live acceptance status.
 | --- | --- | --- |
 | Band | n78, explicitly configured | n78, explicitly configured |
 | Carrier NR-ARFCN | `644000` | `640000` |
-| Carrier center | 3660 MHz | 3600 MHz |
+| Logical USRP carrier center | 3660 MHz | 3600 MHz |
 | Channel bandwidth | 20 MHz | 40 MHz |
 | Common SCS | 30 kHz | 30 kHz |
 | Nominal USRP-side channel interval | 3650–3670 MHz | 3580–3620 MHz |
-| Intended OTA center / interval | 3660 MHz / 3650–3670 MHz | 9250 MHz / 9230–9270 MHz via Pi-Radio |
+| Physical OTA center / interval | 3660 MHz / 3650–3670 MHz | 9250 MHz / 9230–9270 MHz via Pi-Radio |
 | SSB NR-ARFCN | `643680` confirmed in startup and 2026-10-13 UE1 lock/serving-cell readback | `638976` derived for 40 MHz and confirmed in October 29 startup |
 | Radio | B210 serial `3271233`, USB 3 at `2-1.3` / controller `NVDA8000:00`; rediscover before use | B210 serial `328B021`, USB 3 at `6-1.1` / controller `NVDA8000:02`; rediscover before use |
 | Sample rate | 23.04 MS/s | 46.08 MS/s |
-| Configured TX / RX gain | 70 / 35 dB | 45 / 20 dB |
+| Configured TX / RX gain | 70 / 35 dB | 60 / 10 dB |
 
 For the direct n78 test, both complete nominal channels lie within the US
-CBRS frequency range, 3550–3700 MHz. The designed 9250-MHz converted OTA path
-is a separate RF arrangement; the CBRS discussion here applies to direct n78.
+CBRS frequency range, 3550–3700 MHz. The current 9250-MHz converted OTA path
+is a separate RF arrangement; the CBRS discussion here applies to the original
+direct n78 baseline. License availability for the project's 9.25-GHz band
+was confirmed by the operator.
 Use this pair only when the applicable operating authorization covers both
 full intervals and the actual location/power/emission conditions. A grant
 restricted to 3550–3650 MHz does not cover the proposed DU1 channel; select a
@@ -360,13 +375,16 @@ them; repeat the affected cases afterward.
 
 ## Topology and Identity Contract
 
-This diagram shows the current direct n78 test. The designed converted
-9250-MHz link-2 branch is shown in the [radio specification](../docs/dual_link_radio_design.md).
+This diagram shows the current deployment, including DU2's 9250-MHz FR3
+branch. The [radio specification](../docs/project_design_and_progress.md) also
+retains the historical direct n78 test arrangement.
 
 ```mermaid
 flowchart LR
     U1[UE1 modem and SIM1] <-->|3660 MHz / 20 MHz| R1[B210 serial 3271233]
-    U2[UE2 modem and SIM2] <-->|3600 MHz / 40 MHz direct test| R2[B210 serial 328B021]
+    U2[UE2 modem and SIM2] <-->|3600 MHz interface / 40 MHz| PUE[UE-side Pi-Radio]
+    PUE <-->|9250 MHz OTA / 40 MHz| PDU[DU-side Pi-Radio]
+    PDU <-->|3600 MHz interface / 40 MHz| R2[B210 serial 328B021]
     R1 <--> D1[OCUDU DU1]
     R2 <--> D2[OCUDU DU2]
     D1 <-->|F1| CU[Shared OCUDU CU]
@@ -428,21 +446,21 @@ they already exist:
 | Location | Purpose |
 | --- | --- |
 | `configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml` | Deployed and verified for single-link UL functionality; underflow remediation deferred |
-| `configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml` | Current 40-MHz DU2 radio/cell/F1 configuration for B210 328B021; startup and operator-confirmed direct UE connection on October 29; sustained 40-MHz traffic/KPM and converted operation pending; earlier experiment records used 20 MHz |
+| `configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml` | Current 40-MHz DU2 configuration for B210 328B021; 3600-MHz logical interface, 9250-MHz OTA through Pi-Radio and TX 60 / RX 10 tuned for the modified FR3 hardware; completed integrated connectivity and sustained traffic/KPM require retained evidence; earlier experiments used direct n78 |
 | `configs/ocudu/dual_fr1/du2_flexric.yml` | Current DU2 E2/KPM overlay and 100-ms scheduler/RLC metrics |
 | `configs/flexric/xapp_du_kpm_base5.conf` | One DU-only five-metric subscription, shared with Plan 2 when available |
 | `patches/flexric/dual-fr1-kpm-diagnostics.patch` | Minimal monitor attribution, missing-value, and lifecycle changes |
 | `scripts/dual_fr1/check_config.py` | Implemented offline identities, F1/E2, nominal channels, missing serial, metrics and writable log checks; operating authorization and SSB derivation remain separate |
 | `scripts/dual_fr1/configure_ue_routes.sh` | Guarded per-UE policy routes and precise rollback |
 | `scripts/dual_fr1/verify_kpm.py` | Per-link report/lifecycle/evidence checks |
-| `docs/runbooks/dual_fr1_runbook.md` | DU2 preparation/bring-up and UL-only acceptance procedure; startup/F1/E2, UE2 solo UL and subsequent concurrent TCP UL / two-DU KPM checkpoints observed; full acceptance pending |
-| `docs/dual_ue_laptop_quick_commands.md` | Separate ordered UE1/UE2 sequences, source/server-destination rules and complete per-role IPv4 reset using current state only. October 13 launcher record: UE1 modem/SIM 13 / bearer 9 / 10.45.0.6/30 / wwan0 / table 151 and UE2 modem/SIM 14 / bearer 10 / 10.46.0.5/30 / wwan1 / table 152. Both exits 0, receiver 13.8/17.3 Mbit/s; that KPM capture has 123 callbacks per DU and 63/61 complete UL-active rows. Approximate +199.27-second historical clock correction gives 62/61 rows inside the laptop run. Full repeatability/comparative UDP, cold-start and bidirectional disturbance experiments are now supplemental, outside current acceptance and merging |
+| `docs/spark_quick_commands.md` | DU2 preparation/bring-up and UL-only acceptance procedure; startup/F1/E2, UE2 solo UL and subsequent concurrent TCP UL / two-DU KPM checkpoints observed; full acceptance pending |
+| `docs/operations/manual_laptop_startup.md` | Separate ordered UE1/UE2 sequences, source/server-destination rules and complete per-role IPv4 reset using current state only. October 13 launcher record: UE1 modem/SIM 13 / bearer 9 / 10.45.0.6/30 / wwan0 / table 151 and UE2 modem/SIM 14 / bearer 10 / 10.46.0.5/30 / wwan1 / table 152. Both exits 0, receiver 13.8/17.3 Mbit/s; that KPM capture has 123 callbacks per DU and 63/61 complete UL-active rows. Approximate +199.27-second historical clock correction gives 62/61 rows inside the laptop run. Full repeatability/comparative UDP, cold-start and bidirectional disturbance experiments are now supplemental, outside current acceptance and merging |
 | `scripts/dual_fr1/reset_ue_network.py` / `tests/dual_ue_reset_test.py` | Implemented per-role IPv4 reset from current IMEI/ports and kernel state, with optional PDU disconnect. Added `--shutdown`: disconnect, clear the role's host path, delete all selected-modem bearer objects and disable it; rereads identity and verifies zero bearers / disabled state. Ordinary reset and disconnect-only behavior are preserved. Thirty-two offline stateful tests passed, covering both roles, other-UE preservation, stale bearers, idempotence, dry run, failed deletion/disable, reconnection and changed identity. No live laptop shutdown executed by the agent |
 | `scripts/dual_fr1/run_dual_ul.py` / `tests/dual_ue_ul_test.py` | Implemented concurrent launcher that discovers both current IMEI/SIM/APN/bearer addresses and interfaces instead of historical tuples, checks installed prefixes and source/unbound routes, and rereads identities before starting either client; supports read-only preflight and records real per-process status/time/metadata, with partial-start/interrupt cleanup. Twenty-five offline tests passed, including indexed/scalar access technologies, LTE/missing-report rejection and different/unreported gateways. Operator's measured concurrent run completed with both exits 0 and receiver 13.8/17.3 Mbit/s, overlapping the latest dual-DU KPM after approximate clock correction. Full acceptance pending |
-| `docs/dual_ue_spark_quick_commands.md` | Spark commands for core/CU/RIC/two-DU startup, both server endpoints, DU-tagged KPM capture and shutdown |
+| `docs/spark_quick_commands.md` | Spark commands for core/CU/RIC/two-DU startup, both server endpoints, DU-tagged KPM capture and shutdown |
 | `scripts/dual_fr1/xapp_oran_moni_dual.c` / `scripts/dual_fr1/build_kpm_monitor.sh` | Built isolated diagnostic using pinned FlexRIC API/library; labels each callback with DU ID, supports finite capture and dense subscription cleanup; latest two completed captures each have 123 real UE callbacks per DU, both subscription/delete pairs and normal exit. Latest capture has 61 simultaneous complete UL-active row pairs. Earlier disconnected-xApp deletion-failure abort path remains unfixed |
-| `docs/evidence/2026-10-13_dual_kpm_reports/` | Retained two full Spark captures, 492 parsed rows, RIC lifecycle, selected CU identity ledger, operator laptop summary/receiver intervals, approximate clock alignment, PUSCH aggregates, reproducible analysis and throughput/CRC plot |
-| `docs/networking/dual_ue_subnets.md` / `scripts/dual_fr1/prepare_dual_subnets.py` / `scripts/dual_fr1/apply_dual_subnets.sh` / `scripts/dual_fr1/ue2_dnn.js` | Dual-subnet migration, backups, saved apply command, targeted UE2 DNN rename and rollback; six mocked apply tests passed; core, registered IPv4/private-ping paths, solo UL and subsequent concurrent TCP UL / dual-DU KPM checkpoints observed; full acceptance pending |
+| `docs/experiments/evidence/2026-10-13_dual_kpm_reports/` | Retained two full Spark captures, 492 parsed rows, RIC lifecycle, selected CU identity ledger, operator laptop summary/receiver intervals, approximate clock alignment, PUSCH aggregates, reproducible analysis and throughput/CRC plot |
+| `docs/experiments/records/networking/dual_ue_subnets_2026-10-13.md` / `scripts/dual_fr1/prepare_dual_subnets.py` / `scripts/dual_fr1/apply_dual_subnets.sh` / `scripts/dual_fr1/ue2_dnn.js` | Dual-subnet migration, backups, saved apply command, targeted UE2 DNN rename and rollback; six mocked apply tests passed; core, registered IPv4/private-ping paths, solo UL and subsequent concurrent TCP UL / dual-DU KPM checkpoints observed; full acceptance pending |
 
 Keep DU1's maintained configuration in Falcon and deploy it to
 `$OCUDU_SOURCE/configs/du1_b210_n78_3660mhz.yml`. DU1 parse/start commands use
@@ -457,8 +475,8 @@ and raw security-bearing logs outside Git; publish only reviewed excerpts.
 
 ## Step 1 Capture the Historical Single Link
 
-- [ ] Read the [handoff](../docs/development/development_handoff.md), single-link runbook,
-  [Spark commands](../docs/single_ue/spark_quick_commands.md), and SIM preparation record.
+- [ ] Read the [handoff](../docs/project_design_and_progress.md#development-and-validation-policy), single-link runbook,
+  [Spark commands](../docs/operations/legacy_single_ue.md#1-baseline-and-physical-connections), and SIM preparation record.
 - [ ] Record source revisions/local diffs, binary/plugin hashes, installed RIC
   and xApp configs, current DU1/CU files, gains, and relevant host settings.
 - [ ] Preserve FlexRIC's uncommitted timestamp repair and `kpm_timestamp.h`.
@@ -487,8 +505,11 @@ git -C "$FALCON_REPO" rev-parse HEAD > "$DUAL_FR1_EVIDENCE/baseline/falcon-head.
 git -C "$OCUDU_SOURCE" rev-parse HEAD > "$DUAL_FR1_EVIDENCE/baseline/ocudu-head.txt"
 git -C "$FLEXRIC_SOURCE" rev-parse HEAD > "$DUAL_FR1_EVIDENCE/baseline/flexric-head.txt"
 git -C "$FLEXRIC_SOURCE" diff --binary > "$DUAL_FR1_EVIDENCE/baseline/flexric-local.patch"
+# The retired 3750-MHz example is read from Git into the evidence directory.
+git -C "$OCUDU_SOURCE" show 9a2ddac6ce:configs/du1_b210_n78_20mhz.yml \
+  > "$DUAL_FR1_EVIDENCE/baseline/du1_3750_committed.yml"
 sha256sum "$OCUDU_SOURCE/configs/cu.yml" \
-  "$OCUDU_SOURCE/configs/du1_b210_n78_20mhz.yml" \
+  "$DUAL_FR1_EVIDENCE/baseline/du1_3750_committed.yml" \
   "$OCUDU_SOURCE/configs/du1_flexric.yml" \
   /usr/local/lib/flexric/libkpm_sm.so \
   /usr/local/bin/flexric/xApp/c/xapp_oran_moni \
@@ -504,6 +525,11 @@ from the proposed CBRS deployment. New-carrier acceptance remains pending.
 
 ## Step 2 Inventory Hardware and Select Both CBRS Carriers
 
+This channel-selection section records the original direct n78 baseline.
+The current DU2 FR3 deployment uses Pi-Radio at 9250 MHz under the
+operator-confirmed project license; its 3600-MHz values describe the logical
+interfaces. Use the current radio specification and Spark handbook for that setup.
+
 - [ ] Stop any DU that owns a radio before using UHD discovery/probe tools.
   Inventory two actual B210 serials, USB paths, antennas, and power connections.
 - [ ] Confirm each radio operates over USB 3 and assess shared controller/load
@@ -516,7 +542,7 @@ from the proposed CBRS deployment. New-carrier acceptance remains pending.
   test conditions. Treat the runbook's 3750-MHz/gain settings as historical
   references; the following checks select this deployment's authorized settings.
 - [ ] Confirm the existing authorization covers DU1 3650–3670 MHz and DU2
-  3580–3620 MHz for the current direct test, the actual lab location,
+  3580–3620 MHz for the original direct n78 baseline, the actual lab location,
   operating power/emissions, and validity
   period. Record the applicable authorization/reference locally; do not infer
   coverage from indoor operation or partial shielding.
@@ -596,8 +622,8 @@ ru_sdr:
   clock: internal
   clock_ppm: 0.0
   freq_offset: 0
-  tx_gain: 45
-  rx_gain: 20
+  tx_gain: 60
+  rx_gain: 10
 cell_cfg:
   dl_arfcn: 640000
   band: 78
@@ -727,7 +753,7 @@ their own credentials. Their live registration is still required in Step 7.
   accepting live attribution. The fixture cannot substitute for two live links.
 
 Build after applying the reviewed diagnostic delta while retaining local
-timestamp changes, using the [recorded FlexRIC build settings](../docs/setup/software_installation_and_drivers.md):
+timestamp changes, using the [recorded FlexRIC build settings](../docs/operations/setup/software_installation_and_drivers.md):
 
 ```bash
 cmake -S "$FLEXRIC_SOURCE" -B "$FLEXRIC_DUAL_BUILD" \
@@ -791,8 +817,8 @@ the existing five-metric xApp subscribes successfully to each.
 - [ ] Validate UE1 alone on DU1 with SIM1/new subscriber, then UE2 alone on DU2
   with SIM2/new subscriber. Preserve each successful standalone result.
 - [ ] Apply the firmware-verified NR SA/n78 selection and cell-lock workflow
-  from the separate [UE1 lock sequence](../docs/dual_ue_laptop_quick_commands.md#ue1-cell-lock)
-  and [UE2 lock sequence](../docs/dual_ue_laptop_quick_commands.md#ue2-cell-lock). Use DU1 PCI 1 /
+  from the separate [UE1 lock sequence](../docs/operations/manual_laptop_startup.md#ue1-cell-lock)
+  and [UE2 lock sequence](../docs/operations/manual_laptop_startup.md#ue2-cell-lock). Use DU1 PCI 1 /
   its newly derived and observed CBRS SSB, and DU2 PCI 2 / its own derived and
   observed SSB. The booklet's historical 649632 lock applies only to 3750 MHz;
   replace it for this deployment. Require each
@@ -800,7 +826,7 @@ the existing five-metric xApp subscribes successfully to each.
 - [ ] Require private PLMN `00101`, intended cell/PCI/SSB, SA registration,
   attached packet service, and connected non-suspended IPv4 bearer: UE1
   `internet / 10.45.0.0/16`, UE2 `internet2 / 10.46.0.0/16` after the
-  [subnet migration](../docs/networking/dual_ue_subnets.md).
+  [subnet migration](../docs/experiments/records/networking/dual_ue_subnets_2026-10-13.md).
   A ready SIM, high signal indicator, or idle `NOCONN` text alone is insufficient.
 - [ ] Attach both concurrently. Record actual bearer IDs, WWAN interfaces,
   addresses/prefix/MTU/gateway, serving cells, and CU/DU UE contexts.
@@ -858,7 +884,7 @@ source-policy route setup for this dual-link test instead.
   path, with no implicit fallback over Wi-Fi or the other modem.
 - Supplemental experiment: disconnect each bearer/remove its run-owned path in
   turn and retain affected-path and survivor-traffic observations. Track this in
-  [bidirectional disturbance experiments](../docs/development/dual_ue_supplemental_experiments.md#3-bidirectional-link-loss-and-recovery);
+  [bidirectional disturbance experiments](../docs/experiments/supplemental_experiments.md#3-bidirectional-link-loss-and-recovery);
   completion is not required for current acceptance or merging. Actual route
   ownership and fallback guards remain required operating behavior.
 
@@ -968,7 +994,7 @@ The following work is tracked separately from current acceptance and merging:
 - [ ] Bidirectional link-loss/recovery: disturb UE2 while UE1 continues traffic,
   then reverse roles, recording survivor behavior and restored PDU/IP/KPM state.
 
-Use the [supplemental experiment requirements](../docs/development/dual_ue_supplemental_experiments.md)
+Use the [supplemental experiment requirements](../docs/experiments/supplemental_experiments.md)
 for the test method and evidence to retain. Keep these checkboxes pending until
 performed; their completion is not an exit criterion for the current baseline.
 Describe only the RF conditions and disturbance directions actually measured.

@@ -1049,17 +1049,22 @@ class CellParsingTest(unittest.TestCase):
         cell = CONNECT.mm_serving_cell({"modem.generic.cell-info": "cell type: 5gnr, serving: yes, ci: 0066c000, physical-ci: 0x1"})
         self.assertEqual((cell["pci"], cell["nci"]), (1, 0x66C000))
 
-    def test_real_archived_qeng_readbacks(self):
-        # Archived October 13 readbacks used the earlier 20-MHz DU2 profile.
-        archived_ssb = {1: 643680, 2: 639648}
-        for ue, name in ((1, "operator_ue1_readback.txt"), (2, "operator_ue2_coexistence_readback.txt")):
-            text = (REPO / "docs/evidence/2026-10-13_du1_registration" / name).read_text()
-            replies = [line for line in text.splitlines() if line.startswith('+QENG: "servingcell"')]
-            self.assertTrue(replies)
+    def test_qeng_sa_readback_examples(self):
+        # Inline protocol examples keep this regression independent of local captures.
+        examples = {
+            1: (643680, (
+                '+QENG: "servingcell","NOCONN","NR5G-SA","TDD",001,01,00066C000,1,7,643680,78,1,-95,-11,20,1,35',
+                '+QENG: "servingcell","NOCONN","NR5G-SA","TDD",001,01,00066C000,1,7,643680,78,1,-96,-11,21,1,34',
+            )),
+            2: (638976, (
+                '+QENG: "servingcell","NOCONN","NR5G-SA","TDD", 001,01,00066C001,2,7,638976,78,1,-90,-11,24,1,40',
+            )),
+        }
+        for ue, (ssb, replies) in examples.items():
             for reply in replies:
                 cell = CONNECT.qeng_serving_cell(reply)
                 self.assertEqual((cell["pci"], cell["nci"], cell["arfcn"], cell["band"], cell["plmn"]),
-                                 (ue, CONNECT.ROLES[ue]["nci"], archived_ssb[ue], 78, "00101"))
+                                 (ue, CONNECT.ROLES[ue]["nci"], ssb, 78, "00101"))
 
     def test_qeng_search_and_nsa_are_not_sa_serving_proof(self):
         for reply in ('+QENG: "servingcell","SEARCH"', '+QENG: "servingcell","NOCONN","NR5G-NSA","TDD",001,01'):

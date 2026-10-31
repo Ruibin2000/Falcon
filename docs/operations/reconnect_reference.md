@@ -1,23 +1,24 @@
 # Dual UE Laptop Automatic Reconnect — Full Reference
 
-Updated: 2026-10-29. Developer: Ruibin.
+Updated: 2026-10-30. Developer: Ruibin.
 
-**Current radio design:** [profiles and validation scope](../dual_link_radio_design.md).
-DU1 uses 3660 MHz / 20 MHz; DU2 uses a 3600-MHz n78 interface / 40 MHz,
-with a designed Pi-Radio OTA path at 9250 MHz. The October 29 test has no
-converters, and the operator confirmed that both UEs connected directly.
+**Current radio design:** [profiles and validation scope](../project_design_and_progress.md).
+DU1 uses 3660 MHz / 20 MHz OTA; DU2 uses 9250 MHz / 40 MHz OTA through
+Pi-Radio with a 3600-MHz logical n78 interface. DU2 TX 60 / RX 10 applies to
+this modified FR3 path. The operator-confirmed direct-radio connections on
+October 29 are a separate historical checkpoint.
 Earlier recovery experiments retain their original 20-MHz DU2 configuration.
 
-The detailed reconnect instructions are archived here from the original Quick Start.
+This reference holds the detailed recovery policy, port ownership checks and troubleshooting. The quick guide is the daily operation entry point.
 For the command-only experiment sequence, use the
-[Laptop reconnect Quick Start](../dual_ue_laptop_reconnect_quick_start.md); it pairs
-with [Spark section 7](../dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)
+[Laptop reconnect Quick Start](../laptop_reconnect_quick_start.md); it pairs
+with [Spark section 7](../spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)
 for the dual-UE identity/RF capture and concurrent iperf upload.
 
 Run these watchers on the **UE laptop** during an experiment. Each one prepares
 its selected UE, verifies connectivity, then keeps monitoring and recovering that
 UE until Ctrl+C shuts it down. For one startup/self-check followed by a passive,
-low-resource wait until Ctrl+C (no ongoing probes), use [laptop one-shot startup and self-check](../dual_ue_automation.md).
+low-resource wait until Ctrl+C (no ongoing probes), use [laptop one-shot startup and self-check](../laptop_single_quick_start.md).
 This guide uses **`reconnect_ue1.sh` / `reconnect_ue2.sh`**. The separate
 **`connect_ue1.sh` / `connect_ue2.sh`** entry points perform one-shot startup
 and a passive wait. Both modes share a per-UE lock, so only one can own a given
@@ -25,13 +26,13 @@ UE at a time.
 
 **2026-10-24 checkpoint:** the current script optimization stage is complete.
 Keep the recovery policy and defaults below. The new
-[English UE2 / FR3 recovery report](../reports/ue2_fr3_recovery_experiment_report_2026-10-24.md)
+[English UE2 / FR3 recovery report](../experiments/reports/ue2_fr3_recovery_experiment_report_2026-10-24.md)
 records two completed recovery cycles with new IP allocations after host NTP
 synchronization; the final operator-directed closing stage is excluded.
 
 **Acceptance scope:** cold-start reproduction, full repeatability and
 bidirectional disturbance/survivor tests are
-[supplemental experiments](../development/dual_ue_supplemental_experiments.md),
+[supplemental experiments](../experiments/supplemental_experiments.md),
 excluded from current Dual UE acceptance and merge prerequisites.
 
 <a id="before-starting"></a>
@@ -39,7 +40,7 @@ excluded from current Dual UE acceptance and merge prerequisites.
 ## 1. Before starting
 
 Start Spark's core, CU and both DUs using
-[Spark quick commands](../dual_ue_spark_quick_commands.md). Keep ModemManager running
+[Spark quick commands](../spark_quick_commands.md). Keep ModemManager running
 on the laptop and close minicom before starting a watcher.
 
 **No manual modem selection, serving-cell query or AT lock sequence is required
@@ -80,7 +81,7 @@ USB/IMEI/IMSI checks or guess a tty number.
 
 The script performs the modem/SIM, enable/registration, serving-cell, PDU,
 interface/routing and ping self-checks. Start Spark's core, CU and both DUs first
-using [Spark quick commands](../dual_ue_spark_quick_commands.md). Keep ModemManager
+using [Spark quick commands](../spark_quick_commands.md). Keep ModemManager
 running and close minicom before launching the script.
 
 ### Laptop dependencies (install once)
@@ -106,16 +107,14 @@ sudo systemctl enable --now ModemManager
 | SSB NR-ARFCN / SCS | `643680` / 30 kHz | `638976` / 30 kHz |
 | Carrier NR-ARFCN | `644000` | `640000` |
 | Channel bandwidth / USRP sample rate | 20 MHz / 23.04 MS/s | 40 MHz / 46.08 MS/s |
-| Configured TX / RX gain | 70 / 35 dB | 45 / 20 dB |
-| Current direct-test OTA center | 3660 MHz | 3600 MHz, no converters |
-| Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
+| Configured TX / RX gain | 70 / 35 dB | 60 / 10 dB |
+| Physical OTA center | 3660 MHz, direct | 9250 MHz via Pi-Radio conversion |
 | Independent reset block | priority `20151` | priority `20152` |
 
 FR1 and FR3 identify the two paths. Both DUs use logical n78 configurations.
-The designed Pi-Radio branch translates DU2's 3600-MHz USRP/modem interfaces
-to a 9250-MHz OTA center. During the current direct test, UE2 operates at
-3600 MHz without converters. OCUDU, E2 and modem locks retain logical n78
-information in either arrangement.
+Pi-Radio translates DU2's 3600-MHz USRP/modem interfaces to its current
+9250-MHz OTA center. OCUDU, E2 and modem locks retain logical n78 information.
+Earlier direct n78 tests remain historical records.
 The current 40-MHz DU2 profile uses SSB `638976`; refresh Laptop scripts before
 reconnecting. Historical 20-MHz experiment readbacks below retain `639648`.
 The common PLMN is `00101`, TAC is `7`, and access must be NR SA. The scripts
@@ -213,10 +212,10 @@ the short PDU-disconnect limit.
 The current Spark seven-metric profile uses **100 ms** DU source windows and
 DU subscription periods; CU identity remains **1000 ms** and Core polling
 **1 second**. Prepare and start Spark using the
-[default startup procedure](../dual_ue_spark_quick_commands.md).
+[default startup procedure](../spark_quick_commands.md).
 Laptop watcher intervals and the 60-second traffic command below are unchanged.
 Verify `granularity_ms=100` and actual per-DU receive/header intervals in
-the [capture inspection reference](../development/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
+the [capture inspection reference](../reference/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
 The period is not a bound on identity recovery or forwarding latency.
 The earlier 1-second captures remain baseline evidence only.
 
@@ -237,8 +236,8 @@ A failed preflight starts neither client; resolve the affected watcher's error
 before continuing.
 
 Spark's two foreground servers must already be listening as described in
-[Spark section 6](../dual_ue_spark_quick_commands.md#6-start-both-iperf-servers-before-the-laptop-sequences).
-Start the [120-second xApp capture in Spark section 7a](../dual_ue_spark_quick_commands.md#7a-start-the-xapp-and-write-a-120-second-txt-capture).
+[Spark section 6](../spark_quick_commands.md#6-start-both-iperf-servers-before-the-laptop-sequences).
+Start the [120-second xApp capture in Spark section 7a](../spark_quick_commands.md#7a-start-the-xapp-and-write-a-120-second-txt-capture).
 Wait for all three intended E2 nodes and three subscriptions, then immediately
 start the two Laptop uploads:
 
@@ -282,11 +281,11 @@ storage; `/tmp` is not permanent storage.
 
 ### Six-minute reconnect stability test
 
-[Spark section 7b](../dual_ue_spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul)
+[Spark section 7b](../spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul)
 is a **360-second expanded xApp capture with both reconnect watchers active**.
 It replaces the previous quick-guide idle/resume exercise. Watcher pings are
 part of this test; no RRC/Core idle transition is required. The earlier
-[manual idle/resume procedure](../development/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test)
+[manual idle/resume procedure](../reference/ue_identity_xapp.md#six-minute-bidirectional-idleresume-test)
 remains a separate optional experiment with its own traffic/capture commands.
 
 The finite [`run_dual_stability.py`](../../scripts/dual_fr1/run_dual_stability.py)
@@ -342,7 +341,7 @@ For the diagnostic trial, select the optional stack-capture launchers for both
 DUs in Spark sections 5a/5b and retain both `/tmp/falcon-duN-crash.*` directories.
 They run the existing binary under GDB and save thread stacks/status on a fatal
 signal. Record that GDB is enabled on both DUs when assessing timing. See the
-[dual-DU capture instructions](../troubleshooting/du2_crash_capture.md).
+[dual-DU capture instructions](du_crash_capture.md).
 
 Evaluate this trial across the following dimensions:
 
@@ -391,7 +390,7 @@ Evaluate this trial across the following dimensions:
    responses and real xApp exit 0. An unreproduced crash remains unresolved
    until its cause is identified or bounded by the intended development scope.
 
-The [expanded capture inspection](../development/ue_identity_xapp.md#expanded-27-metric-capture-inspection)
+The [expanded capture inspection](../reference/ue_identity_xapp.md#expanded-27-metric-capture-inspection)
 provides the raw-row summary commands. `STATUS: completed` from the Laptop
 runner certifies only its traffic/path checks. Connection continuity and
 xApp stability/correctness need the combined watcher/Core/CU/DU/capture review
@@ -570,7 +569,7 @@ properties are not dumped. Healthy monitoring is silent at levels 1 and 2.
 still happen.** It does not mean passive monitoring without network traffic.
 Registration snapshots (state, 3GPP registration/packet state, PLMN, access
 technology and elapsed wait) are saved in the detailed log and shown at level 3;
-see [registration diagnosis](../dual_ue_automation.md#waiting-at-modem-registration)
+see [registration diagnosis](../laptop_single_quick_start.md#waiting-at-modem-registration)
 if the watcher cannot get past that step.
 Verbosity changes terminal detail, not the checks or recovery actions. The older
 `connect_ue*.sh` one-shot scripts retain their boolean `--verbose` flag; the
@@ -790,7 +789,7 @@ needs retained detailed evidence.
 The NR preference query/write formats and `nr5g_disable_mode=2` (disable NSA)
 come from the [Quectel RG50xQ/RM5xxQ AT manual](https://www.quectel.com/content/uploads/2024/05/Quectel_RG50xQRM5xxQ_Series_AT_Commands_Manual_V1.2.pdf).
 The lock readback format also matches the retained
-[UE2 operator evidence](../evidence/2026-10-13_du2_registration/operator_at_readback.txt).
+[UE2 operator evidence](../experiments/evidence/2026-10-13_du2_registration/operator_at_readback.txt).
 The registration option is provided by [ModemManager's 3GPP CLI](https://github.com/linux-mobile-broadband/ModemManager/blob/main/cli/mmcli-modem-3gpp.c).
 The [mmcli entry point](https://github.com/linux-mobile-broadband/ModemManager/blob/main/cli/mmcli.c)
 defaults to a 30-second operation timeout; the watcher overrides it specifically
@@ -906,7 +905,7 @@ it is not acceptance evidence for the deferred/background registration flow.
 
 For read-only radio diagnosis, invoke the Python helper directly, without
 `--auto-cell-lock`. Its `--at-port` uses the same owned-port, read-only serving-cell fallback described in
-[the one-shot guide](../dual_ue_automation.md#serving-cell-mismatch-or-unavailable-getcellinfo).
+[the one-shot guide](../laptop_single_quick_start.md#serving-cell-mismatch-or-unavailable-getcellinfo).
 Use the option on a watcher as follows, replacing the serial link with this UE's
 verified AT port:
 
@@ -918,8 +917,8 @@ sudo python3 -B ~/falcon-ue-connect/reconnect_ue.py --ue 2 --verbose 2 \
 For manual diagnosis only, stop the affected watcher and wait for its shutdown
 result before opening minicom or changing serial settings; close minicom before
 restarting it. Manual modem selection, port opening and AT commands are in the
-[UE1 / FR1 procedure](../dual_ue_laptop_quick_commands.md#12-verify-the-at-port-and-restore-the-du1-lock)
-and [UE2 / FR3 procedure](../dual_ue_laptop_quick_commands.md#22-verify-the-at-port-and-restore-the-du2-lock).
+[UE1 / FR1 procedure](manual_laptop_startup.md#12-verify-the-at-port-and-restore-the-du1-lock)
+and [UE2 / FR3 procedure](manual_laptop_startup.md#22-verify-the-at-port-and-restore-the-du2-lock).
 Install `minicom` separately if needed for that diagnosis. Optional bounded operation:
 
 ```bash
@@ -1067,8 +1066,8 @@ the same session `3d293a88328ef4b45294ee09cd7d3d28` changed its FR3 peer from
 **2026-10-23 19:30:26.906 EDT**, followed by path UP at `19:30:27.046`.
 Raw MPTCP telemetry showed an established subflow to `.4` at
 `19:30:32.221660` and positive received bytes at `19:30:32.622597`.
-See the [configuration/recovery audit](../evidence/2026-10-24_ue_recovery_mptcp/audit.json)
-and [original experiment report](../reports/mptcp_video_experiment_report_2026-10-23.md).
+See the [configuration/recovery audit](../experiments/evidence/2026-10-24_ue_recovery_mptcp/audit.json)
+and [original experiment report](../experiments/reports/mptcp_video_experiment_report_2026-10-23.md).
 This establishes address adaptation in that retained experiment; the new
 disconnect/reconnect helper sequence still needs its own live acceptance run.
 

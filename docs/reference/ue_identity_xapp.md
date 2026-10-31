@@ -1,9 +1,9 @@
 # Standalone CU/DU identity xApp
 
-Deployment update, October 29: the [current two-link design](../dual_link_radio_design.md)
-uses DU1 3660 MHz / 20 MHz and DU2 3600-MHz n78 interface / 40 MHz. Both UE
-connections were operator-confirmed in the direct test without Pi-Radio;
-the designed link-2 OTA path is 9250 MHz through converters. E2 identities
+Deployment update, October 30: the [current two-link design](../project_design_and_progress.md)
+uses DU1 3660 MHz / 20 MHz OTA and DU2 9250 MHz / 40 MHz OTA through Pi-Radio,
+with a 3600-MHz logical n78 interface. DU2 TX 60 / RX 10 applies to the modified
+FR3 hardware. The October 29 direct-radio connections are historical. E2 identities
 remain logical n78, and AMF/SMF remain the source of current UE IP context.
 The identity rules in this document apply to either RF arrangement. Earlier
 experiment records retain their 20-MHz DU2 configuration. The integrated
@@ -118,7 +118,7 @@ The E2 SCTP connector now enables `SCTP_NODELAY`. Leaving it unset allows
 Nagle buffering to interact with the 200 ms delayed-SACK timer. An isolated
 100 ms loopback sender reproduced gaps up to 208.09 ms with
 NODELAY off, versus 99.85–100.19 ms with it on. The subsequent
-[live validation](../reports/dual_ue_100ms_validation_report_2026-10-25.md)
+[live validation](../experiments/reports/dual_ue_100ms_validation_report_2026-10-25.md)
 records receive intervals of 96.214–103.879 ms for FR1 and 98.042–101.965 ms
 for FR3, with no reversed headers or reported collector ingress loss.
 RIC already enables NODELAY; its source/plugin ABI is unchanged.
@@ -148,15 +148,15 @@ supported and cannot be combined explicitly with `--du-metrics`.
 The live run verifies both fixes for sustained connections, including equal
 F1 ID 1 on both DUs and 2,338 continuously matched rows after startup.
 For repetition, use
-[the Spark procedure](../dual_ue_spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
+[the Spark procedure](../spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
 A live legacy-DU subscription remains separate from this new-rate verification.
 
 ## Build and offline verification
 
 The October 25 scope/NODELAY correction passes 76 Python and 29 native checks,
 including independent APER decoding with duplicate per-DU F1 IDs. Retained
-[verification metadata](../evidence/2026-10-25_cu_du_scope_fix/verification.json)
-and [SCTP comparison](../evidence/2026-10-25_cu_du_scope_fix/sctp_cadence.json)
+[verification metadata](../experiments/evidence/2026-10-25_cu_du_scope_fix/verification.json)
+and [SCTP comparison](../experiments/evidence/2026-10-25_cu_du_scope_fix/sctp_cadence.json)
 are offline evidence. The linked live report separately verifies receive
 cadence, typed metric delivery and current dual-UE binding.
 
@@ -345,7 +345,7 @@ outside E2 callbacks. Missing KPM values remain `no_value`, measured zero
 remains `0`, and incomplete-flag absence is distinct from false. Collection
 time is the KPM report header, not a reconstructed per-sample timestamp.
 
-The [actual live TXT trial](../evidence/2026-10-21_ue_identity_live/10_single_ue1_txt_iperf/bindings.txt)
+The [actual live TXT trial](../experiments/evidence/2026-10-21_ue_identity_live/10_single_ue1_txt_iperf/bindings.txt)
 contains 118 records, with 117 consecutive observed matches during a UE1
 iperf test. Its first record remains unresolved while waiting for CU identity.
 To inspect a completed run using standard Ubuntu tools:
@@ -460,7 +460,7 @@ without any verified history can still have unknown IP: real-time output cannot
 recover identity information that has not arrived. Using `--fresh-only`
 disables history, including when the local JSON enables it.
 
-The [independent-link regression](../evidence/2026-10-21_ue_identity_live/15_independent_links_replay/comparison.json)
+The [independent-link regression](../experiments/evidence/2026-10-21_ue_identity_live/15_independent_links_replay/comparison.json)
 checks the previous real 637-row trace: 581 original bindings remain unchanged,
 29 UE1 rows now match using fresh own CU/Core inputs and their established
 DU/F1 scope, and 27 rows lack an initial established scope or CU identity.
@@ -468,7 +468,7 @@ Both fresh-only and last-known give 610 matched, 0 cached, 27 unresolved for
 this trace. Raw-source checks on the additional 29 matches confirm CU age at
 most 999,105 us and Core age at most 966,709 us. This is a file-only check,
 not a new live acceptance. The
-[earlier history-only regression](../evidence/2026-10-21_ue_identity_live/14_last_known_policy_replay/comparison.json)
+[earlier history-only regression](../experiments/evidence/2026-10-21_ue_identity_live/14_last_known_policy_replay/comparison.json)
 retains its archived configuration without independent-link matching; its 29
 cached rows describe the superseded intermediate policy.
 
@@ -488,7 +488,7 @@ with many context changes may therefore need a controlled restart.
 ## Six-minute bidirectional idle/resume test
 
 This remains a separate manual idle/resume experiment. The current
-[Spark section 7b](../dual_ue_spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul)
+[Spark section 7b](../spark_quick_commands.md#7b-six-minute-reconnect-stability-with-alternating-and-concurrent-ul)
 uses reconnect watchers and alternating/concurrent traffic for stability; it
 does not require idle transitions.
 
@@ -500,7 +500,7 @@ is 120 seconds (`cu_cp_unit_config.h`); the CU base/identity overlay do not
 override it. Each role therefore gets 150 seconds without generated traffic.
 Core must actually report idle; stopping iperf alone does not prove idle.
 
-The first [real bidirectional run](../reports/ue_identity_dual_ue_live_2026-10-21.md#live-six-minute-bidirectional-idleresume-validation)
+The first [real bidirectional run](../experiments/reports/ue_identity_dual_ue_live_2026-10-21.md#live-six-minute-bidirectional-idleresume-validation)
 passes independent current matching: 645 matched / 648 total, three own
 startup/resume boundary records, and zero cached. Each UE's observed Core idle
 interval lasts about 30 seconds while its peer has 30 consecutive matched
@@ -768,13 +768,13 @@ still unverified and must not be assumed from matching printed times.
 
 ## Evidence and remaining validation
 
-See the [implementation record](../reports/ue_identity_implementation_2026-10-21.md)
+See the [implementation record](../experiments/reports/ue_identity_implementation_2026-10-21.md)
 for commands and baselines, and the
-[single-UE live report](../reports/ue_identity_single_ue1_live_2026-10-21.md)
+[single-UE live report](../experiments/reports/ue_identity_single_ue1_live_2026-10-21.md)
 for real Core schema, CU/DU E2, Laptop path and sustained-UL evidence. The
 single-UE experimental association passed with 57/58 then 117/118 matched
 rows; each initial row remained unresolved during subscription warmup.
-The subsequent [dual-UE live report](../reports/ue_identity_dual_ue_live_2026-10-21.md)
+The subsequent [dual-UE live report](../experiments/reports/ue_identity_dual_ue_live_2026-10-21.md)
 records three subscriptions, 223 DU samples, 221 correct observed matches and
 two initial unresolved samples. Both concurrent iperf clients exit 0, receiver
 13.2/11.9 Mbit/s. An independent raw-input audit checks all matched Core/CU/DU

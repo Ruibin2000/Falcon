@@ -1,11 +1,12 @@
 # Dual UE Supplemental Experiments
 
-Updated: 2026-10-29. Developer: Ruibin.
+Updated: 2026-10-30. Developer: Ruibin.
 
-Use the [current radio design](../dual_link_radio_design.md): DU1 at
-3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz. Record whether
-link 2 is direct n78 or converted to the designed 9250-MHz OTA path; the
-October 29 connection checkpoint used direct radio without Pi-Radio. Keep
+Use the [current radio design](../project_design_and_progress.md): DU1 at
+3660 MHz / 20 MHz OTA and DU2 at 9250 MHz / 40 MHz OTA through Pi-Radio,
+with a 3600-MHz logical n78 interface. DU2's ongoing configuration uses the
+modified FR3 hardware and tuned TX 60 / RX 10. The October 29 connection
+checkpoint used direct radio without Pi-Radio and remains historical. Keep
 RF mode, gains and bandwidths explicit in comparisons. The two cells have
 different capacities (51 / 106 PRBs), so equal raw throughput is not an
 acceptance expectation. Earlier dual-20-MHz results retain their original scope.
@@ -75,14 +76,14 @@ the survivor throughout each cycle.
   traces from that same run. Radio/PDU recovery alone does not measure video QoE.
 
 Two UE2 recovery cycles are already documented in the
-[October 24 report](../reports/ue2_fr3_recovery_experiment_report_2026-10-24.md).
+[October 24 report](reports/ue2_fr3_recovery_experiment_report_2026-10-24.md).
 The complete symmetric disturbance/survivor experiment remains to be performed.
-The earlier [bidirectional idle/resume trial](../reports/ue_identity_dual_ue_live_2026-10-21.md)
+The earlier [bidirectional idle/resume trial](reports/ue_identity_dual_ue_live_2026-10-21.md)
 retains its measured identity-association scope.
 
-Use the [Spark commands](../dual_ue_spark_quick_commands.md),
-[manual Laptop commands](../dual_ue_laptop_quick_commands.md) and
-[automatic reconnect guide](../dual_ue_laptop_reconnect_quick_start.md).
+Use the [Spark commands](../spark_quick_commands.md),
+[manual Laptop commands](../operations/manual_laptop_startup.md) and
+[automatic reconnect guide](../laptop_reconnect_quick_start.md).
 Stop experiment traffic and finish xApp cleanup, complete both UE shutdowns,
 then stop the DUs, CU and core. Preserve each run's evidence before clearing
 temporary directories or restarting the hosts.

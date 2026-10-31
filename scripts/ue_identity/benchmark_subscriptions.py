@@ -24,10 +24,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--seconds", type=int, default=60)
-    parser.add_argument("--source-events", type=Path, default=ROOT/"docs/evidence/2026-10-25_dual_ue_27kpm_stability/xapp/inputs.ndjson.gz")
+    parser.add_argument("--source-events", type=Path, required=True,
+                        help="local captured NDJSON input (.gz supported); experiment archives are not in Git")
     args = parser.parse_args()
     if not 5 <= args.seconds <= 300:
         parser.error("offline replay span must be 5..300 seconds; this is not live stability acceptance")
+    if not args.source_events.is_file():
+        parser.error("--source-events must name an existing local capture; experiment archives are not in Git")
     out = args.output_dir.resolve()
     out.mkdir(parents=True, exist_ok=False)
     first = None

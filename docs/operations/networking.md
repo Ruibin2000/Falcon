@@ -4,19 +4,19 @@ Updated: 2026-10-24. The operator applied this migration on `spark-7c40`
 (Open5GS `2.8.0~noble5`) on October 23. Independent read-only checks confirmed
 the deployed configuration, addresses, return routes and active SMF/UPF services.
 Subsequent post-split traffic passed in the
-[October 23 MPTCP video trial](../reports/mptcp_video_experiment_report_2026-10-23.md);
+[October 23 MPTCP video trial](../experiments/reports/mptcp_video_experiment_report_2026-10-23.md);
 fresh UE2 PDU/IP recovery and both ping modes passed in the
-[October 24 recovery trial](../reports/ue2_fr3_recovery_experiment_report_2026-10-24.md).
+[October 24 recovery trial](../experiments/reports/ue2_fr3_recovery_experiment_report_2026-10-24.md).
 Cold-boot persistence remains untested and is tracked as a
-[supplemental experiment](../development/dual_ue_supplemental_experiments.md),
+[supplemental experiment](../experiments/supplemental_experiments.md),
 not a prerequisite for current acceptance or merging.
 
 ## Current layout
 
-The [current radio design](../dual_link_radio_design.md) uses DU1 at
-3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz, with a
-designed Pi-Radio 9250-MHz OTA path. The October 29 direct-radio test has no
-converters. The radio bandwidth/conversion changes retain the DNN, subnet,
+The [current radio design](../project_design_and_progress.md) uses DU1 at
+3660 MHz / 20 MHz OTA and DU2 at 9250 MHz / 40 MHz OTA through Pi-Radio,
+with a 3600-MHz logical n78 interface. The October 29 direct-radio test was
+a historical checkpoint without converters. The current deployment retains the DNN, subnet,
 TUN and policy-table assignments below; always rediscover the allocated UE IP.
 
 | Role | DNN / APN | UE IPv4 pool | Spark interface | Spark service endpoint |
@@ -82,10 +82,10 @@ Require the address/interface pairs above, UP flags, MTU 1400,
 `10.45.0.0/16` through `ogstun_1`, `10.46.0.0/16` through `ogstun_2`, and active
 services. A return-route lookup alone does not establish UE connectivity.
 
-Repeat each role's complete [laptop sequence](../dual_ue_laptop_quick_commands.md)
+Repeat each role's complete [laptop sequence](manual_laptop_startup.md)
 to rebuild its actual bearer/WWAN/policy path, then verify source-bound ping
 and individual/concurrent traffic against the paired
-[Spark servers](../dual_ue_spark_quick_commands.md). Use newly read UE addresses;
+[Spark servers](../spark_quick_commands.md). Use newly read UE addresses;
 the `.2` destinations in the retained route probes are routing checks only.
 
 ## Archived migration and reproduction
@@ -114,7 +114,7 @@ conflicting TUNs and active services. It refuses an existing backup destination.
 For reproduction from the captured pre-migration state, stop MPX/iperf traffic
 on both hosts. In each selected laptop UE terminal, verify the actual modem,
 disconnect its PDU and disable it using the
-[laptop procedure](../dual_ue_laptop_quick_commands.md). USB removal and Spark
+[laptop procedure](manual_laptop_startup.md). USB removal and Spark
 shutdown are unnecessary; CU/DU/RIC can remain running. The historical apply
 command, using the archived copy, is:
 
@@ -144,11 +144,11 @@ failure-recovery branch have not been exercised.
 
 ## Evidence and remaining validation
 
-The [manifest](../evidence/2026-10-23_dual_tun_split/manifest.json) separates
-[operator output](../evidence/2026-10-23_dual_tun_split/operator_stdout.txt), the
-independent [runtime snapshot](../evidence/2026-10-23_dual_tun_split/runtime_snapshot.json)
-and [archived guard verification](../evidence/2026-10-23_dual_tun_split/archive_verify_stdout.txt).
-The [archive validation record](../evidence/2026-10-23_dual_tun_split/archive_validation.json)
+The [manifest](../experiments/evidence/2026-10-23_dual_tun_split/manifest.json) separates
+[operator output](../experiments/evidence/2026-10-23_dual_tun_split/operator_stdout.txt), the
+independent [runtime snapshot](../experiments/evidence/2026-10-23_dual_tun_split/runtime_snapshot.json)
+and [archived guard verification](../experiments/evidence/2026-10-23_dual_tun_split/archive_verify_stdout.txt).
+The [archive validation record](../experiments/evidence/2026-10-23_dual_tun_split/archive_validation.json)
 records checksum, script syntax, documentation shell syntax and link checks.
 All five deployed files match the archived prepared hashes; SMF configuration,
 management default routing and IPv4 policy rules match the captured baseline.

@@ -5,8 +5,8 @@ This directory preserves 15 files byte-for-byte from the prepared bundle
 `spark-7c40`, creating `ogstun_1 / 10.45.0.1/16` and
 `ogstun_2 / 10.46.0.1/16`, both with MTU 1400.
 
-See the [migration and rollback guide](../../../../docs/networking/dual_ue_tun_split.md)
-and [retained evidence](../../../../docs/evidence/2026-10-23_dual_tun_split/manifest.json).
+See the [migration and rollback guide](../../../../docs/operations/networking.md)
+and [retained evidence](../../../../docs/experiments/evidence/2026-10-23_dual_tun_split/manifest.json).
 
 | Artifact | Purpose |
 | --- | --- |
@@ -24,6 +24,6 @@ The deployed backup is `/var/backups/falcon-dual-tun-c8f9f749`.
 
 This bundle is specific to the captured host/configuration and is already
 applied. Do not rerun `apply.sh` on the current Spark. Post-split traffic is
-recorded in the [October 23 MPTCP report](../../../../docs/reports/mptcp_video_experiment_report_2026-10-23.md).
+recorded in the [October 23 MPTCP report](../../../../docs/experiments/reports/mptcp_video_experiment_report_2026-10-23.md).
 Live migration rollback, automatic migration-failure recovery and cold-boot
 validation remain untested.

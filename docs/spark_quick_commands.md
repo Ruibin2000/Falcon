@@ -1,11 +1,12 @@
 # Dual UE Spark Quick Commands — 100 ms DU / 1 s CU and app subscriptions
 
-Updated: 2026-10-29. Developer: Ruibin Chen.
+Updated: 2026-10-30. Developer: Ruibin Chen.
 
-**Radio design:** [current profiles and validation scope](dual_link_radio_design.md).
-DU1 is 3660 MHz / 20 MHz; DU2 is a 3600-MHz n78 interface / 40 MHz,
-designed for 9250-MHz OTA through Pi-Radio. The current test has no converters;
-the operator confirmed both UE connections on October 29 in direct n78 mode.
+**Radio design:** [current profiles and validation scope](project_design_and_progress.md).
+DU1 is 3660 MHz / 20 MHz OTA. DU2 uses 9250-MHz FR3 OTA through Pi-Radio,
+with a 3600-MHz logical n78 interface / 40 MHz and tuned TX 60 / RX 10 dB.
+This is DU2's ongoing deployment after the hardware modification. The
+October 29 direct n78 connection test remains a separate historical checkpoint.
 
 This is the complete Spark startup and experiment procedure for two UEs,
 using the first expanded **27-measurement** DU profile at **100 ms** and CU identity
@@ -29,7 +30,7 @@ xApp-to-TXT diagnostic captures.
 These defaults apply throughout configuration, build checks, startup and
 result inspection below. Actual expanded 100 ms operation must be verified from the new
 capture; configuration values alone do not establish live timing. See the
-[first-expansion contract](e2sm-kpm/du_kpm_expansion_stage1.md) for units,
+[first-expansion contract](reference/kpm_metrics.md) for units,
 sample counts, latest-value ages and missing-data rules. The accepted seven
 and legacy five profiles remain available; diagnostic mode defaults to seven,
 while application subscription mode defaults to 27 and fresh-only matching.
@@ -53,26 +54,26 @@ carries serving-DU scope in its optional RAN UE identity; the captured
 DUs are supported. Shared context-generation and remaining restart/reuse/
 performance gates are still open in
 [Plan 4](../plans/cu-ue-ip-e2-binding.md). The application interface is described in
-the [subscription guide](kpm_app_interface.md) and
+the [subscription guide](interface/README.md#10-service-operation-and-offline-verification) and
 [Plan 2](../plans/xapp-kpm-app-subscription.md). Core IP allocation and MPTCP
 steering remain separate from this dummy delivery test. The
-[October 13 DU-only UL/KPM results](evidence/2026-10-13_dual_kpm_reports/manifest.json)
+[October 13 DU-only UL/KPM results](experiments/evidence/2026-10-13_dual_kpm_reports/manifest.json)
 remain historical [Plan 3](../plans/dual-ue-du-fr1-channels.md) evidence.
 
 Run setup/service commands on Spark; the traffic block explicitly marked Laptop
 runs there. Use Bash and separate foreground
 terminals for CU, RIC, each DU, each iperf server, xApp and the single dummy. Use the
-[Laptop reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md) for
+[Laptop reconnect Quick Start](laptop_reconnect_quick_start.md) for
 automatic UE connection/recovery and the section 7 concurrent iperf test;
 manual modem/AT/routing/client commands remain in
-[Dual UE Laptop Quick Commands](dual_ue_laptop_quick_commands.md).
+[Dual UE Laptop Quick Commands](operations/manual_laptop_startup.md).
 Startup order: prepare artifacts → Core → identity-configured RIC
 → identity-enabled CU → both DUs → both servers → complete Laptop UE1 sequence
 → complete Laptop UE2 sequence → section 7c xApp → single dummy → dual upload.
 Every service/client is started manually in the foreground. Reuse healthy infrastructure during
 modem recovery; steps 1–5 cover a stopped testbed.
 After a modem power cycle, repeat the affected role's complete laptop sequence
-([UE1](dual_ue_laptop_quick_commands.md#ue1-start) / [UE2](dual_ue_laptop_quick_commands.md#ue2-start)) before traffic. The operator reported
+([UE1](operations/manual_laptop_startup.md#ue1-start) / [UE2](operations/manual_laptop_startup.md#ue2-start)) before traffic. The operator reported
 lock query `0`; its lock must be restored and the actual serving cell verified.
 The October 21 Laptop truth identified IMSI `001010000000101` / `internet` /
 `10.45.0.2` and IMSI `001010000000102` / `internet2` / `10.46.0.2`.
@@ -83,20 +84,20 @@ inputs and the xApp output. The launcher records the bearer default gateway
 while actual routes determine the server path.
 The explicit table-151/table-152 inspection, complete per-role host IPv4 reset
 without old-session parameters, guarded rebuilding and both private-path checks are in
-[UE1 recovery](dual_ue_laptop_quick_commands.md#ue1-clean-old-path) and
-[UE2 recovery](dual_ue_laptop_quick_commands.md#ue2-clean-old-path).
+[UE1 recovery](operations/manual_laptop_startup.md#ue1-clean-old-path) and
+[UE2 recovery](operations/manual_laptop_startup.md#ue2-clean-old-path).
 These tables belong to the laptop. Spark keeps service addresses `10.45.0.1`
 and `10.46.0.1`, and its two iperf listeners continue to use the same bindings.
-The laptop's [guarded reset](dual_ue_laptop_quick_commands.md#block-wifi-fallback)
+The laptop's [guarded reset](operations/manual_laptop_startup.md#block-wifi-fallback)
 installs destination blocks that survive reset/shutdown: ordinary ping and
 TCP/UDP to these service IPs cannot fall back to Wi-Fi. Rebuilding installs both
 source and destination lookups; verify both routes before traffic. Management
 Wi-Fi and its default route remain available for other destinations.
-The October 23 [TUN split](networking/dual_ue_tun_split.md) is applied: UE1 uses `ogstun_1`
+The October 23 [TUN split](operations/networking.md) is applied: UE1 uses `ogstun_1`
 and UE2 uses `ogstun_2`, both with MTU 1400. Spark configuration checks passed;
 post-split traffic and UE2 PDU/ping recovery passed in the October 23/24
 reports. Cold-start, full repeatability and bidirectional disturbance/survivor
-tests are [supplemental experiments](development/dual_ue_supplemental_experiments.md),
+tests are [supplemental experiments](experiments/supplemental_experiments.md),
 not current Dual UE acceptance criteria or merge prerequisites.
 
 ## 0. Role assignments and core preparation
@@ -104,10 +105,10 @@ not current Dual UE acceptance criteria or merge prerequisites.
 | Parameter | UE1 / DU1 | UE2 / DU2 |
 | --- | --- | --- |
 | B210 serial | `3271233` | `328B021` |
-| Configured TX / RX gain | 70 / 35 dB | 45 / 20 dB |
+| Configured TX / RX gain | 70 / 35 dB | 60 / 10 dB |
 | Carrier / ARFCN | 3660 MHz / `644000` | 3600 MHz / `640000` |
 | Channel bandwidth / sample rate | 20 MHz / 23.04 MS/s | 40 MHz / 46.08 MS/s |
-| Intended OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
+| Physical OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
 | PCI / SSB / SCS / band | `1` / `643680` / 30 kHz / n78 | `2` / `638976` / 30 kHz / n78 |
 | DU ID / sector / expected NCI | `1` / `0` / `6733824` | `2` / `1` / `6733825` |
 | DU F1 bind | `127.0.10.2` | `127.0.10.3` |
@@ -124,8 +125,8 @@ not current Dual UE acceptance criteria or merge prerequisites.
 The reviewed dual-subnet migration is complete. Preserve bundle
 `/tmp/falcon-dual-subnets.Ir8TjqjO`; do not reapply the first-migration script to
 the migrated core. The old two-address `ogstun` was subsequently split;
-use the [current layout, archived scripts and rollback](networking/dual_ue_tun_split.md).
-See [Dual UE Subnets](networking/dual_ue_subnets.md) for the historical DNN migration. Both cells use
+use the [current layout, archived scripts and rollback](operations/networking.md).
+See [Dual UE Subnets](experiments/records/networking/dual_ue_subnets_2026-10-13.md) for the historical DNN migration. Both cells use
 PLMN `00101`, TAC 7, SST 1 and n78 / SCS 30 kHz, with DU1 at 20 MHz and DU2
 at 40 MHz. Keep K/OPc private
 and preserve the baseline subscriber; do not blindly reset SQN.
@@ -174,21 +175,25 @@ python3 "$FALCON_REPO/scripts/dual_fr1/check_config.py" \
 Require `PASS`: both deployed DU configs must enable scheduler/RLC metrics
 with `metrics.periodicity.du_report_period: 100`. Keep the actual recorded RF
 conditions for the run. DU1 uses 20 MHz, 23.04 MS/s and TX 70 / RX 35;
-DU2 uses 40 MHz, 46.08 MS/s and TX 45 / RX 20. These gains are not calibrated dBm.
+DU2 uses 40 MHz, 46.08 MS/s and TX 60 / RX 10. These gains follow the deployed
+OCUDU YAML after operator-reported live tuning of the modified 9250-MHz FR3
+hardware path. The maintained Falcon templates
+match those startup values. Gain settings are in dB, not calibrated output dBm.
 DU2's USRP-side carrier remains 3600 MHz / n78 / ARFCN `640000`.
-The designed Pi-Radio path translates it to a 9250-MHz OTA center. Its nominal
-40-MHz channel spans 3580–3620 MHz at the USRP and, with conversion, 9230–9270 MHz OTA.
+Pi-Radio translates it to the current 9250-MHz OTA center. Its nominal
+40-MHz channel spans 3580–3620 MHz at the USRP and 9230–9270 MHz OTA.
 OCUDU and E2/RIC continue to describe the logical n78 cell; they do not
 automatically learn Pi-Radio's external frequency conversion.
 
 The 40-MHz configuration uses 106 PRBs at 30 kHz and derives SSB ARFCN
 `638976`; the former 20-MHz setup used `639648`. Before starting Laptop UE2,
 copy the updated connection scripts using the
-[Laptop script update block](dual_ue_laptop_reconnect_quick_start.md#2-copy-or-update-scripts--laptop-terminal-watchers-stopped).
+[Laptop script update block](laptop_reconnect_quick_start.md#2-copy-or-update-scripts--laptop-terminal-watchers-stopped).
 The DU2 startup confirms 40 MHz, 46.08 MS/s and SSB `638976`; both UE
 connections were confirmed by the operator in the October 29 direct test.
-Sustained traffic/KPM with this profile and the converted 9250-MHz path
-require separate run evidence.
+The October 30 hardware/gain confirmation establishes the current FR3 RF
+arrangement. A completed integrated 9250-MHz UE/PDU/connectivity test and
+sustained traffic/KPM run still require their own retained evidence.
 With the default over-the-wire format, this OCUDU implementation selects `sc12`
 for a B2xx radio above 30.72 MS/s; keep the actual startup stream settings in
 the new run's evidence.
@@ -247,7 +252,7 @@ revision. The dry run checks configuration support; live CU identity delivery
 and both DU RF subscriptions are verified in section 7. Both DUs must
 advertise `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB`; a five-metric fallback does not
 validate the RF extension.
-See the [identity implementation guide](development/ue_identity_xapp.md#build-and-offline-verification)
+See the [identity implementation guide](reference/ue_identity_xapp.md#build-and-offline-verification)
 for dependency/build troubleshooting. A successful build is preparation, not
 live binding acceptance.
 
@@ -299,7 +304,7 @@ if (failed) quit(1);
 ```
 
 Stop if either profile fails. Prepare it using its own protected credentials via
-the [subscriber procedure](setup/sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers).
+the [subscriber procedure](operations/setup/sim_provisioning_and_dual_ue.md#prepare-open5gs-subscribers).
 This projection does not verify K/OPc or SQN. Preserve the historical subscriber
 `001010000000001`; do not reset SQN to 96 without checking its current state.
 
@@ -339,10 +344,10 @@ ip -4 route show 10.46.0.0/16
 Require `10/10`; `ogstun_1` must be UP, MTU 1400, with `10.45.0.1/16`, and
 `ogstun_2` must be UP, MTU 1400, with `10.46.0.1/16`. The private routes must
 use their corresponding TUNs. The old name `ogstun` is absent. Current setup,
-archived scripts and rollback are in the [TUN split guide](networking/dual_ue_tun_split.md);
-the two-DNN subscriber history is in the [subnet migration guide](networking/dual_ue_subnets.md).
+archived scripts and rollback are in the [TUN split guide](operations/networking.md);
+the two-DNN subscriber history is in the [subnet migration guide](experiments/records/networking/dual_ue_subnets_2026-10-13.md).
 Original single-subnet repair is in the
-[full runbook](runbooks/full_reproduction_runbook.md#7-start-only-the-required-5gc-functions).
+[full runbook](operations/legacy_single_ue.md#7-start-only-the-required-5gc-functions).
 
 Check the existing read-only identity APIs from Spark before starting RAN:
 
@@ -433,7 +438,7 @@ import yaml
 
 checks = [
     ("DU1", "configs/du1_b210_n78_3660mhz.yml", (70, 35, 20, 23.04)),
-    ("DU2", "configs/du2_b210_n78_40mhz.yml", (45, 20, 40, 46.08)),
+    ("DU2", "configs/du2_b210_n78_40mhz.yml", (60, 10, 40, 46.08)),
 ]
 failed = False
 for label, filename, expected in checks:
@@ -451,11 +456,15 @@ raise SystemExit(1 if failed else 0)
 PY
 ```
 
-Require `PASS` for both DUs: DU1 **TX 70 / RX 35 dB**, DU2 **TX 45 / RX 20 dB**.
+Require `PASS` for both DUs: DU1 **TX 70 / RX 35 dB**, DU2 **TX 60 / RX 10 dB**.
 Also require DU1 **20 MHz / 23.04 MS/s** and DU2 **40 MHz / 46.08 MS/s**.
 The command reads the actual OCUDU startup YAML files. Each DU applies these
 gains when started with the commands below; no runtime console adjustment is
 needed for this setup. Resolve any `FAIL` before starting either DU.
+
+DU1's current launcher reads `configs/du1_b210_n78_3660mhz.yml`.
+Read gains from the actual startup files. The retired 3750-MHz DU1 runtime
+configuration has been removed.
 
 ### 5a. Spark DU1 terminal
 
@@ -516,12 +525,16 @@ PCI 2 / carrier `640000` / SSB `638976`,
 F1/E2 completed, `==== DU started ===`, and RIC accepted gNB 411 / DU ID 2.
 Leave this terminal running.
 
+The cell line reports the logical 3600-MHz n78 interface. Pi-Radio provides
+the current 9250-MHz physical OTA path externally, so the logical carrier,
+band and SSB values above remain the expected startup output.
+
 For the diagnostic stability trial, choose the optional capture launcher for
 **both DUs** when starting the testbed. Reuse an already-debugged DU; an existing
 normal DU needs to exit before its replacement is started. Neither launcher
 attaches to or stops an existing DU. On a fatal signal, each debugger saves
 that DU's all-thread stacks and status in its own directory; keep both paths.
-See [capture details and output files](troubleshooting/du2_crash_capture.md).
+See [capture details and output files](operations/du_crash_capture.md).
 No DU rebuild or system core-dump configuration change is needed. Mark the
 trial as running under GDB, which can change execution timing.
 
@@ -568,16 +581,16 @@ DU terminal with a separate command.
 ;rx_gain 0 35;
 ```
 
-**DU2 — apply the configured TX gain of 45 dB and RX gain of 20 dB:**
+**DU2 — apply the configured TX gain of 60 dB and RX gain of 10 dB:**
 
 Enter each command separately in the DU2 terminal:
 
 ```text
-;tx_gain 0 45;
+;tx_gain 0 60;
 ```
 
 ```text
-;rx_gain 0 20;
+;rx_gain 0 10;
 ```
 
 Require a successful gain acknowledgement after each command.
@@ -608,7 +621,7 @@ Restore DU1's configured TX gain with a separate command in the DU1 terminal:
 For DU2, restore its configured TX gain in the DU2 terminal:
 
 ```text
-;tx_gain 0 45;
+;tx_gain 0 60;
 ```
 
 In another **Spark** terminal, display the gain acknowledgement times for the
@@ -694,13 +707,13 @@ tail -n 40 "$IPERF_SERVER_READ/server.log"
 ```
 
 For the automatic workflow, follow the
-[Laptop reconnect Quick Start](dual_ue_laptop_reconnect_quick_start.md): start
+[Laptop reconnect Quick Start](laptop_reconnect_quick_start.md): start
 one watcher per UE, wait for both connection `SUCCESS` markers and pass the
 dual-upload helper's `--check-only` preflight. Leave both watchers running,
 then continue with section 7 below.
 
-For manual operation, the laptop follows the [complete UE1 sequence](dual_ue_laptop_quick_commands.md#ue1-start)
-in its own terminal, followed by the [complete UE2 sequence](dual_ue_laptop_quick_commands.md#ue2-start)
+For manual operation, the laptop follows the [complete UE1 sequence](operations/manual_laptop_startup.md#ue1-start)
+in its own terminal, followed by the [complete UE2 sequence](operations/manual_laptop_startup.md#ue2-start)
 in another terminal. Each sequence includes identity/cell/PDU, complete role reset,
 its own table/rules, private ping and individual UL with the other UE's test
 traffic idle. Keep both PDU paths active for the concurrent test in step 7.
@@ -789,10 +802,10 @@ These snapshot commands return immediately. To watch an active capture, use
 new output even after the xApp exits. Ctrl+C there stops only `tail`.
 
 Once subscriptions are ready, immediately run the Laptop's
-[60-second concurrent iperf command](dual_ue_laptop_reconnect_quick_start.md#6-start-spark-section-7a-then-upload-for-60-seconds).
-The [preceding current-IP/route preflight](dual_ue_laptop_reconnect_quick_start.md#5-check-both-current-ips-and-routes--laptop-terminal-3)
+[60-second concurrent iperf command](laptop_reconnect_quick_start.md#6-start-spark-section-7a-then-upload-for-60-seconds).
+The [preceding current-IP/route preflight](laptop_reconnect_quick_start.md#5-check-both-current-ips-and-routes--laptop-terminal-3)
 must pass first; keep both reconnect watchers running through this capture.
-The [manual dual-upload procedure](dual_ue_laptop_quick_commands.md#dual-ul)
+The [manual dual-upload procedure](operations/manual_laptop_startup.md#dual-ul)
 is available when using manual UE setup instead. Keep both clients' actual current
 IP/SUPI/DNN and completion summaries for comparison; do not substitute old
 `.2` addresses. The 120-second capture leaves time for startup and the upload.
@@ -804,7 +817,7 @@ Expected: both roles repeatedly show `status=matched` with their current
 Laptop IP, SUPI and DNN; both DUs carry 27 raw metrics with `granularity_ms=100`.
 Allow startup rows to remain unresolved until fresh CU/Core inputs arrive.
 For detailed metric, timing and input-loss analysis, use the
-[development reference](development/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
+[development reference](reference/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
 
 ### 7b. Six-minute reconnect stability with alternating and concurrent UL
 
@@ -827,7 +840,7 @@ directories with the xApp capture. A fresh trial is required after replacing
 a running DU; repeat UE connection verification before traffic.
 
 Before starting this capture, complete the preparation in the
-[Laptop reconnect stability commands](dual_ue_laptop_reconnect_quick_start.md#7a-six-minute-stability-test--both-reconnect-watchers-stay-running)
+[Laptop reconnect stability commands](laptop_reconnect_quick_start.md#7a-six-minute-stability-test--both-reconnect-watchers-stay-running)
 until the traffic runner shows `READY` and both watchers have reported
 `SUCCESS`. All Laptop transfers, watcher/traffic commands, phase schedules
 and result checks are maintained there. Normal watcher pings stay enabled;
@@ -882,9 +895,9 @@ directories** from section 6 as well. `status.json` / `backtrace.txt` are
 written only after that debugger stops/exits, so they need not exist while a
 healthy DU is still running. Timestamp/source checks
 and metric correctness criteria are in the
-[stability analysis reference](runbooks/dual_ue_laptop_reconnect_reference.md#six-minute-reconnect-stability-test).
+[stability analysis reference](operations/reconnect_reference.md#six-minute-reconnect-stability-test).
 The detailed raw capture inspection remains in the
-[development reference](development/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
+[development reference](reference/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
 
 ### 7c. Live app subscription test with one dummy
 
@@ -1012,7 +1025,7 @@ previous traffic and the previous dummy; stop the previous xApp normally before
 starting this fresh service. Use one dummy for both links throughout this trial.
 
 First prepare the **Laptop** using its matching
-[section 7d](dual_ue_laptop_reconnect_quick_start.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy)
+[section 7d](laptop_reconnect_quick_start.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy)
 until the traffic helper prints `READY`. Leave that prompt open before starting
 the Spark commands below.
 
@@ -1142,8 +1155,8 @@ delete responses while CU/DUs/RIC are still running. For sections 7a/7b, allow
 the finite diagnostic xApp to receive all three delete responses and stop
 naturally. If using reconnect watchers, press Ctrl+C
 in each Laptop watcher terminal and require that role's shutdown `SUCCESS`, as
-shown in the [Laptop reconnect shutdown commands](dual_ue_laptop_reconnect_quick_start.md#8-stop-after-iperf-and-the-xapp-have-finished).
-For manually connected UEs, follow [separate laptop shutdown](dual_ue_laptop_quick_commands.md#cleanup):
+shown in the [Laptop reconnect shutdown commands](laptop_reconnect_quick_start.md#8-stop-after-iperf-and-the-xapp-have-finished).
+For manually connected UEs, follow [separate laptop shutdown](operations/manual_laptop_startup.md#cleanup):
 UE1 first, then UE2, using the updated helper's `--shutdown` to disconnect the PDU,
 clear host IPv4 configuration, delete each modem's bearers and disable it.
 After both laptop shutdown success markers, stop both iperf
@@ -1176,5 +1189,5 @@ logs/summary. Also retain both `/tmp/falcon-iperf-fr1.*` and
 post-exit `exit.txt`. `/tmp` may be cleared on reboot: copy the printed evidence
 directories to a persistent experiment directory before shutdown. Keep raw
 security-bearing Core logs and K/OPc outside Git. The October 21 live functional
-results are retained in the [report](reports/ue_identity_dual_ue_live_2026-10-21.md);
+results are retained in the [report](experiments/reports/ue_identity_dual_ue_live_2026-10-21.md);
 record the new cold-start outcome separately from those historical trials.

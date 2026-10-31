@@ -1,8 +1,9 @@
 # xApp subscription and bound KPM report push plan
 
-Deployment context, October 29: the [current radio design](../docs/dual_link_radio_design.md)
+Deployment context, October 30: the [current radio design](../docs/project_design_and_progress.md)
 uses DU1 at 3660 MHz / 20 MHz and DU2 at a 3600-MHz n78 interface / 40 MHz,
-designed for 9250-MHz OTA through Pi-Radio. Both UEs connected in the current
+now serving the 9250-MHz OTA path through Pi-Radio, with TX 60 / RX 10 tuned
+for the modified FR3 hardware. Both UEs connected in the historical October 29
 direct test without converters. The 120/360-second delivery evidence used
 the earlier 20-MHz DU2 profile. Radio changes retain the version-2 wire
 contract, current-IP matching and 100-ms DU cadence; path labels do not
@@ -39,7 +40,7 @@ execution order. **Five- or seven-metric live acceptance is no longer a prerequi
 for this task.** Their existing code, configs and offline results remain reusable
 transport regressions. The active task starts from the working 27-metric matched
 report pipeline. Maintain this single active plan; the
-[previous text](../docs/evidence/2026-10-26_kpm_app_subscription/plan_before_du27_revision.txt)
+[previous text](../docs/experiments/evidence/2026-10-26_kpm_app_subscription/plan_before_du27_revision.txt)
 is retained only as historical evidence.
 
 ## Implementation checkpoint
@@ -58,13 +59,13 @@ report-ready-to-receive p99 is 3.380/3.595 ms. The final replay has no ingress/c
 overflow or expired report. An initial EOF ordering failure is retained with its
 fix and dedicated regression.
 
-See the [implementation report](../docs/reports/du27_app_subscription_2026-10-26.md),
-[interface and commands](../docs/kpm_app_interface.md) and
-[retained manifest](../docs/evidence/2026-10-26_du27_app_subscriptions/manifest.json).
+See the [implementation report](../docs/experiments/reports/du27_app_subscription_2026-10-26.md),
+[interface and commands](../docs/interface/README.md#10-service-operation-and-offline-verification) and
+[retained manifest](../docs/experiments/evidence/2026-10-26_du27_app_subscriptions/manifest.json).
 Sanitizers instrument the changed collector, with the existing SDK/plugin reused.
 That offline checkpoint started no equipment. Subsequent operator-run
-[120-second](../docs/reports/du27_app_subscription_live_2026-10-26.md) and
-[360-second](../docs/reports/du27_app_subscription_6min_live_2026-10-26.md) live E2
+[120-second](../docs/experiments/reports/du27_app_subscription_live_2026-10-26.md) and
+[360-second](../docs/experiments/reports/du27_app_subscription_6min_live_2026-10-26.md) live E2
 tests use one all-links dummy. They deliver and write all 2,400 / 7,200 reports,
 with push p99 2.314 / 3.595 ms. The six-minute run additionally verifies every raw
 DU row in its subscription window and normal three-subscription E2 cleanup.
@@ -78,12 +79,12 @@ rows confirm the operator's current baseline:
 | Evidence | Finding |
 | --- | --- |
 | [Expanded E2 configuration](../configs/flexric/xapp_ue_identity_expanded.conf) | Exactly the 27 DU actions in `metrics.EXPANDED`; DU 100 ms, CU identity 1000 ms |
-| [Metric registry](../scripts/ue_identity/metrics.py) and [reference](../docs/du_kpm_metrics_reference.md) | Raw metric names, units and INTEGER/REAL/noValue semantics already exist; derived failure ratios remain separate |
+| [Metric registry](../scripts/ue_identity/metrics.py) and [reference](../docs/reference/kpm_metrics.md) | Raw metric names, units and INTEGER/REAL/noValue semantics already exist; derived failure ratios remain separate |
 | [Coordinator](../scripts/ue_identity/xapp_ue_identity.py) | `run.handle()` calls `Mapper.ingest()`, then writes each generated record to stdout NDJSON and optional TXT |
 | [Matcher](../scripts/ue_identity/mapping.py) | Generated records already contain full DU/UE identity, binding status/reason, CU/Core/session relation and current UE IPv4 |
 | [TXT formatter](../scripts/ue_identity/text_report.py) | `format_record()` already formats bound identity and KPM values for a human-readable report |
-| [October 25 live report](../docs/reports/dual_ue_27kpm_stability_report_2026-10-25.md) | Six-minute dual-UE acquisition and association run at nominal 100 ms |
-| [October 26 raw-data recheck](../docs/evidence/2026-10-26_kpm_app_subscription/du27_baseline_recheck.json) | 7,158 rows, all with exactly 27 names and 100 ms granularity; 3,579 rows per DU; 7,138 matched, 19 ambiguous and 1 unresolved |
+| [October 25 live report](../docs/experiments/reports/dual_ue_27kpm_stability_report_2026-10-25.md) | Six-minute dual-UE acquisition and association run at nominal 100 ms |
+| [October 26 raw-data recheck](../docs/experiments/evidence/2026-10-26_kpm_app_subscription/du27_baseline_recheck.json) | 7,158 rows, all with exactly 27 names and 100 ms granularity; 3,579 rows per DU; 7,138 matched, 19 ambiguous and 1 unresolved |
 
 The 20 startup rows without a current match must stay explicitly unbound. The
 existing matched records carry `cu_reported_du_scope` in this captured deployment.
@@ -98,7 +99,7 @@ Current compact matched report payloads in that archive are 2,731–2,905 UTF-8
 bytes before the new subscription envelope. This is a sizing observation for
 the existing reports, not a bound on all future frames.
 
-The [earlier base5 prototype](../docs/evidence/2026-10-26_kpm_app_subscription/base5_interface_reference.txt)
+The [earlier base5 prototype](../docs/experiments/evidence/2026-10-26_kpm_app_subscription/base5_interface_reference.txt)
 passed 25 offline transport cases and a synthetic demonstration. It does not yet
 publish the 27-metric matched reports or their CU/Core/IP bindings. Those results
 cannot establish the new application's correctness, stability or timeliness.

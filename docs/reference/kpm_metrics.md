@@ -1,12 +1,12 @@
 # DU KPM metric reference
 
-Updated: October 29, 2026.
+Updated: October 30, 2026.
 
-The [current two-link deployment](dual_link_radio_design.md) uses DU1 at
+The [current two-link deployment](../project_design_and_progress.md) uses DU1 at
 3660 MHz / 20 MHz (51 PRBs) and DU2 at a 3600-MHz n78 interface / 40 MHz
-(106 PRBs), both at 30-kHz SCS and 100-ms DU reporting. Link 2 is designed
-for Pi-Radio conversion to 9250-MHz OTA; the current direct test has no
-converters. This does not change the measurement names or units. Normalize
+(106 PRBs), both at 30-kHz SCS and 100-ms DU reporting. Link 2 now uses
+Pi-Radio conversion to 9250-MHz OTA, with TX 60 / RX 10 tuned for the modified
+FR3 hardware. This does not change the measurement names or units. Normalize
 PRB usage using each cell's reported capacity; do not assume 51 PRBs for both
 links or interpret the `FR3` label as an E2 physical-frequency measurement.
 
@@ -16,6 +16,8 @@ to the retained `rlc_metrics` reports for the requested UE. The `t` column
 identifies the corresponding DU console label, when one is printed. An em
 dash means that this measurement has no separate column in the console table.
 `INTEGER` and `REAL` describe the E2 record type, before plot unit conversions.
+
+## Raw measurement catalogue
 
 | Reported KPM | Meaning and wire unit / type | DU source field | DU console `t` column | Statistic |
 | --- | --- | --- | --- | --- |
@@ -71,6 +73,79 @@ Plots convert rates to Mbit/s and RLC delay to ms. The xApp additionally derives
 CU identity reports and the joined Core IPv4/session fields are also separate
 from this DU measurement list.
 
-Implementation details and deployment profiles are described in the
-[first DU KPM expansion](e2sm-kpm/du_kpm_expansion_stage1.md). Live observations are
-recorded in the [six-minute dual UE stability report](reports/dual_ue_27kpm_stability_report_2026-10-25.md).
+## Profiles and deployment
+
+| Selection | Configuration | DU period |
+| --- | --- | --- |
+| Explicit `--du-metrics 27` | [Expanded](../../configs/flexric/xapp_ue_identity_expanded.conf) | 100 ms |
+| Default / `--du-metrics 7` | [Accepted seven](../../configs/flexric/xapp_ue_identity.conf) | 100 ms |
+| `--du-metrics 5` | [Legacy five](../../configs/flexric/xapp_ue_identity_five.conf) | 1000 ms |
+
+These selections describe diagnostic acquisition. The current Spark guide
+selects 27 metrics explicitly; application subscription mode uses the full
+`du27_bound_v1` profile. See the [app interface](../interface/README.md).
+
+The [Spark quick commands, section 7](../spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)
+target the expanded capture and retain current IP checks. Older DUs cannot
+serve the new names; rejected metrics must not be silently omitted.
+Rebuild/restart both DUs and the xApp. Healthy CU, RIC and Core can remain
+running. No CU identity or FlexRIC source/SDK ABI change is required.
+The collector is rebuilt to format unsigned measurement integers correctly.
+
+## Missing data and field freshness
+
+The seven existing names and units are retained: `DRB.RlcSduDelayDl`,
+`DRB.UEThpDl`, `DRB.UEThpUl`, `RRU.PrbTotDl`, `RRU.PrbTotUl`,
+`PUSCH.RSRP.dBFS`, `PUSCH.SNR.dB`.
+
+Added names are local UE-scoped metrics supporting one unfiltered
+`NO_LABEL` and preserving requested UE order. Node/cell aggregation is
+rejected. They carry the existing node/DU/F1 identity and current-IP binding.
+Values come from typed scheduler snapshots, not console text.
+
+
+PHR, BSR and DL buffer remain unavailable until an indication arrives.
+Their last-known values persist across windows with increasing age; context
+removal/recreation clears them. Ages use a monotonic clock, are measured
+at source snapshot creation, exclude delivery time and are not refreshed by
+a repeated KPM read.
+
+BSR partial-LCG/format interpretation is unchanged: the last indication's
+sum is not proof of a complete, continuously updated modem queue. DL buffer
+combines last-known per-channel values with potentially different ages.
+
+Buffer sums use 64-bit accumulation and are withheld when they exceed the
+unsigned 32-bit wire domain. Valid zero, negative PHR and missing data remain
+distinct. Nonfinite/out-of-range REAL values are withheld. Current OCUDU
+REAL storage has float precision, so fractional throughput is retained to
+that precision rather than promising exact source-double equality.
+
+## Getter fixes and xApp-derived values
+
+CQI is advertised at UE scope and resolves the actual requested UE.
+PRB-used/percentage getters also find the actual `ue_index`, rather than
+using it as a dense vector offset. Both representations use the full PRB-slot
+count: `100 * used / (directional_slots * cell_prbs)`. The existing
+`RRU.PrbTotDl/Ul` still return INTEGER percentages. The additional local
+`PRB.UsageDl.Percent` and `PRB.UsageUl.Percent` return REAL percentages directly
+from the DU, separately from xApp-derived values. For example, 19 used PRB-slots
+out of 520 produce approximately 3.653846% as REAL and 3% as INTEGER. One out
+of 520 produces approximately 0.192308% as REAL and 0% as INTEGER. Valid zero
+remains REAL zero; a missing UE or zero slot/capacity denominator produces
+noValue. The REAL metrics are UE-only; no node/cell aggregate is advertised.
+
+Raw E2 values remain in `row.metrics`. The xApp separately emits
+`DL.HARQ.FailureRatio` and `UL.CRC.FailureRatio` in `derived_metrics`,
+with source names and unit percent: `100 * NOK / (OK + NOK)`.
+Missing counts or a zero denominator produce noValue. These are observed
+outcome ratios, not first-transmission BLER or IP packet loss. TXT labels
+them as xApp-derived. Seven/five-measurement rows retain their behavior.
+
+## Verification and remaining scope
+
+The dated [100-ms validation](../experiments/reports/dual_ue_100ms_validation_report_2026-10-25.md),
+[27-metric experiment](../experiments/reports/dual_ue_27kpm_stability_report_2026-10-25.md)
+and [subscription experiment](../experiments/reports/du27_app_subscription_6min_live_2026-10-26.md)
+record successful delivery on their captured direct-radio profiles. Current FR3
+integrated connectivity, sustained KPM, snapshot consistency and lifecycle-generation
+proof retain the scope stated in [Project Design and Progress](../project_design_and_progress.md).
