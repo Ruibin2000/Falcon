@@ -1,5 +1,0 @@
-patching file src/lib/3gpp/dec/dec_gnb.c
-/usr/bin/ld: warning: /home/nyu/flexric/build-ocudu/src/sm/kpm_sm/kpm_sm_v03.00/CMakeFiles/kpm_sm.dir/kpm_sm_agent.c.o: requires executable stack (because the .note.GNU-stack section is executable)
-Built isolated candidate plugin: /tmp/falcon-ue-identity-sm/libkpm_sm.so
-/usr/bin/ld: warning: e42_xapp_api.c.o: requires executable stack (because the .note.GNU-stack section is executable)
-Built: /tmp/falcon-xapp-ue-identity

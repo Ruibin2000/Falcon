@@ -1,1 +1,0 @@
-Spark configuration verified: UE1=ogstun_1, UE2=ogstun_2

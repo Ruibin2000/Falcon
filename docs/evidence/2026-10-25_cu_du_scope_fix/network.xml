@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuites tests="1" failures="0" disabled="0" errors="0" time="0.02" timestamp="2026-10-25T16:46:18.140" name="AllTests">
-  <testsuite name="e2ap_network_adapter_test" tests="1" failures="0" disabled="0" skipped="0" errors="0" time="0.02" timestamp="2026-10-25T16:46:18.140">
-    <testcase name="when_e2_setup_response_received_then_ric_connected" file="/home/nyu/ocudu/tests/unittests/e2/e2ap_network_adapter_test.cpp" line="247" status="run" result="completed" time="0.02" timestamp="2026-10-25T16:46:18.140" classname="e2ap_network_adapter_test" />
-  </testsuite>
-</testsuites>

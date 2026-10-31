@@ -1,6 +1,0 @@
-/tmp/falcon-dual-cu.n5YhWTeW/cu.log:1383: 2026-10-14T02:11:35.198719 [CU-UEMNG] [I] ue=13 du_index=1 gnb_du_id=2 pci=2 rnti=0x4608 pcell_index=0: Created new CU-CP UE
-/tmp/falcon-dual-cu.n5YhWTeW/cu.log:1385: 2026-10-14T02:11:35.198771 [CU-CP-F1] [I] ue=13 du_ue=7 cu_ue=7: Added UE context
-/tmp/falcon-dual-cu.n5YhWTeW/cu.log:1390: 2026-10-14T02:11:35.198874 [CU-CP-F1] [I] Tx PDU du=2 ue=13 cu_ue=7 du_ue=7: DLRRCMessageTransfer
-/tmp/falcon-dual-cu.n5YhWTeW/cu.log:2204: 2026-10-14T02:14:35.071542 [CU-UEMNG] [I] ue=19 du_index=0 gnb_du_id=1 pci=1 rnti=0x460c pcell_index=0: Created new CU-CP UE
-/tmp/falcon-dual-cu.n5YhWTeW/cu.log:2206: 2026-10-14T02:14:35.071616 [CU-CP-F1] [I] ue=19 du_ue=11 cu_ue=11: Added UE context
-/tmp/falcon-dual-cu.n5YhWTeW/cu.log:2211: 2026-10-14T02:14:35.071662 [CU-CP-F1] [I] Tx PDU du=1 ue=19 cu_ue=11 du_ue=11: DLRRCMessageTransfer

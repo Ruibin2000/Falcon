@@ -1,5 +1,0 @@
-Running main() from ./googletest/src/gtest_main.cc
-2026-10-25T21:47:10.760324 [E2SM-KPM] [D] Received RLC metrics: ue=91 DRB1.
-2026-10-25T21:47:10.760325 [E2SM-KPM] [D] Received RLC metrics: ue=7 DRB1.
-[==========] 7 tests from 1 test suite ran. (14 ms total)
-[  PASSED  ] 7 tests.

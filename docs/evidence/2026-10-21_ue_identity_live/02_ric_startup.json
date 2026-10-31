@@ -1,8 +1,0 @@
-{
-  "recorded_at_utc": "2026-10-21T20:21:57.453204+00:00",
-  "stage": "live_ric_startup",
-  "source_log": "/tmp/falcon-identity-ric.3AvCEzED/ric.log",
-  "log_sha256": "9769794113f62e9705df0758a6e7eeb0c1e621f49a69d97febc8d7c2308c73f5",
-  "observation": "Actual startup loads ORAN-E2SM-KPM SM ID 2 from candidate SM_DIR; CU/DU registrations remain pending",
-  "sm_dir": "/tmp/falcon-ue-identity-sm/"
-}

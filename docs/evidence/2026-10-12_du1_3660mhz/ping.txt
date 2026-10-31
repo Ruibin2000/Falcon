@@ -1,6 +1,0 @@
-Operator-provided UE laptop output from the 2026-10-12 session.
-Command: ping -I "$WWAN_IF" -c 5 10.45.0.1
-Source: 10.45.0.2, interface wwan0
-Reply RTTs: 539, 37.9, 37.1, 35.3, 33.6 ms (rounded reply-line values).
-5 packets transmitted, 5 received, 0% packet loss, time 4005ms
-rtt min/avg/max/mdev = 33.593/136.571/538.943/201.191 ms

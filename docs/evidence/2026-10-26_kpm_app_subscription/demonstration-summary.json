@@ -1,8 +1,0 @@
-{
-  "status": "passed",
-  "source": "fixture",
-  "fixture_period_ms": 1000,
-  "independent_clients": 2,
-  "minimum_rows_per_client": 30,
-  "live_acceptance": "pending"
-}

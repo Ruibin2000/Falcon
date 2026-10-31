@@ -1,4 +1,0 @@
-{"time_utc": "2026-10-24T22:10:29.813254+00:00", "direction": "tx", "port": 0, "gain_db": 40.0, "event": "gain_acknowledged", "timestamp_basis": "console_output_observed", "console_log": "spark/du2-startup.log"}
-{"time_utc": "2026-10-24T22:10:43.389353+00:00", "direction": "tx", "port": 0, "gain_db": 70.0, "event": "gain_acknowledged", "timestamp_basis": "console_output_observed", "console_log": "spark/du2-startup.log"}
-{"time_utc": "2026-10-24T22:11:21.871522+00:00", "direction": "tx", "port": 0, "gain_db": 40.0, "event": "gain_acknowledged", "timestamp_basis": "console_output_observed", "console_log": "spark/du2-startup.log"}
-{"time_utc": "2026-10-24T22:12:06.776610+00:00", "direction": "tx", "port": 0, "gain_db": 70.0, "event": "gain_acknowledged", "timestamp_basis": "console_output_observed", "console_log": "spark/du2-startup.log"}
