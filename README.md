@@ -1,9 +1,11 @@
 # Falcon
 
-Experiment reports, raw evidence, plots and run records are retained locally
-under `docs/experiments/` and excluded from Git. Historical artifact links
-require that local archive; a fresh clone contains the instructions, project
-status, interface examples and synthetic test fixtures. See the
+Experiment reports and their selected figures are versioned under
+`docs/experiments/reports/`. Detailed evidence, full message captures, logs,
+CSV/JSON results and working records remain local and are excluded from Git.
+Historical raw-artifact references require that local archive; a fresh clone
+includes the reports, figures, instructions, project status, interface examples
+and synthetic test fixtures. See the
 [archive policy](docs/experiments/README.md#local-archive-policy).
 
 **Current two-link radio profiles, 2026-10-30:** DU1 uses **3660 MHz / 20 MHz / TX 70 / RX 35**;

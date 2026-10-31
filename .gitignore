@@ -4,11 +4,21 @@ sim_du*_credentials.txt*
 # Local editor workspace.
 /Falcon.code-workspace
 
-# Local experiment reports, evidence, records and relocation manifests.
-# Keep only the archive policy/index and reusable experiment instructions.
-/docs/experiments/*
-!/docs/experiments/README.md
-!/docs/experiments/supplemental_experiments.md
+# Detailed experiment captures and working records stay local.
+/docs/experiments/evidence/
+/docs/experiments/records/
+/docs/experiments/documentation_relocation.json
+
+# Publish readable reports and their selected presentation figures.
+# Keep raw data and other generated files out of the report directories.
+/docs/experiments/reports/*
+!/docs/experiments/reports/*.md
+!/docs/experiments/reports/assets/
+/docs/experiments/reports/assets/**/*
+!/docs/experiments/reports/assets/**/
+!/docs/experiments/reports/assets/**/*.png
+!/docs/experiments/reports/assets/**/*.svg
+!/docs/experiments/reports/assets/**/*.pdf
 
 # Former experiment archive locations; prevent accidental reintroduction.
 /docs/evidence/

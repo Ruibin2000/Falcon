@@ -6,13 +6,20 @@ dated results with their original RF configuration and validation scope.
 
 ## Local Archive Policy
 
-Experiment reports, evidence, run records and relocation manifests in this
-directory are local files excluded by the repository `.gitignore`. Only this
-index and `supplemental_experiments.md` are versioned. Artifact links in these
-documents work when the corresponding local archive is present; the artifacts
-are not delivered by a fresh clone.
+Readable reports in `reports/*.md` and their selected PNG/SVG/PDF figures in
+`reports/assets/` are versioned and published with the repository. This index
+and `supplemental_experiments.md` are also versioned.
 
-Keep new run output here or in a root `artifacts/`, `captures/`, `evidence/`,
+Detailed captures in `evidence/`, working verification records in `records/`,
+and `documentation_relocation.json` remain local and are excluded by
+`.gitignore`. This includes complete KPM inputs/outputs, dummy TXT/JSONL data,
+raw logs, packet captures, per-sample CSV/JSON results, run configuration
+snapshots, manifests, analysis helpers and experiment archives. Report references
+marked `local archive` identify these retained files without creating links to
+files absent from GitHub. A fresh clone includes report text and figures;
+reanalysis of captured data requires the local archive separately.
+
+Keep new run output in `evidence/` or in a root `artifacts/`, `captures/`, `evidence/`,
 `logs/`, `outputs/`, `results/`, `runs/` or `tmp/` directory, which are also
 ignored. The quick guides normally create run directories under `/tmp`,
 outside the repository. Logs and packet captures (`*.log`, `*.log.*`,
@@ -23,17 +30,17 @@ interface examples and development logs remain versioned. Automated tests do
 not require this archive. Captured-input benchmarks require an explicit local
 `--source-events` path.
 
-Previously tracked experiment files have been removed from the Git index while
-preserving the local archive. The next commit will remove them from the current
-repository tree; this does not remove files from earlier Git history.
+The local archive preserves previously captured data. Removing detailed data
+from the current repository tree does not remove it from earlier Git history.
 
 | Location | Contents |
 | --- | --- |
-| `reports/` | Readable experiment and implementation reports |
-| `evidence/` | Captured logs, message archives, configuration snapshots, CSVs, plots and analysis helpers |
-| `records/kpm/` | Dated RF/KPM source reviews, build/verification records and semantics trace |
-| `records/bringup/` | Original SA/FlexRIC troubleshooting and timestamp repair |
-| `records/networking/` | Historical two-subnet migration; current networking is in operations |
+| `reports/` | Published experiment and implementation reports |
+| `reports/assets/` | Published figures selected for those reports |
+| `evidence/` | Local captured logs, message archives, configuration snapshots, CSVs, plots and analysis helpers |
+| `records/kpm/` | Local dated RF/KPM source reviews, build/verification records and semantics trace |
+| `records/bringup/` | Local original SA/FlexRIC troubleshooting and timestamp repair |
+| `records/networking/` | Local historical two-subnet migration; current networking is in operations |
 | [Supplemental experiments](supplemental_experiments.md) | Cold-start, repeatability and symmetric disturbance methods |
 
 ## Main Results
@@ -49,14 +56,15 @@ repository tree; this does not remove files from earlier Git history.
 
 ## Reading and Reproduction
 
-The report links its matching evidence directory and analysis command. Preserve
-raw logs, archives and recorded values. Historical manifests retain captured
-source hashes and original source locations; these are provenance, not current
-deployment settings. The reports and evidence moved together, preserving their
-relative layout. The October 13 analysis helper now resolves its own directory;
+Reports retain their analysis commands and local evidence paths. Preserve raw
+logs, archives and recorded values. Published figures are byte-identical copies
+of the selected local figures; the original figures remain with the local data.
+Historical manifests retain captured source hashes and original source locations;
+these are provenance, not current deployment settings. The October 13 analysis
+helper now resolves its own directory;
 its manifest records the previous analyzer hash and this portability change.
 Three other helpers use the updated repository depth. The
-[relocation record](documentation_relocation.json) preserves their original
+local relocation record (`documentation_relocation.json`) preserves their original
 and current hashes; recorded experiment inputs and outcomes are unchanged.
 
 The old `FR3` label in the October 13–26 experiments denoted a direct n78 demo
