@@ -1,6 +1,6 @@
 # xApp and MPTCP application interface
 
-Updated October 30, 2026. Protocol version **2**; metric profile **`du27_bound_v1`**.
+Updated November 1, 2026. Protocol version **2**; metric profile **`du27_bound_v1`**.
 
 This document defines the implemented Falcon interface for an MPTCP/MPX application to subscribe to KPM reports. The xApp pushes each newly generated, currently matched report with its DU/UE identity, current UE IPv4, and 27 raw KPM metrics. The MPTCP application uses that IPv4 to associate the report with its own current path. The same interface has been exercised by an independent dummy application in successful 120 second and 360 second live experiments.
 
@@ -356,11 +356,17 @@ Version-1 requests are not automatically translated. The MPTCP client must updat
 
 ## 8. Working dummy application use case
 
+This section is a historical/reference consumer use case. Normal deployment
+now uses the formal MPTCP server, as reported by the operator on November 1,
+2026. The [Spark startup procedure](../spark_quick_commands.md#7c-start-the-continuous-xapp-and-wait-for-mptcp-registration)
+starts continuous xApp and waits for that server's registration; the reference
+consumer below is not a required startup step.
+
 The independent [dummy_subscriber.py](../../scripts/ue_identity/dummy_subscriber.py) uses this exact socket protocol. It registers once for all matched links, receives both UE paths on one connection, sends ping every 10 s, validates report/profile/identity/timing, and writes TXT through a separate bounded worker. Normal completion unregisters, reads the final acknowledgement and EOF, drains output, writes a summary, and exits.
 
 ### Run the reference consumer
 
-First start the xApp and its existing RIC/CU/DUs/Core using the [Spark subscription commands](../spark_quick_commands.md#7c-live-app-subscription-test-with-one-dummy). Once the service and collector are ready, run **one dummy** in another Spark terminal:
+First start the xApp and its existing RIC/CU/DUs/Core using the [Spark subscription commands](../spark_quick_commands.md#7c-start-the-continuous-xapp-and-wait-for-mptcp-registration). Once the service and collector are ready, run **one dummy** in another Spark terminal:
 
 ```bash
 cd /home/nyu/Desktop/Falcon_repo/Falcon
@@ -378,7 +384,7 @@ DUMMY_RC=${PIPESTATUS[0]}
 printf 'dummy exit=%s\n' "$DUMMY_RC" | tee "$DUMMY_RUN/exit.txt"
 ```
 
-For the exact six-phase traffic workload, follow the matching [Spark section 7d](../spark_quick_commands.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy) and [Laptop section 7d](../laptop_reconnect_quick_start.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy). Finish the dummy before stopping xApp; keep RIC/CU/DUs running until all E2 deletion responses arrive.
+The recorded six-phase workload and timing are preserved in the [six-minute experiment report](../experiments/reports/du27_app_subscription_6min_live_2026-10-26.md#test-window-and-configuration). This is a separate reference experiment. Finish the reference consumer before stopping xApp; keep RIC/CU/DUs running until all E2 deletion responses arrive.
 
 | Output | Contents |
 | --- | --- |
@@ -404,7 +410,7 @@ For the exact six-phase traffic workload, follow the matching [Spark section 7d]
 
 Both runs used one all-links dummy on Spark. The six-minute run preserved all 7,200 raw DU rows in the subscription window, with no duplicate, missing, or reordered delivered report. Both IP bindings stayed constant, and each DU delivered exactly 100 reports in every 10 s bin. It completed registration, 35 pongs, unregistration, and final service shutdown with zero active connections/registrations, empty ingress, no recorded service failures, and dummy/xApp exit code 0.
 
-Detailed [120 second results](../experiments/reports/du27_app_subscription_live_2026-10-26.md), [six minute results with UL/DL plots](../experiments/reports/du27_app_subscription_6min_live_2026-10-26.md), and the [six minute raw archive](../experiments/evidence/2026-10-26_du27_app_subscription_6min_live/live-artifacts.tar.gz) are retained. These runs validate the broker-to-independent-application path. Actual MPTCP client parsing, path-cache behavior, and dashboard integration still need joint testing; 30 minute operation and live reconnect/slow-consumer workloads remain separate acceptance work. The implemented lifecycle/isolation behavior also has offline coverage in the [implementation record](../experiments/reports/du27_app_subscription_2026-10-26.md).
+Detailed [120 second results](../experiments/reports/du27_app_subscription_live_2026-10-26.md), [six minute results with UL/DL plots](../experiments/reports/du27_app_subscription_6min_live_2026-10-26.md), and the [six minute raw archive](../experiments/evidence/2026-10-26_du27_app_subscription_6min_live/live-artifacts.tar.gz) are retained. These runs validate the broker-to-independent-application path. The operator reported formal MPTCP server integration on November 1, 2026. Its quantitative live results are separate from these historical consumer measurements; 30 minute operation and live reconnect/slow-consumer workloads remain separate acceptance work. The implemented lifecycle/isolation behavior also has offline coverage in the [implementation record](../experiments/reports/du27_app_subscription_2026-10-26.md).
 
 The timed dummy's `status: passed` alone does not establish an expected report count: a duration-based run can finish without enforcing a minimum count. For integration acceptance, also require nonzero expected links/counts and reconcile raw source, received JSON, and TXT as done in these archived tests.
 

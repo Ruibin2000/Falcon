@@ -282,6 +282,53 @@ class RadioRecoveryTest(unittest.TestCase):
             self.assertTrue(evidence["cfun_retry"]["functionality_restored"])
             self.assertEqual(evidence["lock_action"], "verified_after_cfun_retry")
 
+    def test_ok_but_disabled_lock_uses_guarded_cfun_retry_for_both_roles(self):
+        for ue in (1, 2):
+            with self.subTest(ue=ue), FakeAT(ue).port() as modem:
+                original = modem.reply
+                command = f'AT+QNWLOCK="common/5g",{ue},{CONNECT.ROLES[ue]["ssb"]},30,78'
+                def reply(request):
+                    if request == command and modem.cfun != 0:
+                        modem.commands.append(request)
+                        return "\r\nOK\r\n"  # Acknowledged without applying.
+                    return original(request)
+                evidence = {}
+                with patch.object(modem, "reply", side_effect=reply):
+                    WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[ue], evidence, allow_cfun_retry=True)
+            self.assertEqual(modem.commands.count(command), 2)
+            self.assertEqual(modem.cfun, 1)
+            self.assertEqual(evidence["lock_after_ok"], ["0"])
+            self.assertEqual(evidence["cfun_retry"]["trigger"], "lock_not_applied")
+            self.assertIsNone(evidence["cfun_retry"]["trigger_cme"])
+            self.assertEqual(evidence["verified_lock"], [str(ue), str(CONNECT.ROLES[ue]["ssb"]), "30", "78"])
+
+    def test_ok_but_disabled_lock_never_cycles_cfun_without_permission(self):
+        with FakeAT(wrong_lock=True).port() as modem:
+            evidence = {}
+            with self.assertRaisesRegex(CONNECT.CellError, "Cell-lock readback mismatch"):
+                WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence)
+        self.assertFalse(any(command.startswith("AT+CFUN=") for command in modem.commands))
+        self.assertNotIn("verified_lock", evidence)
+
+    def test_905_during_cfun_retry_remains_failure_after_verified_restoration(self):
+        command = 'AT+QNWLOCK="common/5g",2,638976,30,78'
+        with FakeAT(require_cfun_zero=True).port() as modem:
+            original = modem.reply
+            def reply(request):
+                if request == command and modem.cfun == 0:
+                    modem.commands.append(request)
+                    return "\r\n+CME ERROR: 905\r\n"
+                return original(request)
+            evidence = {}
+            with patch.object(modem, "reply", side_effect=reply), self.assertRaises(CONNECT.ATCommandError) as caught:
+                WATCH.restore_cell_lock("owned-at-port", {}, CONNECT.ROLES[2], evidence, allow_cfun_retry=True)
+        self.assertEqual(caught.exception.cme_code, 905)
+        self.assertEqual(modem.cfun, 1)
+        self.assertEqual(evidence["cfun_retry"]["status"], "failed")
+        self.assertTrue(evidence["cfun_retry"]["functionality_restored"])
+        self.assertEqual(evidence["cfun_retry"]["lock_write_error"]["cme_code"], 905)
+        self.assertNotIn("verified_lock", evidence)
+
     def test_rejected_cfun_retry_still_restores_functionality_and_keeps_failure(self):
         command = 'AT+QNWLOCK="common/5g",2,638976,30,78'
         with FakeAT(reject=command).port() as modem:

@@ -541,6 +541,67 @@ class ConnectTest(unittest.TestCase):
         self.assertIn(("mmcli", "-m", new, "--disable"), self.network.changes)
         self.assertNotIn(("mmcli", "-m", old, "--disable"), self.network.changes)
 
+    def test_shutdown_waits_for_target_modem_to_reappear_then_checks_new_identity(self):
+        session = self.session(1)
+        session.discover()
+        old, new = session.modem, "/org/freedesktop/ModemManager1/Modem/999"
+        read, inventory_calls, clock = self.network.read, [0], [0.0]
+        peer = self.network.survivor(1)
+        def reenumerating(*command):
+            if command[:2] == ("mmcli", "-m") and command[2] == old:
+                raise subprocess.CalledProcessError(1, command, stderr="couldn't find modem")
+            if command == ("mmcli", "-L"):
+                inventory_calls[0] += 1
+                if inventory_calls[0] < 3:
+                    output = read(*command)
+                    # First list is stale; the next lists only the peer UE.
+                    return output if inventory_calls[0] == 1 else "\n".join(line for line in output.splitlines() if old not in line)
+                if old in self.network.modems:
+                    self.network.modems = {new: self.network.modems[old], **{p: d for p, d in self.network.modems.items() if p != old}}
+                    self.network.bearers[new] = self.network.bearers.pop(old)
+            return read(*command)
+        with patch.object(CONNECT, "read", side_effect=reenumerating), \
+                patch.object(CONNECT.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(CONNECT.time, "sleep", side_effect=lambda delay: clock.__setitem__(0, clock[0] + delay)):
+            result = CONNECT.shutdown_on_interrupt(1, modem_cache=session.modem_cache)
+        self.assertEqual(result["status"], "completed", result)
+        self.assertEqual(result["rediscovery"], dict(attempts=3, status="verified", modem=new))
+        self.assertIn(("mmcli", "-m", new, "--disable"), self.network.changes)
+        self.assertNotIn(("mmcli", "-m", old, "--disable"), self.network.changes)
+        self.assertEqual(self.network.survivor(1), peer)
+
+    def test_shutdown_missing_target_has_bounded_wait_and_no_mutations(self):
+        old = next(iter(self.network.modems))
+        read, clock = self.network.read, [0.0]
+        def missing(*command):
+            output = read(*command)
+            return "\n".join(line for line in output.splitlines() if old not in line) if command == ("mmcli", "-L") else output
+        with patch.object(CONNECT, "read", side_effect=missing), \
+                patch.object(CONNECT.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(CONNECT.time, "sleep", side_effect=lambda delay: clock.__setitem__(0, clock[0] + delay)):
+            result = CONNECT.shutdown_on_interrupt(1, rediscovery_timeout=1)
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["rediscovery"]["status"], "timed_out")
+        self.assertEqual(clock[0], 1)
+        self.assertEqual(self.network.changes, [])
+
+    def test_shutdown_duplicate_imei_and_wrong_sim_do_not_enter_missing_modem_wait(self):
+        for bad in ("duplicate", "sim"):
+            with self.subTest(case=bad):
+                original = CONNECT.kv
+                def invalid(*command):
+                    value = original(*command)
+                    if bad == "duplicate" and command[:2] == ("mmcli", "-m"):
+                        value["modem.generic.equipment-identifier"] = CONNECT.ROLES[1]["imei"]
+                    if bad == "sim" and command[:2] == ("mmcli", "-i"):
+                        value["sim.properties.imsi"] = CONNECT.ROLES[2]["imsi"]
+                    return value
+                with patch.object(CONNECT, "kv", side_effect=invalid), patch.object(CONNECT.time, "sleep") as sleep:
+                    result = CONNECT.shutdown_on_interrupt(1)
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual(self.network.changes, [])
+                sleep.assert_not_called()
+
     def test_cell_drift_after_pdu_stops_before_wwan_configuration(self):
         self.network.drift_on_connect = True
         with self.assertRaises(CONNECT.CellError):

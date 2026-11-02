@@ -1,6 +1,10 @@
-# Dual UE Spark Quick Commands — 100 ms DU / 1 s CU and app subscriptions
+# Dual UE Spark Quick Commands — 100 ms DU / 1 s CU and MPTCP subscriptions
 
-Updated: 2026-10-30. Developer: Ruibin Chen.
+Updated: 2026-11-01. Developer: Ruibin Chen.
+
+For one-terminal startup, DU2 gain commands and unified shutdown, use
+[Spark Auto Quick Start](spark_auto.md). The individual component commands
+below remain available for preparation and diagnosis.
 
 **Radio design:** [current profiles and validation scope](project_design_and_progress.md).
 DU1 is 3660 MHz / 20 MHz OTA. DU2 uses 9250-MHz FR3 OTA through Pi-Radio,
@@ -8,16 +12,17 @@ with a 3600-MHz logical n78 interface / 40 MHz and tuned TX 60 / RX 10 dB.
 This is DU2's ongoing deployment after the hardware modification. The
 October 29 direct n78 connection test remains a separate historical checkpoint.
 
-This is the complete Spark startup and experiment procedure for two UEs,
-using the first expanded **27-measurement** DU profile at **100 ms** and CU identity
-reports at **1 second**. Follow sections 1–6 to prepare/start the testbed,
-then [section 7c](#7c-live-app-subscription-test-with-one-dummy) for the current
-application subscription test. Keep the Python matching/publisher implementation:
-one xApp service pushes both links to **one all-links dummy**, which writes TXT.
-Use 7c for a 120-second dummy session overlapping a 60-second dual uplink. Use
-[7d](#7d-six-minute-alternating-ul-with-one-subscribed-dummy) for a 360-second dummy
-session covering six alternating/concurrent upload phases. Sections 7a/7b retain the earlier direct
-xApp-to-TXT diagnostic captures.
+This is the Spark startup procedure for two UEs, using the expanded
+**27-measurement** DU profile at **100 ms** and CU identity reports at
+**1 second**. The formal MPTCP server is the application subscriber.
+Start the infrastructure in sections 1–5, connect the two Laptop UEs, then use
+[section 7c](#7c-start-the-continuous-xapp-and-wait-for-mptcp-registration)
+to start the xApp and wait for MPTCP registration. The service runs until Ctrl+C
+and pushes each newly matched IDs + IP + KPM report to the registered server.
+The MPTCP server can connect, disconnect and register again independently.
+
+Section 6 and sections 7a/7b are optional standalone iperf/TXT diagnostics.
+They are separate from normal MPTCP operation; run only one xApp mode at a time.
 
 | Source | Default period |
 | --- | --- |
@@ -28,8 +33,8 @@ xApp-to-TXT diagnostic captures.
 | Identity source freshness limit | **3 seconds** |
 
 These defaults apply throughout configuration, build checks, startup and
-result inspection below. Actual expanded 100 ms operation must be verified from the new
-capture; configuration values alone do not establish live timing. See the
+result inspection below. Verify actual expanded 100-ms delivery in the MPTCP
+application's reception status/logs; configuration alone does not establish live timing. See the
 [first-expansion contract](reference/kpm_metrics.md) for units,
 sample counts, latest-value ages and missing-data rules. The accepted seven
 and legacy five profiles remain available; diagnostic mode defaults to seven,
@@ -41,13 +46,13 @@ separately before starting the application subscription service.
 
 The accepted E2 binaries already enable `SCTP_NODELAY` to avoid holding small
 KPM messages behind delayed acknowledgments. This behavior is retained.
-Verify actual receive spacing and ordering again with the expanded capture.
+Verify actual receive spacing and ordering in the application after startup.
 
 The xApp combines DU KPM, CU identity-bearing E2 reports and existing
 read-only AMF/SMF infoAPIs. Each matched report retains:
 gNB/DU/F1 UE ID, SUPI, NGAP IDs/GUAMI, PDU session/DNN/IP, then KPM. The commands
 in sections 7a/7b retain `--observed-unique` for legacy CU compatibility.
-Sections 7c/7d use the current explicit CU scope and fresh-only matching. The updated CU
+Section 7c uses the current explicit CU scope and fresh-only matching. The updated CU
 carries serving-DU scope in its optional RAN UE identity; the captured
 `local.json` admits `du36-cuue28-v1`. Updated records should show
 `assurance=cu_reported_du_scope` and a `CU scope:` line. Equal F1 IDs on the two
@@ -55,21 +60,23 @@ DUs are supported. Shared context-generation and remaining restart/reuse/
 performance gates are still open in
 [Plan 4](../plans/cu-ue-ip-e2-binding.md). The application interface is described in
 the [subscription guide](interface/README.md#10-service-operation-and-offline-verification) and
-[Plan 2](../plans/xapp-kpm-app-subscription.md). Core IP allocation and MPTCP
-steering remain separate from this dummy delivery test. The
+[Plan 2](../plans/xapp-kpm-app-subscription.md). The MPTCP server owns its
+current path/IP table and transport steering; xApp supplies matched KPM reports. The
 [October 13 DU-only UL/KPM results](experiments/evidence/2026-10-13_dual_kpm_reports/manifest.json)
 remain historical [Plan 3](../plans/dual-ue-du-fr1-channels.md) evidence.
 
 Run setup/service commands on Spark; the traffic block explicitly marked Laptop
 runs there. Use Bash and separate foreground
-terminals for CU, RIC, each DU, each iperf server, xApp and the single dummy. Use the
+terminals for CU, RIC, each DU, xApp and the MPTCP server. Optional iperf
+servers use their own terminals. Use the
 [Laptop reconnect Quick Start](laptop_reconnect_quick_start.md) for
-automatic UE connection/recovery and the section 7 concurrent iperf test;
+automatic UE connection/recovery and MPTCP operation;
 manual modem/AT/routing/client commands remain in
 [Dual UE Laptop Quick Commands](operations/manual_laptop_startup.md).
 Startup order: prepare artifacts → Core → identity-configured RIC
-→ identity-enabled CU → both DUs → both servers → complete Laptop UE1 sequence
-→ complete Laptop UE2 sequence → section 7c xApp → single dummy → dual upload.
+→ identity-enabled CU → both DUs → complete Laptop UE1 sequence
+→ complete Laptop UE2 sequence → section 7c xApp → MPTCP server registration
+→ MPTCP operation. Start iperf servers only for the optional diagnostics.
 Every service/client is started manually in the foreground. Reuse healthy infrastructure during
 modem recovery; steps 1–5 cover a stopped testbed.
 After a modem power cycle, repeat the affected role's complete laptop sequence
@@ -657,7 +664,12 @@ live records; hardware timing accuracy still needs measurement on the testbed.
 These tests do not start radios; verify
 F1/E2, console help, both UE paths and traffic after the next actual launch.
 
-## 6. Start both iperf servers before the laptop sequences
+## 6. Optional iperf servers for standalone diagnostics
+
+Normal MPTCP operation does not require these iperf servers. For that workflow,
+prepare the Laptop UEs after sections 1–5 and continue with
+[section 7c](#7c-start-the-continuous-xapp-and-wait-for-mptcp-registration).
+Use this section only for the separate iperf/TXT diagnostics below.
 
 Start each logged server in its own Spark terminal. Before replacing an old
 unlogged listener, finish active Laptop traffic and press Ctrl+C in that
@@ -709,43 +721,43 @@ tail -n 40 "$IPERF_SERVER_READ/server.log"
 For the automatic workflow, follow the
 [Laptop reconnect Quick Start](laptop_reconnect_quick_start.md): start
 one watcher per UE, wait for both connection `SUCCESS` markers and pass the
-dual-upload helper's `--check-only` preflight. Leave both watchers running,
-then continue with section 7 below.
+dual-upload helper's `--check-only` preflight. Leave both watchers running. Continue with
+[section 7c](#7c-start-the-continuous-xapp-and-wait-for-mptcp-registration)
+for MPTCP operation, or explicitly select an optional diagnostic below.
 
 For manual operation, the laptop follows the [complete UE1 sequence](operations/manual_laptop_startup.md#ue1-start)
 in its own terminal, followed by the [complete UE2 sequence](operations/manual_laptop_startup.md#ue2-start)
 in another terminal. Each sequence includes identity/cell/PDU, complete role reset,
 its own table/rules, private ping and individual UL with the other UE's test
-traffic idle. Keep both PDU paths active for the concurrent test in step 7.
+traffic idle. Keep both PDU paths active for MPTCP operation or the selected diagnostic.
 
-## 7. Start the dual UE identity/RF xApp and save TXT results
+## 7. Start the continuous xApp and wait for MPTCP registration
 
-For the current **application subscription** test, use
-[7c](#7c-live-app-subscription-test-with-one-dummy) for the short run or
-[7d](#7d-six-minute-alternating-ul-with-one-subscribed-dummy) for the six-minute
-run. The 7a/7b commands below
-remain direct diagnostic captures: the xApp itself writes their TXT. Run one
-xApp mode at a time. Sections 7c/7d have the dummy own TXT and receipt timing.
+For normal operation, go to
+[section 7c](#7c-start-the-continuous-xapp-and-wait-for-mptcp-registration).
+It starts the subscription service indefinitely and waits for the formal
+MPTCP server to register. The application receives reports over TCP;
+subscription-mode xApp output is not a TXT file.
 
-Use this section for the merged RIC/xApp/E2SM integration test. Finish steps
-1–6 and connect both Laptop UEs first. Keep Core, the identity-configured RIC,
-the identity-enabled CU, both DUs and both iperf listeners running. Finish any
-other xApp before starting this capture.
+The optional 7a/7b commands below retain the earlier direct xApp-to-TXT
+diagnostics. They have finite durations and must be run separately from the
+continuous service. Finish MPTCP traffic and stop its KPM subscription before
+switching to those diagnostic modes; run only one xApp at a time.
 
-Require the RIC to have accepted the three intended E2 nodes: CU/gNB 411,
-gNB 411 / DU ID 1, and gNB 411 / DU ID 2. The xApp discovers nodes at startup;
-if one is missing, fix its E2 connection before launching the xApp.
+For all modes, keep Core, the identity-configured RIC, the identity-enabled CU
+and both DUs running, with both Laptop UE paths prepared. Require the RIC to
+have accepted the three intended E2 nodes: CU/gNB 411, gNB 411 / DU ID 1,
+and gNB 411 / DU ID 2. The collector discovers nodes at startup; resolve a
+missing E2 node before launching xApp. iperf listeners are required only for
+the optional traffic diagnostics.
 
-This command uses the maintained identity coordinator, the **dual UE**
-`local.json`, and the explicit **27-measurement expanded** subscription. The two RF names
-are `PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB`. CU identity subscriptions, including
-`FALCON.UE.RRCState`, remain enabled. `--observed-unique` allows the existing
-experimental CU/DU/Core association; `--fresh-only` disables historical IP
-fallback for this test, so an old cached IP cannot hide a missing current join.
-Both DU subscriptions use **100 ms** reporting/granularity and require the
-100 ms source configs. CU identity remains at 1000 ms. Expect roughly ten
-reports per second per active DU, twenty DU rows per second across the two
-single-UE paths. An idle 100 ms window may have no usable PUSCH sample.
+Both DU subscriptions use **100 ms** reporting/granularity; CU identity stays
+at **1000 ms**. The profile contains all 27 measurements, including
+`PUSCH.RSRP.dBFS` and `PUSCH.SNR.dB`, plus the CU identity source
+`FALCON.UE.RRCState`. Normal service mode uses explicit CU scope and fresh-only
+matching. The optional legacy diagnostics additionally use `--observed-unique`.
+Expect about ten DU reports per second per active matched link; a window
+without usable PUSCH can contain `no_value` RF measurements.
 
 ### 7a. Start the xApp and write a 120-second TXT capture
 
@@ -829,7 +841,7 @@ and leave other applications off the WWAN paths. The test uses the expanded
 **360-second** xApp capture.
 
 Both iperf listeners must use the logged commands from
-[section 6](#6-start-both-iperf-servers-before-the-laptop-sequences).
+[section 6](#6-optional-iperf-servers-for-standalone-diagnostics).
 Retain the FR1 and FR3 server directories to correlate connection/reset errors
 with the Laptop's per-phase results.
 
@@ -899,27 +911,23 @@ and metric correctness criteria are in the
 The detailed raw capture inspection remains in the
 [development reference](reference/ue_identity_xapp.md#expanded-27-metric-capture-inspection).
 
-### 7c. Live app subscription test with one dummy
+### 7c. Start the continuous xApp and wait for MPTCP registration
 
-Use this path for the Python matching/publisher version. **Run exactly one dummy
-with `--all-links`**; it receives both DU/UE links in the same connection and TXT.
-Finish any 7a/7b xApp first. Keep Core, RIC, CU, both DUs and both iperf servers
-running, and complete the Laptop current-IP/route preflight. Healthy RAN services
-can be reused. The three intended E2 nodes must already be present before xApp
-startup. App reconnects do not reconnect the RAN or create more E2 subscriptions.
+Use the Python matching/publisher service for the formal MPTCP server.
+Keep Core, RIC, CU and both DUs running; complete the Laptop current-IP/route
+preflight. Healthy infrastructure can be reused. Finish any 7a/7b diagnostic
+xApp before starting this service. The three intended E2 nodes must already
+be present. Application reconnects do not create additional E2 subscriptions.
 
-#### 7c1. Spark xApp terminal
+#### 7c1. Prepare and start xApp in its Spark terminal
 
-Build the current C collector to a new run directory, even when reusing running
-RAN services. This preserves the previous collector and uses the callback-entry
-timestamps required by the subscription service. The Python service still owns
-identity matching and publication. The build and configuration check start no
-radio or RIC services; stop here on any error.
+Create a fresh service directory and build the collector with an isolated
+plugin. These build/check commands start no radio or RIC services:
 
 ```bash
 cd /home/nyu/Desktop/Falcon_repo/Falcon
-KPM_SUB_RUN=$(mktemp -d /tmp/falcon-dual-subscriptions.XXXXXXXX)
-printf 'Subscription service directory: %s\n' "$KPM_SUB_RUN"
+KPM_SUB_RUN=$(mktemp -d /tmp/falcon-mptcp-xapp.XXXXXXXX)
+printf 'xApp service directory: %s\n' "$KPM_SUB_RUN"
 cp configs/ue_identity/local.json "$KPM_SUB_RUN/local.json"
 cp configs/ue_identity/subscriptions.json "$KPM_SUB_RUN/subscriptions.json"
 FALCON_IDENTITY_SM_DIR="$KPM_SUB_RUN/sm" \
@@ -930,8 +938,8 @@ sed "s#^SM_DIR = .*#SM_DIR = \"$KPM_SUB_RUN/sm/\"#" \
 "$KPM_SUB_RUN/collector" --check-clock
 ```
 
-Keep the printed directory. Retain the source/configuration identities, then
-start the service in the foreground:
+Stop on any error. In the same terminal, retain source/configuration identities
+and start the service:
 
 ```bash
 git -C /home/nyu/Desktop/Falcon_repo/Falcon rev-parse HEAD > "$KPM_SUB_RUN/falcon-head.txt"
@@ -949,218 +957,94 @@ set -o pipefail
     --collector "$KPM_SUB_RUN/collector" \
     --config "$KPM_SUB_RUN/local.json" --e2-config "$KPM_SUB_RUN/xapp.conf" \
     --publish-config "$KPM_SUB_RUN/subscriptions.json" --fresh-only --duration 0 \
-    --capture-events "$KPM_SUB_RUN/inputs.ndjson" \
-    --report-evidence "$KPM_SUB_RUN/source.jsonl" \
     --publisher-summary "$KPM_SUB_RUN/publisher.json"
 ) 2>&1 | tee -i "$KPM_SUB_RUN/xapp.log"
 KPM_SUB_RC=${PIPESTATUS[0]}
 printf 'xApp exit=%s\n' "$KPM_SUB_RC" | tee "$KPM_SUB_RUN/exit.txt"
 ```
 
-Require **both** readiness checkpoints in `xapp.log`:
+Require both readiness checkpoints:
 
-- `SUBSCRIPTION_READY host=127.0.0.1 port=8765 profile=du27_bound_v1 source=e2`:
-  the application listener is ready. It can admit a waiting application.
+- `SUBSCRIPTION_READY host=127.0.0.1 port=8765 profile=du27_bound_v1 source=e2`
+  means the application listener is ready.
 - Three registered E2 nodes, three successful subscriptions, and
-  `identity collector: 3 KPM subscriptions, duration=0`: CU and both DUs are
-  subscribed. Repeated correctly bound dummy reports below establish delivery.
+  `identity collector: 3 KPM subscriptions, duration=0` mean CU and both DUs
+  are subscribed.
 
-Leave this terminal running. `--duration 0` runs until Ctrl+C. Routine xApp TXT
-and per-report stdout are disabled; `inputs.ndjson` and `source.jsonl` are explicit
-verification traces for this test. The service uses current explicit CU scope
-from `local.json` and forces fresh-only matching. It pushes each new matched
-report when generated, without another 100 ms transmission timer.
+Keep this terminal running. `--duration 0` continues until Ctrl+C; there is
+no 120-second or six-minute application window. The service waits for MPTCP
+registration and pushes each new matched report when generated. No extra
+100-ms transmission timer is added. Normal startup writes lifecycle logs;
+raw input/report capture is an explicit troubleshooting option described in
+the [interface guide](interface/README.md#10-service-operation-and-offline-verification).
+`publisher.json` and `exit.txt` are finalized when the service stops.
 
-#### 7c2. Spark dummy terminal
+#### 7c2. Wait for the formal MPTCP server to register
 
-In a new foreground terminal, paste the service directory. Variables do not
-cross terminals. This short run uses **120 seconds**. Use section 7d for the six-minute
-alternating/concurrent test. Retain a new output directory for each session.
+Start the integrated MPTCP server using its own project launch procedure.
+If its KPM client was already waiting for xApp, allow it to reconnect and
+register according to its implemented retry behavior. It must share Spark's
+loopback network namespace with xApp.
 
-```bash
-cd /home/nyu/Desktop/Falcon_repo/Falcon
-read -r -p 'Paste the subscription service directory: ' KPM_SERVICE_RUN
-DUMMY_SECONDS=120
-KPM_DUMMY_RUN=$(mktemp -d /tmp/falcon-dual-dummy.XXXXXXXX)
-printf 'Single dummy directory: %s\n' "$KPM_DUMMY_RUN"
-printf '%s\n' "$KPM_SERVICE_RUN" > "$KPM_DUMMY_RUN/service-directory.txt"
-printf '%s\n' "$DUMMY_SECONDS" > "$KPM_DUMMY_RUN/duration-seconds.txt"
-set -o pipefail
-python3 -B scripts/ue_identity/dummy_subscriber.py \
-  --host 127.0.0.1 --port 8765 --app-id dual-ue-dummy --all-links \
-  --expected-profile du27_bound_v1 --duration "$DUMMY_SECONDS" \
-  --text-output "$KPM_DUMMY_RUN/bindings.txt" \
-  --receipts-output "$KPM_DUMMY_RUN/receipts.jsonl" \
-  --summary "$KPM_DUMMY_RUN/summary.json" --check-timing \
-  2>&1 | tee -i "$KPM_DUMMY_RUN/dummy.log"
-KPM_DUMMY_RC=${PIPESTATUS[0]}
-printf 'dummy exit=%s\n' "$KPM_DUMMY_RC" | tee "$KPM_DUMMY_RUN/exit.txt"
-```
+| Setting | Value |
+| --- | --- |
+| Subscription endpoint | TCP `127.0.0.1:8765` |
+| Protocol version | `2` |
+| Expected metric profile | `du27_bound_v1` |
+| Filter for both links | `{"mode":"all_matched_links"}` |
+| Application identity | The MPTCP server's configured `app_id` |
+| Framing and lifecycle | [Version-2 interface](interface/README.md) |
 
-This is one subscriber for both links. It sends heartbeat every 10 seconds,
-validates complete 27-metric/binding envelopes, timestamps full-frame receipt,
-and writes TXT in a separate bounded worker. At the end it unregisters, receives
-the final acknowledgment/EOF, drains TXT and writes its summary. Leave the xApp
-running until the dummy finishes. Current dummy reconnect is manual: rerun this
-block with a new directory after the previous process exits.
+The MPTCP server performs its own registration, heartbeat and lifecycle
+handling. It needs neither TXT files nor the xApp service directory.
 
-Expect `APP_REGISTER_RECEIVED`, then `APP_REGISTERED` in the xApp terminal.
-The dummy writes both links to `bindings.txt`. After registration, immediately
-run the 60-second upload on the **Laptop**, with both reconnect watchers active:
+In the xApp terminal, expect `APP_REGISTER_RECEIVED`, then `APP_REGISTERED`.
+Confirm that `requested_app_id` / `app_id` identifies the intended MPTCP
+server. `APP_REGISTERED` records admission with its acknowledgement queued;
+the MPTCP client must also receive `registration_status` with
+`status: "registered"`, the current broker instance and subscription ID.
+A listening port or TCP connection alone does not prove registration.
 
-```bash
-python3 ~/falcon-ue-connect/run_dual_ul.py --seconds 60
-```
+Verify delivery in the MPTCP application's own status/logs: received
+`kpm_report` frames must use `data_source: "e2"`, contain all 27 raw metrics,
+and associate `report.ue_ipv4` with the current Laptop UE source addresses.
+Use the Laptop [current-IP/route check](laptop_reconnect_quick_start.md#5-check-both-current-ips-and-routes--laptop-terminal-3),
+rather than old captured IPs or Spark's `.1` endpoints. Expect nominal 100-ms
+per-link updates while each link is active and matched. Registration and
+heartbeat alone do not establish fresh KPM delivery on both paths.
 
-Let the dummy finish all 120 seconds. Expect `status: passed`, equal
-`reports_received`/`text_reports_written`, `unregistered: true` and dummy exit 0.
-Keep its printed directory and the Laptop upload directory. The xApp remains
-running until Ctrl+C; its lifecycle log records normal unregister and disconnect.
+The MPTCP server may disconnect and register again while xApp, Core and RAN
+continue running. Every new connection registers afresh; historical reports
+are not replayed. Do not restart the RAN solely for an application reconnect.
 
-### 7d. Six-minute alternating UL with one subscribed dummy
-
-Run this after the short 7c test. Keep Core, RIC, CU, both DUs, both logged iperf
-servers and both Laptop reconnect watchers running. Keep gains fixed. Finish
-previous traffic and the previous dummy; stop the previous xApp normally before
-starting this fresh service. Use one dummy for both links throughout this trial.
-
-First prepare the **Laptop** using its matching
-[section 7d](laptop_reconnect_quick_start.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy)
-until the traffic helper prints `READY`. Leave that prompt open before starting
-the Spark commands below.
-
-**Spark xApp terminal — prepare a fresh service directory:**
+To inspect lifecycle logs from another Spark terminal:
 
 ```bash
-cd /home/nyu/Desktop/Falcon_repo/Falcon
-KPM_SUB_RUN=$(mktemp -d /tmp/falcon-dual-subscriptions-6min.XXXXXXXX)
-printf 'Subscription service directory: %s\n' "$KPM_SUB_RUN"
-cp configs/ue_identity/local.json "$KPM_SUB_RUN/local.json"
-cp configs/ue_identity/subscriptions.json "$KPM_SUB_RUN/subscriptions.json"
-FALCON_IDENTITY_SM_DIR="$KPM_SUB_RUN/sm" \
-  bash scripts/ue_identity/build.sh "$KPM_SUB_RUN/collector" &&
-sed "s#^SM_DIR = .*#SM_DIR = \"$KPM_SUB_RUN/sm/\"#" \
-  configs/flexric/xapp_ue_identity_expanded.conf > "$KPM_SUB_RUN/xapp.conf" &&
-"$KPM_SUB_RUN/collector" --check-config "$KPM_SUB_RUN/xapp.conf" &&
-"$KPM_SUB_RUN/collector" --check-clock
+read -r -p 'Paste the xApp service directory: ' XAPP_SERVICE_RUN
+tail -n 80 "$XAPP_SERVICE_RUN/xapp.log"
 ```
 
-Stop on any build/config error.
-
-**Spark xApp terminal — print the service directory to copy:**
-
-Run this in the same terminal before starting the service:
-
-```bash
-printf '%s\n' "$KPM_SUB_RUN"
-```
-
-Copy the printed path. When the Spark dummy terminal prompts
-`Paste the subscription service directory:`, paste only this path and press
-Enter. Use the directory from this run; shell variables do not cross terminals.
-
-In the same xApp terminal, start the Python service:
-
-```bash
-git -C /home/nyu/Desktop/Falcon_repo/Falcon rev-parse HEAD > "$KPM_SUB_RUN/falcon-head.txt"
-git -C /home/nyu/Desktop/Falcon_repo/Falcon status --short > "$KPM_SUB_RUN/falcon-status.txt"
-git -C /home/nyu/flexric rev-parse HEAD > "$KPM_SUB_RUN/flexric-head.txt"
-git -C /home/nyu/ocudu rev-parse HEAD > "$KPM_SUB_RUN/ocudu-head.txt"
-sha256sum "$KPM_SUB_RUN/collector" "$KPM_SUB_RUN/sm/libkpm_sm.so" \
-  "$KPM_SUB_RUN/local.json" "$KPM_SUB_RUN/xapp.conf" \
-  "$KPM_SUB_RUN/subscriptions.json" scripts/ue_identity/*.py \
-  scripts/ue_identity/e2_collector.c > "$KPM_SUB_RUN/sha256.txt"
-set -o pipefail
-(
-  printf '%s\n' "$BASHPID" > "$KPM_SUB_RUN/xapp.pid"
-  exec python3 -B scripts/ue_identity/xapp_ue_identity.py \
-    --collector "$KPM_SUB_RUN/collector" \
-    --config "$KPM_SUB_RUN/local.json" --e2-config "$KPM_SUB_RUN/xapp.conf" \
-    --publish-config "$KPM_SUB_RUN/subscriptions.json" --fresh-only --duration 0 \
-    --capture-events "$KPM_SUB_RUN/inputs.ndjson" \
-    --report-evidence "$KPM_SUB_RUN/source.jsonl" \
-    --publisher-summary "$KPM_SUB_RUN/publisher.json"
-) 2>&1 | tee -i "$KPM_SUB_RUN/xapp.log"
-KPM_SUB_RC=${PIPESTATUS[0]}
-printf 'xApp exit=%s\n' "$KPM_SUB_RC" | tee "$KPM_SUB_RUN/exit.txt"
-```
-
-Require `SUBSCRIPTION_READY ... source=e2`, three registered E2 nodes, three
-successful subscriptions and `identity collector: 3 KPM subscriptions, duration=0`.
-Keep this terminal running. The xApp runs continuously; the dummy below defines
-the six-minute receiving window.
-
-**Spark dummy terminal — paste the new service directory and receive for 360 seconds:**
-
-```bash
-cd /home/nyu/Desktop/Falcon_repo/Falcon
-read -r -p 'Paste the subscription service directory: ' KPM_SERVICE_RUN
-DUMMY_SECONDS=360
-KPM_DUMMY_RUN=$(mktemp -d /tmp/falcon-dual-dummy-6min.XXXXXXXX)
-printf 'Single dummy directory: %s\n' "$KPM_DUMMY_RUN"
-printf '%s\n' "$KPM_SERVICE_RUN" > "$KPM_DUMMY_RUN/service-directory.txt"
-printf '%s\n' "$DUMMY_SECONDS" > "$KPM_DUMMY_RUN/duration-seconds.txt"
-set -o pipefail
-python3 -B scripts/ue_identity/dummy_subscriber.py \
-  --host 127.0.0.1 --port 8765 --app-id dual-ue-dummy --all-links \
-  --expected-profile du27_bound_v1 --duration "$DUMMY_SECONDS" \
-  --text-output "$KPM_DUMMY_RUN/bindings.txt" \
-  --receipts-output "$KPM_DUMMY_RUN/receipts.jsonl" \
-  --summary "$KPM_DUMMY_RUN/summary.json" --check-timing \
-  2>&1 | tee -i "$KPM_DUMMY_RUN/dummy.log"
-KPM_DUMMY_RC=${PIPESTATUS[0]}
-printf 'dummy exit=%s\n' "$KPM_DUMMY_RC" | tee "$KPM_DUMMY_RUN/exit.txt"
-```
-
-Require `APP_REGISTERED` for `dual-ue-dummy` in the xApp terminal. Within
-**10 seconds of that registration**, enter the following at the waiting
-**Laptop traffic prompt**:
-
-```text
-START
-```
-
-| Phase | Duration | Laptop upload |
-| --- | --- | --- |
-| 1 | 50 s | UE1 / FR1 |
-| 2 | 50 s | UE2 / FR3 |
-| 3 | 50 s | UE1 + UE2 |
-| 4 | 50 s | UE1 / FR1 |
-| 5 | 50 s | UE2 / FR3 |
-| 6 | 50 s | UE1 + UE2 |
-
-The six phases contain 300 seconds of traffic. The helper allows up to
-335 seconds after `START` for traffic and path checks; starting within 10 seconds
-of dummy registration keeps the full run inside its 360-second connection.
-Both watchers keep checking/recovering throughout. Let the dummy finish all
-360 seconds after the traffic helper completes.
-
-Expected: Laptop `STATUS: completed`, six completed phases, all eight iperf
-client exits 0 and no allocation changes; dummy `status: passed`, equal
-receive/TXT counts, `unregistered: true` and exit 0. Keep the Spark service and
-dummy directories, Laptop `/tmp/falcon-dual-stability-*`, both watcher directories
-and both iperf server logs. This records the subscription/TXT path during the
-same alternating workload as 7b.
-
-After Laptop traffic and the dummy finish, press Ctrl+C in the xApp terminal
-and wait for three E2 subscription deletions and xApp exit 0. Keep CU, both DUs
-and RIC running until cleanup finishes; then use section 8 if ending the testbed.
+The directory is for operator inspection, not a parameter passed to MPTCP.
 
 ## 8. Shutdown and retained evidence
 
-For sections 7c/7d, finish Laptop traffic, let the single dummy unregister and drain
-TXT, then press Ctrl+C in the xApp terminal. Require dummy and xApp exit 0,
-zero active registrations in the service summary, and all three E2 subscription
-delete responses while CU/DUs/RIC are still running. For sections 7a/7b, allow
-the finite diagnostic xApp to receive all three delete responses and stop
-naturally. If using reconnect watchers, press Ctrl+C
-in each Laptop watcher terminal and require that role's shutdown `SUCCESS`, as
-shown in the [Laptop reconnect shutdown commands](laptop_reconnect_quick_start.md#8-stop-after-iperf-and-the-xapp-have-finished).
+For a full testbed shutdown, first finish MPTCP traffic and stop its KPM
+subscription normally. Let the server unregister or close its connection;
+xApp logs `APP_UNREGISTERED` and/or `APP_DISCONNECTED` for that application.
+Then press Ctrl+C in the xApp terminal. Require xApp exit 0, zero active
+registrations/connections in the final service summary, and all three E2
+subscription delete responses while CU/DUs/RIC are still running.
+Stopping an MPTCP client alone does not require stopping xApp or the RAN.
+
+For the optional 7a/7b diagnostics, allow the finite xApp to stop naturally and
+receive all three delete responses. After xApp has stopped, press Ctrl+C in
+each Laptop watcher terminal and require its shutdown `SUCCESS`, following the
+[Laptop shutdown commands](laptop_reconnect_quick_start.md#8-stop-after-mptcp-and-the-xapp-have-finished).
 For manually connected UEs, follow [separate laptop shutdown](operations/manual_laptop_startup.md#cleanup):
 UE1 first, then UE2, using the updated helper's `--shutdown` to disconnect the PDU,
 clear host IPv4 configuration, delete each modem's bearers and disable it.
-After both laptop shutdown success markers, stop both iperf
-server terminals, then each DU, CU and RIC in their own terminals with Ctrl+C.
+After both laptop shutdown success markers, stop any optional iperf servers
+that were started, then each DU, CU and RIC in their own terminals with Ctrl+C.
 Stop the shared core only after both DUs have finished using it:
 
 ```bash
@@ -1175,11 +1059,13 @@ Optional MongoDB shutdown preserves its container/data:
 sudo docker stop open5gs-mongo
 ```
 
-For sections 7c/7d retain the complete service and dummy directories: binary/plugin
-and configuration identities, `xapp.log`, `inputs.ndjson`, `source.jsonl`,
-`publisher.json`, both exit files, dummy `bindings.txt`, `receipts.jsonl`,
-`summary.json` and `duration-seconds.txt`. Keep each sequential dummy session
-separately when checking reconnects.
+For section 7c retain the service directory: source revisions, binary/plugin
+hashes, configuration snapshots, `xapp.log`, final `publisher.json` and
+`exit.txt`. Keep the MPTCP application's own registration, reception and path
+logs alongside the run record. Detailed input/report traces exist only if
+explicitly enabled for troubleshooting. Raw data remains local; publish the
+reviewed report and selected figures according to the
+[experiment archive policy](experiments/README.md#local-archive-policy).
 
 For sections 7a/7b retain each capture's `local.json`, `xapp.conf`, `exit.txt`, `inputs.ndjson`,
 `rows.ndjson`, `bindings.txt` and `xapp.log`, together with the

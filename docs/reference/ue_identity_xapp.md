@@ -148,7 +148,7 @@ supported and cannot be combined explicitly with `--du-metrics`.
 The live run verifies both fixes for sustained connections, including equal
 F1 ID 1 on both DUs and 2,338 continuously matched rows after startup.
 For repetition, use
-[the Spark procedure](../spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
+[the Spark procedure](../spark_quick_commands.md#7-start-the-continuous-xapp-and-wait-for-mptcp-registration).
 A live legacy-DU subscription remains separate from this new-rate verification.
 
 ## Build and offline verification

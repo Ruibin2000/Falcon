@@ -1,6 +1,6 @@
 # Project Design and Progress
 
-Updated: 2026-10-30.
+Updated: 2026-11-01.
 
 Falcon uses two independent UE/modem/USRP/DU paths with a shared OCUDU CU,
 Open5GS Core and FlexRIC. Link 1 is the direct 3660-MHz FR1 path. Link 2 uses
@@ -21,8 +21,9 @@ traffic/KPM through the converted FR3 path. Integrated FR3 UE/PDU connectivity s
 
 ## Daily Operation and Documentation
 
-Use [Spark quick commands](spark_quick_commands.md) for the shared
-infrastructure, DU startup and experiments. Choose either the
+Use [Spark auto startup](spark_auto.md) for one-terminal startup, DU2 gain
+control and unified shutdown. The individual
+[Spark commands](spark_quick_commands.md) cover preparation and diagnosis. Choose either the
 [Laptop one-shot guide](laptop_single_quick_start.md) or the
 [Laptop reconnect guide](laptop_reconnect_quick_start.md) for the two modems.
 Detailed manual procedures are in [operations](operations/manual_laptop_startup.md),
@@ -61,7 +62,7 @@ these roles; its example UE IDs and addresses are historical.
 | DU2 40-MHz migration | Startup and both direct-radio UE connections confirmed October 29 | DU2 46.08 MS/s / SSB `638976`; direct test then used TX 45 / RX 20 |
 | Current 9.25-GHz FR3 hardware and gains | Operator-confirmed deployment from October 30 | Pi-Radio manual calibration and Quectel antenna rewiring complete; license availability confirmed; DU2 TX 60 / RX 10 tuned for this path |
 | Integrated FR3 UE/PDU connectivity and sustained traffic/KPM | Completed retained test pending | DU F1/E2 startup and RF preparation alone do not establish end-to-end connectivity |
-| Actual MPTCP/MPX consumer using the broker | Joint integration test pending | The verified subscriber was the independent dummy; use the [v2 contract](interface/README.md) |
+| Actual MPTCP/MPX consumer using the broker | Formal MPTCP server integration reported by the operator on November 1 | Normal startup runs continuous xApp and waits for server registration; quantitative formal-client results were not supplied in this update. Use the [v2 contract](interface/README.md). |
 | Longer live stability and fault cases | Pending | 30-minute run, app/UE reconnect, IP changes/reuse and slow consumers need their own live evidence |
 | Guarded CME 902 / CFUN cell-lock fallback | Implemented with offline regression coverage | See [reconnect details](operations/reconnect_reference.md#cme-902-after-a-du-gain-drop); physical fallback execution remains separately unverified |
 
@@ -221,8 +222,8 @@ Only current matched bindings are published; stale, ambiguous or unresolved
 source context remains explicit. Slow clients have separate bounded output queues.
 
 The service runs continuously with `--duration 0` until normal shutdown.
-The one all-links dummy owns TXT/receipt storage; routine subscription-mode
-xApp output is TCP push. MPTCP matches `report.ue_ipv4` against its current
+The formal MPTCP server is the normal application subscriber; routine
+subscription-mode xApp output is TCP push. MPTCP matches `report.ue_ipv4` against its current
 path table. The [interface document](interface/README.md) contains the wire
 schema, lifecycle, captured messages, launch commands and offline verification.
 
@@ -232,9 +233,11 @@ Start the Core and current RIC/CU before both DUs; verify radio/F1/E2
 readiness, then prepare the two Laptop UEs and traffic endpoints. Start the
 xApp after the intended E2 membership exists. A RIC restart requires the
 documented DU restart sequence; automatic late joining is not assumed.
-Use Spark 7c/7d and the corresponding Laptop sections for the single-dummy tests.
+Use [Spark 7c](spark_quick_commands.md#7c-start-the-continuous-xapp-and-wait-for-mptcp-registration)
+and the corresponding Laptop section for normal MPTCP operation. Historical
+reference-consumer experiments remain in their dated reports.
 
-Finish traffic and the dummy, stop xApp normally and retain E2 delete responses,
+Finish MPTCP traffic and its KPM subscription, stop xApp normally and retain E2 delete responses,
 then shut down both UE watchers/holders, DUs, RIC/CU and Core as needed.
 Healthy watchers remain active until stopped; a one-shot holder waits without
 ongoing probes after startup. Keep ModemManager running and close minicom

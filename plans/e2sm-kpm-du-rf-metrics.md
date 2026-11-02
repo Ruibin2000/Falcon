@@ -54,7 +54,7 @@ premature percentage truncation. The expanded profile is explicit; the
 seven-metric launcher default and five-metric legacy backup remain available.
 DU periods stay 100 ms, CU identity 1000 ms and Core polling 1 s. This
 supersedes the earlier 1000 -> 200 -> 100 ms sequence for this first batch.
-The [Spark procedure](../docs/spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)
+The [Spark procedure](../docs/spark_quick_commands.md#7-start-the-continuous-xapp-and-wait-for-mptcp-registration)
 now targets expanded live validation. Offline results do not close that live
 step. RI/OLLA/TA, additional RLC, cell and RU-health metrics remain later work.
 The source-snapshot concurrency deferral is unchanged.
@@ -79,7 +79,7 @@ are available in every UL sample above 1 Mbit/s. The run keeps steady F1
 contexts; it does not validate the separate PRB-index defect after replacement,
 full radio health or source-snapshot synchronization. Source-generation
 trace/header correlation remains unimplemented.
-Use [the default Spark startup and 100 ms inspection commands](../docs/spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results).
+Use [the default Spark startup and 100 ms inspection commands](../docs/spark_quick_commands.md#7-start-the-continuous-xapp-and-wait-for-mptcp-registration).
 
 The operator requested more DL/UL measurements before any frequency increase.
 This decision extends the original two-RF-metric scope and supersedes its

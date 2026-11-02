@@ -1,6 +1,6 @@
 # Laptop Single Connection Quick Start — One-shot Startup and Self-check
 
-Updated: 2026-10-31. Developer: Ruibin.
+Updated: 2026-11-01. Developer: Ruibin.
 
 The [current two-link design](project_design_and_progress.md) uses DU1 at
 3660 MHz / 20 MHz OTA and DU2 at 9250 MHz / 40 MHz OTA through Pi-Radio,
@@ -21,6 +21,14 @@ queries or ping during that wait. For ongoing monitoring/recovery use the
 `reconnect_ue*.sh` entry scripts run continuous recovery and include their own
 AT port/automatic cell-lock options. Those options are not added to the one-shot
 entry scripts. Both modes use the same per-UE lock to reject simultaneous ownership.
+
+After both UE launchers report `PASS`, keep their terminals open. Start the
+[continuous xApp on Spark](spark_quick_commands.md#7c-start-the-continuous-xapp-and-wait-for-mptcp-registration)
+and wait for the formal MPTCP server to connect/register. The application
+consumes matched KPM directly over TCP `127.0.0.1:8765`; these UE launchers
+prepare the radio/IP paths and do not launch the MPTCP application. Before a
+full shutdown, finish MPTCP traffic and stop xApp normally as described in
+[Spark section 8](spark_quick_commands.md#8-shutdown-and-retained-evidence).
 
 **Acceptance scope, 2026-10-24:** cold-start reproduction, full repeatability
 and bidirectional disturbance/survivor testing are

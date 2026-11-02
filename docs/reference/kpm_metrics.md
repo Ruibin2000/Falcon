@@ -85,8 +85,8 @@ These selections describe diagnostic acquisition. The current Spark guide
 selects 27 metrics explicitly; application subscription mode uses the full
 `du27_bound_v1` profile. See the [app interface](../interface/README.md).
 
-The [Spark quick commands, section 7](../spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)
-target the expanded capture and retain current IP checks. Older DUs cannot
+The [Spark quick commands, section 7](../spark_quick_commands.md#7-start-the-continuous-xapp-and-wait-for-mptcp-registration)
+target the expanded profile and retain current IP checks. Older DUs cannot
 serve the new names; rejected metrics must not be silently omitted.
 Rebuild/restart both DUs and the xApp. Healthy CU, RIC and Core can remain
 running. No CU identity or FlexRIC source/SDK ABI change is required.

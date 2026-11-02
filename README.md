@@ -8,6 +8,13 @@ includes the reports, figures, instructions, project status, interface examples
 and synthetic test fixtures. See the
 [archive policy](docs/experiments/README.md#local-archive-policy).
 
+**Normal MPTCP operation, 2026-11-01:** the operator reports that the formal
+MPTCP server is now integrated with the xApp broker. Start the
+[continuous xApp](docs/spark_quick_commands.md#7c-start-the-continuous-xapp-and-wait-for-mptcp-registration)
+and wait for server registration. Keep the Laptop UE paths active using the
+[reconnect guide](docs/laptop_reconnect_quick_start.md#7c-mptcp-operation-with-the-continuous-xapp).
+Earlier reference-consumer tests below remain historical validation results.
+
 **Current two-link radio profiles, 2026-10-30:** DU1 uses **3660 MHz / 20 MHz / TX 70 / RX 35**;
 DU2 uses **9250-MHz FR3 OTA through Pi-Radio / 40 MHz / TX 60 / RX 10**,
 with a **3600-MHz logical n78 USRP/modem interface**.
@@ -77,12 +84,13 @@ was the second path's logical demo label.
 
 Falcon is a 5G/AI-RAN experimental platform based on the NVIDIA DGX Spark. **On 2026-10-13, concurrent TCP uplink delivered receiver UE1 13.8 Mbit/s and UE2 17.3 Mbit/s, both with sender Retr 0 and process exit 0. The xApp received 123 real UE callbacks per DU, including 63/61 complete UL-active five-metric rows, with successful subscription/deletion and normal exit.** The [retained analysis](docs/experiments/evidence/2026-10-13_dual_kpm_reports/manifest.json) reconciles the approximately 199.27-second Spark/Laptop clock difference and retains both captures, parsed rows and the throughput/CRC plot. This establishes concurrent UL functionality and two-DU KPM reception; protocol-explicit cross-layer correlation retains its separate scope. Cold-start, full repeatability/comparative UDP and bidirectional disturbance/survivor tests are supplemental experiments, excluded from current acceptance and merging. Earlier single-link checkpoints are retained. The longer-term objective is dual independent radio paths with FlexRIC telemetry, AI channel/rate prediction, and MPTCP video steering.
 
-**Start here: [Project Design and Progress](docs/project_design_and_progress.md)** — current architecture, radio profiles, verified results and next work. Daily operation uses the three quick guides in the document index below. Earlier single-link reproduction and debugging remain historical references.
+**Start here: [Project Design and Progress](docs/project_design_and_progress.md)** — current architecture, radio profiles, verified results and next work. Daily operation uses the quick guides in the document index below. Earlier single-link reproduction and debugging remain historical references.
 
-For daily operation use [Spark quick commands](docs/spark_quick_commands.md),
+For daily operation use [Spark auto startup](docs/spark_auto.md) or the
+individual [Spark quick commands](docs/spark_quick_commands.md),
 then choose the [Laptop one-shot](docs/laptop_single_quick_start.md) or
 [Laptop reconnect](docs/laptop_reconnect_quick_start.md) guide. Spark prepares the
-shared Core/CU/FlexRIC, both DUs and both traffic endpoints before the Laptop
+shared Core/CU/FlexRIC, both DUs and xApp before the Laptop
 UE sequences. Each role independently selects its modem/SIM and current bearer,
 checks its actual serving cell, and owns its policy route and Wi-Fi fallback guard.
 The [manual reference](docs/operations/manual_laptop_startup.md) supplies detailed
@@ -261,20 +269,22 @@ Versions and runtime results above are drawn from the deployment records. FlexRI
 
 ## Document Index
 
-The four files at the top of `docs/` are the current entry points:
+The five files at the top of `docs/` are the current entry points:
 
 | Document | Use |
 | --- | --- |
 | [Project Design and Progress](docs/project_design_and_progress.md) | Current architecture, radio/IP profiles, configuration ownership, verified results and open work |
-| [Spark quick commands](docs/spark_quick_commands.md) | Core, CU, FlexRIC, both DUs, traffic servers, xApp/dummy experiments and shutdown |
+| [Spark auto startup](docs/spark_auto.md) | One-terminal startup, DU2 gain commands, health monitoring and unified shutdown |
+| [Spark quick commands](docs/spark_quick_commands.md) | Individual Core, CU, FlexRIC, DU and continuous xApp startup; optional traffic diagnostics |
 | [Laptop one-shot quick commands](docs/laptop_single_quick_start.md) | Prepare/check one UE, then hold until Ctrl+C |
-| [Laptop reconnect quick commands](docs/laptop_reconnect_quick_start.md) | Prepare and continuously monitor both UEs; matched traffic and subscription tests |
+| [Laptop reconnect quick commands](docs/laptop_reconnect_quick_start.md) | Prepare and continuously monitor both UE paths for MPTCP operation |
 
 ```text
 docs/
 ├── laptop_single_quick_start.md
 ├── laptop_reconnect_quick_start.md
 ├── spark_quick_commands.md
+├── spark_auto.md
 ├── project_design_and_progress.md
 ├── operations/                  # detailed procedures, setup, networking and recovery
 │   └── setup/
@@ -302,12 +312,13 @@ raw evidence, implementation reviews and supplemental experiments.
 
 1. Read [Project Design and Progress](docs/project_design_and_progress.md) and
    check the current DU1 FR1 / DU2 9.25-GHz FR3 profiles.
-2. Use [Spark sections 1–6](docs/spark_quick_commands.md) to prepare
-   Core/CU/RIC, both radios/DUs and application endpoints.
+2. Use [Spark auto startup](docs/spark_auto.md) after the one-time preparation,
+   or the [individual Spark commands](docs/spark_quick_commands.md), to bring up
+   Core/CU/RIC, both radios/DUs and the continuous xApp.
 3. On the Laptop, choose the [one-shot](docs/laptop_single_quick_start.md) or
    [continuous reconnect](docs/laptop_reconnect_quick_start.md) entry points.
-4. Use the matching Spark/Laptop 7c or 7d sections for the one-dummy
-   subscription experiment, then follow their shutdown and evidence steps.
+4. Let the formal MPTCP server register with xApp and verify its KPM reception.
+   Stop the auto controller with Ctrl+C when finished; Docker/MongoDB stay running.
 
 DU2's physical OTA center is 9250 MHz through Pi-Radio; its logical USRP/modem
 interface and OCUDU startup output remain 3600 MHz / n78. The current gain

@@ -44,6 +44,15 @@ class CellError(ValueError):
     """No acceptable live registration/serving-cell evidence."""
 
 
+class ModemNotFound(CellError):
+    """The selected IMEI is temporarily absent from the current inventory."""
+
+
+def missing_modem_object(error):
+    message = (str(error) + (error.stderr or "")).lower()
+    return any(word in message for word in ("couldn't find modem", "unknownobject", "does not exist"))
+
+
 class ATCommandError(CellError):
     """Keep a rejected command's raw reply and vendor code as evidence."""
     def __init__(self, command, reply):
@@ -393,8 +402,7 @@ class Connection:
             except subprocess.CalledProcessError as error:
                 # Rediscover a removed object, but never query the other UE to
                 # work around a slow or unresponsive selected modem.
-                message = (str(error) + (error.stderr or "")).lower()
-                if not any(word in message for word in ("couldn't find modem", "unknownobject", "does not exist")):
+                if not missing_modem_object(error):
                     raise
             if info is not None and (info.get("modem.generic.equipment-identifier") != self.role["imei"]
                                      or info.get("modem.generic.device-identifier") != self.identity):
@@ -407,9 +415,19 @@ class Connection:
         if info is None:
             self.modem_cache.clear()
             paths = sorted(set(re.findall(r"/org/freedesktop/ModemManager1/Modem/\d+", read("mmcli", "-L"))))
-            records = [(path, kv("mmcli", "-m", path, "-K")) for path in paths]
+            records = []
+            for path in paths:
+                try:
+                    records.append((path, kv("mmcli", "-m", path, "-K")))
+                except subprocess.CalledProcessError as error:
+                    if not missing_modem_object(error):
+                        raise
+                    # The inventory may change between -L and -m. A vanished
+                    # object is not proof of a conflicting or replacement UE.
             matches = [(path, item) for path, item in records
                        if item.get("modem.generic.equipment-identifier") == self.role["imei"]]
+            if not matches:
+                raise ModemNotFound("Expected IMEI must match exactly one current modem")
             require(len(matches) == 1, "Expected IMEI must match exactly one current modem")
             self.modem, info = matches[0]
             self.identity = info.get("modem.generic.device-identifier")
@@ -898,7 +916,7 @@ def capture_reset_output():
         reset.read = original_read
 
 
-def shutdown_on_interrupt(ue, *, lock_path=None, modem_cache=None):
+def shutdown_on_interrupt(ue, *, lock_path=None, modem_cache=None, rediscovery_timeout=30):
     """Run per-modem shutdown outside the short kernel network transactions."""
     result = dict(ue=ue, status="started", started_at=datetime.now(timezone.utc).isoformat())
     with ignore_stop_signals():
@@ -908,7 +926,26 @@ def shutdown_on_interrupt(ue, *, lock_path=None, modem_cache=None):
         try:
             with capture_reset_output():
                 session = Connection(ue, modem_cache=modem_cache, network_lock_path=lock_path)
-                session.discover()
+                # A CFUN transition may remove the old MM object before its
+                # replacement is enumerated. Wait only for a missing target;
+                # ambiguity, a wrong SIM or other errors still fail immediately.
+                deadline = time.monotonic() + rediscovery_timeout
+                rediscovery = dict(attempts=0, status="checking")
+                result["rediscovery"] = rediscovery
+                while True:
+                    rediscovery["attempts"] += 1
+                    try:
+                        session.discover()
+                        rediscovery.update(status="verified", modem=session.modem)
+                        break
+                    except ModemNotFound:
+                        remaining = deadline - time.monotonic()
+                        if remaining <= 0:
+                            rediscovery["status"] = "timed_out"
+                            raise CellError(f"Selected UE{ue} modem did not reappear within {rediscovery_timeout:g}s; cleanup incomplete") from None
+                        if rediscovery["attempts"] == 1:
+                            status(f"UE{ue} shutdown: waiting up to {rediscovery_timeout:g}s for the selected IMEI to reappear ...")
+                        time.sleep(min(0.5, remaining))
                 info = session.checked_modem()
                 net_ports = ports(info)
                 require(len(net_ports) == 1, "Expected one dedicated WWAN for shutdown")

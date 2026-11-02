@@ -1,6 +1,6 @@
 # Dual UE Laptop Reconnect — Quick Commands and Expected Results
 
-Updated: 2026-10-30. Developer: Ruibin.
+Updated: 2026-11-02. Developer: Ruibin.
 
 **Spark target:** DU1/DU2 statistics and KPM **100 ms**; CU identity **1 second**.
 
@@ -17,16 +17,16 @@ connections are historical; DU2 uses the modified FR3 path going forward. See th
 in section 2 before starting UE2: the earlier 20-MHz profile used SSB `639648`.
 The modem lock and OCUDU/E2 cell information use the logical n78 frequency.
 
-**Current application subscription tests:** use
-[7c](#7c-live-app-subscription-test-with-one-dummy) for the 120-second test or
-[7d](#7d-six-minute-alternating-ul-with-one-subscribed-dummy) for the six-minute
-alternating test. Their numbers match the Spark handbook. Both use one dummy
-on Spark, while Laptop runs the two UE watchers and traffic. Sections 6–7a retain
-the earlier direct xApp-to-TXT diagnostic workflow.
+**Normal MPTCP operation:** complete sections 1–5, keep both UE watchers
+running, then follow [section 7c](#7c-mptcp-operation-with-the-continuous-xapp)
+and [Spark 7c](spark_quick_commands.md#7c-start-the-continuous-xapp-and-wait-for-mptcp-registration).
+The continuous xApp waits for the formal MPTCP server to register and receive
+matched KPM. There is no timed subscriber test in the normal startup flow.
+Sections 6, 7 and 7a are optional standalone iperf/direct-TXT diagnostics.
 
 [Full reference and troubleshooting](operations/reconnect_reference.md) ·
-[Spark startup and servers, sections 1–6](spark_quick_commands.md#1-check-radios-and-deploy-configuration-before-a-cold-start) ·
-[Spark xApp capture and inspection, section 7](spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)
+[Spark startup, sections 1–5](spark_quick_commands.md#1-check-radios-and-deploy-configuration-before-a-cold-start) ·
+[Spark continuous xApp and MPTCP registration](spark_quick_commands.md#7c-start-the-continuous-xapp-and-wait-for-mptcp-registration)
 
 ## 1. Laptop dependencies — once
 
@@ -52,15 +52,22 @@ sudo systemctl enable --now ModemManager
 
 **Expected:** seven files listed; one SSH login; no intermediate archive file.
 
-**CME 902 recovery, updated 2026-10-29:** both UE watchers now retry a rejected
-cell-lock write once with `CFUN=0`, then restore `CFUN=1`, when the lock readback
-still differs and the selected modem has no active PDU. A correct saved lock is
+**Cell-lock recovery, updated 2026-11-02:** both UE watchers retry a lock write
+once with `CFUN=0`, then restore `CFUN=1`, when it returns CME 902 with a different
+readback, or returns `OK` but readback remains disabled (`0`), and the selected
+modem has no active PDU. A correct saved lock is
 reused. An active PDU prevents this CFUN retry. The selected radio temporarily
 goes offline during the retry; the script attempts to restore `CFUN=1` even if
 the lock fails or Ctrl+C interrupts it. Lock readback is checked again after
 functionality is restored. Registration, serving-cell, PDU and ping checks
 must still pass before `SUCCESS`. This path has offline regression coverage;
 physical recovery on the current firmware still requires a live test.
+
+After a CFUN transition, Ctrl+C shutdown waits up to 30 seconds for a missing
+target IMEI to reappear, then verifies the current modem/SIM before cleanup.
+Ambiguous identities and wrong SIMs still stop cleanup immediately. A timeout
+remains a cleanup failure. CME 905 still blocks registration; see the
+[read-only firmware/lock diagnostic](operations/reconnect_reference.md#cme-905-during-cfun-recovery-and-modem-rediscovery).
 
 If a manual AT session was left at `AT+CFUN=0`, restore `AT+CFUN=1` in that
 modem's AT terminal, then exit minicom before starting its watcher. The watcher
@@ -81,7 +88,7 @@ and IMEI/IMSI; a listing alone does not prove modem identity. For swapped
 cables or a port-ownership error, use the
 [AT port reference](operations/reconnect_reference.md#at-port-mapping).
 
-## 4. Connect both UEs — Spark sections 1–6 already running
+## 4. Connect both UEs — Spark sections 1–5 already running
 
 **Laptop terminal 1 — UE1 / FR1:**
 
@@ -251,129 +258,46 @@ continuity, 27 metrics, cadence, gaps and radio warnings with the
 The traffic summary alone does not certify the xApp or the absence of brief
 reconnect events between traffic snapshots.
 
-## 7c. Live app subscription test with one dummy
+## 7c. MPTCP operation with the continuous xApp
 
-Pair with [Spark 7c](spark_quick_commands.md#7c-live-app-subscription-test-with-one-dummy).
-The Spark dummy receives for 120 seconds; Laptop uploads concurrently for 60 seconds.
-
-Keep the existing UE1 and UE2 watchers running after both report `SUCCESS`.
-If they are not running, start each in its own Laptop terminal after Spark
-sections 1–6 are ready:
-
-**Laptop terminal 1 — UE1:**
-
-```bash
-sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 3 --verbose 2
-```
-
-**Laptop terminal 2 — UE2:**
-
-```bash
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 3 --verbose 2
-```
-
-Reuse healthy existing watchers; keep one owner per UE. Keep both Spark iperf
-servers listening at `10.45.0.1:5201` and `10.46.0.1:5202`.
-
-**Laptop terminal 3 — update the two traffic helpers:**
-
-```bash
-(
-  set -euo pipefail
-  mkdir -p ~/falcon-ue-connect
-  ssh -T nyu@10.20.44.26 \
-    'tar -C /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1 -czf - run_dual_ul.py run_dual_stability.py' |
-    tar -xzf - -C ~/falcon-ue-connect
-)
-```
-
-Check both current UE IPs and routes:
+Keep the two watchers from section 4 running after both report `SUCCESS`.
+Reuse healthy watchers and maintain one owner per UE. Confirm both current
+addresses and routes using the same check as section 5:
 
 ```bash
 python3 ~/falcon-ue-connect/run_dual_ul.py --check-only
 ```
 
-Require both role checks to pass. Start Spark 7c's xApp and single dummy, then
-wait for its three E2 subscriptions and `APP_REGISTERED` for `dual-ue-dummy`.
-Immediately run the upload in Laptop terminal 3:
+This check starts no iperf traffic. Normal MPTCP operation does not require
+Spark's optional iperf listeners or a scheduled 60/360-second traffic run.
 
-```bash
-python3 ~/falcon-ue-connect/run_dual_ul.py --seconds 60
-```
+On Spark, start the [continuous xApp service](spark_quick_commands.md#7c-start-the-continuous-xapp-and-wait-for-mptcp-registration),
+then start or reconnect the integrated MPTCP server using its own launch
+procedure. Wait for its `APP_REGISTER_RECEIVED` and `APP_REGISTERED` events
+in the xApp terminal, followed by registration acknowledgement and fresh KPM
+reception in the MPTCP application. The client uses TCP `127.0.0.1:8765`,
+protocol version `2`, profile `du27_bound_v1` and its configured `app_id`.
 
-Expected: both client exits 0, `STATUS: completed` and a printed
-`/tmp/falcon-dual-ul-*` directory. Keep that directory and both watcher logs.
-Let the Spark dummy finish 120 seconds and unregister; keep the watchers running
-if continuing with the six-minute test.
+| Laptop truth | Expected MPTCP association |
+| --- | --- |
+| UE1, DNN `internet`, current address in `10.45.0.0/16` | `report.ue_ipv4` matches the current UE1 source address |
+| UE2, DNN `internet2`, current address in `10.46.0.0/16` | `report.ue_ipv4` matches the current UE2 source address |
+| A UE reconnects and receives a new address | The application resolves the new address against its current path table |
 
-## 7d. Six-minute alternating UL with one subscribed dummy
+Use current allocations from the check; do not substitute historical IPs or
+Spark's `.1` endpoints. xApp sends full matched IDs + IP + 27 KPM reports,
+nominally every 100 ms per active link. The MPTCP application consumes the
+socket stream directly. Keep the UE watchers and xApp running throughout
+MPTCP operation; no fixed test duration stops them. The server can disconnect
+and register again independently of the UE watchers and RAN.
 
-Pair with [Spark 7d](spark_quick_commands.md#7d-six-minute-alternating-ul-with-one-subscribed-dummy).
-Finish previous iperf clients before preparing this run. Spark's single dummy
-receives both links for 360 seconds; the six traffic phases each last 50 seconds.
+## 8. Stop after MPTCP and the xApp have finished
 
-Keep the existing UE1 and UE2 watchers running after both report `SUCCESS`.
-If they are not running, start each in its own Laptop terminal after Spark
-sections 1–6 are ready:
-
-**Laptop terminal 1 — UE1:**
-
-```bash
-sudo bash ~/falcon-ue-connect/reconnect_ue1.sh --interval 3 --verbose 2
-```
-
-**Laptop terminal 2 — UE2:**
-
-```bash
-sudo bash ~/falcon-ue-connect/reconnect_ue2.sh --interval 3 --verbose 2
-```
-
-Reuse healthy existing watchers; keep one owner per UE. Keep both Spark iperf
-servers listening at `10.45.0.1:5201` and `10.46.0.1:5202`.
-
-**Laptop terminal 3 — update the traffic helpers and wait at READY:**
-
-```bash
-(
-  set -euo pipefail
-  mkdir -p ~/falcon-ue-connect
-  ssh -T nyu@10.20.44.26 \
-    'tar -C /home/nyu/Desktop/Falcon_repo/Falcon/scripts/dual_fr1 -czf - run_dual_ul.py run_dual_stability.py' |
-    tar -xzf - -C ~/falcon-ue-connect
-  python3 ~/falcon-ue-connect/run_dual_stability.py
-)
-```
-
-Require both current role summaries followed by `READY`. Leave this prompt
-open, then start Spark 7d's fresh xApp service and its single 360-second dummy.
-Within **10 seconds of `APP_REGISTERED`** in the Spark xApp terminal, enter this
-at the Laptop traffic prompt:
-
-```text
-START
-```
-
-| Phase | Duration | iperf upload |
-| --- | --- | --- |
-| 1 | 50 s | UE1 / FR1 |
-| 2 | 50 s | UE2 / FR3 |
-| 3 | 50 s | UE1 + UE2 |
-| 4 | 50 s | UE1 / FR1 |
-| 5 | 50 s | UE2 / FR3 |
-| 6 | 50 s | UE1 + UE2 |
-
-Keep both watchers running and gains fixed. The 300 seconds of scheduled traffic
-plus bounded path checks fit inside the 360-second dummy window when started
-on time. The xApp itself remains continuous (`duration=0`).
-
-Expected: six completed phases, eight successful iperf receivers, all client
-exits 0, no allocation changes, `STATUS: completed` and a printed
-`/tmp/falcon-dual-stability-*` directory. Retain `summary.json`, `events.ndjson`,
-`truth.json`, all eight `phaseN-ueM.json` files and both watcher directories.
-Let the Spark dummy finish all 360 seconds and unregister, then stop the xApp
-normally before following section 8 if ending the testbed.
-
-## 8. Stop after iperf and the xApp have finished
+For a full testbed shutdown, finish MPTCP traffic and its KPM subscription,
+then stop xApp normally on Spark and wait for its three E2 subscription delete
+responses, following [Spark section 8](spark_quick_commands.md#8-shutdown-and-retained-evidence).
+After that, shut down the two Laptop UE watchers below. For an optional
+diagnostic run, finish its traffic and finite xApp first.
 
 **Laptop terminal 1:** press Ctrl+C and wait for:
 

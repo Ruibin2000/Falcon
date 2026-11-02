@@ -1,6 +1,6 @@
 # Dual UE Laptop Automatic Reconnect — Full Reference
 
-Updated: 2026-10-30. Developer: Ruibin.
+Updated: 2026-11-02. Developer: Ruibin.
 
 **Current radio design:** [profiles and validation scope](../project_design_and_progress.md).
 DU1 uses 3660 MHz / 20 MHz OTA; DU2 uses 9250 MHz / 40 MHz OTA through
@@ -10,10 +10,10 @@ October 29 are a separate historical checkpoint.
 Earlier recovery experiments retain their original 20-MHz DU2 configuration.
 
 This reference holds the detailed recovery policy, port ownership checks and troubleshooting. The quick guide is the daily operation entry point.
-For the command-only experiment sequence, use the
-[Laptop reconnect Quick Start](../laptop_reconnect_quick_start.md); it pairs
-with [Spark section 7](../spark_quick_commands.md#7-start-the-dual-ue-identityrf-xapp-and-save-txt-results)
-for the dual-UE identity/RF capture and concurrent iperf upload.
+For normal MPTCP operation, use the
+[Laptop reconnect Quick Start](../laptop_reconnect_quick_start.md) with the
+[continuous Spark xApp](../spark_quick_commands.md#7-start-the-continuous-xapp-and-wait-for-mptcp-registration).
+The standalone iperf/TXT diagnostics below pair with optional Spark sections 7a/7b.
 
 Run these watchers on the **UE laptop** during an experiment. Each one prepares
 its selected UE, verifies connectivity, then keeps monitoring and recovering that
@@ -236,7 +236,7 @@ A failed preflight starts neither client; resolve the affected watcher's error
 before continuing.
 
 Spark's two foreground servers must already be listening as described in
-[Spark section 6](../spark_quick_commands.md#6-start-both-iperf-servers-before-the-laptop-sequences).
+[Spark section 6](../spark_quick_commands.md#6-optional-iperf-servers-for-standalone-diagnostics).
 Start the [120-second xApp capture in Spark section 7a](../spark_quick_commands.md#7a-start-the-xapp-and-write-a-120-second-txt-capture).
 Wait for all three intended E2 nodes and three subscriptions, then immediately
 start the two Laptop uploads:
@@ -609,7 +609,10 @@ Wi-Fi fallback block stays installed; the other UE and management Wi-Fi are pres
 
 Wait for `UE1 shutdown: SUCCESS` / `UE2 shutdown: SUCCESS` before manual
 configuration or restarting that role. Host cleanup can wait for the other
-role's kernel network transaction. Repeated Ctrl+C/SIGTERM cannot re-enter or
+role's kernel network transaction. When the selected IMEI is missing, shutdown
+also allows up to 30 seconds for modem rediscovery before making changes.
+It verifies the current modem/SIM; duplicate IMEIs, wrong SIMs and other errors
+still fail immediately. Repeated Ctrl+C/SIGTERM cannot re-enter or
 interrupt cleanup;
 a failed cleanup prints `FAIL` plus the reason, even at verbosity 1. The outcome
 is saved in `summary.json`. A later startup can enable/reconnect the disabled UE.
@@ -717,6 +720,10 @@ cooldown gate, each eligible radio recovery does the following:
    are reported explicitly and block registration. The attempt records all mode
    changes, lock readbacks and restoration results under `radio_recovery.cfun_retry`.
    A retained active PDU prevents this CFUN retry; healthy locks do not enter it.
+   Since 2026-11-02, a write that returns `OK` but reads back disabled (`0`)
+   can enter the same single retry under the same no-active-PDU guard. Its
+   evidence uses `trigger=lock_not_applied` and `trigger_cme=null`; it is never
+   accepted on `OK` alone. Other mismatching successful readbacks still fail.
 5. Record `AT+QENG="servingcell"` and `AT+C5GREG?`, restore serial settings and
    close the port. Once radio registration recovers, reread the current bearer/IP
    and verify its data path. An existing PDU may resume with its original IP;
@@ -842,6 +849,51 @@ temporarily disables cellular operation; a board LED may change during this
 step. Full-functionality readback is `+CFUN: 1`, which does not itself prove
 registration. If 902 persists or restoration fails, retain `run.log` and
 `attempts.jsonl`; an unverified lock still blocks PDU setup.
+
+### CME 905 during CFUN recovery and modem rediscovery
+
+The 2026-11-02 UE2 trace verified `CFUN: 0`, received CME 905 while writing
+`AT+QNWLOCK="common/5g",2,638976,30,78`, then verified restoration to `CFUN: 1`.
+The lock was not verified and registration/PDU setup remained blocked. A later
+inventory showed modem objects 59 and 66 after the previous selected object 63
+disappeared; the replacement must be identified by IMEI/SIM, not object number.
+The original immediate shutdown failed while the selected IMEI was absent.
+
+Shutdown now waits for a missing target before revalidating identity and
+cleaning up. A rejected AT reply is written at its original position in the
+transcript, and verified CFUN restoration is visible at verbosity 2. Offline
+tests cover this 902 → 905 → restored-CFUN failure and delayed rediscovery;
+they do not establish successful physical cell locking. No verified
+firmware-specific interpretation of CME 905 is available for this incident.
+
+With the UE2 watcher stopped and minicom closed, run this **read-only** Laptop
+diagnostic. It verifies UE2's current IMEI/SIM and AT-port ownership before
+querying firmware, supported lock syntax and saved state. It does not change CFUN,
+lock settings, PDU state or host networking:
+
+```bash
+sudo python3 -B - <<'PY'
+import sys
+sys.path.insert(0, "/home/david/falcon-ue-connect")
+import connect_ue as ue
+session = ue.Connection(2)
+session.discover()
+info = session.checked_modem()
+port = "/dev/serial/by-path/pci-0000:00:14.0-usb-0:3:1.2-port0"
+with ue.serial_modem(port, info, session.role) as fd:
+    for command in ('ATI', 'AT+QGMR', 'AT+CFUN?', 'AT+QNWLOCK=?',
+                    'AT+QNWLOCK="common/5g"', 'AT+QENG="servingcell"'):
+        print("AT > " + command, flush=True)
+        try:
+            print(ue.at_reply(fd, command).strip(), flush=True)
+        except ue.ATCommandError as error:
+            print(error.reply.strip() or "[no AT response]", flush=True)
+PY
+```
+
+If discovery still fails, retain the current `mmcli -L` output and the
+ModemManager/kernel journal around the incident. Keep the complete `run.log`
+and `attempts.jsonl`; a tail may omit the initial `OK`/disabled-lock attempt.
 
 ### Registration times out with a correct saved lock
 
