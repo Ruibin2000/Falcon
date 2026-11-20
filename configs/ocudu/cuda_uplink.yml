@@ -1,0 +1,15 @@
+# Optional overlay for the separately built CUDA-capable DU, on both links.
+# Keep radio parameters in the deployed DU YAML; this overlay never retunes RF.
+expert_phy:
+  pusch_acceleration_mode: enabled
+  ldpc_decoder_algorithm: auto
+  nvcuda_device_id: 0
+  pdsch_acceleration_mode: disabled
+  prach_acceleration_mode: disabled
+  srs_acceleration_mode: disabled
+
+ru_sdr:
+  expert_cfg:
+    low_phy_tx_acceleration_mode: disabled
+    low_phy_rx_acceleration_mode: disabled
+    low_phy_prach_demodulation_acceleration_mode: disabled

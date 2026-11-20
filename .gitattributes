@@ -1,0 +1,2 @@
+# Unified diff context represents empty source lines with a required space.
+patches/ocudu/*.patch whitespace=-blank-at-eol

@@ -2,7 +2,7 @@
 
 Deployment update, October 30: the [current two-link design](../project_design_and_progress.md)
 uses DU1 3660 MHz / 20 MHz OTA and DU2 9250 MHz / 40 MHz OTA through Pi-Radio,
-with a 3600-MHz logical n78 interface. DU2 TX 60 / RX 10 applies to the modified
+with a 3600-MHz logical n78 interface. DU2 TX 60 / RX 35 applies to the modified
 FR3 hardware. The October 29 direct-radio connections are historical. E2 identities
 remain logical n78, and AMF/SMF remain the source of current UE IP context.
 The identity rules in this document apply to either RF arrangement. Earlier

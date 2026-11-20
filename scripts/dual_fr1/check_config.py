@@ -64,7 +64,7 @@ def identity(config):
             integer(config.get("gnb_id_bit_length", 22), "gnb_id_bit_length"))
 
 
-def validate(cu, du1, du2):
+def validate(cu, du1=None, du2=None, *, du2_wired20=False):
     errors, rows = [], []
 
     def require(condition, message):
@@ -74,8 +74,12 @@ def validate(cu, du1, du2):
     cu_identity = identity(cu)
     cu_cp = section(cu, "cu_cp")
     cu_f1 = address(section(cu_cp, "f1ap").get("bind_addrs"), "CU F1 bind")
-    require(cu_cp.get("max_nof_dus", 6) >= 2, "CU capacity is less than two DUs")
-    for label, config in [("DU1", du1), ("DU2", du2)]:
+    dus = [(label, config) for label, config in (("DU1", du1), ("DU2", du2)) if config is not None]
+    require(bool(dus), "At least one DU configuration is required")
+    require(not du2_wired20 or (du1 is None and du2 is not None),
+            "The wired20 profile requires DU2 only")
+    require(cu_cp.get("max_nof_dus", 6) >= len(dus), "CU capacity is less than the selected DU count")
+    for label, config in dus:
         require("cells" not in config, f"{label}: checker supports one cell_cfg per DU")
         gnb, bits = identity(config)
         require((gnb, bits) == cu_identity, f"{label}: gNB identity differs from CU")
@@ -92,13 +96,19 @@ def validate(cu, du1, du2):
         require(cell.get("plmn") == "00101", f"{label}: PLMN must be the string 00101")
         require(cell.get("tac") == 7, f"{label}: expected TAC 7")
         bandwidth = integer(cell.get("channel_bandwidth_MHz"), f"{label} bandwidth")
-        expected_bandwidth, expected_srate = (20, 23.04) if label == "DU1" else (40, 46.08)
+        expected_bandwidth, expected_srate = (20, 23.04) if label == "DU1" or du2_wired20 else (40, 46.08)
         require(cell.get("band") == 78 and cell.get("common_scs") == 30
                 and bandwidth == expected_bandwidth,
                 f"{label}: expected explicit n78 / {expected_bandwidth} MHz / 30 kHz")
         arfcn = integer(cell.get("dl_arfcn"), f"{label} ARFCN")
         center = 3000 + 0.015 * (arfcn - 600000)
         interval = (center - bandwidth / 2, center + bandwidth / 2)
+        if du2_wired20:
+            require((gnb, bits, du_id, pci, sector, arfcn) == (411, 22, 2, 2, 1, 640000),
+                    "DU2 wired20: expected gNB 411/22, DU 2, PCI 2, NCI 66C001 and carrier 640000")
+            require(cell.get("nof_antennas_dl", 1) == cell.get("nof_antennas_ul", 1) == 1
+                    and section(radio, "expert_cfg").get("tx_mode") == "continuous",
+                    "DU2 wired20: expected 1T1R with continuous TX mode for separate TX/RX and RX2 paths")
         require(arfcn % 2 == 0, f"{label}: ARFCN is off the n78 30-kHz channel raster")
         require(3550 <= interval[0] and interval[1] <= 3700,
                 f"{label}: full nominal channel is outside 3550-3700 MHz")
@@ -148,10 +158,11 @@ def validate(cu, du1, du2):
                          cgi=(cell.get("plmn"), (gnb << (36 - bits)) | sector),
                          f1=bind, f1u=f1u, log=str(logfile), interval=interval,
                          center_mhz=center, bandwidth_mhz=bandwidth, srate=radio.get("srate")))
-    for key in ["serial", "du_id", "pci", "cgi", "f1", "f1u", "log"]:
-        require(rows[0][key] != rows[1][key], f"Duplicate {key} across DU1 and DU2")
-    left, right = sorted(rows, key=lambda row: row["interval"][0])
-    require(left["interval"][1] <= right["interval"][0], "Nominal DU channels overlap")
+    if len(rows) == 2:
+        for key in ["serial", "du_id", "pci", "cgi", "f1", "f1u", "log"]:
+            require(rows[0][key] != rows[1][key], f"Duplicate {key} across DU1 and DU2")
+        left, right = sorted(rows, key=lambda row: row["interval"][0])
+        require(left["interval"][1] <= right["interval"][0], "Nominal DU channels overlap")
     return errors, rows
 
 

@@ -8,7 +8,7 @@ below remain available for preparation and diagnosis.
 
 **Radio design:** [current profiles and validation scope](project_design_and_progress.md).
 DU1 is 3660 MHz / 20 MHz OTA. DU2 uses 9250-MHz FR3 OTA through Pi-Radio,
-with a 3600-MHz logical n78 interface / 40 MHz and tuned TX 60 / RX 10 dB.
+with a 3600-MHz logical n78 interface / 40 MHz and configured TX 60 / RX 35 dB.
 This is DU2's ongoing deployment after the hardware modification. The
 October 29 direct n78 connection test remains a separate historical checkpoint.
 
@@ -112,7 +112,7 @@ not current Dual UE acceptance criteria or merge prerequisites.
 | Parameter | UE1 / DU1 | UE2 / DU2 |
 | --- | --- | --- |
 | B210 serial | `3271233` | `328B021` |
-| Configured TX / RX gain | 70 / 35 dB | 60 / 10 dB |
+| Configured TX / RX gain | 70 / 25 dB | 60 / 35 dB |
 | Carrier / ARFCN | 3660 MHz / `644000` | 3600 MHz / `640000` |
 | Channel bandwidth / sample rate | 20 MHz / 23.04 MS/s | 40 MHz / 46.08 MS/s |
 | Physical OTA center | 3660 MHz | 9250 MHz via Pi-Radio conversion |
@@ -181,10 +181,14 @@ python3 "$FALCON_REPO/scripts/dual_fr1/check_config.py" \
 
 Require `PASS`: both deployed DU configs must enable scheduler/RLC metrics
 with `metrics.periodicity.du_report_period: 100`. Keep the actual recorded RF
-conditions for the run. DU1 uses 20 MHz, 23.04 MS/s and TX 70 / RX 35;
-DU2 uses 40 MHz, 46.08 MS/s and TX 60 / RX 10. These gains follow the deployed
-OCUDU YAML after operator-reported live tuning of the modified 9250-MHz FR3
-hardware path. The maintained Falcon templates
+conditions for the run. Both maintained DU configs now explicitly set
+`cell_cfg.tdd_ul_dl_cfg` to **DDDSUUUUUU**: 3 DL slots, 1 special slot
+(8 DL symbols, no UL symbols), and 6 UL slots per 5 ms at 30 kHz SCS.
+This profile takes effect on DU startup; reconnect the UEs afterward.
+DU1 uses 20 MHz, 23.04 MS/s and TX 70 / RX 25;
+DU2 uses 40 MHz, 46.08 MS/s and TX 60 / RX 35. These gains follow the deployed
+OCUDU YAML, including the November 2 RX update to 35 dB for the modified
+9250-MHz FR3 hardware path. The maintained Falcon templates
 match those startup values. Gain settings are in dB, not calibrated output dBm.
 DU2's USRP-side carrier remains 3600 MHz / n78 / ARFCN `640000`.
 Pi-Radio translates it to the current 9250-MHz OTA center. Its nominal
@@ -444,8 +448,8 @@ from pathlib import Path
 import yaml
 
 checks = [
-    ("DU1", "configs/du1_b210_n78_3660mhz.yml", (70, 35, 20, 23.04)),
-    ("DU2", "configs/du2_b210_n78_40mhz.yml", (60, 10, 40, 46.08)),
+    ("DU1", "configs/du1_b210_n78_3660mhz.yml", (70, 25, 20, 23.04)),
+    ("DU2", "configs/du2_b210_n78_40mhz.yml", (60, 35, 40, 46.08)),
 ]
 failed = False
 for label, filename, expected in checks:
@@ -463,7 +467,7 @@ raise SystemExit(1 if failed else 0)
 PY
 ```
 
-Require `PASS` for both DUs: DU1 **TX 70 / RX 35 dB**, DU2 **TX 60 / RX 10 dB**.
+Require `PASS` for both DUs: DU1 **TX 70 / RX 25 dB**, DU2 **TX 60 / RX 35 dB**.
 Also require DU1 **20 MHz / 23.04 MS/s** and DU2 **40 MHz / 46.08 MS/s**.
 The command reads the actual OCUDU startup YAML files. Each DU applies these
 gains when started with the commands below; no runtime console adjustment is
@@ -582,13 +586,13 @@ Port `0` is local to that DU process and is not its DU ID. This changes its
 radio's uplink reception gain. Restore the configured value in the corresponding
 DU terminal with a separate command.
 
-**DU1 — restore RX gain to 35 dB:**
+**DU1 — restore RX gain to 25 dB:**
 
 ```text
-;rx_gain 0 35;
+;rx_gain 0 25;
 ```
 
-**DU2 — apply the configured TX gain of 60 dB and RX gain of 10 dB:**
+**DU2 — apply the configured TX gain of 60 dB and RX gain of 35 dB:**
 
 Enter each command separately in the DU2 terminal:
 
@@ -597,7 +601,7 @@ Enter each command separately in the DU2 terminal:
 ```
 
 ```text
-;rx_gain 0 10;
+;rx_gain 0 35;
 ```
 
 Require a successful gain acknowledgement after each command.

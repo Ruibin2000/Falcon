@@ -1,0 +1,97 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# DU2 / UE2 wired: direct 3600 MHz / n78 / 20 MHz, without Pi-Radio.
+# Nominal channel: 3590-3610 MHz; SCS 30 kHz; sample rate 23.04 MS/s.
+# B210 328B021: one RF A channel, TX/RX for DL and RX2 for UL.
+# Physical path: UE2 ANT3 -- ZFRSC-42-S+ common port (3), then
+#   50 dB (20+20+10) to RF A TX/RX; 60 dB to RF A RX2.
+# No common attenuator is installed (updated 2026-11-19).
+# Attenuators are external hardware; these comments do not configure them.
+# Expected default SSB ARFCN: 639648. The 40-MHz UE2 watcher uses 638976;
+# its lock/profile must be adapted before connecting to this wired cell.
+# Standalone configuration: DU2 E2 and 100-ms metrics are included below.
+# Reuse the existing CU/RIC and xapp_ue_identity_expanded.conf (DU time=100).
+# Accepted DL baseline (2026-11-19): TX 70, digital back-off 12, DL branch 50 dB,
+# no common attenuator; retain the frequency, bandwidth and TDD settings below.
+# UE2 on PCI 2 / NCI 66C001: QENG RSRP -99 dBm, RSRQ -11 dB, SINR 24 dB;
+# C5GREG=0,1 confirms registration. These are measured values, not fixed targets.
+# Selected UL baseline (2026-11-19): RX 35, no common attenuator, UL branch 60 dB.
+# The 60-s UL run measured median SINR 23.6 dB, MAC 39.41 Mbps, CRC NOK 10.59%;
+# iperf3 receiver 37.4 Mbps, sender TCP Retr=0. These are observations, not targets.
+# Keep this DL baseline and the shared RF path unchanged for repeat runs.
+# Gains are in dB, not calibrated RF output power; long-term stability is unverified.
+gnb_id: 411
+gnb_id_bit_length: 22
+gnb_du_id: 2
+
+f1ap:
+  addrs: 127.0.10.1
+  bind_addrs: 127.0.10.3
+
+f1u:
+  socket:
+    - bind_addr: 127.0.10.3
+
+ru_sdr:
+  device_driver: uhd
+  device_args: type=b200,serial=328B021,num_recv_frames=64,num_send_frames=64
+  srate: 23.04
+  clock: internal
+  clock_ppm: 0.0
+  freq_offset: 0
+  tx_gain: 70  # Accepted DL baseline; preserve during UL tuning.
+  rx_gain: 35  # Selected wired UL baseline from the 2026-11-19 run.
+  # Preserve the native OFDM amplitude back-off.
+  amplitude_control:
+    tx_gain_backoff: 12
+  # Keep separate TX/RX and RX2 paths; UHD defaults the RX antenna to RX2.
+  expert_cfg:
+    tx_mode: continuous
+
+cell_cfg:
+  dl_arfcn: 640000
+  band: 78
+  channel_bandwidth_MHz: 20
+  common_scs: 30
+  nof_antennas_dl: 1
+  nof_antennas_ul: 1
+  plmn: "00101"
+  tac: 7
+  pci: 2
+  sector_id: 1
+  # Preserve the existing DU2 TDD profile: DDDSUUUUUU, 10 slots / 5 ms.
+  tdd_ul_dl_cfg:
+    dl_ul_tx_period: 10
+    nof_dl_slots: 3
+    nof_dl_symbols: 8
+    nof_ul_slots: 6
+    nof_ul_symbols: 0
+
+log:
+  filename: /tmp/du2_wired_3600_20mhz.log
+  all_level: info
+
+pcap:
+  mac_enable: false
+  mac_filename: /tmp/du2_wired_3600_20mhz_mac.pcap
+  f1ap_enable: false
+  f1ap_filename: /tmp/du2_wired_3600_20mhz_f1ap.pcap
+  f1u_enable: false
+  f1u_filename: /tmp/du2_wired_3600_20mhz_f1u.pcap
+
+e2:
+  enable_du_e2: true
+  addrs: [127.0.0.1]
+  bind_addrs: [127.0.10.3]
+  port: 36421
+  e2sm_kpm_enabled: true
+
+metrics:
+  # Include scheduler UL SINR/RSRP/CRC/PHR in the native log for tuning.
+  enable_log: true
+  layers:
+    enable_sched: true
+    enable_rlc: true
+  periodicity:
+    du_report_period: 100

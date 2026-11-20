@@ -2,9 +2,13 @@
 
 Updated: 2026-11-02. Developer: Ruibin.
 
+For **UE2 direct n78 wired / 20 MHz / SSB 639648**, use the separate
+[Laptop wired UE2 guide](laptop_wired_ue2_quick_start.md) and
+`reconnect_ue2_wired20.sh`. The dual/OTA UE2 commands below use 40 MHz / SSB 638976.
+
 **Spark target:** DU1/DU2 statistics and KPM **100 ms**; CU identity **1 second**.
 
-**Current Spark startup gains:** DU1 TX 70 / RX 35 dB; DU2 TX 60 / RX 10 dB,
+**Current Spark startup gains:** DU1 TX 70 / RX 25 dB; DU2 TX 60 / RX 35 dB,
 following the actual OCUDU startup YAML after live tuning. DU2's values apply
 to its modified 9250-MHz FR3 hardware path. See the
 [Spark gain check](spark_quick_commands.md#5-start-du1-and-du2-in-separate-terminals-and-keep-both-running).
@@ -51,6 +55,11 @@ sudo systemctl enable --now ModemManager
 ```
 
 **Expected:** seven files listed; one SSH login; no intermediate archive file.
+
+**AT I/O fix, November 18:** refresh `connect_ue.py` before retrying an
+`Errno 11` failure during `AT+CGSN`. Nonblocking reads/writes now retry within
+the five-second command deadline, and partial writes preserve their offset.
+See the [AT I/O diagnosis](operations/reconnect_reference.md#temporary-nonblocking-at-io-errors).
 
 **Cell-lock recovery, updated 2026-11-02:** both UE watchers retry a lock write
 once with `CFUN=0`, then restore `CFUN=1`, when it returns CME 902 with a different

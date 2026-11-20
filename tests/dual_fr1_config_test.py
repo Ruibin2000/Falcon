@@ -33,11 +33,29 @@ class DualConfigTest(unittest.TestCase):
         self.du2["ru_sdr"]["device_args"] = "type=b200,serial=REPLACE_WITH_ACTUAL_DU2_SERIAL"
         self.assertTrue(any("actual B210 serial" in error for error in self.errors()))
 
+    def test_single_du1_requires_only_one_cu_slot_and_retains_metric_checks(self):
+        self.cu["cu_cp"]["max_nof_dus"] = 1
+        errors, rows = checker.validate(self.cu, self.du1)
+        self.assertEqual(errors, [])
+        self.assertEqual([row["label"] for row in rows], ["DU1"])
+        self.du1["metrics"]["periodicity"]["du_report_period"] = 1000
+        self.assertIn("DU1: scheduler/RLC metrics and 100-ms reporting are required", checker.validate(self.cu, self.du1)[0])
+
     def test_split_e2_overlay_and_distinct_cell_identity(self):
         self.use_synthetic_radio()
         errors, rows = checker.validate(self.cu, self.du1, self.du2)
         self.assertEqual(errors, [])
         self.assertEqual([row["cgi"][1] for row in rows], [6733824, 6733825])
+
+    def test_wired_du2_is_an_explicit_single_du_profile_without_relaxing_ota(self):
+        wired = checker.load(REPO / "configs/ocudu/dual_fr1/du2_b210_n78_20mhz_wired.yml")
+        wired["log"]["filename"] = "/tmp/falcon-config-fixture-wired-du2.log"
+        errors, rows = checker.validate(self.cu, None, wired, du2_wired20=True)
+        self.assertEqual(errors, [])
+        self.assertEqual([(row["label"], row["cgi"][1]) for row in rows], [("DU2", 6733825)])
+        self.assertIn("DU2: expected explicit n78 / 40 MHz / 30 kHz", checker.validate(self.cu, None, wired)[0])
+        wired["cell_cfg"]["pci"] = 1
+        self.assertTrue(any("NCI 66C001" in error for error in checker.validate(self.cu, None, wired, du2_wired20=True)[0]))
 
     def test_different_du_id_and_pci_do_not_prevent_duplicate_cgi(self):
         self.use_synthetic_radio()

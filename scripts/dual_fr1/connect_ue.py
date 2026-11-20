@@ -295,15 +295,35 @@ def verify_at_port(at_port, net_ports):
 
 
 def at_reply(fd, command):
-    termios.tcflush(fd, termios.TCIFLUSH)
-    os.write(fd, (command + "\r").encode("ascii"))
-    result = b""
+    # The owned tty is opened with O_NONBLOCK. Readiness can change between
+    # select() and I/O, so EAGAIN/EINTR must stay within this command's deadline.
     deadline = time.monotonic() + 5
+    termios.tcflush(fd, termios.TCIFLUSH)
+    payload = (command + "\r").encode("ascii")
+    offset = 0
+    while offset < len(payload):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise ATCommandError(command, "")
+        _, writable, _ = select.select([], [fd], [], remaining)
+        if not writable:
+            raise ATCommandError(command, "")
+        try:
+            written = os.write(fd, payload[offset:])
+        except (BlockingIOError, InterruptedError):
+            continue
+        if written <= 0:
+            raise CellError(f"AT command {command}: serial write made no progress")
+        offset += written
+    result = b""
     while time.monotonic() < deadline:
         ready, _, _ = select.select([fd], [], [], max(0, deadline - time.monotonic()))
         if not ready:
             break
-        chunk = os.read(fd, 4096)
+        try:
+            chunk = os.read(fd, 4096)
+        except (BlockingIOError, InterruptedError):
+            continue
         if not chunk:
             break
         result += chunk

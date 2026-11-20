@@ -5,7 +5,7 @@ Updated: October 30, 2026.
 The [current two-link deployment](../project_design_and_progress.md) uses DU1 at
 3660 MHz / 20 MHz (51 PRBs) and DU2 at a 3600-MHz n78 interface / 40 MHz
 (106 PRBs), both at 30-kHz SCS and 100-ms DU reporting. Link 2 now uses
-Pi-Radio conversion to 9250-MHz OTA, with TX 60 / RX 10 tuned for the modified
+Pi-Radio conversion to 9250-MHz OTA, with TX 60 / RX 35 tuned for the modified
 FR3 hardware. This does not change the measurement names or units. Normalize
 PRB usage using each cell's reported capacity; do not assume 51 PRBs for both
 links or interpret the `FR3` label as an E2 physical-frequency measurement.

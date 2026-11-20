@@ -13,7 +13,7 @@ Laptop still prepares each intended modem/SIM/cell/PDU/route independently.
 **Radio design:** DU1 is 3660 MHz / 20 MHz / SSB `643680`; DU2 is
 3600-MHz logical interface / 40 MHz / SSB `638976`. Both use logical n78 locks.
 DU2's current physical OTA path uses Pi-Radio at 9250 MHz after the hardware
-modification, with TX 60 / RX 10 dB. The October 29 direct-radio connections
+modification, with TX 60 / RX 35 dB. The October 29 direct-radio connections
 are a historical checkpoint.
 See the [complete profiles and evidence scope](../project_design_and_progress.md).
 
@@ -354,7 +354,7 @@ reports incomplete; address-removal failures retain the existing guards.
 | Carrier / ARFCN | 3660 MHz / `644000` | 3600 MHz / `640000` |
 | Channel bandwidth | 20 MHz | 40 MHz |
 | USRP sample rate | 23.04 MS/s | 46.08 MS/s |
-| Configured TX / RX gain | 70 / 35 dB | 60 / 10 dB |
+| Configured TX / RX gain | 70 / 25 dB | 60 / 35 dB |
 | Physical OTA center | 3660 MHz, direct | 9250 MHz via Pi-Radio conversion |
 | PCI / SSB / SCS / band | `1` / `643680` / 30 kHz / n78 | `2` / `638976` / 30 kHz / n78 |
 | DU ID / sector / expected NCI | `1` / `0` / `6733824` | `2` / `1` / `6733825` |

@@ -1,5 +1,14 @@
 # Falcon
 
+For Spark operation with **DU1/UE1 only**, use the
+[FR1 auto startup guide](docs/operations/spark_fr1_auto.md).
+
+For **DU2/UE2 direct n78 wired / 20 MHz**, use
+[Spark wired DU2 quick start](docs/spark_wired_du2_quick_start.md) and
+[Laptop wired UE2 quick start](docs/laptop_wired_ue2_quick_start.md).
+The `scripts/spark_wired_du2_auto.py` entry reuses the dual/FR1 controller with
+CU + DU2 only, TX 70 / RX 35 and 100-ms DU metrics, without Pi-Radio.
+
 Experiment reports and their selected figures are versioned under
 `docs/experiments/reports/`. Detailed evidence, full message captures, logs,
 CSV/JSON results and working records remain local and are excluded from Git.
@@ -15,11 +24,11 @@ and wait for server registration. Keep the Laptop UE paths active using the
 [reconnect guide](docs/laptop_reconnect_quick_start.md#7c-mptcp-operation-with-the-continuous-xapp).
 Earlier reference-consumer tests below remain historical validation results.
 
-**Current two-link radio profiles, 2026-10-30:** DU1 uses **3660 MHz / 20 MHz / TX 70 / RX 35**;
-DU2 uses **9250-MHz FR3 OTA through Pi-Radio / 40 MHz / TX 60 / RX 10**,
+**Current two-link radio profiles, 2026-11-19:** DU1 uses **3660 MHz / 20 MHz / TX 70 / RX 25**;
+DU2 uses **9250-MHz FR3 OTA through Pi-Radio / 40 MHz / TX 60 / RX 35**,
 with a **3600-MHz logical n78 USRP/modem interface**.
-DU2's gains were tuned for the modified FR3 hardware, and 9250 MHz is its
-deployment going forward, as confirmed by the operator.
+DU2's RX startup gain was updated from 10 to 15 dB, then to 35 dB on November 2. It uses
+the modified FR3 hardware and 9250-MHz deployment confirmed by the operator.
 Both UEs connected in the October 29 direct n78 test without Pi-Radio;
 that earlier checkpoint used DU2 TX 45 / RX 20. Completed integrated FR3
 UE/PDU connectivity and sustained traffic/KPM still require retained run evidence. The
@@ -173,7 +182,7 @@ flowchart LR
     Up <-->|9.25 GHz OTA| Link3
 ```
 
-The current FR3 deployment uses a **3600-MHz USRP/modem interface and a 9250-MHz OTA center through Pi-Radio conversion**. DU2 uses **40 MHz / 46.08 MS/s / TX 60 / RX 10**, tuned for the modified FR3 hardware, while DU1 uses **3660 MHz / 20 MHz / 23.04 MS/s / TX 70 / RX 35**. The operator confirmed license availability for the 9.25-GHz experiment, completed Pi-Radio manual calibration and completed Quectel antenna rewiring. Both OCUDU cells retain logical n78 configurations, and E2/RIC do not automatically learn the external RF conversion. On October 29 both UEs connected in the earlier direct test, with no Pi-Radio installed and DU2 gains then at TX 45 / RX 20. Earlier dual-UE experiment results used DU2 at 20 MHz; those results retain their own configurations and validation scope. See the [current radio design](docs/project_design_and_progress.md). FlexRIC and the KPM xApp receive measurements from both DUs. RIC/AI-assisted steering remains future work. The working RAN is OCUDU with Open5GS; the OAI label in the concept diagram is an alternative implementation.
+The current FR3 deployment uses a **3600-MHz USRP/modem interface and a 9250-MHz OTA center through Pi-Radio conversion**. DU2 uses **40 MHz / 46.08 MS/s / TX 60 / RX 35**, configured for the modified FR3 hardware, while DU1 uses **3660 MHz / 20 MHz / 23.04 MS/s / TX 70 / RX 25**. The operator confirmed license availability for the 9.25-GHz experiment, completed Pi-Radio manual calibration and completed Quectel antenna rewiring. Both OCUDU cells retain logical n78 configurations, and E2/RIC do not automatically learn the external RF conversion. On October 29 both UEs connected in the earlier direct test, with no Pi-Radio installed and DU2 gains then at TX 45 / RX 20. Earlier dual-UE experiment results used DU2 at 20 MHz; those results retain their own configurations and validation scope. See the [current radio design](docs/project_design_and_progress.md). FlexRIC and the KPM xApp receive measurements from both DUs. RIC/AI-assisted steering remains future work. The working RAN is OCUDU with Open5GS; the OAI label in the concept diagram is an alternative implementation.
 
 ### Network-Side Implementation: OCUDU, Open5GS, and FlexRIC
 
@@ -322,7 +331,7 @@ raw evidence, implementation reviews and supplemental experiments.
 
 DU2's physical OTA center is 9250 MHz through Pi-Radio; its logical USRP/modem
 interface and OCUDU startup output remain 3600 MHz / n78. The current gain
-settings are DU1 TX/RX 70/35 and DU2 60/10. Hardware preparation, direct-radio
+settings are DU1 TX/RX 70/25 and DU2 60/35. Hardware preparation, direct-radio
 historical tests and completed FR3 integration have distinct validation scope.
 The earlier single-link workflow is retained as a
 [historical reproduction reference](docs/operations/legacy_single_ue.md).

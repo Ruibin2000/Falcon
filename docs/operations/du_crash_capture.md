@@ -1,8 +1,8 @@
 # Capture a DU1 or DU2 runtime crash
 
 The [current radio profiles](../project_design_and_progress.md) are DU1
-3660 MHz OTA / 20 MHz / TX 70 / RX 35 and DU2 9250 MHz OTA / 40 MHz /
-TX 60 / RX 10 through Pi-Radio. DU2 retains a 3600-MHz logical n78 interface;
+3660 MHz OTA / 20 MHz / TX 70 / RX 25 and DU2 9250 MHz OTA / 40 MHz /
+TX 60 / RX 35 through Pi-Radio. DU2 retains a 3600-MHz logical n78 interface;
 its gain values were tuned for the modified FR3 hardware. Retain the RF arrangement with
 the configuration snapshots so that a historical crash is not attributed to
 a later bandwidth, gain or converter setup.

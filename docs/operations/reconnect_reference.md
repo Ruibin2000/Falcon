@@ -4,7 +4,7 @@ Updated: 2026-11-02. Developer: Ruibin.
 
 **Current radio design:** [profiles and validation scope](../project_design_and_progress.md).
 DU1 uses 3660 MHz / 20 MHz OTA; DU2 uses 9250 MHz / 40 MHz OTA through
-Pi-Radio with a 3600-MHz logical n78 interface. DU2 TX 60 / RX 10 applies to
+Pi-Radio with a 3600-MHz logical n78 interface. DU2 TX 60 / RX 35 applies to
 this modified FR3 path. The operator-confirmed direct-radio connections on
 October 29 are a separate historical checkpoint.
 Earlier recovery experiments retain their original 20-MHz DU2 configuration.
@@ -77,6 +77,26 @@ For intentionally changed wiring, verify the modem's current USB ownership and
 update its entry script or supply its verified `--at-port`; do not bypass the
 USB/IMEI/IMSI checks or guess a tty number.
 
+### Temporary nonblocking AT I/O errors
+
+On November 18, UE1 passed its ModemManager identity check and serial setup,
+then failed at the first read-only `AT+CGSN` with `[Errno 11] Resource
+temporarily unavailable`. A later `fuser` check showed no current port owner;
+that does not establish which process, if any, was involved at failure time.
+No cell-lock write had been reached in that attempt.
+
+The serial descriptor uses `O_NONBLOCK`. `connect_ue.py` now waits for
+writability, handles partial command writes, and retries `EAGAIN`/interrupted
+reads and writes within one five-second command deadline. A missing response
+still fails; USB/device I/O errors still propagate. This is covered by offline
+I/O and PTY tests; resolution of the operator's live failure needs a Laptop
+retest with the updated file.
+
+Refresh the scripts using the copy step below before retrying. If the error
+persists, retain `run.log` and `attempts.jsonl` from the printed directory.
+The 30-second cell-lock cooldown is the existing failed-attempt throttle;
+waiting for it does not prove a serial-port or radio fault has recovered.
+
 ## 2. Automation scripts
 
 The script performs the modem/SIM, enable/registration, serving-cell, PDU,
@@ -107,7 +127,7 @@ sudo systemctl enable --now ModemManager
 | SSB NR-ARFCN / SCS | `643680` / 30 kHz | `638976` / 30 kHz |
 | Carrier NR-ARFCN | `644000` | `640000` |
 | Channel bandwidth / USRP sample rate | 20 MHz / 23.04 MS/s | 40 MHz / 46.08 MS/s |
-| Configured TX / RX gain | 70 / 35 dB | 60 / 10 dB |
+| Configured TX / RX gain | 70 / 25 dB | 60 / 35 dB |
 | Physical OTA center | 3660 MHz, direct | 9250 MHz via Pi-Radio conversion |
 | Independent reset block | priority `20151` | priority `20152` |
 

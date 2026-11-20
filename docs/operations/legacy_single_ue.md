@@ -3,7 +3,7 @@
 Scope update, October 30: this runbook retains the DU1 single-link baseline.
 The [current dual-link design](../project_design_and_progress.md) uses DU1 at
 3660 MHz / 20 MHz OTA and DU2 at 9250 MHz / 40 MHz OTA through Pi-Radio,
-with a 3600-MHz logical n78 interface and tuned TX 60 / RX 10. Both UE
+with a 3600-MHz logical n78 interface and configured TX 60 / RX 35. Both UE
 connections were confirmed in the earlier October 29 direct-radio test.
 Use the paired dual-UE handbooks for
 that deployment; historical single-link measurements below retain their scope.
@@ -30,7 +30,7 @@ Execute one numbered stage at a time. Check the stated evidence before advancing
 
 ## 1. Baseline and physical connections
 
-The current functional uplink configuration is n78, carrier ARFCN **644000 / 3660 MHz**, SSB ARFCN **643680**, 20 MHz, 30 kHz SCS, PCI 1, PLMN `00101`, TAC 7, SST 1, DNN `internet`, and IPv4. B210 serial is `3271233`, sample rate 23.04 MS/s, and the actual new file uses **TX 70 / RX 35**. It includes E2/KPM and scheduler/RLC metrics in one file. Historical carrier 650000 / 3750 MHz and SSB 649632 remain documented in the [configuration history](../project_design_and_progress.md#configuration-ownership); the old files are preserved. Record actual gains per run; gain is not calibrated dBm or EIRP.
+The current functional uplink configuration is n78, carrier ARFCN **644000 / 3660 MHz**, SSB ARFCN **643680**, 20 MHz, 30 kHz SCS, PCI 1, PLMN `00101`, TAC 7, SST 1, DNN `internet`, and IPv4. B210 serial is `3271233`, sample rate 23.04 MS/s, and the actual new file uses **TX 70 / RX 25**. It includes E2/KPM and scheduler/RLC metrics in one file. Historical carrier 650000 / 3750 MHz and SSB 649632 remain documented in the [configuration history](../project_design_and_progress.md#configuration-ownership); the old files are preserved. Record actual gains per run; gain is not calibrated dBm or EIRP.
 
 `[SPARK]` Connect B210 through USB 3; do not place the working DU on a 480M USB 2 path. Attach the verified RF antenna path before enabling transmission. Use the recorded laboratory frequency and power conditions. The current DU2 FR3 branch uses external Pi-Radio conversion between 3600-MHz interfaces and 9250-MHz OTA; the single-link procedure below operates DU1.
 
@@ -289,7 +289,7 @@ Require the current AMF `gNB-N2 accepted` / added-gNB entry and an established N
 
 ## 9. Confirm RF and start the DU
 
-Confirm n78, ARFCN 644000, 3660 MHz, 20 MHz, 30 kHz, PLMN `00101`, TAC 7, PCI 1, B210 `3271233`, and actual TX/RX gain against stage 6. The deployed file uses TX 70 / RX 35. The DU command below enables RF transmission.
+Confirm n78, ARFCN 644000, 3660 MHz, 20 MHz, 30 kHz, PLMN `00101`, TAC 7, PCI 1, B210 `3271233`, and actual TX/RX gain against stage 6. The deployed file uses TX 70 / RX 25. The DU command below enables RF transmission.
 
 ### 9a Deploy the complete DU1 configuration
 

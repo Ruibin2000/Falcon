@@ -53,6 +53,14 @@ from the current repository tree does not remove it from earlier Git history.
 | October 24 | [UE2 recovery](reports/ue2_fr3_recovery_experiment_report_2026-10-24.md) | Two measured gain disturbance/recovery cycles |
 | October 25 | [100-ms reporting](reports/dual_ue_100ms_validation_report_2026-10-25.md), [27 metrics](reports/dual_ue_27kpm_stability_report_2026-10-25.md) | Direct-radio acquisition, explicit scope and full raw metrics |
 | October 26 | [120-second delivery](reports/du27_app_subscription_live_2026-10-26.md), [six-minute delivery](reports/du27_app_subscription_6min_live_2026-10-26.md) | One independent subscriber; 2,400 / 7,200 reports received and written |
+| November 19 | [Wired DU2 baseline](../spark_wired_du2_quick_start.md#recorded-comparison-on-2026-11-19), [Laptop commands](../laptop_wired_ue2_quick_start.md) | Direct n78, 20 MHz, TX/RX 70/35; one 60-second UL run, receiver 37.4 Mbps |
+
+The November 19 final raw export, summaries, configuration snapshot and hash
+manifest are retained locally in `evidence/2026-11-19_ue2_wired20_baseline/`.
+Earlier RX20/RX30/RX40 exports were verified as exact byte prefixes of the final
+cumulative RX35 export and removed as redundant copies. Select each recorded
+traffic window before analyzing the retained log. The cleanup inventory is local
+under `records/maintenance/2026-11-19_workspace_cleanup.json`.
 
 ## Reading and Reproduction
 
@@ -68,6 +76,6 @@ local relocation record (`documentation_relocation.json`) preserves their origin
 and current hashes; recorded experiment inputs and outcomes are unchanged.
 
 The old `FR3` label in the October 13–26 experiments denoted a direct n78 demo
-path. Current DU2 uses 9.25-GHz OTA, 40 MHz and TX/RX 60/10 after hardware
+path. Current DU2 uses 9.25-GHz OTA, 40 MHz and TX/RX 60/35 after hardware
 modification. Earlier throughput/delivery results do not establish current FR3
 end-to-end connectivity or sustained performance. New runs retain their own evidence.

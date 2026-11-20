@@ -1,6 +1,6 @@
 # Project Design and Progress
 
-Updated: 2026-11-01.
+Updated: 2026-11-19.
 
 Falcon uses two independent UE/modem/USRP/DU paths with a shared OCUDU CU,
 Open5GS Core and FlexRIC. Link 1 is the direct 3660-MHz FR1 path. Link 2 uses
@@ -10,19 +10,50 @@ configuration on both paths.
 
 On October 30 the operator confirmed that DU2's hardware had been modified
 for 9250-MHz operation and that this is its configuration going forward.
-DU2 TX 60 / RX 10 dB was obtained by tuning this FR3 hardware path. The
-operator also confirmed license availability for the project's 9.25-GHz
-experimental band, completed Pi-Radio manual calibration and completed
+DU2 TX 60 / RX 10 dB was obtained by tuning this FR3 hardware path. On
+November 2 the operator changed the DU2 RX startup gain to 15 dB, then
+confirmed 35 dB as the current value, keeping TX at 60 dB. The deployed
+DU1 YAML uses the operator-confirmed TX 70 / RX 25 dB setting, synchronized
+with the maintained template on November 19. The operator also confirmed license availability for the
+project's 9.25-GHz experimental band, completed Pi-Radio manual calibration and completed
 Quectel antenna rewiring.
 
 The October 29 direct 3600-MHz UE2 connection test is historical. Its result
 does not establish integrated UE registration, PDU connectivity or sustained
 traffic/KPM through the converted FR3 path. Integrated FR3 UE/PDU connectivity still needs a completed retained test.
 
+## Accepted Wired UE2 Baseline
+
+The November 19 wired experiment uses a separate direct n78 DU2 profile:
+3600 MHz, 20 MHz, 23.04 MS/s, 1T1R, TX 70 / RX 35, digital TX backoff 12 dB,
+and 100-ms DU statistics/KPM. TDD is `DDDSUUUUUU`. Quectel ANT3 connects through
+a ZFRSC-42-S+ splitter, with a 50-dB DL branch to B210 RF A TX/RX, a 60-dB UL
+branch to RF A RX2, and no common attenuator or Pi-Radio.
+
+The accepted DL snapshot was approximately -98 to -99 dBm RSRP and 24 dB SINR.
+The selected 60-second UL window measured median SINR 23.6 dB, mean MAC
+throughput 39.41 Mbps, CRC NOK 10.59%, two RF underflows and zero RF-late messages.
+The operator supplied an iperf summary of 37.4 Mbps at the receiver and zero
+sender TCP retransmissions. These single-run results do not establish optimal
+gains, long-term stability, or acceptance of the separate FR3 OTA deployment.
+
+Use the [Spark wired guide](spark_wired_du2_quick_start.md) and
+[Laptop wired guide](laptop_wired_ue2_quick_start.md). The final cumulative raw
+export, comparison/capacity summaries, accepted configuration snapshot and
+provenance manifest remain in the local archive
+`docs/experiments/evidence/2026-11-19_ue2_wired20_baseline/`.
+The wired entry points reuse the shared Spark and Laptop controllers.
+The earlier temporary DU1 diagnostic candidate has been removed. The operator
+confirmed that DU1 RX 25 was the actual run setting. Both the maintained DU1
+template and its deployed copy use TX 70 / RX 25. The cleanup change to RX 45
+was incorrect and has been reverted; no live gain command was issued.
+
 ## Daily Operation and Documentation
 
 Use [Spark auto startup](spark_auto.md) for one-terminal startup, DU2 gain
-control and unified shutdown. The individual
+control and unified shutdown.
+For DU1/UE1 only, use [Spark FR1 auto startup](operations/spark_fr1_auto.md),
+with DU1 gain control and two E2 subscriptions. The individual
 [Spark commands](spark_quick_commands.md) cover preparation and diagnosis. Choose either the
 [Laptop one-shot guide](laptop_single_quick_start.md) or the
 [Laptop reconnect guide](laptop_reconnect_quick_start.md) for the two modems.
@@ -60,9 +91,10 @@ these roles; its example UE IDs and addresses are historical.
 | 27 raw DU KPM at nominal 100 ms | Verified on the captured direct-radio setup | [Six-minute metric report](experiments/reports/dual_ue_27kpm_stability_report_2026-10-25.md); [metric contract](reference/kpm_metrics.md) |
 | App registration and full bound report push | Implemented; one dummy received/wrote 2,400 and 7,200 reports | [120-second](experiments/reports/du27_app_subscription_live_2026-10-26.md) and [six-minute](experiments/reports/du27_app_subscription_6min_live_2026-10-26.md) tests; push p99 2.314 / 3.595 ms; normal cleanup |
 | DU2 40-MHz migration | Startup and both direct-radio UE connections confirmed October 29 | DU2 46.08 MS/s / SSB `638976`; direct test then used TX 45 / RX 20 |
-| Current 9.25-GHz FR3 hardware and gains | Operator-confirmed deployment from October 30 | Pi-Radio manual calibration and Quectel antenna rewiring complete; license availability confirmed; DU2 TX 60 / RX 10 tuned for this path |
+| Current 9.25-GHz FR3 hardware and gains | Hardware confirmed October 30; RX startup gain updated November 2 | Pi-Radio manual calibration and Quectel antenna rewiring complete; license availability confirmed; current DU2 default TX 60 / RX 35 |
 | Integrated FR3 UE/PDU connectivity and sustained traffic/KPM | Completed retained test pending | DU F1/E2 startup and RF preparation alone do not establish end-to-end connectivity |
 | Actual MPTCP/MPX consumer using the broker | Formal MPTCP server integration reported by the operator on November 1 | Normal startup runs continuous xApp and waits for server registration; quantitative formal-client results were not supplied in this update. Use the [v2 contract](interface/README.md). |
+| CUDA uplink processing on both DUs | Offline correctness passed; live A/B acceptance pending | GPU PUSCH/LDPC with retained E2/KPM integration and explicit `--cuda` startup. Controlled 1-layer comparisons were slower than CPU, so no performance gain is claimed; see [CUDA build and validation](operations/cuda_ldpc.md). |
 | Longer live stability and fault cases | Pending | 30-minute run, app/UE reconnect, IP changes/reuse and slow consumers need their own live evidence |
 | Guarded CME 902 / CFUN cell-lock fallback | Implemented with offline regression coverage | See [reconnect details](operations/reconnect_reference.md#cme-902-after-a-du-gain-drop); physical fallback execution remains separately unverified |
 
@@ -89,7 +121,7 @@ are distinct. Historical measurements remain scoped to their recorded RF setup.
 | Nominal USRP-side channel | 3650–3670 MHz | 3580–3620 MHz |
 | Physical OTA center | 3660 MHz, direct | 9250 MHz via Pi-Radio |
 | Nominal OTA channel | 3650–3670 MHz | 9230–9270 MHz |
-| Configured TX / RX gain | 70 / 35 dB | 60 / 10 dB |
+| Configured TX / RX gain | 70 / 25 dB | 60 / 35 dB |
 | DU ID / sector / NCI | `1` / `0` / `6733824` | `2` / `1` / `6733825` |
 | Maintained configuration | [DU1 YAML](../configs/ocudu/dual_fr1/du1_b210_n78_3660mhz.yml) | [DU2 YAML](../configs/ocudu/dual_fr1/du2_b210_n78_40mhz.yml) |
 
@@ -102,11 +134,11 @@ OCUDU configuration.
 The gain values are startup defaults in dB, rather than calibrated output
 powers in dBm. Record any runtime console overrides with the run evidence.
 
-The current gain row follows the actual OCUDU startup YAML after subsequent
-live tuning, as confirmed by the operator on October 30: DU1 TX 70 / RX 35
-and DU2 TX 60 / RX 10. DU2's values apply to the modified 9250-MHz FR3
-hardware path. Falcon's maintained DU2 template is synchronized with
-the deployed file. The October 29 migration used DU2 TX 45 / RX 20; that
+The current gain row follows the actual OCUDU startup YAML: DU1 TX 70 /
+RX 25 and DU2 TX 60 / RX 35. DU2 uses the modified 9250-MHz FR3 hardware
+path, with RX updated from 10 to 15 and then 35 dB on November 2. The October 30 tuned
+TX 60 / RX 10 setting remains historical. Falcon's maintained DU2 template
+is synchronized with the deployed file. The October 29 migration used DU2 TX 45 / RX 20; that
 earlier checkpoint and older experiment reports retain their recorded gains.
 
 ## Radio Topology
@@ -270,7 +302,7 @@ The newer FR3 path still needs its own integration evidence.
 ## Next Work
 
 1. Retain a complete FR3 UE acquisition/registration/PDU/private-connectivity
-   test using 9.25-GHz OTA, DU2 40 MHz and the tuned 60/10 gains.
+   test using 9.25-GHz OTA, DU2 40 MHz and the configured 60/35 gains.
 2. Run a fresh dual-link traffic/KPM/subscription workload on the current
    20/40-MHz RF setup, checking IP binding, cadence, payload integrity and cleanup.
 3. Adapt and jointly test the real MPTCP/MPX consumer, then complete the longer

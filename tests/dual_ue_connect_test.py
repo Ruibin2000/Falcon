@@ -3,6 +3,7 @@
 
 import contextlib
 import copy
+import errno
 import io
 import ipaddress
 import json
@@ -1134,6 +1135,56 @@ class CellParsingTest(unittest.TestCase):
 
 
 class SerialQueryTest(unittest.TestCase):
+    def test_nonblocking_at_io_retries_and_preserves_partial_write_offset(self):
+        payload = b"AT+CGSN\r"
+        accepted = []
+        attempts = []
+        def write(fd, data):
+            attempts.append(data)
+            if len(attempts) == 1:
+                raise BlockingIOError(errno.EAGAIN, "temporarily unavailable")
+            count = min(3, len(data))
+            accepted.append(data[:count])
+            return count
+        def ready(readers, writers, errors, timeout):
+            self.assertGreater(timeout, 0)
+            self.assertLessEqual(timeout, 5)
+            return readers, writers, []
+        chunks = [BlockingIOError(errno.EAGAIN, "temporarily unavailable"),
+                  b"\r\n863305041978437\r\n", InterruptedError(errno.EINTR, "interrupted"), b"OK\r\n"]
+        with patch.object(CONNECT.termios, "tcflush"), \
+                patch.object(CONNECT.select, "select", side_effect=ready), \
+                patch.object(CONNECT.os, "write", side_effect=write), \
+                patch.object(CONNECT.os, "read", side_effect=chunks):
+            reply = CONNECT.at_reply(999, "AT+CGSN")
+        self.assertEqual(b"".join(accepted), payload)
+        self.assertEqual(attempts[:3], [payload, payload, payload[3:]])
+        self.assertIn("863305041978437", reply)
+        self.assertTrue(reply.endswith("OK\r\n"))
+
+    def test_nonblocking_write_or_read_timeout_is_an_at_command_failure(self):
+        for writing in (True, False):
+            with self.subTest(writing=writing), patch.object(CONNECT.termios, "tcflush"), \
+                    patch.object(CONNECT.select, "select", side_effect=(
+                        [([], [999], []), ([], [], [])] if writing else
+                        [([], [999], []), ([999], [], []), ([], [], [])])), \
+                    patch.object(CONNECT.os, "write", side_effect=BlockingIOError(errno.EAGAIN, "busy") if writing else None,
+                                 return_value=8), \
+                    patch.object(CONNECT.os, "read", side_effect=BlockingIOError(errno.EAGAIN, "busy")):
+                with self.assertRaises(CONNECT.ATCommandError) as error:
+                    CONNECT.at_reply(999, "AT+CGSN")
+                self.assertIn("AT+CGSN", str(error.exception))
+
+    def test_nontransient_serial_failure_is_not_retried(self):
+        with patch.object(CONNECT.termios, "tcflush"), \
+                patch.object(CONNECT.select, "select", side_effect=lambda r, w, e, t: (r, w, [])), \
+                patch.object(CONNECT.os, "write", return_value=8), \
+                patch.object(CONNECT.os, "read", side_effect=OSError(errno.EIO, "device error")) as read:
+            with self.assertRaises(OSError) as error:
+                CONNECT.at_reply(999, "AT+CGSN")
+        self.assertEqual(error.exception.errno, errno.EIO)
+        read.assert_called_once()
+
     def test_query_only_serial_protocol_and_settings_restore(self):
         for wrong_imei in (False, True):
             with self.subTest(wrong_imei=wrong_imei):

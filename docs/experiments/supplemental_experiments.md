@@ -5,7 +5,7 @@ Updated: 2026-10-30. Developer: Ruibin.
 Use the [current radio design](../project_design_and_progress.md): DU1 at
 3660 MHz / 20 MHz OTA and DU2 at 9250 MHz / 40 MHz OTA through Pi-Radio,
 with a 3600-MHz logical n78 interface. DU2's ongoing configuration uses the
-modified FR3 hardware and tuned TX 60 / RX 10. The October 29 connection
+modified FR3 hardware and configured TX 60 / RX 35. The October 29 connection
 checkpoint used direct radio without Pi-Radio and remains historical. Keep
 RF mode, gains and bandwidths explicit in comparisons. The two cells have
 different capacities (51 / 106 PRBs), so equal raw throughput is not an

@@ -9,7 +9,7 @@ Both subscriber paths subsequently passed registration and IPv4 traffic in the
 dated dual-UE reports. The [current radio design](../../project_design_and_progress.md)
 assigns SIM `...101` to the intended DU1 3660-MHz / 20-MHz path and SIM `...102`
 to the intended DU2 3600-MHz logical n78 interface / 40-MHz path. Link 2 now
-uses 9250-MHz OTA through Pi-Radio, with TX 60 / RX 10 tuned for the modified
+uses 9250-MHz OTA through Pi-Radio, with TX 60 / RX 35 tuned for the modified
 FR3 hardware. The October 29 direct-radio connections are historical. SIM credentials and
 PLMN do not themselves enforce cell selection; verify the actual serving cell.
 

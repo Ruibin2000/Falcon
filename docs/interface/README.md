@@ -8,7 +8,7 @@ This is Falcon's local application protocol. Its version is independent of the E
 
 The [current radio design](../project_design_and_progress.md) uses DU1 at
 3660 MHz / 20 MHz OTA and DU2 at 9250 MHz / 40 MHz OTA through Pi-Radio,
-with a 3600-MHz logical n78 interface and TX 60 / RX 10 tuned for the modified
+with a 3600-MHz logical n78 interface and TX 60 / RX 35 tuned for the modified
 FR3 hardware. This is DU2's ongoing deployment. The October 29 direct-radio
 connection test is historical. `FR1`/`FR3` are application path labels; FR3
 now corresponds to the physical 9250-MHz path. E2 retains logical n78 information, and this protocol

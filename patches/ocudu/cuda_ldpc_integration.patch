@@ -1,0 +1,3347 @@
+diff --git a/.gitignore b/.gitignore
+index 0a2c4d2..ed7bccd 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,9 +1,41 @@
+ # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+ # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+ 
+-# Reminder: this file should only be used to ignore files generated as part of the project build
+-# (i.e., files that all developers will want to ignore). Please use $OCUDU_DIR/.git/info/exclude
+-# or $XDG_CONFIG_HOME/git/ignore for auxiliary files inside the repository that are specific of
+-# one user's workflow (e.g., build folders). See also https://git-scm.com/docs/gitignore).
++# Ignore build artifacts and backups.
++# Use $OCUDU_DIR/.git/info/exclude or $XDG_CONFIG_HOME/git/ignore for other
++# user-specific auxiliary files. See https://git-scm.com/docs/gitignore.
+ 
+ /utils/gdb/python/ocudu/__pycache__
++
++# Local CMake build directories
++/build/
++/build-*/
++/build_*/
++/cmake-build-*/
++
++# Generated CMake and Ninja metadata
++CMakeFiles/
++CMakeCache.txt
++cmake_install.cmake
++CTestTestfile.cmake
++install_manifest.txt
++compile_commands.json
++build.ninja
++.ninja_deps
++.ninja_log
++
++# Compiled objects, libraries and coverage files
++*.o
++*.obj
++*.a
++*.so
++*.so.*
++*.dylib
++*.dll
++*.lib
++*.exe
++*.gcda
++*.gcno
++
++# Backup copies
++*.bak
+diff --git a/apps/helpers/e2/e2_config_translators.h b/apps/helpers/e2/e2_config_translators.h
+index 0b4c844..e996a3c 100644
+--- a/apps/helpers/e2/e2_config_translators.h
++++ b/apps/helpers/e2/e2_config_translators.h
+@@ -25,6 +25,9 @@ inline e2_sctp_gateway_config generate_e2_client_gateway_config(const e2_config&
+   e2ap_sctp.ppid              = ppid;
+   e2ap_sctp.bind_addresses    = e2_cfg.bind_addrs;
+   fill_sctp_network_gateway_config_socket_params(e2ap_sctp, e2_cfg.sctp);
++  // Periodic KPM indications are small messages. Do not hold a later 100 ms
++  // indication behind an unacknowledged message and the peer's delayed SACK.
++  e2ap_sctp.nodelay           = true;
+ 
+   const std::string logger_id = (ppid == E2_DU_PPID)   ? "E2-DU"
+                                 : (ppid == E2_UP_PPID) ? "E2-CU-UP"
+diff --git a/apps/units/o_cu_cp/cu_cp/cu_cp_config_translators.cpp b/apps/units/o_cu_cp/cu_cp/cu_cp_config_translators.cpp
+index d30690b..95177b2 100644
+--- a/apps/units/o_cu_cp/cu_cp/cu_cp_config_translators.cpp
++++ b/apps/units/o_cu_cp/cu_cp/cu_cp_config_translators.cpp
+@@ -477,6 +477,7 @@ ocucp::cu_cp_configuration ocudu::generate_cu_cp_config(const cu_cp_unit_config&
+   // Metrics.
+   out_cfg.metrics.layers_cfg.enable_ngap_metrics = cu_cfg.metrics.layers_cfg.enable_ngap_metrics;
+   out_cfg.metrics.layers_cfg.enable_rrc_metrics  = cu_cfg.metrics.layers_cfg.enable_rrc_metrics;
++  out_cfg.metrics.layers_cfg.enable_ue_identity = cu_cfg.metrics.layers_cfg.enable_ue_identity;
+ 
+   // Mobility.
+   out_cfg.mobility.mobility_mgr_config.trigger_handover_from_measurements =
+diff --git a/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h b/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h
+index de538ae..da745c2 100644
+--- a/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h
++++ b/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h
+@@ -388,10 +388,11 @@ struct cu_cp_unit_metrics_layer_config {
+   bool enable_ngap_metrics   = false;
+   bool enable_pdcp_metrics   = false;
+   bool enable_rrc_metrics    = false;
++  bool enable_ue_identity = false;
+   bool enable_cu_cp_executor = false;
+ 
+   /// Returns true if one or more layers are enabled, false otherwise.
+-  bool are_metrics_enabled() const { return enable_ngap_metrics || enable_pdcp_metrics || enable_rrc_metrics; }
++  bool are_metrics_enabled() const { return enable_ngap_metrics || enable_pdcp_metrics || enable_rrc_metrics || enable_ue_identity; }
+ };
+ 
+ /// Metrics configuration.
+diff --git a/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_cli11_schema.cpp b/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_cli11_schema.cpp
+index b5e62e0..fc31ce7 100644
+--- a/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_cli11_schema.cpp
++++ b/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_cli11_schema.cpp
+@@ -863,6 +863,7 @@ static void configure_cli11_metrics_layers_args(CLI::App& app, cu_cp_unit_metric
+   add_option(app, "--enable_ngap", metrics_params.enable_ngap_metrics, "Enable NGAP metrics")->capture_default_str();
+   add_option(app, "--enable_pdcp", metrics_params.enable_pdcp_metrics, "Enable PDCP metrics")->capture_default_str();
+   add_option(app, "--enable_rrc", metrics_params.enable_rrc_metrics, "Enable CU-CP RRC metrics")->capture_default_str();
++  add_option(app, "--enable_ue_identity", metrics_params.enable_ue_identity, "Enable CU-CP identity snapshots")->capture_default_str();
+ }
+ 
+ static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_config& metrics_params)
+diff --git a/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_yaml_writer.cpp b/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_yaml_writer.cpp
+index d93bb19..b3233cb 100644
+--- a/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_yaml_writer.cpp
++++ b/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_yaml_writer.cpp
+@@ -405,6 +405,7 @@ static void fill_cu_cp_metrics_layers_section(YAML::Node node, const cu_cp_unit_
+   node["enable_ngap"] = config.enable_ngap_metrics;
+   node["enable_pdcp"] = config.enable_pdcp_metrics;
+   node["enable_rrc"]  = config.enable_rrc_metrics;
++  node["enable_ue_identity"] = config.enable_ue_identity;
+ }
+ 
+ static void fill_cu_cp_metrics_section(YAML::Node node, const cu_cp_unit_metrics_config& config)
+diff --git a/configs/cu.yml b/configs/cu.yml
+index 354924a..7c8dc73 100644
+--- a/configs/cu.yml
++++ b/configs/cu.yml
+@@ -1,12 +1,12 @@
+ # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+ # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+ 
+-
+ # Example config for a locally deployed CU listening on the localhost interface for a DU connection
+ 
+ cu_cp:
++  request_pdu_session_timeout: 10
+   amf:
+-    addrs: 127.0.1.100
++    addrs: 127.0.0.5
+     bind_addrs: 127.0.0.1
+     supported_tracking_areas:
+       - tac: 7
+@@ -14,17 +14,22 @@ cu_cp:
+           - plmn: "00101"
+             tai_slice_support_list:
+               - sst: 1
++
+   f1ap:
+     bind_addrs: 127.0.10.1
+ 
+ cu_up:
++  ngu:
++    socket:
++      - bind_addr: 127.0.0.1
++
+   f1u:
+     socket:
+       - bind_addr: 127.0.10.1
+ 
+ log:
+   filename: /tmp/cu.log
+-  all_level: warning
++  all_level: info
+ 
+ pcap:
+   ngap_enable: false
+diff --git a/configs/du1_b210_n78_3660mhz.yml b/configs/du1_b210_n78_3660mhz.yml
+new file mode 100644
+index 0000000..a52cb50
+--- /dev/null
++++ b/configs/du1_b210_n78_3660mhz.yml
+@@ -0,0 +1,61 @@
++# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
++# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
++
++# Standalone DU1 configuration copied from the actual DU1 B210 and FlexRIC files.
++# 3660 MHz / 20 MHz occupies the nominal interval 3650-3670 MHz.
++# Gains are the current file values; live acceptance at this carrier is pending.
++# Derive the modem SSB lock from this run's DU startup output.
++gnb_du_id: 1
++
++f1ap:
++  addrs: 127.0.10.1
++  bind_addrs: 127.0.10.2
++
++f1u:
++  socket:
++    - bind_addr: 127.0.10.2
++
++ru_sdr:
++  device_driver: uhd
++  device_args: type=b200,serial=3271233,num_recv_frames=64,num_send_frames=64
++  srate: 23.04
++  clock: internal
++  clock_ppm: 0.0
++  freq_offset: 0
++  tx_gain: 70
++  rx_gain: 35
++
++cell_cfg:
++  dl_arfcn: 644000
++  band: 78
++  channel_bandwidth_MHz: 20
++  common_scs: 30
++  plmn: "00101"
++  tac: 7
++  pci: 1
++
++log:
++  filename: /tmp/du1_3660.log
++  all_level: info
++
++pcap:
++  mac_enable: false
++  mac_filename: /tmp/du1_3660_mac.pcap
++  f1ap_enable: false
++  f1ap_filename: /tmp/du1_3660_f1ap.pcap
++  f1u_enable: false
++  f1u_filename: /tmp/du1_3660_f1u.pcap
++
++e2:
++  enable_du_e2: true
++  addrs: [127.0.0.1]
++  bind_addrs: [127.0.0.1]
++  port: 36421
++  e2sm_kpm_enabled: true
++
++metrics:
++  layers:
++    enable_sched: true
++    enable_rlc: true
++  periodicity:
++    du_report_period: 100
+diff --git a/configs/du1_flexric.yml b/configs/du1_flexric.yml
+new file mode 100644
+index 0000000..3af1125
+--- /dev/null
++++ b/configs/du1_flexric.yml
+@@ -0,0 +1,13 @@
++e2:
++  enable_du_e2: true
++  addrs: [127.0.0.1]
++  bind_addrs: [127.0.0.1]
++  port: 36421
++  e2sm_kpm_enabled: true
++
++metrics:
++  layers:
++    enable_sched: true
++    enable_rlc: true
++  periodicity:
++    du_report_period: 1000
+diff --git a/configs/du2_b210_n78_40mhz.yml b/configs/du2_b210_n78_40mhz.yml
+new file mode 100644
+index 0000000..4d16316
+--- /dev/null
++++ b/configs/du2_b210_n78_40mhz.yml
+@@ -0,0 +1,53 @@
++# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
++# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
++
++# DU2 / FR3: 9250 MHz OTA via Pi-Radio; logical interface 3600 MHz / n78 / 40 MHz.
++# At 30 kHz SCS, nominal channels are 3580-3620 MHz (interface), 9230-9270 MHz (OTA).
++# Default SSB ARFCN at this bandwidth is 638976; use the matching UE2 lock.
++# B210 328B021 was independently discovered on Spark on 2026-10-13.
++# Rediscover both physical radios before live dual-DU startup.
++# TX/RX gains are 60/10 dB after tuning the modified 9250-MHz FR3 hardware path.
++# Load du2_flexric.yml as the second configuration file.
++gnb_id: 411
++gnb_id_bit_length: 22
++gnb_du_id: 2
++
++f1ap:
++  addrs: 127.0.10.1
++  bind_addrs: 127.0.10.3
++
++f1u:
++  socket:
++    - bind_addr: 127.0.10.3
++
++ru_sdr:
++  device_driver: uhd
++  device_args: type=b200,serial=328B021,num_recv_frames=64,num_send_frames=64
++  srate: 46.08
++  clock: internal
++  clock_ppm: 0.0
++  freq_offset: 0
++  tx_gain: 60
++  rx_gain: 10
++
++cell_cfg:
++  dl_arfcn: 640000
++  band: 78
++  channel_bandwidth_MHz: 40
++  common_scs: 30
++  plmn: "00101"
++  tac: 7
++  pci: 2
++  sector_id: 1
++
++log:
++  filename: /tmp/du2_3600.log
++  all_level: info
++
++pcap:
++  mac_enable: false
++  mac_filename: /tmp/du2_3600_mac.pcap
++  f1ap_enable: false
++  f1ap_filename: /tmp/du2_3600_f1ap.pcap
++  f1u_enable: false
++  f1u_filename: /tmp/du2_3600_f1u.pcap
+diff --git a/configs/du2_flexric.yml b/configs/du2_flexric.yml
+new file mode 100644
+index 0000000..9dd6f1b
+--- /dev/null
++++ b/configs/du2_flexric.yml
+@@ -0,0 +1,14 @@
++# DU2 E2 destination is shared with DU1; its local bind identifies this DU.
++e2:
++  enable_du_e2: true
++  addrs: [127.0.0.1]
++  bind_addrs: [127.0.10.3]
++  port: 36421
++  e2sm_kpm_enabled: true
++
++metrics:
++  layers:
++    enable_sched: true
++    enable_rlc: true
++  periodicity:
++    du_report_period: 100
+diff --git a/include/ocudu/cu_cp/cu_cp_configuration.h b/include/ocudu/cu_cp/cu_cp_configuration.h
+index b5857fc..0b5f3c7 100644
+--- a/include/ocudu/cu_cp/cu_cp_configuration.h
++++ b/include/ocudu/cu_cp/cu_cp_configuration.h
+@@ -134,6 +134,7 @@ struct cu_cp_configuration {
+     bool enable_ngap_metrics = false;
+     /// Enable RRC metrics.
+     bool enable_rrc_metrics = false;
++    bool enable_ue_identity = false;
+   };
+ 
+   struct metrics_params {
+diff --git a/include/ocudu/cu_cp/cu_cp_metrics_notifier.h b/include/ocudu/cu_cp/cu_cp_metrics_notifier.h
+index a9890af..b5f0c11 100644
+--- a/include/ocudu/cu_cp/cu_cp_metrics_notifier.h
++++ b/include/ocudu/cu_cp/cu_cp_metrics_notifier.h
+@@ -5,6 +5,7 @@
+ #pragma once
+ 
+ #include "ocudu/ngap/mobility_management_metrics.h"
++#include "ocudu/cu_cp/ue_identity.h"
+ #include "ocudu/ngap/ngap_metrics.h"
+ #include "ocudu/ran/gnb_du_id.h"
+ #include "ocudu/ran/pci.h"
+@@ -26,6 +27,9 @@ struct cu_cp_metrics_report {
+     pci_t pci;
+     /// RRC connection state of the UE.
+     ocucp::rrc_state rrc_connection_state;
++    cu_cp_ue_index_t ue_index = cu_cp_ue_index_t::invalid;
++    std::optional<ocucp::cu_ue_identity> identity;
++    std::vector<uint8_t> slice_ssts;
+   };
+   struct cell_info {
+     nr_cell_global_id_t cgi;
+diff --git a/include/ocudu/cu_cp/ue_identity.h b/include/ocudu/cu_cp/ue_identity.h
+new file mode 100644
+index 0000000..2f35066
+--- /dev/null
++++ b/include/ocudu/cu_cp/ue_identity.h
+@@ -0,0 +1,30 @@
++// SPDX-FileCopyrightText: Copyright (C) 2026 Ruibin Chen
++// SPDX-License-Identifier: BSD-3-Clause-Open-MPI
++#pragma once
++
++#include "ocudu/cu_cp/cu_cp_types.h"
++#include "ocudu/ran/gnb_du_id.h"
++#include "ocudu/ran/guami.h"
++#include <cstdint>
++
++namespace ocudu::ocucp {
++
++/// Owned identity views. Call getters only on the CU control executor.
++struct ngap_ue_identity {
++  uint64_t amf_ue_ngap_id;
++  uint64_t ran_ue_ngap_id;
++  guami_t  guami;
++};
++
++struct f1ap_ue_identity {
++  uint64_t cu_ue_f1ap_id;
++  uint64_t du_ue_f1ap_id;
++};
++
++struct cu_ue_identity {
++  ngap_ue_identity ngap;
++  f1ap_ue_identity f1;
++  gnb_du_id_t      du_id;
++};
++
++} // namespace ocudu::ocucp
+diff --git a/include/ocudu/f1ap/cu_cp/f1ap_cu.h b/include/ocudu/f1ap/cu_cp/f1ap_cu.h
+index 9d0254b..ac4d072 100644
+--- a/include/ocudu/f1ap/cu_cp/f1ap_cu.h
++++ b/include/ocudu/f1ap/cu_cp/f1ap_cu.h
+@@ -6,6 +6,8 @@
+ 
+ #include "ocudu/adt/byte_buffer.h"
+ #include "ocudu/adt/expected.h"
++#include "ocudu/cu_cp/cu_cp_types.h"
++#include "ocudu/cu_cp/ue_identity.h"
+ #include "ocudu/cu_cp/cu_cp_ue_messages.h"
+ #include "ocudu/f1ap/common/f1ap_ref_time_info.h"
+ #include "ocudu/f1ap/cu_cp/du_setup_notifier.h"
+@@ -147,6 +149,8 @@ public:
+   /// \brief Returns the number of connected UEs at the F1AP
+   /// \return The number of connected UEs.
+   virtual size_t get_nof_ues() const = 0;
++
++  virtual std::optional<f1ap_ue_identity> get_ue_identity_snapshot(cu_cp_ue_index_t ue_index) const { return std::nullopt; }
+ };
+ 
+ /// Handle UE context removal
+diff --git a/include/ocudu/ngap/ngap.h b/include/ocudu/ngap/ngap.h
+index c8ed09a..2affdc1 100644
+--- a/include/ocudu/ngap/ngap.h
++++ b/include/ocudu/ngap/ngap.h
+@@ -8,6 +8,7 @@
+ #include "ocudu/ngap/ngap_handover.h"
+ #include "ocudu/ngap/ngap_init_context_setup.h"
+ #include "ocudu/ngap/ngap_metrics.h"
++#include "ocudu/cu_cp/ue_identity.h"
+ #include "ocudu/ngap/ngap_pdu_session.h"
+ #include "ocudu/ngap/ngap_rrc_inactive_transition.h"
+ #include "ocudu/ngap/ngap_setup.h"
+@@ -377,6 +378,7 @@ public:
+   /// \param[in] ue_index of a given UE.
+   /// \param[out] amf_ue_id of the given UE.
+   virtual amf_ue_id_t get_amf_ue_id(const cu_cp_ue_index_t& ue_index) = 0;
++  virtual std::optional<ngap_ue_identity> get_ue_identity_snapshot(cu_cp_ue_index_t ue_index) const { return std::nullopt; }
+ };
+ 
+ /// Interface used to capture the NGAP metrics from a single CU-CP NGAP.
+diff --git a/include/ocudu/scheduler/scheduler_metrics.h b/include/ocudu/scheduler/scheduler_metrics.h
+index 2f93bd0..f40e755 100644
+--- a/include/ocudu/scheduler/scheduler_metrics.h
++++ b/include/ocudu/scheduler/scheduler_metrics.h
+@@ -38,9 +38,9 @@ struct scheduler_ue_metrics {
+   unsigned dl_nof_ok;
+   /// Number of detected HARQ NACKs or HARQ-ACK misdetections.
+   unsigned dl_nof_nok;
+-  /// SNR in dB estimated for the PUSCH.
++  /// PHY-selected PUSCH value in dB, reported with the existing SNR name.
+   float pusch_snr_db;
+-  /// RSRP in dB estimated for the PUSCH.
++  /// PUSCH DM-RS RSRP estimated in software dBFS.
+   float pusch_rsrp_db;
+   /// SNR in dB estimated for the PUCCH.
+   float pucch_snr_db;
+@@ -100,6 +100,17 @@ struct scheduler_ue_metrics {
+   sample_statistics<unsigned> dl_ri_stats;
+   /// UL RI statistics over the metrics report interval.
+   sample_statistics<unsigned> ul_ri_stats;
++  /// Number of available PUSCH SNR reports in this window. A measured 0 dB is valid.
++  unsigned nof_pusch_snr_reports = 0;
++  /// MCS observation counts distinguish a measured index zero from no grants.
++  unsigned nof_dl_mcs_reports = 0;
++  unsigned nof_ul_mcs_reports = 0;
++  /// Age of the last received indication at snapshot creation, in milliseconds.
++  /// Absence means no indication was observed for this UE. These are not window means.
++  std::optional<double> phr_age_ms;
++  std::optional<double> bsr_age_ms;
++  /// Age of the newest DL logical-channel buffer indication, not of every channel.
++  std::optional<double> dl_buffer_age_ms;
+ };
+ 
+ /// \brief Event that occurred in the cell of the scheduler.
+diff --git a/lib/cu_cp/cu_cp_impl.cpp b/lib/cu_cp/cu_cp_impl.cpp
+index 92fe082..0585c7f 100644
+--- a/lib/cu_cp/cu_cp_impl.cpp
++++ b/lib/cu_cp/cu_cp_impl.cpp
+@@ -85,6 +85,34 @@ extract_supported_tas(const std::vector<cu_cp_configuration::ngap_config>& ngap_
+   return supported_tas;
+ }
+ 
++void cu_cp_impl::collect_ue_identities(cu_cp_metrics_report& report)
++{
++  if (!cfg.metrics.layers_cfg.enable_ue_identity) {
++    return;
++  }
++  for (auto& item : report.ues) {
++    auto* ue = ue_mng.find_du_ue(item.ue_index);
++    if (ue == nullptr || ue->get_ue_context().reconfiguration_disabled) {
++      continue;
++    }
++    auto* ng = ngap_db.find_ngap(ue->get_ue_context().plmn);
++    auto* du = du_db.find_du_processor(ue->get_du_index());
++    if (ng == nullptr || du == nullptr) {
++      continue;
++    }
++    auto ng_id = ng->get_ue_identity_snapshot(item.ue_index);
++    auto f1_id = du->get_f1ap_handler().get_ue_identity_snapshot(item.ue_index);
++    if (ng_id && f1_id && item.du_id != gnb_du_id_t::invalid) {
++      item.identity = cu_ue_identity{*ng_id, *f1_id, item.du_id};
++      for (const auto& pdu : ue->get_up_resource_manager().get_pdu_sessions_map()) {
++        for (const auto& drb : pdu.second.drbs) {
++          item.slice_ssts.push_back(drb.second.s_nssai.sst.value());
++        }
++      }
++    }
++  }
++}
++
+ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
+   cfg(config_),
+   cu_cp_executor(*cfg.services.cu_cp_executor),
+@@ -95,7 +123,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
+                            .max_nof_drbs_per_ue = cfg.admission.max_nof_drbs_per_ue,
+                            .int_algo_pref_list  = cfg.security.int_algo_pref_list,
+                            .enc_algo_pref_list  = cfg.security.enc_algo_pref_list,
+-                           .enable_rrc_metrics  = cfg.metrics.layers_cfg.enable_rrc_metrics,
++                           .enable_rrc_metrics  = cfg.metrics.layers_cfg.enable_rrc_metrics || cfg.metrics.layers_cfg.enable_ue_identity,
+                            .ue                  = cfg.ue},
+          ue_manager_dependencies{.timers         = *cfg.services.timers,
+                                  .cu_cp_executor = *cfg.services.cu_cp_executor,
+@@ -139,7 +167,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
+                                                  .du_handler       = du_db,
+                                                  .ngap_handler     = ngap_db,
+                                                  .mobility_handler = mobility_mng,
+-                                                 .logger           = logger}),
++                                                 .logger           = logger,
++                                                  .identity_collector = [this](cu_cp_metrics_report& report) { collect_ue_identities(report); }}),
+   cu_cp_cfgtr(mobility_manager_ev_notifier, du_db, ngap_db, ue_mng)
+ {
+   assert_cu_cp_configuration_valid(cfg);
+diff --git a/lib/cu_cp/cu_cp_impl.h b/lib/cu_cp/cu_cp_impl.h
+index 6049521..df20902 100644
+--- a/lib/cu_cp/cu_cp_impl.h
++++ b/lib/cu_cp/cu_cp_impl.h
+@@ -229,6 +229,9 @@ public:
+   cu_configurator&                       get_cu_configurator() override { return cu_cp_cfgtr; }
+ 
+ private:
++  /// Copy complete local identities on the CU-CP executor into an owned report.
++  void collect_ue_identities(cu_cp_metrics_report& report);
++
+   // Handling of DU events.
+   void handle_rrc_ue_creation(cu_cp_ue_index_t ue_index, rrc_ue_interface& rrc_ue) override;
+ 
+diff --git a/lib/cu_cp/metrics_handler/metrics_handler_impl.cpp b/lib/cu_cp/metrics_handler/metrics_handler_impl.cpp
+index 638cd6c..6984745 100644
+--- a/lib/cu_cp/metrics_handler/metrics_handler_impl.cpp
++++ b/lib/cu_cp/metrics_handler/metrics_handler_impl.cpp
+@@ -17,7 +17,8 @@ metrics_handler_impl::metrics_handler_impl(const metrics_handler_impl_dependenci
+   du_handler(dependencies.du_handler),
+   ngap_handler(dependencies.ngap_handler),
+   mobility_handler(dependencies.mobility_handler),
+-  logger(dependencies.logger)
++  logger(dependencies.logger),
++  identity_collector(dependencies.identity_collector)
+ {
+ }
+ 
+@@ -83,6 +84,10 @@ cu_cp_metrics_report metrics_handler_impl::create_report() const
+   report.ngaps    = ngap_handler.handle_ngap_metrics_report_request();
+   report.mobility = mobility_handler.handle_mobility_metrics_report_request();
+ 
++  if (identity_collector) {
++    identity_collector(report);
++  }
++
+   // TODO: Get metrics of connected CU-CP/AMF nodes.
+ 
+   return report;
+diff --git a/lib/cu_cp/metrics_handler/metrics_handler_impl.h b/lib/cu_cp/metrics_handler/metrics_handler_impl.h
+index 9b15569..922f36f 100644
+--- a/lib/cu_cp/metrics_handler/metrics_handler_impl.h
++++ b/lib/cu_cp/metrics_handler/metrics_handler_impl.h
+@@ -12,6 +12,7 @@
+ #include "ocudu/support/executors/task_executor.h"
+ #include "ocudu/support/timers.h"
+ #include <deque>
++#include <functional>
+ #include <mutex>
+ 
+ namespace ocudu::ocucp {
+@@ -24,6 +25,7 @@ struct metrics_handler_impl_dependencies {
+   ngap_repository_metrics_handler&  ngap_handler;
+   mobility_manager_metrics_handler& mobility_handler;
+   ocudulog::basic_logger&           logger;
++  std::function<void(cu_cp_metrics_report&)> identity_collector;
+ };
+ 
+ class metrics_handler_impl final : public metrics_handler
+@@ -57,6 +59,7 @@ private:
+   ngap_repository_metrics_handler&  ngap_handler;
+   mobility_manager_metrics_handler& mobility_handler;
+   ocudulog::basic_logger&           logger;
++  std::function<void(cu_cp_metrics_report&)> identity_collector;
+ 
+   // Member variables to manage pool of sessions.
+   std::mutex                           mutex;
+diff --git a/lib/cu_cp/ue_manager/ue_manager_impl.cpp b/lib/cu_cp/ue_manager/ue_manager_impl.cpp
+index 4792a21..cc1b32d 100644
+--- a/lib/cu_cp/ue_manager/ue_manager_impl.cpp
++++ b/lib/cu_cp/ue_manager/ue_manager_impl.cpp
+@@ -394,6 +394,8 @@ std::vector<cu_cp_metrics_report::ue_info> ue_manager::handle_ue_metrics_report_
+     report.emplace_back();
+     cu_cp_metrics_report::ue_info& ue_report = report.back();
+ 
++    ue_report.ue_index = ue.first;
++
+     ue_report.rnti  = ue.second.get_c_rnti();
+     ue_report.du_id = ue.second.get_du_id();
+     ue_report.pci   = ue.second.get_pci();
+diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp
+index ef877ca..7c5d9cd 100644
+--- a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp
++++ b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.cpp
+@@ -13,6 +13,11 @@ e2sm_kpm_cu_meas_provider_impl::e2sm_kpm_cu_meas_provider_impl() : logger(ocudul
+ 
+ e2sm_kpm_cu_cp_meas_provider_impl::e2sm_kpm_cu_cp_meas_provider_impl() : e2sm_kpm_cu_meas_provider_impl()
+ {
++  // Vendor state gauge: actual CU RRC state, not an identity encoded as a metric.
++  // 0=idle, 1=connected, 2=inactive. Identities travel in the standard UEID.
++  supported_metrics.emplace("FALCON.UE.RRCState",
++                            e2sm_kpm_supported_metric_t{
++                                NO_LABEL, UE_LEVEL, false, &e2sm_kpm_cu_cp_meas_provider_impl::get_ue_rrc_state});
+   supported_metrics.emplace(
+       "RRC.ConnEstabAtt",
+       e2sm_kpm_supported_metric_t{
+@@ -51,6 +56,141 @@ e2sm_kpm_cu_cp_meas_provider_impl::e2sm_kpm_cu_cp_meas_provider_impl() : e2sm_kp
+                                 NO_LABEL, E2_NODE_LEVEL, false, &e2sm_kpm_cu_cp_meas_provider_impl::get_rrc_conn_max});
+ }
+ 
++namespace {
++
++bool has_usable_identity(const cu_cp_metrics_report::ue_info& ue)
++{
++  return ue.identity && ue.identity->du_id != gnb_du_id_t::invalid &&
++         ue.ue_index != cu_cp_ue_index_t::invalid && static_cast<uint64_t>(ue.ue_index) < (uint64_t{1} << 28);
++}
++
++ue_id_c make_identity(const cu_cp_metrics_report::ue_info& ue)
++{
++  ue_id_c result;
++  auto& id = result.set_gnb_ue_id();
++  const auto& identity = *ue.identity;
++  id.amf_ue_ngap_id = identity.ngap.amf_ue_ngap_id;
++  id.guami.plmn_id = identity.ngap.guami.plmn.to_bytes();
++  id.guami.amf_region_id.from_number(identity.ngap.guami.amf_region_id);
++  id.guami.amf_set_id.from_number(identity.ngap.guami.amf_set_id);
++  id.guami.amf_pointer.from_number(identity.ngap.guami.amf_pointer);
++  id.gnb_cu_ue_f1ap_id_list.resize(1);
++  id.gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id = identity.f1.cu_ue_f1ap_id;
++  // Locally allocated RAN UE identity, using the existing optional 8-octet IE.
++  // du36-cuue28-v1: full 36-bit serving DU ID followed by the CU UE index.
++  // This is an opaque RAN UE ID on the wire, not an extra measurement. Only
++  // consumers explicitly configured for this allocation may interpret it.
++  // The CU index distinguishes simultaneously active contexts; it is NOT a
++  // lifecycle generation counter. Reuse still requires conservative handling.
++  id.ran_ue_id_present = true;
++  id.ran_ue_id.from_number((gnb_du_id_to_int(identity.du_id) << 28) | static_cast<uint64_t>(ue.ue_index));
++  return result;
++}
++
++bool matches_sst(const cu_cp_metrics_report::ue_info& ue, const test_cond_info_s& condition)
++{
++  if (condition.test_type.type() != test_cond_type_c::types::snssai || !condition.test_expr_present ||
++      condition.test_expr != test_cond_expression_e::equal || !condition.test_value_present ||
++      condition.test_value.type() != test_cond_value_c::types::value_int) {
++    return false;
++  }
++  auto sst = condition.test_value.value_int();
++  return sst >= 0 && sst <= 255 && std::find(ue.slice_ssts.begin(), ue.slice_ssts.end(), sst) != ue.slice_ssts.end();
++}
++
++} // namespace
++
++bool e2sm_kpm_cu_cp_meas_provider_impl::is_ue_supported(const ue_id_c& id)
++{
++  std::lock_guard<std::mutex> lock(cu_cp_metrics_mutex);
++  if (!identity_snapshot_is_fresh() || id.type() != ue_id_c::types::gnb_ue_id) {
++    return false;
++  }
++  return std::any_of(cu_cp_metrics->ues.begin(), cu_cp_metrics->ues.end(), [&](const auto& ue) {
++    return has_usable_identity(ue) && make_identity(ue) == id;
++  });
++}
++
++bool e2sm_kpm_cu_cp_meas_provider_impl::is_test_cond_supported(const test_cond_type_c& type)
++{
++  return type.type() == test_cond_type_c::types::snssai;
++}
++
++bool e2sm_kpm_cu_cp_meas_provider_impl::get_ues_matching_test_conditions(
++    const matching_ue_cond_per_sub_list_l& conditions, std::vector<ue_id_c>& ues)
++{
++  std::lock_guard<std::mutex> lock(cu_cp_metrics_mutex);
++  ues.clear();
++  if (!identity_snapshot_is_fresh()) {
++    return true;
++  }
++  for (const auto& ue : cu_cp_metrics->ues) {
++    if (!has_usable_identity(ue) || ue.rrc_connection_state != ocucp::rrc_state::connected) {
++      continue;
++    }
++    bool matches = std::all_of(conditions.begin(), conditions.end(), [&](const auto& condition) {
++      return !condition.lc_or_present && matches_sst(ue, condition.test_cond_info);
++    });
++    if (matches) {
++      ues.push_back(make_identity(ue));
++    }
++  }
++  return true;
++}
++
++bool e2sm_kpm_cu_cp_meas_provider_impl::get_ues_matching_test_conditions(
++    const matching_cond_list_l& conditions, std::vector<ue_id_c>& ues)
++{
++  std::lock_guard<std::mutex> lock(cu_cp_metrics_mutex);
++  ues.clear();
++  if (!identity_snapshot_is_fresh()) {
++    return true;
++  }
++  for (const auto& ue : cu_cp_metrics->ues) {
++    if (!has_usable_identity(ue) || ue.rrc_connection_state != ocucp::rrc_state::connected) {
++      continue;
++    }
++    bool matches = std::all_of(conditions.begin(), conditions.end(), [&](const auto& condition) {
++      if (condition.lc_or_present) {
++        return false;
++      }
++      const auto& choice = condition.matching_cond_choice;
++      if (choice.type() == matching_cond_item_choice_c::types::test_cond_info) {
++        return matches_sst(ue, choice.test_cond_info());
++      }
++      return choice.type() == matching_cond_item_choice_c::types::meas_label && choice.meas_label().no_label_present;
++    });
++    if (matches) {
++      ues.push_back(make_identity(ue));
++    }
++  }
++  return true;
++}
++
++bool e2sm_kpm_cu_meas_provider_impl::get_ue_rrc_state(const label_info_list_l labels,
++                                                   const std::vector<ue_id_c>& ues,
++                                                   const std::optional<cgi_c> cell,
++                                                   std::vector<meas_record_item_c>& items)
++{
++  if (cell || ues.empty() || labels.size() != 1 || !labels[0].meas_label.no_label_present) {
++    return false;
++  }
++  for (const auto& id : ues) {
++    meas_record_item_c item;
++    item.set_no_value();
++    if (identity_snapshot_is_fresh()) {
++      for (const auto& ue : cu_cp_metrics->ues) {
++        if (has_usable_identity(ue) && make_identity(ue) == id) {
++          item.set_integer() = static_cast<unsigned>(ue.rrc_connection_state);
++          break;
++        }
++      }
++    }
++    items.push_back(item);
++  }
++  return true;
++}
++
+ bool e2sm_kpm_cu_meas_provider_impl::check_e2sm_kpm_metrics_definitions(span<const e2sm_kpm_metric_t> metric_defs)
+ {
+   std::string metric_name;
+@@ -117,6 +257,12 @@ bool e2sm_kpm_cu_meas_provider_impl::is_metric_supported(const asn1::e2sm::meas_
+                                                          const e2sm_kpm_metric_level_enum level,
+                                                          const bool&                      cell_scope)
+ {
++  if (meas_type.type() != meas_type_c::types::meas_name) {
++    return false;
++  }
++  if (meas_type.meas_name().to_string() == "FALCON.UE.RRCState") {
++    return supported_metrics.count("FALCON.UE.RRCState") != 0 && level == UE_LEVEL && !cell_scope && label.no_label_present;
++  }
+   if (!label.no_label_present) {
+     logger.debug("Currently only NO_LABEL metric supported.");
+     return false;
+@@ -152,6 +298,7 @@ bool e2sm_kpm_cu_meas_provider_impl::get_meas_data(const asn1::e2sm::meas_type_c
+                                                    const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
+                                                    std::vector<asn1::e2sm::meas_record_item_c>& items)
+ {
++  std::lock_guard<std::mutex> lock(cu_cp_metrics_mutex);
+   metric_meas_getter_func_ptr metric_meas_getter_func;
+   auto                        it = supported_metrics.find(meas_type.meas_name().to_string().c_str());
+   if (it == supported_metrics.end()) {
+@@ -211,7 +358,9 @@ void e2sm_kpm_cu_meas_provider_impl::report_metrics(const ocuup::f1u_metrics_con
+ 
+ void e2sm_kpm_cu_meas_provider_impl::report_metrics(const cu_cp_metrics_report& metrics)
+ {
++  std::lock_guard<std::mutex> lock(cu_cp_metrics_mutex);
+   cu_cp_metrics = metrics;
++  cu_cp_metrics_updated = std::chrono::steady_clock::now();
+ }
+ 
+ e2sm_kpm_cu_up_meas_provider_impl::e2sm_kpm_cu_up_meas_provider_impl() : e2sm_kpm_cu_meas_provider_impl()
+diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h
+index 3597424..0e316db 100644
+--- a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h
++++ b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h
+@@ -14,6 +14,7 @@
+ #include "ocudu/e2/e2sm/e2sm_kpm.h"
+ #include "ocudu/f1u/cu_up/f1u_bearer.h"
+ #include "ocudu/pdcp/pdcp_entity.h"
++#include <chrono>
+ #include <deque>
+ #include <map>
+ #include <mutex>
+@@ -98,11 +99,19 @@ protected:
+   metric_meas_getter_func_t get_rrc_reestab_succ_with_ue_context;
+   metric_meas_getter_func_t get_rrc_conn_mean;
+   metric_meas_getter_func_t get_rrc_conn_max;
++  metric_meas_getter_func_t get_ue_rrc_state;
+ 
+   ocudulog::basic_logger& logger;
+ 
+   std::map<std::string, e2sm_kpm_supported_metric_t>           supported_metrics;
++  // Metrics dispatch and E2 collection run on different executors.
++  std::mutex                                                 cu_cp_metrics_mutex;
+   std::optional<cu_cp_metrics_report>                          cu_cp_metrics;
++  std::chrono::steady_clock::time_point cu_cp_metrics_updated{};
++  bool identity_snapshot_is_fresh() const
++  {
++    return cu_cp_metrics && std::chrono::steady_clock::now() - cu_cp_metrics_updated < std::chrono::seconds{3};
++  }
+   std::map<uint32_t, std::deque<pdcp_metrics_container>>       ue_aggr_pdcp_metrics;
+   std::map<uint32_t, std::deque<ocuup::f1u_metrics_container>> ue_aggr_f1u_metrics;
+   const uint32_t                                               max_pdcp_metrics = 10;
+@@ -113,6 +122,13 @@ class e2sm_kpm_cu_cp_meas_provider_impl : public e2sm_kpm_cu_meas_provider_impl
+ {
+ public:
+   e2sm_kpm_cu_cp_meas_provider_impl();
++
++  bool is_ue_supported(const asn1::e2sm::ue_id_c& ueid) override;
++  bool is_test_cond_supported(const asn1::e2sm::test_cond_type_c& type) override;
++  bool get_ues_matching_test_conditions(const asn1::e2sm::matching_cond_list_l& conditions,
++                                        std::vector<asn1::e2sm::ue_id_c>& ues) override;
++  bool get_ues_matching_test_conditions(const asn1::e2sm::matching_ue_cond_per_sub_list_l& conditions,
++                                        std::vector<asn1::e2sm::ue_id_c>& ues) override;
+ };
+ 
+ class e2sm_kpm_cu_up_meas_provider_impl : public e2sm_kpm_cu_meas_provider_impl
+diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.cpp b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.cpp
+index 4330fa6..2df5922 100644
+--- a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.cpp
++++ b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.cpp
+@@ -3,21 +3,86 @@
+ // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
+ 
+ #include "e2sm_kpm_du_meas_provider_impl.h"
++#include <algorithm>
++#include <cmath>
++#include <limits>
+ 
+ using namespace asn1::e2ap;
+ using namespace asn1::e2sm;
+ using namespace ocudu;
+ 
++namespace {
++
++// Vendor metric: scheduler-window PUSCH DM-RS received power in the DU's software dBFS scale.
++// This is not a UE-reported downlink measurement or the standard UL SRS RSRP measurement.
++constexpr char pusch_rsrp_metric_name[] = "PUSCH.RSRP.dBFS";
++// SNR is the wire/display name for the configured PHY estimator's selected value (ul_sinr_dB).
++constexpr char pusch_snr_metric_name[] = "PUSCH.SNR.dB";
++
++bool has_only_no_label(const meas_label_s& label)
++{
++  return label.no_label_present && label.no_label == meas_label_s::no_label_opts::true_value && !label.ext &&
++         !(label.plmn_id_present || label.slice_id_present || label.five_qi_present || label.qfi_present ||
++           label.qci_present || label.qc_imax_present || label.qc_imin_present || label.ar_pmax_present ||
++           label.ar_pmin_present || label.bitrate_range_present || label.layer_mu_mimo_present || label.sum_present ||
++           label.dist_bin_x_present || label.dist_bin_y_present || label.dist_bin_z_present ||
++           label.pre_label_override_present || label.start_end_ind_present || label.min_present || label.max_present ||
++           label.avg_present || label.ssb_idx_present || label.non_go_b_b_fmode_idx_present ||
++           label.mimo_mode_idx_present || label.cell_global_id.is_present() || label.beam_id.is_present());
++}
++
++} // namespace
++
+ e2sm_kpm_du_meas_provider_impl::e2sm_kpm_du_meas_provider_impl(odu::f1ap_ue_id_translator& f1ap_ue_id_translator_) :
+   logger(ocudulog::fetch_basic_logger("E2SM-KPM")), f1ap_ue_id_provider(f1ap_ue_id_translator_)
+ {
+   // Array of supported metrics.
+   supported_metrics.emplace(
+-      "CQI", e2sm_kpm_supported_metric_t{NO_LABEL, UNKNOWN_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_cqi});
++      "CQI", e2sm_kpm_supported_metric_t{NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_cqi});
++  supported_metrics.emplace("CQI.Samples", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::cqi_samples>});
++  supported_metrics.emplace("DL.MCS", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::dl_mcs>});
++  supported_metrics.emplace("UL.MCS", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::ul_mcs>});
++  supported_metrics.emplace("DL.MCS.Samples", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::dl_mcs_samples>});
++  supported_metrics.emplace("UL.MCS.Samples", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::ul_mcs_samples>});
++  supported_metrics.emplace("UL.PHR.dB", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::phr>});
++  supported_metrics.emplace("UL.PHR.AgeMs", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::phr_age>});
++  supported_metrics.emplace("UL.BSR.Bytes", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::bsr>});
++  supported_metrics.emplace("UL.BSR.AgeMs", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::bsr_age>});
++  supported_metrics.emplace("DL.Buffer.Bytes", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::dl_buffer>});
++  supported_metrics.emplace("DL.Buffer.AgeMs", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::dl_buffer_age>});
++  supported_metrics.emplace("DL.MAC.Throughput", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::dl_brate>});
++  supported_metrics.emplace("UL.MAC.Throughput", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::ul_brate>});
++  supported_metrics.emplace("DL.HARQ.Ok", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::dl_ok>});
++  supported_metrics.emplace("DL.HARQ.Nok", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::dl_nok>});
++  supported_metrics.emplace("UL.CRC.Ok", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::ul_ok>});
++  supported_metrics.emplace("UL.CRC.Nok", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::ul_nok>});
++  supported_metrics.emplace("PRB.UsageDl.Percent", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::dl_prb_usage>});
++  supported_metrics.emplace("PRB.UsageUl.Percent", e2sm_kpm_supported_metric_t{
++      NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement<scheduler_metric::ul_prb_usage>});
+   supported_metrics.emplace(
+-      "RSRP", e2sm_kpm_supported_metric_t{NO_LABEL, UNKNOWN_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_rsrp});
++      pusch_rsrp_metric_name,
++      e2sm_kpm_supported_metric_t{NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_rsrp});
+   supported_metrics.emplace(
+-      "RSRQ", e2sm_kpm_supported_metric_t{NO_LABEL, UNKNOWN_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_rsrq});
++      pusch_snr_metric_name,
++      e2sm_kpm_supported_metric_t{NO_LABEL, UE_LEVEL, false, &e2sm_kpm_du_meas_provider_impl::get_snr});
+ 
+   supported_metrics.emplace(
+       "RRU.PrbAvailDl",
+@@ -220,6 +285,10 @@ bool e2sm_kpm_du_meas_provider_impl::is_metric_supported(const asn1::e2sm::meas_
+ 
+   for (auto& metric : supported_metrics) {
+     if (strcmp(meas_type.meas_name().to_string().c_str(), metric.first.c_str()) == 0) {
++      // UE-only metrics must not be admitted at node/cell scope or with unsupported labels.
++      if (metric.second.supported_levels == UE_LEVEL) {
++        return level == UE_LEVEL && !cell_scope && has_only_no_label(label);
++      }
+       return true;
+     }
+   }
+@@ -313,25 +382,117 @@ bool e2sm_kpm_du_meas_provider_impl::handle_no_meas_data_available(
+   return false;
+ }
+ 
+-bool e2sm_kpm_du_meas_provider_impl::get_cqi(const asn1::e2sm::label_info_list_l          label_info_list,
+-                                             const std::vector<asn1::e2sm::ue_id_c>&      ues,
+-                                             const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
+-                                             std::vector<asn1::e2sm::meas_record_item_c>& items)
++const scheduler_ue_metrics* e2sm_kpm_du_meas_provider_impl::find_ue_metrics(const ue_id_c& ue) const
+ {
+-  bool meas_collected = false;
+-  if (last_ue_metrics.empty()) {
+-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+-  }
+-  scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
++  if (ue.type() != ue_id_c::types_opts::gnb_du_ue_id) {
++    return nullptr;
++  }
++  const auto f1 = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ue_id().gnb_cu_ue_f1ap_id);
++  const auto index = f1ap_ue_id_provider.get_ue_index(f1);
++  if (index == du_ue_index_t::INVALID_DU_UE_INDEX) {
++    return nullptr;
++  }
++  // DU indices may be sparse after UE removal; vector positions are not identities.
++  auto found = std::find_if(last_ue_metrics.begin(), last_ue_metrics.end(),
++                            [index](const auto& metric) { return metric.ue_index == index; });
++  return found == last_ue_metrics.end() ? nullptr : &*found;
++}
+ 
+-  meas_record_item_c meas_record_item;
+-  meas_record_item.set_integer() = ue_metrics.cqi_stats.get_nof_observations() > 0
+-                                       ? static_cast<uint64_t>(std::round(ue_metrics.cqi_stats.get_mean()))
+-                                       : 0;
+-  items.push_back(meas_record_item);
+-  meas_collected = true;
++template <e2sm_kpm_du_meas_provider_impl::scheduler_metric Metric>
++bool e2sm_kpm_du_meas_provider_impl::get_scheduler_measurement(
++    const label_info_list_l label_info_list, const std::vector<ue_id_c>& ues,
++    const std::optional<cgi_c> cell_global_id, std::vector<meas_record_item_c>& items)
++{
++  const bool supported = !ues.empty() && !cell_global_id.has_value() &&
++                         label_info_list.size() == 1 && has_only_no_label(label_info_list[0].meas_label);
++  for (const auto& ue : ues) {
++    meas_record_item_c item;
++    item.set_no_value();
++    const auto* metric = supported ? find_ue_metrics(ue) : nullptr;
++    if (metric != nullptr) {
++      auto real = [&item](double value) {
++        if (std::isfinite(value) && std::abs(value) <= std::numeric_limits<float>::max()) {
++          item.set_real().value = value;
++        }
++      };
++      auto age = [&real](const std::optional<double>& value) {
++        if (value.has_value() && *value >= 0) {
++          real(*value);
++        }
++      };
++      switch (Metric) {
++        case scheduler_metric::cqi:
++          if (metric->cqi_stats.get_nof_observations() > 0) {
++            item.set_integer() = static_cast<uint64_t>(std::round(metric->cqi_stats.get_mean()));
++          }
++          break;
++        case scheduler_metric::cqi_samples:
++          item.set_integer() = metric->cqi_stats.get_nof_observations();
++          break;
++        case scheduler_metric::dl_mcs:
++          if (metric->nof_dl_mcs_reports > 0) {
++            item.set_integer() = metric->dl_mcs.value();
++          }
++          break;
++        case scheduler_metric::ul_mcs:
++          if (metric->nof_ul_mcs_reports > 0) {
++            item.set_integer() = metric->ul_mcs.value();
++          }
++          break;
++        case scheduler_metric::dl_mcs_samples:
++          item.set_integer() = metric->nof_dl_mcs_reports;
++          break;
++        case scheduler_metric::ul_mcs_samples:
++          item.set_integer() = metric->nof_ul_mcs_reports;
++          break;
++        case scheduler_metric::phr:
++          if (metric->last_phr.has_value() && metric->phr_age_ms.has_value()) {
++            real(*metric->last_phr);
++          }
++          break;
++        case scheduler_metric::phr_age: age(metric->phr_age_ms); break;
++        case scheduler_metric::bsr:
++          if (metric->bsr_age_ms.has_value()) {
++            item.set_integer() = metric->bsr;
++          }
++          break;
++        case scheduler_metric::bsr_age: age(metric->bsr_age_ms); break;
++        case scheduler_metric::dl_buffer:
++          if (metric->dl_buffer_age_ms.has_value()) {
++            item.set_integer() = metric->dl_bs;
++          }
++          break;
++        case scheduler_metric::dl_buffer_age: age(metric->dl_buffer_age_ms); break;
++        case scheduler_metric::dl_brate: real(metric->dl_brate_kbps); break;
++        case scheduler_metric::ul_brate: real(metric->ul_brate_kbps); break;
++        case scheduler_metric::dl_ok: item.set_integer() = metric->dl_nof_ok; break;
++        case scheduler_metric::dl_nok: item.set_integer() = metric->dl_nof_nok; break;
++        case scheduler_metric::ul_ok: item.set_integer() = metric->ul_nof_ok; break;
++        case scheduler_metric::ul_nok: item.set_integer() = metric->ul_nof_nok; break;
++        case scheduler_metric::dl_prb_usage:
++        case scheduler_metric::ul_prb_usage: {
++          const bool uplink = Metric == scheduler_metric::ul_prb_usage;
++          const uint64_t slots = uplink ? nof_ul_slots : nof_dl_slots;
++          if (slots > 0 && nof_cell_prbs > 0) {
++            const uint64_t used = uplink ? metric->tot_pusch_prbs_used : metric->tot_pdsch_prbs_used;
++            // Preserve the fractional percentage; the legacy INTEGER getters are unchanged.
++            real(100.0 * used / (slots * nof_cell_prbs));
++          }
++          break;
++        }
++      }
++    }
++    items.push_back(item);
++  }
++  return supported;
++}
+ 
+-  return meas_collected;
++bool e2sm_kpm_du_meas_provider_impl::get_cqi(const label_info_list_l label_info_list,
++                                            const std::vector<ue_id_c>& ues,
++                                            const std::optional<cgi_c> cell_global_id,
++                                            std::vector<meas_record_item_c>& items)
++{
++  return get_scheduler_measurement<scheduler_metric::cqi>(label_info_list, ues, cell_global_id, items);
+ }
+ 
+ bool e2sm_kpm_du_meas_provider_impl::get_rsrp(const asn1::e2sm::label_info_list_l          label_info_list,
+@@ -339,37 +500,66 @@ bool e2sm_kpm_du_meas_provider_impl::get_rsrp(const asn1::e2sm::label_info_list_
+                                               const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
+                                               std::vector<asn1::e2sm::meas_record_item_c>& items)
+ {
+-  bool meas_collected = false;
+-  if (last_ue_metrics.empty()) {
+-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+-  }
+-  scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
+-
+-  meas_record_item_c meas_record_item;
+-  meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
+-  items.push_back(meas_record_item);
+-  meas_collected = true;
++  return get_pusch_rf_measurement(pusch_rf_metric::rsrp, label_info_list, ues, cell_global_id, items);
++}
+ 
+-  return meas_collected;
++bool e2sm_kpm_du_meas_provider_impl::get_snr(const asn1::e2sm::label_info_list_l          label_info_list,
++                                           const std::vector<asn1::e2sm::ue_id_c>&      ues,
++                                           const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
++                                           std::vector<asn1::e2sm::meas_record_item_c>& items)
++{
++  return get_pusch_rf_measurement(pusch_rf_metric::snr, label_info_list, ues, cell_global_id, items);
+ }
+ 
+-bool e2sm_kpm_du_meas_provider_impl::get_rsrq(const asn1::e2sm::label_info_list_l          label_info_list,
+-                                              const std::vector<asn1::e2sm::ue_id_c>&      ues,
+-                                              const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
+-                                              std::vector<asn1::e2sm::meas_record_item_c>& items)
++bool e2sm_kpm_du_meas_provider_impl::get_pusch_rf_measurement(
++    pusch_rf_metric                              metric_type,
++    const asn1::e2sm::label_info_list_l          label_info_list,
++    const std::vector<asn1::e2sm::ue_id_c>&      ues,
++    const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
++    std::vector<asn1::e2sm::meas_record_item_c>& items)
+ {
+-  bool meas_collected = false;
+-  if (last_ue_metrics.empty()) {
+-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
++  const bool is_snr = metric_type == pusch_rf_metric::snr;
++  // No node/cell aggregation is defined, and exactly one unfiltered measurement is returned per requested UE.
++  if (ues.empty() || cell_global_id.has_value() || label_info_list.size() != 1 ||
++      !has_only_no_label(label_info_list[0].meas_label)) {
++    logger.debug("Metric {} supports only UE-level measurements with NO_LABEL and no cell filter.",
++                 is_snr ? pusch_snr_metric_name : pusch_rsrp_metric_name);
++    // Report services currently consume the records even if the getter returns false.
++    for (size_t i = 0; i != ues.size(); ++i) {
++      meas_record_item_c item;
++      item.set_no_value();
++      items.push_back(item);
++    }
++    return false;
+   }
+-  scheduler_ue_metrics ue_metrics = last_ue_metrics[0];
+ 
+-  meas_record_item_c meas_record_item;
+-  meas_record_item.set_integer() = (int)ue_metrics.pusch_snr_db;
+-  items.push_back(meas_record_item);
+-  meas_collected = true;
++  for (const auto& ue : ues) {
++    meas_record_item_c meas_record_item;
++    meas_record_item.set_no_value();
++
++    if (ue.type() == ue_id_c::types_opts::gnb_du_ue_id) {
++      const auto ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ue_id().gnb_cu_ue_f1ap_id);
++      const auto ue_index   = f1ap_ue_id_provider.get_ue_index(ue_f1ap_id);
++      if (ue_index != du_ue_index_t::INVALID_DU_UE_INDEX) {
++        // The snapshot vector is dense, but internal UE indices may have gaps after UE removal.
++        auto metric = std::find_if(last_ue_metrics.begin(), last_ue_metrics.end(), [ue_index](const auto& candidate) {
++          return candidate.ue_index == ue_index;
++        });
++        if (metric != last_ue_metrics.end()) {
++          const float value = is_snr ? metric->pusch_snr_db : metric->pusch_rsrp_db;
++          const bool has_sample = !is_snr || metric->nof_pusch_snr_reports > 0;
++          if (has_sample && std::isfinite(value)) {
++            // RSRP uses -infinity for missing data. SNR needs a count to distinguish missing from measured 0 dB.
++            meas_record_item.set_real().value = value;
++          }
++        }
++      }
++    }
++    // Preserve request order and cardinality, including disconnected or unmeasured UEs.
++    items.push_back(meas_record_item);
++  }
+ 
+-  return meas_collected;
++  return true;
+ }
+ 
+ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl(const asn1::e2sm::label_info_list_l          label_info_list,
+@@ -386,11 +576,12 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_dl(const asn1::e2sm::label_in
+     logger.debug("Metric: RRU.PrbAvailDl supports only NO_LABEL label.");
+     return meas_collected;
+   }
+-  unsigned sum_dl_prbs_used = std::accumulate(
+-      last_ue_metrics.begin(), last_ue_metrics.end(), 0u, [](unsigned sum, const scheduler_ue_metrics& metric) {
+-        return sum + metric.tot_pdsch_prbs_used;
+-      });
+-  int mean_dl_prbs_used = nof_dl_slots > 0 ? static_cast<int>(sum_dl_prbs_used / nof_dl_slots) : 0;
++  int mean_dl_prbs_used =
++      std::accumulate(last_ue_metrics.begin(),
++                      last_ue_metrics.end(),
++                      0,
++                      [](size_t sum, const scheduler_ue_metrics& metric) { return sum + metric.tot_pdsch_prbs_used; }) /
++      nof_dl_slots;
+ 
+   for (size_t i = 0; i < std::max(ues.size(), size_t(1)); ++i) {
+     meas_record_item_c meas_record_item;
+@@ -416,11 +607,12 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul(const asn1::e2sm::label_in
+     logger.debug("Metric: RRU.PrbAvailUl supports only NO_LABEL label.");
+     return meas_collected;
+   }
+-  unsigned sum_ul_prbs_used = std::accumulate(
+-      last_ue_metrics.begin(), last_ue_metrics.end(), 0u, [](unsigned sum, const scheduler_ue_metrics& metric) {
+-        return sum + metric.tot_pusch_prbs_used;
+-      });
+-  int mean_ul_prbs_used = nof_ul_slots > 0 ? static_cast<int>(sum_ul_prbs_used / nof_ul_slots) : 0;
++  int mean_ul_prbs_used =
++      std::accumulate(last_ue_metrics.begin(),
++                      last_ue_metrics.end(),
++                      0,
++                      [](size_t sum, const scheduler_ue_metrics& metric) { return sum + metric.tot_pusch_prbs_used; }) /
++      nof_ul_slots;
+ 
+   for (size_t i = 0; i < std::max(ues.size(), size_t(1)); ++i) {
+     meas_record_item_c meas_record_item;
+@@ -432,179 +624,73 @@ bool e2sm_kpm_du_meas_provider_impl::get_prb_avail_ul(const asn1::e2sm::label_in
+   return meas_collected;
+ }
+ 
+-bool e2sm_kpm_du_meas_provider_impl::get_prb_used_dl(const asn1::e2sm::label_info_list_l          label_info_list,
+-                                                     const std::vector<asn1::e2sm::ue_id_c>&      ues,
+-                                                     const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
+-                                                     std::vector<asn1::e2sm::meas_record_item_c>& items)
++bool e2sm_kpm_du_meas_provider_impl::get_prb_measurement(
++    bool uplink, bool percentage, const label_info_list_l label_info_list,
++    const std::vector<ue_id_c>& ues, std::vector<meas_record_item_c>& items)
+ {
+-  bool meas_collected = false;
+-  if (last_ue_metrics.empty()) {
+-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
++  if (label_info_list.size() > 1 ||
++      (label_info_list.size() == 1 && !label_info_list[0].meas_label.no_label_present)) {
++    return false;
+   }
+-  if ((label_info_list.size() > 1 or
+-       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+-    logger.debug("Metric: RRU.PrbUsedDl supports only NO_LABEL label.");
+-    return meas_collected;
++  if (ues.empty() && last_ue_metrics.empty()) {
++    return handle_no_meas_data_available(ues, items, meas_record_item_c::types::integer);
+   }
+-
++  const uint64_t slots = uplink ? nof_ul_slots : nof_dl_slots;
++  auto record = [this, slots, percentage](uint64_t used) {
++    meas_record_item_c item;
++    item.set_no_value();
++    if (slots > 0 && (!percentage || nof_cell_prbs > 0)) {
++      // Multiply before dividing: do not truncate the PRB/slot mean first.
++      item.set_integer() = percentage ? used * 100U / (slots * nof_cell_prbs) : used / slots;
++    }
++    return item;
++  };
+   if (ues.empty()) {
+-    unsigned sum_dl_prbs = std::accumulate(
+-        last_ue_metrics.begin(), last_ue_metrics.end(), 0u, [](unsigned sum, const scheduler_ue_metrics& metric) {
+-          return sum + metric.tot_pdsch_prbs_used;
+-        });
+-    double             dl_prbs_used = nof_dl_slots > 0 ? sum_dl_prbs / nof_dl_slots : 0;
+-    meas_record_item_c meas_record_item;
+-    meas_record_item.set_integer() = dl_prbs_used;
+-    items.push_back(meas_record_item);
+-    meas_collected = true;
++    uint64_t used = 0;
++    for (const auto& metric : last_ue_metrics) {
++      used += uplink ? metric.tot_pusch_prbs_used : metric.tot_pdsch_prbs_used;
++    }
++    items.push_back(record(used));
+   }
+-
+-  for (auto& ue : ues) {
+-    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ue_id().gnb_cu_ue_f1ap_id);
+-    uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+-    meas_record_item_c  meas_record_item;
+-    if (ue_idx != du_ue_index_t::INVALID_DU_UE_INDEX && ue_idx < last_ue_metrics.size()) {
+-      unsigned ue_mean_dl_prbs_used = nof_dl_slots > 0 ? last_ue_metrics[ue_idx].tot_pdsch_prbs_used / nof_dl_slots : 0;
+-      meas_record_item.set_integer() = ue_mean_dl_prbs_used;
++  for (const auto& ue : ues) {
++    const auto* metric = find_ue_metrics(ue);
++    if (metric != nullptr) {
++      items.push_back(record(uplink ? metric->tot_pusch_prbs_used : metric->tot_pdsch_prbs_used));
+     } else {
+-      meas_record_item.set_no_value();
++      meas_record_item_c item;
++      item.set_no_value();
++      items.push_back(item);
+     }
+-    items.push_back(meas_record_item);
+-    meas_collected = true;
+   }
+-
+-  return meas_collected;
++  return true;
+ }
+ 
+-bool e2sm_kpm_du_meas_provider_impl::get_prb_used_ul(const asn1::e2sm::label_info_list_l          label_info_list,
+-                                                     const std::vector<asn1::e2sm::ue_id_c>&      ues,
+-                                                     const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
+-                                                     std::vector<asn1::e2sm::meas_record_item_c>& items)
++bool e2sm_kpm_du_meas_provider_impl::get_prb_used_dl(
++    const label_info_list_l label_info_list, const std::vector<ue_id_c>& ues,
++    const std::optional<cgi_c> cell_global_id, std::vector<meas_record_item_c>& items)
+ {
+-  bool meas_collected = false;
+-  if (last_ue_metrics.empty()) {
+-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+-  }
+-  if ((label_info_list.size() > 1 or
+-       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+-    logger.debug("Metric: RRU.PrbUsedUl supports only NO_LABEL label.");
+-    return meas_collected;
+-  }
+-
+-  if (ues.empty()) {
+-    unsigned sum_ul_prbs = std::accumulate(
+-        last_ue_metrics.begin(), last_ue_metrics.end(), 0u, [](unsigned sum, const scheduler_ue_metrics& metric) {
+-          return sum + metric.tot_pusch_prbs_used;
+-        });
+-    double             ul_prbs_used = nof_ul_slots > 0 ? sum_ul_prbs / nof_ul_slots : 0;
+-    meas_record_item_c meas_record_item;
+-    meas_record_item.set_integer() = ul_prbs_used;
+-    items.push_back(meas_record_item);
+-    meas_collected = true;
+-  }
+-
+-  for (auto& ue : ues) {
+-    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ue_id().gnb_cu_ue_f1ap_id);
+-    uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+-    meas_record_item_c  meas_record_item;
+-    if (ue_idx != du_ue_index_t::INVALID_DU_UE_INDEX && ue_idx < last_ue_metrics.size()) {
+-      unsigned ue_mean_ul_prbs_used = nof_ul_slots > 0 ? last_ue_metrics[ue_idx].tot_pusch_prbs_used / nof_ul_slots : 0;
+-      meas_record_item.set_integer() = ue_mean_ul_prbs_used;
+-    } else {
+-      meas_record_item.set_no_value();
+-    }
+-    items.push_back(meas_record_item);
+-    meas_collected = true;
+-  }
+-
+-  return meas_collected;
++  return get_prb_measurement(false, false, label_info_list, ues, items);
+ }
+ 
+-bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_dl(const asn1::e2sm::label_info_list_l          label_info_list,
+-                                                         const std::vector<asn1::e2sm::ue_id_c>&      ues,
+-                                                         const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
+-                                                         std::vector<asn1::e2sm::meas_record_item_c>& items)
++bool e2sm_kpm_du_meas_provider_impl::get_prb_used_ul(
++    const label_info_list_l label_info_list, const std::vector<ue_id_c>& ues,
++    const std::optional<cgi_c> cell_global_id, std::vector<meas_record_item_c>& items)
+ {
+-  bool meas_collected = false;
+-  if (last_ue_metrics.empty()) {
+-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+-  }
+-  if ((label_info_list.size() > 1 or
+-       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+-    logger.debug("Metric: RRU.PrbTotDl supports only NO_LABEL label.");
+-    return meas_collected;
+-  }
+-
+-  if (ues.empty()) {
+-    unsigned sum_dl_prbs_used = std::accumulate(
+-        last_ue_metrics.begin(), last_ue_metrics.end(), 0u, [](unsigned sum, const scheduler_ue_metrics& metric) {
+-          return sum + metric.tot_pdsch_prbs_used;
+-        });
+-    double             mean_dl_prbs_used = nof_dl_slots > 0 ? sum_dl_prbs_used / nof_dl_slots : 0;
+-    meas_record_item_c meas_record_item;
+-    meas_record_item.set_integer() = nof_cell_prbs > 0 ? mean_dl_prbs_used * 100 / nof_cell_prbs : 0;
+-    items.push_back(meas_record_item);
+-    meas_collected = true;
+-  }
+-
+-  for (auto& ue : ues) {
+-    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ue_id().gnb_cu_ue_f1ap_id);
+-    uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+-    meas_record_item_c  meas_record_item;
+-    if (ue_idx != du_ue_index_t::INVALID_DU_UE_INDEX && ue_idx < last_ue_metrics.size()) {
+-      unsigned ue_mean_dl_prbs_used = nof_dl_slots > 0 ? last_ue_metrics[ue_idx].tot_pdsch_prbs_used / nof_dl_slots : 0;
+-      meas_record_item.set_integer() = nof_cell_prbs > 0 ? ue_mean_dl_prbs_used * 100 / nof_cell_prbs : 0;
+-    } else {
+-      meas_record_item.set_no_value();
+-    }
+-    items.push_back(meas_record_item);
+-    meas_collected = true;
+-  }
+-
+-  return meas_collected;
++  return get_prb_measurement(true, false, label_info_list, ues, items);
+ }
+ 
+-bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul(const asn1::e2sm::label_info_list_l          label_info_list,
+-                                                         const std::vector<asn1::e2sm::ue_id_c>&      ues,
+-                                                         const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
+-                                                         std::vector<asn1::e2sm::meas_record_item_c>& items)
++bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_dl(
++    const label_info_list_l label_info_list, const std::vector<ue_id_c>& ues,
++    const std::optional<cgi_c> cell_global_id, std::vector<meas_record_item_c>& items)
+ {
+-  bool meas_collected = false;
+-  if (last_ue_metrics.empty()) {
+-    return handle_no_meas_data_available(ues, items, asn1::e2sm::meas_record_item_c::types::options::integer);
+-  }
+-  if ((label_info_list.size() > 1 or
+-       (label_info_list.size() == 1 and not label_info_list[0].meas_label.no_label_present))) {
+-    logger.debug("Metric: RRU.PrbTotUl supports only NO_LABEL label.");
+-    return meas_collected;
+-  }
+-  if (ues.empty()) {
+-    unsigned sum_ul_prbs_used = std::accumulate(
+-        last_ue_metrics.begin(), last_ue_metrics.end(), 0u, [](unsigned sum, const scheduler_ue_metrics& metric) {
+-          return sum + metric.tot_pusch_prbs_used;
+-        });
+-    double             mean_ul_prbs_used = nof_ul_slots > 0 ? sum_ul_prbs_used / nof_ul_slots : 0;
+-    meas_record_item_c meas_record_item;
+-    meas_record_item.set_integer() = nof_cell_prbs > 0 ? mean_ul_prbs_used * 100 / nof_cell_prbs : 0;
+-    items.push_back(meas_record_item);
+-    meas_collected = true;
+-  }
+-
+-  for (auto& ue : ues) {
+-    gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ue_id().gnb_cu_ue_f1ap_id);
+-    uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
+-    meas_record_item_c  meas_record_item;
+-    if (ue_idx != du_ue_index_t::INVALID_DU_UE_INDEX && ue_idx < last_ue_metrics.size()) {
+-      unsigned ue_mean_ul_prbs_used = nof_ul_slots > 0 ? last_ue_metrics[ue_idx].tot_pusch_prbs_used / nof_ul_slots : 0;
+-      meas_record_item.set_integer() = nof_cell_prbs > 0 ? ue_mean_ul_prbs_used * 100 / nof_cell_prbs : 0;
+-    } else {
+-      meas_record_item.set_no_value();
+-    }
+-    items.push_back(meas_record_item);
+-    meas_collected = true;
+-  }
++  return get_prb_measurement(false, true, label_info_list, ues, items);
++}
+ 
+-  return meas_collected;
++bool e2sm_kpm_du_meas_provider_impl::get_prb_use_perc_ul(
++    const label_info_list_l label_info_list, const std::vector<ue_id_c>& ues,
++    const std::optional<cgi_c> cell_global_id, std::vector<meas_record_item_c>& items)
++{
++  return get_prb_measurement(true, true, label_info_list, ues, items);
+ }
+ bool e2sm_kpm_du_meas_provider_impl::get_delay_ul(const asn1::e2sm::label_info_list_l          label_info_list,
+                                                   const std::vector<asn1::e2sm::ue_id_c>&      ues,
+@@ -623,11 +709,13 @@ bool e2sm_kpm_du_meas_provider_impl::get_delay_ul(const asn1::e2sm::label_info_l
+   }
+ 
+   if (ues.empty()) {
+-    float sum_ul_delay_ms = std::accumulate(
+-        last_ue_metrics.begin(), last_ue_metrics.end(), 0.0f, [](float sum, const scheduler_ue_metrics& metric) {
+-          return sum + metric.avg_crc_delay_ms.value_or(0.0f);
+-        });
+-    float              mean_ul_delay_ms = sum_ul_delay_ms / static_cast<float>(last_ue_metrics.size());
++    float mean_ul_delay_ms = std::accumulate(last_ue_metrics.begin(),
++                                             last_ue_metrics.end(),
++                                             0,
++                                             [](size_t sum, const scheduler_ue_metrics& metric) {
++                                               return sum + metric.avg_crc_delay_ms.value_or(0.0f);
++                                             }) /
++                             last_ue_metrics.size();
+     meas_record_item_c meas_record_item;
+     if (mean_ul_delay_ms) {
+       meas_record_item.set_real().value = mean_ul_delay_ms * 10; // unit is 0.1ms
+@@ -702,7 +790,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
+     return meas_collected;
+   }
+   double                       seconds = 1;
+-  std::map<uint16_t, unsigned> ue_throughput;
++  std::map<uint16_t, double> ue_throughput;
+   for (auto& ue : ue_aggr_rlc_metrics) {
+     size_t num_pdu_bytes_with_segmentation;
+     if (std::holds_alternative<rlc_um_tx_metrics_lower>(ue.second.front().tx.tx_low.mode_specific)) {
+@@ -728,13 +816,12 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
+           return sum + metric.tx.tx_low.num_pdu_bytes_no_segmentation;
+         });
+     num_pdu_bytes_no_segmentation /= ue.second.size();
+-    seconds = (float)std::chrono::duration_cast<std::chrono::milliseconds>(ue.second.back().metrics_period).count() /
+-              (float)1000;
++    seconds = std::chrono::duration<double>(ue.second.back().metrics_period).count();
+     ue_throughput[ue.first] = bytes_to_kbits(num_pdu_bytes_no_segmentation + num_pdu_bytes_with_segmentation) / seconds;
+   }
+   if (ues.empty()) {
+     meas_record_item_c meas_record_item;
+-    int                total_throughput = 0;
++    double             total_throughput = 0;
+     for (auto& ue : ue_throughput) {
+       total_throughput += ue.second;
+     }
+@@ -776,20 +863,19 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_mean_throughput(const asn1::e2sm
+   }
+ 
+   double                       seconds = 1;
+-  std::map<uint16_t, unsigned> ue_throughput;
++  std::map<uint16_t, double> ue_throughput;
+   for (auto& ue : ue_aggr_rlc_metrics) {
+     auto num_pdu_bytes =
+         std::accumulate(ue.second.begin(), ue.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
+           return sum + metric.rx.num_pdu_bytes;
+         });
+     num_pdu_bytes /= ue.second.size();
+-    seconds = (float)std::chrono::duration_cast<std::chrono::milliseconds>(ue.second.back().metrics_period).count() /
+-              (float)1000;
++    seconds = std::chrono::duration<double>(ue.second.back().metrics_period).count();
+     ue_throughput[ue.first] = bytes_to_kbits(num_pdu_bytes) / seconds; // unit is kbps
+   }
+   if (ues.empty()) {
+     meas_record_item_c meas_record_item;
+-    int                total_throughput = 0;
++    double             total_throughput = 0;
+     for (auto& ue : ue_throughput) {
+       total_throughput += ue.second;
+     }
+@@ -1080,7 +1166,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_rlc_sdu_latency(const asn1::e2sm
+                           ue_aggr_rlc_metrics[ue_idx].end(),
+                           0,
+                           [](size_t sum, const rlc_metrics& metric) { return sum + metric.tx.tx_high.num_sdus; });
+-      if (tot_sdu_latency_us && tot_num_sdus) {
++      if (tot_num_sdus && tot_sdu_latency_us) {
+         float av_ue_sdu_latency_ms = (static_cast<float>(tot_sdu_latency_us) / tot_num_sdus) / 100; // Unit is 0.1 ms.
+         av_ue_sdu_latency_ms       = std::round(av_ue_sdu_latency_ms * 10.0f) / 10.0f;
+         meas_record_item.set_real();
+@@ -1161,7 +1247,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_ul_rlc_sdu_latency(const asn1::e2sm
+                           ue_aggr_rlc_metrics[ue_idx].end(),
+                           0,
+                           [](size_t sum, const rlc_metrics& metric) { return sum + metric.rx.num_sdus; });
+-      if (tot_sdu_latency_us && tot_num_sdus) {
++      if (tot_num_sdus && tot_sdu_latency_us) {
+         meas_record_item.set_real();
+         meas_record_item.real().value = (static_cast<float>(tot_sdu_latency_us) / tot_num_sdus) / 100; // Unit is 0.1ms.
+         items.push_back(meas_record_item);
+diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h
+index 545168c..cded03a 100644
+--- a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h
++++ b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h
+@@ -67,7 +67,7 @@ private:
+                                           const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
+                                           std::vector<asn1::e2sm::meas_record_item_c>& items);
+ 
+-  typedef metric_meas_getter_func_t(e2sm_kpm_du_meas_provider_impl::* metric_meas_getter_func_ptr);
++  typedef metric_meas_getter_func_t(e2sm_kpm_du_meas_provider_impl::*metric_meas_getter_func_ptr);
+ 
+   struct e2sm_kpm_supported_metric_t {
+     uint32_t                    supported_labels;
+@@ -79,15 +79,36 @@ private:
+   bool check_e2sm_kpm_metrics_definitions(span<const e2sm_kpm_metric_t> metrics_defs);
+ 
+   // Helper functions.
++  enum class scheduler_metric {
++    cqi, cqi_samples, dl_mcs, ul_mcs, dl_mcs_samples, ul_mcs_samples,
++    phr, phr_age, bsr, bsr_age, dl_buffer, dl_buffer_age,
++    dl_brate, ul_brate, dl_ok, dl_nok, ul_ok, ul_nok, dl_prb_usage, ul_prb_usage
++  };
++  const scheduler_ue_metrics* find_ue_metrics(const asn1::e2sm::ue_id_c& ue) const;
++  template <scheduler_metric Metric>
++  bool get_scheduler_measurement(const asn1::e2sm::label_info_list_l          label_info_list,
++                                 const std::vector<asn1::e2sm::ue_id_c>&      ues,
++                                 const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
++                                 std::vector<asn1::e2sm::meas_record_item_c>& items);
++  bool get_prb_measurement(bool uplink, bool percentage,
++                           const asn1::e2sm::label_info_list_l          label_info_list,
++                           const std::vector<asn1::e2sm::ue_id_c>&      ues,
++                           std::vector<asn1::e2sm::meas_record_item_c>& items);
+   float bytes_to_kbits(float value);
+   bool  handle_no_meas_data_available(const std::vector<asn1::e2sm::ue_id_c>&        ues,
+                                       std::vector<asn1::e2sm::meas_record_item_c>&   items,
+                                       asn1::e2sm::meas_record_item_c::types::options value_type);
++  enum class pusch_rf_metric { rsrp, snr };
++  bool get_pusch_rf_measurement(pusch_rf_metric                              metric_type,
++                                const asn1::e2sm::label_info_list_l          label_info_list,
++                                const std::vector<asn1::e2sm::ue_id_c>&      ues,
++                                const std::optional<asn1::e2sm::cgi_c>       cell_global_id,
++                                std::vector<asn1::e2sm::meas_record_item_c>& items);
+ 
+   // Measurement getter functions.
+   metric_meas_getter_func_t get_cqi;
+   metric_meas_getter_func_t get_rsrp;
+-  metric_meas_getter_func_t get_rsrq;
++  metric_meas_getter_func_t get_snr;
+   metric_meas_getter_func_t get_prb_avail_dl;
+   metric_meas_getter_func_t get_prb_avail_ul;
+   metric_meas_getter_func_t get_prb_used_dl;
+@@ -106,9 +127,9 @@ private:
+ 
+   ocudulog::basic_logger&                            logger;
+   odu::f1ap_ue_id_translator&                        f1ap_ue_id_provider;
+-  unsigned                                           nof_cell_prbs          = 0;
+-  unsigned                                           nof_dl_slots           = 0;
+-  unsigned                                           nof_ul_slots           = 0;
++  unsigned                                           nof_cell_prbs = 0;
++  unsigned                                           nof_dl_slots = 0;
++  unsigned                                           nof_ul_slots = 0;
+   unsigned                                           nof_ded_cell_preambles = 0;
+   std::vector<scheduler_ue_metrics>                  last_ue_metrics;
+   std::map<uint16_t, std::deque<rlc_metrics>>        ue_aggr_rlc_metrics;
+diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.cpp b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.cpp
+index 055f549..78adc8e 100644
+--- a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.cpp
++++ b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.cpp
+@@ -64,6 +64,13 @@ bool e2sm_kpm_impl::process_action_def_meas_info_list(const meas_info_list_l&
+     meas_type_c meas_type = meas_info_list[i].meas_type;
+     std::string meas_name = meas_info_list[i].meas_type.meas_name().to_string();
+ 
++    // The vendor PUSCH RF metrics have one unfiltered record per UE, with no label expansion.
++    if ((meas_name == "PUSCH.RSRP.dBFS" || meas_name == "PUSCH.SNR.dB") &&
++        meas_info_list[i].label_info_list.size() != 1) {
++      logger.debug("Metric {} requires exactly one NO_LABEL entry.", meas_name);
++      return false;
++    }
++
+     for (uint32_t l = 0; l < meas_info_list[i].label_info_list.size(); l++) {
+       const meas_label_s& meas_label = meas_info_list[i].label_info_list[l].meas_label;
+       if (du_meas_provider.is_metric_supported(meas_type, meas_label, level, cell_scope)) {
+@@ -152,6 +159,23 @@ bool e2sm_kpm_impl::process_action_definition_format3(const e2sm_kpm_action_defi
+ 
+   for (uint32_t i = 0; i < action_definition.meas_cond_list.size(); ++i) {
+     const meas_type_c& meas_type = action_definition.meas_cond_list[i].meas_type;
++    const bool is_pusch_rf = meas_type.type() == meas_type_c::types_opts::meas_name &&
++                             (meas_type.meas_name().to_string() == "PUSCH.RSRP.dBFS" ||
++                              meas_type.meas_name().to_string() == "PUSCH.SNR.dB");
++    if (is_pusch_rf) {
++      // UE-selection test conditions do not count as measurement labels.
++      unsigned nof_labels = 0;
++      for (const auto& condition : action_definition.meas_cond_list[i].matching_cond) {
++        if (condition.matching_cond_choice.type() == matching_cond_item_choice_c::types_opts::meas_label) {
++          ++nof_labels;
++        }
++      }
++      if (cell_scope || nof_labels != 1) {
++        logger.debug("Metric {} requires exactly one NO_LABEL entry and no cell filter.",
++                     meas_type.meas_name().to_string());
++        return false;
++      }
++    }
+     for (uint32_t m = 0; m < action_definition.meas_cond_list[i].matching_cond.size(); ++m) {
+       const matching_cond_item_s&        matching_cond_item = action_definition.meas_cond_list[i].matching_cond[m];
+       matching_cond_item_choice_c::types test_type          = matching_cond_item.matching_cond_choice.type();
+diff --git a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_utils.cpp b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_utils.cpp
+index bf7b5d0..c62891e 100644
+--- a/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_utils.cpp
++++ b/lib/e2/e2sm/e2sm_kpm/e2sm_kpm_utils.cpp
+@@ -3,6 +3,7 @@
+ // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
+ 
+ #include "e2sm_kpm_utils.h"
++#include <algorithm>
+ 
+ using namespace ocudu;
+ 
+@@ -169,6 +170,16 @@ bool ocudu::operator==(const asn1::e2sm::ue_id_c& lhs, asn1::e2sm::ue_id_c const
+ 
+   // TODO: add support for all types
+   switch (lhs.type()) {
++    case asn1::e2sm::ue_id_c::types_opts::gnb_ue_id: {
++      // Include GUAMI, F1/E1 lists and optional identity fields. Comparing only
++      // the numeric AMF UE ID would merge different AMFs or changed contexts.
++      byte_buffer left, right;
++      asn1::bit_ref lref(left), rref(right);
++      if (lhs.pack(lref) != asn1::OCUDUASN_SUCCESS || rhs.pack(rref) != asn1::OCUDUASN_SUCCESS) {
++        return false;
++      }
++      return left.length() == right.length() && std::equal(left.begin(), left.end(), right.begin());
++    }
+     case asn1::e2sm::ue_id_c::types_opts::gnb_du_ue_id:
+       if (lhs.gnb_du_ue_id() == rhs.gnb_du_ue_id()) {
+         return true;
+@@ -185,8 +196,16 @@ bool ocudu::operator!=(const asn1::e2sm::ue_id_c& lhs, asn1::e2sm::ue_id_c const
+ 
+ bool ocudu::operator<(const asn1::e2sm::ue_id_c& lhs, asn1::e2sm::ue_id_c const& rhs)
+ {
+-  ocudu_assert(lhs.type() != rhs.type(), "Cannot compare UEIDs of different types.");
++  ocudu_assert(lhs.type() == rhs.type(), "Cannot compare UEIDs of different types.");
+   switch (lhs.type()) {
++    case asn1::e2sm::ue_id_c::types_opts::gnb_ue_id: {
++      byte_buffer left, right;
++      asn1::bit_ref lref(left), rref(right);
++      if (lhs.pack(lref) != asn1::OCUDUASN_SUCCESS || rhs.pack(rref) != asn1::OCUDUASN_SUCCESS) {
++        return false;
++      }
++      return std::lexicographical_compare(left.begin(), left.end(), right.begin(), right.end());
++    }
+     case asn1::e2sm::ue_id_c::types_opts::gnb_du_ue_id:
+       if (lhs.gnb_du_ue_id() < rhs.gnb_du_ue_id()) {
+         return true;
+diff --git a/lib/f1ap/cu_cp/f1ap_cu_impl.cpp b/lib/f1ap/cu_cp/f1ap_cu_impl.cpp
+index ff8e51d..a68f143 100644
+--- a/lib/f1ap/cu_cp/f1ap_cu_impl.cpp
++++ b/lib/f1ap/cu_cp/f1ap_cu_impl.cpp
+@@ -162,6 +162,16 @@ void f1ap_cu_impl::handle_message(const f1ap_message& msg)
+   }
+ }
+ 
++std::optional<f1ap_ue_identity> f1ap_cu_impl::get_ue_identity_snapshot(cu_cp_ue_index_t ue_index) const
++{
++  const auto* ue = ue_ctxt_list.find(ue_index);
++  if (ue == nullptr || ue->marked_for_release || !ue->ue_ids.du_ue_f1ap_id.has_value()) {
++    return std::nullopt;
++  }
++  return f1ap_ue_identity{gnb_cu_ue_f1ap_id_to_uint(ue->ue_ids.cu_ue_f1ap_id),
++                          gnb_du_ue_f1ap_id_to_uint(ue->ue_ids.du_ue_f1ap_id.value())};
++}
++
+ void f1ap_cu_impl::remove_ue_context(cu_cp_ue_index_t ue_index)
+ {
+   if (!ue_ctxt_list.contains(ue_index)) {
+diff --git a/lib/f1ap/cu_cp/f1ap_cu_impl.h b/lib/f1ap/cu_cp/f1ap_cu_impl.h
+index 620a2c8..f9517f5 100644
+--- a/lib/f1ap/cu_cp/f1ap_cu_impl.h
++++ b/lib/f1ap/cu_cp/f1ap_cu_impl.h
+@@ -55,6 +55,7 @@ public:
+ 
+   // f1ap_statistics_handler functions.
+   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
++  std::optional<f1ap_ue_identity> get_ue_identity_snapshot(cu_cp_ue_index_t ue_index) const override;
+ 
+   // f1ap_ue_context_removal_handler functions.
+   void remove_ue_context(cu_cp_ue_index_t ue_index) override;
+diff --git a/lib/ngap/ngap_impl.cpp b/lib/ngap/ngap_impl.cpp
+index b379c47..10b6dcc 100644
+--- a/lib/ngap/ngap_impl.cpp
++++ b/lib/ngap/ngap_impl.cpp
+@@ -588,6 +588,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
+ 
+   // Store serving PLMN.
+   ue_ctxt.serving_guami = init_ctxt_setup_req.guami;
++  ue_ctxt.serving_guami_valid = true;
+ 
+   // Store RRC inactive transition report request if present.
+   if (init_ctxt_setup_req.rrc_inactive_transition_report_request.has_value()) {
+@@ -672,6 +673,7 @@ void ngap_impl::handle_ue_context_modification_request(const asn1::ngap::ue_cont
+   // Store serving PLMN if it is set.
+   if (ue_context_mod_request.new_guami.has_value()) {
+     ue_ctxt.serving_guami = ue_context_mod_request.new_guami.value();
++    ue_ctxt.serving_guami_valid = true;
+   }
+ 
+   // Store UE Aggregate Maximum Bitrate if it is set.
+@@ -1672,6 +1674,18 @@ cu_cp_ue_index_t ngap_impl::get_ue_index(const amf_ue_id_t& amf_ue_ngap_id)
+   return cu_cp_ue_index_t::invalid;
+ }
+ 
++std::optional<ngap_ue_identity> ngap_impl::get_ue_identity_snapshot(cu_cp_ue_index_t ue_index) const
++{
++  const auto* ue = ue_ctxt_list.find(ue_index);
++  if (!conn_handler.is_connected() || ue == nullptr || !ue->serving_guami_valid || ue->release_requested || ue->release_scheduled ||
++      ue->ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
++    return std::nullopt;
++  }
++  return ngap_ue_identity{amf_ue_id_to_uint(ue->ue_ids.amf_ue_id),
++                          ran_ue_id_to_uint(ue->ue_ids.ran_ue_id),
++                          ue->serving_guami};
++}
++
+ amf_ue_id_t ngap_impl::get_amf_ue_id(const cu_cp_ue_index_t& ue_index)
+ {
+   if (ue_ctxt_list.contains(ue_index)) {
+diff --git a/lib/ngap/ngap_impl.h b/lib/ngap/ngap_impl.h
+index 29e04ca..2b5e000 100644
+--- a/lib/ngap/ngap_impl.h
++++ b/lib/ngap/ngap_impl.h
+@@ -86,8 +86,9 @@ public:
+   void remove_ue_context(cu_cp_ue_index_t ue_index) override;
+ 
+   // ngap_ue_id_translator.
+-  cu_cp_ue_index_t get_ue_index(const amf_ue_id_t& amf_ue_ngap_id) override;
+-  amf_ue_id_t      get_amf_ue_id(const cu_cp_ue_index_t& ue_index) override;
++  cu_cp_ue_index_t  get_ue_index(const amf_ue_id_t& amf_ue_ngap_id) override;
++  amf_ue_id_t get_amf_ue_id(const cu_cp_ue_index_t& ue_index) override;
++  std::optional<ngap_ue_identity> get_ue_identity_snapshot(cu_cp_ue_index_t ue_index) const override;
+ 
+   ngap_message_handler&                        get_ngap_message_handler() override { return *this; }
+   ngap_event_handler&                          get_ngap_event_handler() override { return *this; }
+diff --git a/lib/ngap/ue_context/ngap_ue_context.h b/lib/ngap/ue_context/ngap_ue_context.h
+index ca479c4..2022787 100644
+--- a/lib/ngap/ue_context/ngap_ue_context.h
++++ b/lib/ngap/ue_context/ngap_ue_context.h
+@@ -23,6 +23,7 @@ struct ngap_ue_context {
+   ngap_ue_ids                                                ue_ids;
+   ngap_cu_cp_ue_notifier*                                    ue = nullptr;
+   guami_t                                                    serving_guami;
++  bool serving_guami_valid = false;
+   unique_timer                                               request_pdu_session_timer;
+   bool                                                       release_requested                     = false;
+   bool                                                       release_scheduled                     = false;
+@@ -110,6 +111,12 @@ public:
+     return ues.at(amf_ue_id_to_ran_ue_id.at(amf_ue_id));
+   }
+ 
++  const ngap_ue_context* find(cu_cp_ue_index_t ue_index) const
++  {
++    auto it = ue_index_to_ran_ue_id.find(ue_index);
++    return it == ue_index_to_ran_ue_id.end() ? nullptr : find(it->second);
++  }
++
+   ngap_ue_context* find(ran_ue_id_t ran_ue_id)
+   {
+     auto it = ues.find(ran_ue_id);
+diff --git a/lib/phy/upper/channel_processors/pusch/pusch_demodulator_gpu_impl.h b/lib/phy/upper/channel_processors/pusch/pusch_demodulator_gpu_impl.h
+index 02b7497..2f982df 100644
+--- a/lib/phy/upper/channel_processors/pusch/pusch_demodulator_gpu_impl.h
++++ b/lib/phy/upper/channel_processors/pusch/pusch_demodulator_gpu_impl.h
+@@ -296,9 +296,7 @@ private:
+ 
+   /// Device memory for full grid upload.
+   void*  d_full_grid_      = nullptr; // fp32 grid after conversion
+-  size_t d_full_grid_cap_  = 0;
+   void*  d_full_estimates_ = nullptr; // fp32 estimates after conversion
+-  size_t d_full_est_cap_   = 0;
+   /// Pointers into unified buffer (computed as offsets, not separately allocated).
+   void* d_grid_cbf16_ = nullptr; // cbf16 grid before conversion
+   int*  d_re_indices_ = nullptr;
+diff --git a/lib/phy/upper/resource_grid_cuda_visible_impl.h b/lib/phy/upper/resource_grid_cuda_visible_impl.h
+index 9f2b3d2..7593f9b 100644
+--- a/lib/phy/upper/resource_grid_cuda_visible_impl.h
++++ b/lib/phy/upper/resource_grid_cuda_visible_impl.h
+@@ -1140,7 +1140,6 @@ private:
+   mutable bool                  host_shadow_valid{false};
+   mutable bool                  host_pinned_valid{false};
+   mutable unsigned              host_pinned_index{~0u};
+-  mutable unsigned              host_shadow_from_index{~0u};
+   mutable std::vector<cbf16_t>  host_shadow;
+ 
+   static constexpr unsigned owned_snapshot_ring = 3;
+diff --git a/lib/scheduler/logging/cell_metrics_handler.cpp b/lib/scheduler/logging/cell_metrics_handler.cpp
+index 553fa42..d779af2 100644
+--- a/lib/scheduler/logging/cell_metrics_handler.cpp
++++ b/lib/scheduler/logging/cell_metrics_handler.cpp
+@@ -331,11 +331,18 @@ void cell_metrics_handler::handle_ul_bsr_indication(const ul_bsr_indication_mess
+   if (ues.contains(bsr.ue_index)) {
+     auto& u = ues[bsr.ue_index];
+ 
+-    // Store last BSR.
+-    u.last_bsr = 0;
++    // Store the sum in this indication; BSR format/partial-LCG behavior is unchanged.
++    uint64_t bytes = 0;
+     // TODO: Handle different BSR formats.
+     for (unsigned i = 0; i != bsr.reported_lcgs.size(); ++i) {
+-      u.last_bsr += bsr.reported_lcgs[i].nof_bytes;
++      bytes += bsr.reported_lcgs[i].nof_bytes;
++    }
++    if (bsr.reported_lcgs.empty() || bytes > std::numeric_limits<unsigned>::max()) {
++      u.last_bsr = 0;
++      u.last_bsr_update.reset();
++    } else {
++      u.last_bsr = static_cast<unsigned>(bytes);
++      u.last_bsr_update = std::chrono::steady_clock::now();
+     }
+   }
+ }
+@@ -353,6 +360,7 @@ void cell_metrics_handler::handle_ul_phr_indication(const ul_phr_indication_mess
+       // Log the floor of the average of the PH interval.
+       interval<int> rg = phr_ind.phr.get_phr().front().ph;
+       u.last_phr       = (rg.start() + rg.stop()) / 2;
++      u.last_phr_update = std::chrono::steady_clock::now();
+       auto diff        = last_slot_tx.without_hyper_sfn() - phr_ind.slot_rx;
+       u.data.sum_ul_ce_delay_slots += diff;
+       u.data.max_ul_ce_delay_slots = std::max(static_cast<unsigned>(diff), u.data.max_ul_ce_delay_slots);
+@@ -391,6 +399,7 @@ void cell_metrics_handler::handle_dl_buffer_state_indication(const dl_buffer_sta
+ 
+     // Store last DL buffer state.
+     u.last_dl_bs[dl_bs.lcid] = dl_bs.bs;
++    u.last_dl_buffer_update = std::chrono::steady_clock::now();
+   }
+ }
+ 
+@@ -661,6 +670,8 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
+   ret.dl_mcs              = sch_mcs_index{mcs};
+   mcs                     = data.nof_puschs > 0 ? std::round(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
+   ret.ul_mcs              = sch_mcs_index{mcs};
++  ret.nof_dl_mcs_reports  = data.nof_dl_cws;
++  ret.nof_ul_mcs_reports  = data.nof_puschs;
+   ret.tot_pdsch_prbs_used = data.tot_dl_prbs_used;
+   ret.tot_pusch_prbs_used = data.tot_ul_prbs_used;
+   ret.dl_brate_kbps       = static_cast<double>(data.sum_dl_tb_bytes * 8U) / metric_report_period.count();
+@@ -669,24 +680,39 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
+   ret.dl_nof_nok          = data.count_uci_harqs - data.count_uci_harq_acks;
+   ret.ul_nof_ok           = data.count_crc_acks;
+   ret.ul_nof_nok          = data.count_crc_pdus - data.count_crc_acks;
+-  ret.pusch_snr_db        = data.nof_pusch_snr_reports > 0 ? data.sum_pusch_snrs / data.nof_pusch_snr_reports : 0;
+-  ret.pusch_rsrp_db       = data.nof_pusch_rsrp_reports > 0 ? data.sum_pusch_rsrp / data.nof_pusch_rsrp_reports
+-                                                            : -std::numeric_limits<float>::infinity();
++  ret.pusch_snr_db          = data.nof_pusch_snr_reports > 0 ? data.sum_pusch_snrs / data.nof_pusch_snr_reports : 0;
++  ret.nof_pusch_snr_reports = data.nof_pusch_snr_reports;
++  ret.pusch_rsrp_db         = data.nof_pusch_rsrp_reports > 0 ? data.sum_pusch_rsrp / data.nof_pusch_rsrp_reports
++                                                           : -std::numeric_limits<float>::infinity();
+   ret.ul_ri_stats         = data.ul_ri;
+   ret.pucch_snr_db        = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
+   ret.last_dl_olla        = last_dl_olla;
+   ret.last_ul_olla        = last_ul_olla;
+   ret.bsr                 = last_bsr;
+   ret.sr_count            = data.count_sr;
+-  ret.dl_bs               = 0;
++  uint64_t dl_buffer_bytes = 0;
+   for (const unsigned value : last_dl_bs) {
+-    ret.dl_bs += value;
++    dl_buffer_bytes += value;
+   }
++  ret.dl_bs = dl_buffer_bytes <= std::numeric_limits<unsigned>::max() ? dl_buffer_bytes : 0;
+   ret.ta_stats                       = data.ta;
+   ret.pusch_ta_stats                 = data.pusch_ta;
+   ret.pucch_ta_stats                 = data.pucch_ta;
+   ret.srs_ta_stats                   = data.srs_ta;
+   ret.last_phr                       = last_phr;
++  const auto now = std::chrono::steady_clock::now();
++  auto age_ms = [now](const std::optional<std::chrono::steady_clock::time_point>& updated) -> std::optional<double> {
++    if (!updated.has_value()) {
++      return std::nullopt;
++    }
++    return std::chrono::duration<double, std::milli>(now - *updated).count();
++  };
++  ret.phr_age_ms       = age_ms(last_phr_update);
++  ret.bsr_age_ms       = age_ms(last_bsr_update);
++  ret.dl_buffer_age_ms = age_ms(last_dl_buffer_update);
++  if (dl_buffer_bytes > std::numeric_limits<unsigned>::max()) {
++    ret.dl_buffer_age_ms.reset();
++  }
+   ret.max_pdsch_distance_ms          = convert_slots_to_ms(data.max_pdsch_distance_slots);
+   ret.max_pusch_distance_ms          = convert_slots_to_ms(data.max_pusch_distance_slots);
+   ret.nof_pucch_f0f1_invalid_harqs   = data.nof_pucch_f0f1_invalid_harqs;
+diff --git a/lib/scheduler/logging/cell_metrics_handler.h b/lib/scheduler/logging/cell_metrics_handler.h
+index 4dcca0a..f8a2567 100644
+--- a/lib/scheduler/logging/cell_metrics_handler.h
++++ b/lib/scheduler/logging/cell_metrics_handler.h
+@@ -109,6 +109,9 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
+     /// back to zero.
+     std::array<slot_point, 2>              oldest_positive_dl_bo_slot;
+     std::array<unsigned, MAX_NOF_RB_LCIDS> last_dl_bs{0};
++    std::optional<std::chrono::steady_clock::time_point> last_phr_update;
++    std::optional<std::chrono::steady_clock::time_point> last_bsr_update;
++    std::optional<std::chrono::steady_clock::time_point> last_dl_buffer_update;
+     std::optional<float>                   last_dl_olla;
+     std::optional<float>                   last_ul_olla;
+     non_persistent_data                    data;
+diff --git a/tests/unittests/e2/CMakeLists.txt b/tests/unittests/e2/CMakeLists.txt
+index e75986c..c811615 100644
+--- a/tests/unittests/e2/CMakeLists.txt
++++ b/tests/unittests/e2/CMakeLists.txt
+@@ -97,6 +97,11 @@ set_tests_properties(
+     e2sm_kpm_cu_cp_meas_provider_metrics_test.e2sm_kpm_cu_cp_returns_expected_rrc_metrics
+     PROPERTIES LABELS "MVP-GOV-E2-15.1;MVP-GOV-E2-15.2;MVP-GOV-E2-15.3;MVP-GOV-E2-16.1;MVP-GOV-E2-16.2;MVP-GOV-E2-17.1;MVP-GOV-E2-17.2;MVP-GOV-E2-4.1;MVP-GOV-E2-4.2")
+ 
++add_executable(e2sm_kpm_du_expansion_test e2sm_kpm_du_expansion_test.cpp)
++target_link_libraries(e2sm_kpm_du_expansion_test ocudulog ocudu_e2 e2ap_asn1 ocudu_support e2_test_helpers GTest::gtest GTest::gtest_main)
++target_include_directories(e2sm_kpm_du_expansion_test PRIVATE ${CMAKE_SOURCE_DIR})
++gtest_discover_tests(e2sm_kpm_du_expansion_test)
++
+ add_executable(e2sm_kpm_test e2sm_kpm_test.cpp)
+ target_link_libraries(e2sm_kpm_test ocudulog ocudu_e2 e2ap_asn1 ocudu_pcap ocudu_gateway ocudu_support e2_test_helpers GTest::gtest GTest::gtest_main
+ )
+diff --git a/tests/unittests/e2/e2ap_network_adapter_test.cpp b/tests/unittests/e2/e2ap_network_adapter_test.cpp
+index 0790f22..bed4dcb 100644
+--- a/tests/unittests/e2/e2ap_network_adapter_test.cpp
++++ b/tests/unittests/e2/e2ap_network_adapter_test.cpp
+@@ -9,6 +9,7 @@
+ #include "tests/unittests/e2/common/e2_test_helpers.h"
+ #include "ocudu/e2/e2_node_component_config_collector.h"
+ #include "ocudu/e2/e2ap_configuration_helpers.h"
++#include "ocudu/e2/e2ap_config_translators.h"
+ #include "ocudu/e2/e2sm/e2sm_manager.h"
+ #include "ocudu/e2/gateways/e2_connection_client.h"
+ #include "ocudu/e2/gateways/e2_network_client_factory.h"
+@@ -64,13 +65,10 @@ protected:
+     ASSERT_NE(ric_gw_port.value(), 0);
+ 
+     // create E2 agent
+-    sctp_network_connector_config e2agent_config;
+-    e2agent_config.dest_name         = "NearRT-RIC";
+-    e2agent_config.if_name           = "E2";
+-    e2agent_config.connect_addresses = {"127.0.0.1"};
+-    e2agent_config.connect_port      = ric_gw_port.value();
+-    e2agent_config.bind_addresses    = {"127.0.0.101"};
+-    e2agent_config.bind_port         = 0;
++    e2_config network_config;
++    network_config.ip_addrs   = {"127.0.0.1"};
++    network_config.port       = ric_gw_port.value();
++    network_config.bind_addrs = {"127.0.0.101"};
+ 
+     cfg                  = config_helpers::make_default_e2ap_config();
+     cfg.e2sm_kpm_enabled = true;
+diff --git a/tests/unittests/e2/e2sm_kpm_du_expansion_test.cpp b/tests/unittests/e2/e2sm_kpm_du_expansion_test.cpp
+new file mode 100644
+index 0000000..ee47b8f
+--- /dev/null
++++ b/tests/unittests/e2/e2sm_kpm_du_expansion_test.cpp
+@@ -0,0 +1,346 @@
++// SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
++// SPDX-License-Identifier: BSD-3-Clause-Open-MPI
++
++#include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
++#include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
++#include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_report_service_impl.h"
++#include "tests/unittests/e2/common/e2_test_helpers.h"
++#include <algorithm>
++#include <cstdlib>
++#include <fstream>
++#include <gtest/gtest.h>
++#include <limits>
++
++using namespace ocudu;
++using namespace asn1::e2sm;
++
++namespace {
++
++const std::vector<std::string> expanded_names = {
++    "DRB.RlcSduDelayDl",
++    "DRB.UEThpDl",
++    "DRB.UEThpUl",
++    "RRU.PrbTotDl",
++    "RRU.PrbTotUl",
++    "PUSCH.RSRP.dBFS",
++    "PUSCH.SNR.dB",
++    "CQI",
++    "CQI.Samples",
++    "DL.MCS",
++    "UL.MCS",
++    "DL.MCS.Samples",
++    "UL.MCS.Samples",
++    "UL.PHR.dB",
++    "UL.PHR.AgeMs",
++    "UL.BSR.Bytes",
++    "UL.BSR.AgeMs",
++    "DL.Buffer.Bytes",
++    "DL.Buffer.AgeMs",
++    "DL.MAC.Throughput",
++    "UL.MAC.Throughput",
++    "DL.HARQ.Ok",
++    "DL.HARQ.Nok",
++    "UL.CRC.Ok",
++    "UL.CRC.Nok",
++    "PRB.UsageDl.Percent",
++    "PRB.UsageUl.Percent"
++};
++
++ue_id_c ue(unsigned id)
++{
++  ue_id_c result;
++  result.set_gnb_du_ue_id().gnb_cu_ue_f1ap_id = id;
++  return result;
++}
++
++label_info_list_l no_label()
++{
++  label_info_list_l labels;
++  labels.resize(1);
++  labels[0].meas_label.no_label_present = true;
++  labels[0].meas_label.no_label = meas_label_s::no_label_e_::true_value;
++  return labels;
++}
++
++scheduler_ue_metrics measurement(unsigned index)
++{
++  scheduler_ue_metrics result{};
++  result.ue_index = to_du_ue_index(index);
++  result.cqi_stats.update(10);
++  result.cqi_stats.update(11);
++  result.cqi_stats.update(11);
++  result.dl_mcs = sch_mcs_index{13};
++  result.ul_mcs = sch_mcs_index{0};
++  result.nof_dl_mcs_reports = 3;
++  result.nof_ul_mcs_reports = 1;
++  result.dl_nof_ok = 7;
++  result.dl_nof_nok = 1;
++  result.ul_nof_ok = 3;
++  result.ul_nof_nok = 2;
++  result.last_phr = -4;
++  result.phr_age_ms = 1250.5;
++  result.bsr = 25000;
++  result.bsr_age_ms = 17.5;
++  result.dl_bs = 4096;
++  result.dl_buffer_age_ms = 0.0;
++  result.dl_brate_kbps = 0.08;
++  result.ul_brate_kbps = 1234.56;
++  result.tot_pdsch_prbs_used = 19;
++  result.tot_pusch_prbs_used = 13;
++  result.pusch_rsrp_db = -13.125F;
++  result.pusch_snr_db = 21.75F;
++  result.nof_pusch_snr_reports = 1;
++  return result;
++}
++
++class du_kpm_expansion_test : public ::testing::Test
++{
++protected:
++  dummy_f1ap_ue_id_translator translator;
++  e2sm_kpm_du_meas_provider_impl provider{translator};
++
++  static void SetUpTestSuite() { ocudulog::init(); }
++
++  void report(std::initializer_list<scheduler_ue_metrics> values, unsigned slots = 10, unsigned prbs = 52)
++  {
++    scheduler_cell_metrics snapshot{};
++    snapshot.nof_prbs = prbs;
++    snapshot.nof_dl_slots = snapshot.nof_ul_slots = slots;
++    snapshot.ue_metrics = values;
++    provider.report_metrics(snapshot);
++  }
++
++  std::vector<meas_record_item_c> collect(const std::string& name, const std::vector<ue_id_c>& ids)
++  {
++    meas_type_c selected;
++    selected.set_meas_name().from_string(name);
++    std::vector<meas_record_item_c> result;
++    EXPECT_TRUE(provider.get_meas_data(selected, no_label(), ids, {}, result));
++    return result;
++  }
++};
++
++TEST_F(du_kpm_expansion_test, sparse_ue_order_counts_signed_power_and_fractional_rates)
++{
++  auto peer = measurement(7);
++  peer.cqi_stats = {};
++  peer.cqi_stats.update(2);
++  peer.last_phr = 8;
++  peer.bsr = 0;
++  report({peer, measurement(91)});
++  for (const auto& expected : std::vector<std::pair<std::string, uint64_t>>{
++           {"CQI", 11}, {"CQI.Samples", 3}, {"DL.MCS", 13}, {"UL.MCS", 0},
++           {"DL.MCS.Samples", 3}, {"UL.MCS.Samples", 1}, {"DL.HARQ.Ok", 7},
++           {"DL.HARQ.Nok", 1}, {"UL.CRC.Ok", 3}, {"UL.CRC.Nok", 2},
++           {"UL.BSR.Bytes", 25000}, {"DL.Buffer.Bytes", 4096}}) {
++    SCOPED_TRACE(expected.first);
++    auto output = collect(expected.first, {ue(91), ue(199), ue(7)});
++    ASSERT_EQ(output.size(), 3U);
++    ASSERT_EQ(output[0].type(), meas_record_item_c::types::integer);
++    EXPECT_EQ(output[0].integer(), expected.second);
++    EXPECT_EQ(output[1].type(), meas_record_item_c::types::no_value);
++  }
++  for (const auto& expected : std::vector<std::pair<std::string, double>>{
++           {"UL.PHR.dB", -4}, {"UL.PHR.AgeMs", 1250.5}, {"UL.BSR.AgeMs", 17.5},
++           {"DL.Buffer.AgeMs", 0}, {"DL.MAC.Throughput", 0.08}, {"UL.MAC.Throughput", 1234.56}}) {
++    SCOPED_TRACE(expected.first);
++    auto output = collect(expected.first, {ue(91), ue(199), ue(7)});
++    ASSERT_EQ(output.size(), 3U);
++    ASSERT_EQ(output[0].type(), meas_record_item_c::types::real);
++    EXPECT_FLOAT_EQ(output[0].real().value, expected.second);
++    EXPECT_EQ(output[1].type(), meas_record_item_c::types::no_value);
++  }
++  EXPECT_EQ(collect("CQI", {ue(7)})[0].integer(), 2U);
++  EXPECT_DOUBLE_EQ(collect("UL.PHR.dB", {ue(7)})[0].real().value, 8.0);
++  EXPECT_EQ(collect("UL.BSR.Bytes", {ue(7)})[0].integer(), 0U);
++}
++
++TEST_F(du_kpm_expansion_test, absence_zero_reset_and_nonfinite_are_distinct)
++{
++  scheduler_ue_metrics empty{};
++  empty.ue_index = to_du_ue_index(91);
++  report({empty});
++  for (const char* name : {"CQI", "DL.MCS", "UL.MCS", "UL.PHR.dB", "UL.PHR.AgeMs",
++                           "UL.BSR.Bytes", "UL.BSR.AgeMs", "DL.Buffer.Bytes", "DL.Buffer.AgeMs"}) {
++    EXPECT_EQ(collect(name, {ue(91)})[0].type(), meas_record_item_c::types::no_value) << name;
++  }
++  for (const char* name : {"CQI.Samples", "DL.MCS.Samples", "UL.MCS.Samples",
++                           "DL.HARQ.Ok", "DL.HARQ.Nok", "UL.CRC.Ok", "UL.CRC.Nok"}) {
++    EXPECT_EQ(collect(name, {ue(91)})[0].integer(), 0U) << name;
++  }
++  auto valid = measurement(91);
++  valid.cqi_stats = {};
++  valid.cqi_stats.update(0);
++  valid.last_phr = 0;
++  valid.bsr = valid.dl_bs = 0;
++  report({valid});
++  EXPECT_EQ(collect("CQI", {ue(91)})[0].integer(), 0U);
++  EXPECT_DOUBLE_EQ(collect("UL.PHR.dB", {ue(91)})[0].real().value, 0.0);
++  EXPECT_EQ(collect("DL.Buffer.Bytes", {ue(91)})[0].integer(), 0U);
++  for (double invalid : {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()}) {
++    valid.dl_brate_kbps = invalid;
++    report({valid});
++    EXPECT_EQ(collect("DL.MAC.Throughput", {ue(91)})[0].type(), meas_record_item_c::types::no_value);
++  }
++  report({measurement(7)});
++  EXPECT_EQ(collect("CQI", {ue(91)})[0].type(), meas_record_item_c::types::no_value);
++}
++
++TEST_F(du_kpm_expansion_test, prb_sparse_indices_multiply_before_division_and_guard_zero_capacity)
++{
++  report({measurement(91)});
++  EXPECT_EQ(collect("RRU.PrbTotDl", {ue(91)})[0].integer(), 3U); // floor(19*100/(10*52)), not 1*100/52.
++  EXPECT_EQ(collect("RRU.PrbUsedDl", {ue(91)})[0].integer(), 1U);
++  EXPECT_EQ(collect("RRU.PrbTotUl", {ue(91)})[0].integer(), 2U);
++  EXPECT_EQ(collect("RRU.PrbUsedUl", {ue(91)})[0].integer(), 1U);
++  report({measurement(91)}, 0);
++  EXPECT_EQ(collect("RRU.PrbTotDl", {ue(91)})[0].type(), meas_record_item_c::types::no_value);
++  report({measurement(91)}, 10, 0);
++  EXPECT_EQ(collect("RRU.PrbTotUl", {ue(91)})[0].type(), meas_record_item_c::types::no_value);
++}
++
++TEST_F(du_kpm_expansion_test, real_prb_usage_preserves_fractional_sub_percent_and_valid_zero)
++{
++  auto empty = measurement(7);
++  empty.tot_pdsch_prbs_used = empty.tot_pusch_prbs_used = 0;
++  report({measurement(91), empty});
++  for (const auto& expected : std::vector<std::pair<std::string, double>>{
++           {"PRB.UsageDl.Percent", 1900.0 / 520.0}, {"PRB.UsageUl.Percent", 2.5}}) {
++    auto values = collect(expected.first, {ue(7), ue(91), ue(199)});
++    ASSERT_EQ(values.size(), 3U);
++    ASSERT_EQ(values[0].type(), meas_record_item_c::types::real);
++    EXPECT_DOUBLE_EQ(values[0].real().value, 0.0);
++    ASSERT_EQ(values[1].type(), meas_record_item_c::types::real);
++    EXPECT_FLOAT_EQ(values[1].real().value, expected.second);
++    EXPECT_EQ(values[2].type(), meas_record_item_c::types::no_value);
++  }
++  EXPECT_EQ(collect("RRU.PrbTotDl", {ue(91)})[0].integer(), 3U);
++  EXPECT_EQ(collect("RRU.PrbTotUl", {ue(91)})[0].integer(), 2U);
++
++  auto small = measurement(91);
++  small.tot_pdsch_prbs_used = small.tot_pusch_prbs_used = 1;
++  report({small});
++  EXPECT_FLOAT_EQ(collect("PRB.UsageDl.Percent", {ue(91)})[0].real().value, 100.0 / 520.0);
++  EXPECT_FLOAT_EQ(collect("PRB.UsageUl.Percent", {ue(91)})[0].real().value, 100.0 / 520.0);
++  EXPECT_EQ(collect("RRU.PrbTotDl", {ue(91)})[0].integer(), 0U);
++  EXPECT_EQ(collect("RRU.PrbTotUl", {ue(91)})[0].integer(), 0U);
++}
++
++TEST_F(du_kpm_expansion_test, real_prb_usage_zero_denominator_or_missing_source_is_no_value)
++{
++  for (const auto& capacity : {std::make_pair(0U, 52U), std::make_pair(10U, 0U)}) {
++    report({measurement(91)}, capacity.first, capacity.second);
++    for (const char* name : {"PRB.UsageDl.Percent", "PRB.UsageUl.Percent"}) {
++      EXPECT_EQ(collect(name, {ue(91)})[0].type(), meas_record_item_c::types::no_value);
++    }
++  }
++  report({});
++  for (const char* name : {"PRB.UsageDl.Percent", "PRB.UsageUl.Percent"}) {
++    EXPECT_EQ(collect(name, {ue(91)})[0].type(), meas_record_item_c::types::no_value);
++  }
++}
++
++TEST_F(du_kpm_expansion_test, capability_scope_labels_and_aper_advertisement)
++{
++  auto names = provider.get_supported_metric_names(UE_LEVEL);
++  e2sm_kpm_asn1_packer packer(provider);
++  auto encoded = packer.pack_ran_function_description();
++  e2sm_kpm_ran_function_description_s description;
++  asn1::cbit_ref reader(encoded);
++  ASSERT_EQ(description.unpack(reader), asn1::OCUDUASN_SUCCESS);
++  for (size_t i = 7; i < expanded_names.size(); ++i) {
++    const auto& name = expanded_names[i];
++    SCOPED_TRACE(name);
++    EXPECT_NE(std::find(names.begin(), names.end(), name), names.end());
++    meas_type_c selected;
++    selected.set_meas_name().from_string(name);
++    EXPECT_TRUE(provider.is_metric_supported(selected, no_label()[0].meas_label, UE_LEVEL, false));
++    EXPECT_FALSE(provider.is_metric_supported(selected, no_label()[0].meas_label, E2_NODE_LEVEL, false));
++    EXPECT_FALSE(provider.is_metric_supported(selected, no_label()[0].meas_label, UE_LEVEL, true));
++    auto labels = no_label();
++    labels[0].meas_label.sum_present = true;
++    std::vector<meas_record_item_c> output;
++    EXPECT_FALSE(provider.get_meas_data(selected, labels, {ue(91)}, {}, output));
++    ASSERT_EQ(output.size(), 1U);
++    EXPECT_EQ(output[0].type(), meas_record_item_c::types::no_value);
++    for (const auto& style : description.ric_report_style_list) {
++      const auto found = std::count_if(style.meas_info_action_list.begin(), style.meas_info_action_list.end(),
++                                      [&name](const auto& info) { return info.meas_name.to_string() == name; });
++      EXPECT_EQ(found, style.ric_report_style_type >= 2 ? 1 : 0);
++    }
++  }
++}
++
++TEST_F(du_kpm_expansion_test, expanded_100ms_aper_fixture_preserves_types_and_sparse_ues)
++{
++  report({measurement(91), measurement(7)});
++  for (unsigned id : {91U, 7U}) {
++    rlc_metrics rlc{};
++    rlc.ue_index = to_du_ue_index(id);
++    rlc.rb_id = rb_id_t(drb_id_t(1));
++    rlc.metrics_period = std::chrono::milliseconds(100);
++    rlc.rx.num_sdus = rlc.rx.num_pdus = 1;
++    rlc.rx.num_sdu_bytes = rlc.rx.num_pdu_bytes = 1000;
++    rlc.rx.mode_specific = rlc_am_rx_metrics{};
++    rlc.tx.tx_high.num_sdus = 1;
++    rlc.tx.tx_low.num_of_pulled_sdus = 1;
++    rlc.tx.tx_low.sum_sdu_latency_us = 100;
++    rlc.tx.tx_low.mode_specific = rlc_am_tx_metrics_lower{};
++    provider.report_metrics(rlc);
++  }
++  auto large = measurement(7);
++  large.bsr = std::numeric_limits<uint32_t>::max();
++  report({measurement(91), large});
++  e2sm_kpm_action_definition_s action;
++  action.ric_style_type = 4;
++  auto& format = action.action_definition_formats.set_action_definition_format4();
++  matching_ue_cond_per_sub_item_s condition;
++  condition.test_cond_info.test_type.set_ul_r_srp().value = test_cond_type_c::ul_r_srp_opts::true_value;
++  format.matching_ue_cond_list.push_back(condition);
++  format.sub_info.granul_period = 100;
++  for (const auto& name : expanded_names) {
++    meas_info_item_s info;
++    info.meas_type.set_meas_name().from_string(name);
++    info.label_info_list = no_label();
++    format.sub_info.meas_info_list.push_back(info);
++  }
++  e2sm_kpm_report_service_style4 service(action, provider);
++  ASSERT_TRUE(service.collect_measurements());
++  ASSERT_TRUE(service.is_ind_msg_ready());
++  byte_buffer encoded = service.get_indication_message();
++  e2sm_kpm_ind_msg_s decoded;
++  asn1::cbit_ref reader(encoded);
++  ASSERT_EQ(decoded.unpack(reader), asn1::OCUDUASN_SUCCESS);
++  const auto& rows = decoded.ind_msg_formats.ind_msg_format3().ue_meas_report_list;
++  ASSERT_EQ(rows.size(), 2U);
++  for (const auto& row : rows) {
++    EXPECT_EQ(row.meas_report.granul_period, 100U);
++    ASSERT_EQ(row.meas_report.meas_data[0].meas_record.size(), expanded_names.size());
++  }
++  auto header_bytes = service.get_indication_header();
++  auto indication = generate_e2_ind_msg(header_bytes, encoded);
++  byte_buffer full_pdu;
++  asn1::bit_ref e2_writer(full_pdu);
++  ASSERT_EQ(indication.pdu.pack(e2_writer), asn1::OCUDUASN_SUCCESS);
++  EXPECT_LT(full_pdu.length(), 9100U);
++  if (const char* directory = std::getenv("FALCON_IDENTITY_FIXTURE_DIR")) {
++    std::ofstream size(std::string(directory) + "/du_expanded_size.txt");
++    size << "Synthetic two-UE KPM payload bytes: " << encoded.length()
++         << "\nSynthetic full E2AP indication bytes: " << full_pdu.length() << "\n";
++  }
++  if (const char* directory = std::getenv("FALCON_IDENTITY_FIXTURE_DIR")) {
++    std::ofstream file(std::string(directory) + "/du_expanded_message.asn", std::ios::binary);
++    for (auto byte : encoded) file.put(static_cast<char>(byte));
++    ASSERT_TRUE(file.good());
++    e2sm_kpm_ind_hdr_s header;
++    header.ind_hdr_formats.ind_hdr_format1().collet_start_time.from_number(2208988900ULL << 32);
++    byte_buffer hdr;
++    asn1::bit_ref hdr_writer(hdr);
++    ASSERT_EQ(header.pack(hdr_writer), asn1::OCUDUASN_SUCCESS);
++    std::ofstream output(std::string(directory) + "/du_expanded_header.asn", std::ios::binary);
++    for (auto byte : hdr) output.put(static_cast<char>(byte));
++    ASSERT_TRUE(output.good());
++  }
++}
++
++} // namespace
+diff --git a/tests/unittests/e2/e2sm_kpm_meas_provider_metrics_test.cpp b/tests/unittests/e2/e2sm_kpm_meas_provider_metrics_test.cpp
+index 430650a..2d4df4b 100644
+--- a/tests/unittests/e2/e2sm_kpm_meas_provider_metrics_test.cpp
++++ b/tests/unittests/e2/e2sm_kpm_meas_provider_metrics_test.cpp
+@@ -4,6 +4,9 @@
+ 
+ #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h"
+ #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
++#include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
++#include <limits>
++#include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_report_service_impl.h"
+ #include "tests/unittests/e2/common/e2_test_helpers.h"
+ #include "ocudu/ran/du_types.h"
+ #include <algorithm>
+@@ -591,3 +594,305 @@ TEST_F(e2sm_kpm_cu_cp_meas_provider_metrics_test, e2sm_kpm_cu_cp_returns_expecte
+     ASSERT_EQ(meas_records_items[0].integer(), metric.second) << "Unexpected value for metric " << metric.first;
+   }
+ }
++
++namespace {
++constexpr const char* falcon_rsrp_name = "PUSCH.RSRP.dBFS";
++constexpr const char* falcon_snr_name = "PUSCH.SNR.dB";
++
++class falcon_sparse_ue_id_translator : public odu::f1ap_ue_id_translator
++{
++public:
++  void remove_ue(du_ue_index_t index) { ids.erase(index); }
++
++  std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const du_ue_index_t& index) const override
++  {
++    const auto it = ids.find(index);
++    if (it == ids.end()) {
++      return std::nullopt;
++    }
++    return int_to_gnb_cu_ue_f1ap_id(it->second);
++  }
++
++  std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const gnb_du_ue_f1ap_id_t& id) const override
++  {
++    return get_gnb_cu_ue_f1ap_id(to_du_ue_index(gnb_du_ue_f1ap_id_to_uint(id)));
++  }
++
++  gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const du_ue_index_t& index) override
++  {
++    return int_to_gnb_du_ue_f1ap_id(index);
++  }
++
++  gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const gnb_cu_ue_f1ap_id_t& id) override
++  {
++    return int_to_gnb_du_ue_f1ap_id(get_ue_index(id));
++  }
++
++  du_ue_index_t get_ue_index(const gnb_du_ue_f1ap_id_t& id) override
++  {
++    const auto index = to_du_ue_index(gnb_du_ue_f1ap_id_to_uint(id));
++    return ids.count(index) == 0 ? INVALID_DU_UE_INDEX : index;
++  }
++
++  du_ue_index_t get_ue_index(const gnb_cu_ue_f1ap_id_t& id) override
++  {
++    for (const auto& pair : ids) {
++      if (pair.second == gnb_cu_ue_f1ap_id_to_uint(id)) {
++        return pair.first;
++      }
++    }
++    return INVALID_DU_UE_INDEX;
++  }
++
++private:
++  std::map<du_ue_index_t, uint32_t> ids{
++      {to_du_ue_index(7), 1007}, {to_du_ue_index(91), 2091}, {to_du_ue_index(199), 3199}};
++};
++
++ue_id_c make_ue(uint32_t f1ap_id)
++{
++  ue_id_c ue;
++  ue.set_gnb_du_ue_id().gnb_cu_ue_f1ap_id = f1ap_id;
++  return ue;
++}
++
++label_info_list_l make_no_label()
++{
++  label_info_item_s item;
++  item.meas_label.no_label_present = true;
++  item.meas_label.no_label         = meas_label_s::no_label_e_::true_value;
++  label_info_list_l result;
++  result.push_back(item);
++  return result;
++}
++
++scheduler_ue_metrics make_measurement(unsigned index, float power, float snr = 23.75F, unsigned samples = 1)
++{
++  scheduler_ue_metrics result{};
++  result.ue_index      = to_du_ue_index(index);
++  result.pci           = 1;
++  result.rnti          = static_cast<rnti_t>(0x4600 + index);
++  result.pusch_rsrp_db = power;
++  result.pusch_snr_db  = snr; // The PHY-selected ul_sinr_dB value is reported using the SNR name.
++  result.nof_pusch_snr_reports = samples;
++  return result;
++}
++
++class falcon_du_rf_native_test : public ::testing::Test
++{
++protected:
++  falcon_du_rf_native_test() : provider(translator)
++  {
++    metric.set_meas_name().from_string(falcon_rsrp_name);
++  }
++
++  static void SetUpTestSuite() { ocudulog::init(); }
++  void TearDown() override { ocudulog::flush(); }
++
++  void report(std::initializer_list<scheduler_ue_metrics> measurements)
++  {
++    scheduler_cell_metrics snapshot{};
++    for (const auto& measurement : measurements) {
++      snapshot.ue_metrics.push_back(measurement);
++    }
++    provider.report_metrics(snapshot);
++  }
++
++  bool collect(const std::vector<ue_id_c>& ues, std::vector<meas_record_item_c>& output)
++  {
++    return provider.get_meas_data(metric, make_no_label(), ues, std::nullopt, output);
++  }
++
++  bool collect_named(const char* name, const std::vector<ue_id_c>& ues, std::vector<meas_record_item_c>& output)
++  {
++    meas_type_c selected;
++    selected.set_meas_name().from_string(name);
++    return provider.get_meas_data(selected, make_no_label(), ues, std::nullopt, output);
++  }
++
++  falcon_sparse_ue_id_translator              translator;
++  e2sm_kpm_du_meas_provider_impl       provider;
++  meas_type_c                         metric;
++};
++
++
++TEST_F(falcon_du_rf_native_test, sparse_f1ap_mapping_preserves_request_order_and_real_values)
++{
++  report({make_measurement(91, 0.F, 0.F), make_measurement(7, -13.125F, 21.75F)});
++  for (const char* name : {falcon_rsrp_name, falcon_snr_name}) {
++    SCOPED_TRACE(name);
++    std::vector<meas_record_item_c> output;
++    ASSERT_TRUE(collect_named(name, {make_ue(1007), make_ue(3199), make_ue(2091), make_ue(9999)}, output));
++    ASSERT_EQ(output.size(), 4U);
++    ASSERT_EQ(output[0].type(), meas_record_item_c::types::real);
++    EXPECT_DOUBLE_EQ(output[0].real().value, name == falcon_rsrp_name ? -13.125 : 21.75);
++    EXPECT_EQ(output[1].type(), meas_record_item_c::types::no_value);
++    ASSERT_EQ(output[2].type(), meas_record_item_c::types::real);
++    EXPECT_DOUBLE_EQ(output[2].real().value, 0.0);
++    EXPECT_EQ(output[3].type(), meas_record_item_c::types::no_value);
++  }
++}
++
++TEST_F(falcon_du_rf_native_test, nonfinite_values_and_zero_snr_without_samples_are_no_value)
++{
++  for (float invalid : {std::numeric_limits<float>::quiet_NaN(),
++                        std::numeric_limits<float>::infinity(),
++                        -std::numeric_limits<float>::infinity()}) {
++    report({make_measurement(7, invalid, invalid)});
++    for (const char* name : {falcon_rsrp_name, falcon_snr_name}) {
++      std::vector<meas_record_item_c> output;
++      ASSERT_TRUE(collect_named(name, {make_ue(1007)}, output));
++      ASSERT_EQ(output.size(), 1U);
++      EXPECT_EQ(output[0].type(), meas_record_item_c::types::no_value);
++    }
++  }
++  report({make_measurement(7, 0.F, 0.F, 0)});
++  std::vector<meas_record_item_c> output;
++  ASSERT_TRUE(collect_named(falcon_snr_name, {make_ue(1007)}, output));
++  ASSERT_EQ(output.size(), 1U);
++  EXPECT_EQ(output[0].type(), meas_record_item_c::types::no_value);
++  output.clear();
++  ASSERT_TRUE(collect_named(falcon_rsrp_name, {make_ue(1007)}, output));
++  ASSERT_EQ(output.size(), 1U);
++  ASSERT_EQ(output[0].type(), meas_record_item_c::types::real);
++  EXPECT_DOUBLE_EQ(output[0].real().value, 0.0);
++}
++
++TEST_F(falcon_du_rf_native_test, replacement_snapshot_and_unsupported_ue_do_not_reuse_first_ue)
++{
++  report({make_measurement(7, -13.125F, 21.75F)});
++  report({make_measurement(91, -3.5F, 7.25F)});
++  ue_id_c wrong_type;
++  wrong_type.set_gnb_ue_id();
++  for (const char* name : {falcon_rsrp_name, falcon_snr_name}) {
++    std::vector<meas_record_item_c> output;
++    ASSERT_TRUE(collect_named(name, {make_ue(1007), wrong_type, make_ue(2091)}, output));
++    ASSERT_EQ(output.size(), 3U);
++    EXPECT_EQ(output[0].type(), meas_record_item_c::types::no_value);
++    EXPECT_EQ(output[1].type(), meas_record_item_c::types::no_value);
++    ASSERT_EQ(output[2].type(), meas_record_item_c::types::real);
++    EXPECT_DOUBLE_EQ(output[2].real().value, name == falcon_rsrp_name ? -3.5 : 7.25);
++  }
++}
++
++TEST_F(falcon_du_rf_native_test, exactly_one_no_label_and_ue_level_are_required)
++{
++  auto mixed = make_no_label();
++  mixed[0].meas_label.five_qi_present = true;
++  mixed[0].meas_label.five_qi = 9;
++  auto duplicate = make_no_label();
++  duplicate.push_back(duplicate[0]);
++  for (const char* name : {falcon_rsrp_name, falcon_snr_name}) {
++    meas_type_c selected;
++    selected.set_meas_name().from_string(name);
++    EXPECT_TRUE(provider.is_metric_supported(selected, make_no_label()[0].meas_label, UE_LEVEL, false));
++    EXPECT_FALSE(provider.is_metric_supported(selected, make_no_label()[0].meas_label, E2_NODE_LEVEL, false));
++    EXPECT_FALSE(provider.is_metric_supported(selected, make_no_label()[0].meas_label, UE_LEVEL, true));
++    EXPECT_FALSE(provider.is_metric_supported(selected, mixed[0].meas_label, UE_LEVEL, false));
++    for (const auto& labels : {label_info_list_l{}, mixed, duplicate}) {
++      std::vector<meas_record_item_c> output;
++      EXPECT_FALSE(provider.get_meas_data(selected, labels, {make_ue(1007), make_ue(2091)}, std::nullopt, output));
++      ASSERT_EQ(output.size(), 2U);
++      EXPECT_EQ(output[0].type(), meas_record_item_c::types::no_value);
++      EXPECT_EQ(output[1].type(), meas_record_item_c::types::no_value);
++    }
++  }
++}
++
++TEST_F(falcon_du_rf_native_test, production_ran_function_advertises_rf_names_without_dummy_rsrp_rsrq)
++{
++  e2sm_kpm_asn1_packer packer(provider);
++  auto encoded = packer.pack_ran_function_description();
++  ASSERT_FALSE(encoded.empty());
++  asn1::cbit_ref reader(encoded);
++  e2sm_kpm_ran_function_description_s decoded;
++  ASSERT_EQ(decoded.unpack(reader), asn1::OCUDUASN_SUCCESS);
++  unsigned ue_styles = 0;
++  for (const auto& style : decoded.ric_report_style_list) {
++    unsigned rsrp_count = 0;
++    unsigned snr_count = 0;
++    for (const auto& info : style.meas_info_action_list) {
++      const auto name = info.meas_name.to_string();
++      rsrp_count += name == falcon_rsrp_name;
++      snr_count += name == falcon_snr_name;
++      EXPECT_NE(name, "RSRP");
++      EXPECT_NE(name, "RSRQ");
++      EXPECT_NE(name, "FALCON.PUSCH.SINR.dB");
++    }
++    const bool ue_level = style.ric_report_style_type >= 2 && style.ric_report_style_type <= 5;
++    EXPECT_EQ(rsrp_count, ue_level ? 1U : 0U);
++    EXPECT_EQ(snr_count, ue_level ? 1U : 0U);
++    ue_styles += ue_level;
++    if (style.ric_report_style_type == 4) {
++      EXPECT_EQ(style.ric_action_format_type, 4);
++      EXPECT_EQ(style.ric_ind_msg_format_type, 3);
++    }
++  }
++  EXPECT_EQ(ue_styles, 4U);
++}
++
++TEST_F(falcon_du_rf_native_test, rlc_throughput_uses_the_actual_100ms_source_window)
++{
++  auto rlc = generate_non_zero_rlc_metrics(7, 1);
++  rlc.metrics_period = std::chrono::milliseconds(100);
++  provider.report_metrics(rlc);
++  for (const auto& expected : {std::make_pair("DRB.UEThpUl", 400.0),
++                              std::make_pair("DRB.UEThpDl", 960.0)}) {
++    std::vector<meas_record_item_c> output;
++    ASSERT_TRUE(collect_named(expected.first, {make_ue(1007)}, output));
++    ASSERT_EQ(output.size(), 1U);
++    ASSERT_EQ(output[0].type(), meas_record_item_c::types::real);
++    EXPECT_DOUBLE_EQ(output[0].real().value, expected.second);
++  }
++}
++
++TEST_F(falcon_du_rf_native_test, style4_100ms_aper_preserves_period_identity_real_zero_and_missing)
++{
++  report({make_measurement(7, -13.125F, 21.75F), make_measurement(91, 0.F, 0.F),
++          make_measurement(199, -std::numeric_limits<float>::infinity(), 0.F, 0)});
++  for (unsigned index : {7U, 91U, 199U}) {
++    auto rlc = generate_non_zero_rlc_metrics(index, 1);
++    rlc.metrics_period = std::chrono::milliseconds(100);
++    provider.report_metrics(rlc);
++  }
++  e2sm_kpm_action_definition_s action;
++  action.ric_style_type = 4;
++  auto& format4 = action.action_definition_formats.set_action_definition_format4();
++  matching_ue_cond_per_sub_item_s condition;
++  condition.test_cond_info.test_type.set_ul_r_srp().value = test_cond_type_c::ul_r_srp_opts::true_value;
++  format4.matching_ue_cond_list.push_back(condition);
++  format4.sub_info.granul_period = 100;
++  for (const char* name : {falcon_rsrp_name, falcon_snr_name}) {
++    meas_info_item_s info;
++    info.meas_type.set_meas_name().from_string(name);
++    info.label_info_list = make_no_label();
++    format4.sub_info.meas_info_list.push_back(info);
++  }
++  e2sm_kpm_report_service_style4 service(action, provider);
++  ASSERT_TRUE(service.collect_measurements());
++  ASSERT_TRUE(service.is_ind_msg_ready());
++  auto wire = service.get_indication_message();
++  e2sm_kpm_ind_msg_s decoded;
++  asn1::cbit_ref input(wire);
++  ASSERT_EQ(decoded.unpack(input), asn1::OCUDUASN_SUCCESS);
++  const auto& reports = decoded.ind_msg_formats.ind_msg_format3().ue_meas_report_list;
++  ASSERT_EQ(reports.size(), 3U);
++  for (unsigned i = 0; i != 3; ++i) {
++    const auto& row = reports[i];
++    EXPECT_EQ(row.ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id, i == 0 ? 1007U : i == 1 ? 2091U : 3199U);
++    EXPECT_TRUE(row.meas_report.granul_period_present);
++    EXPECT_EQ(row.meas_report.granul_period, 100U);
++    ASSERT_EQ(row.meas_report.meas_data.size(), 1U);
++    ASSERT_EQ(row.meas_report.meas_data[0].meas_record.size(), 2U);
++    const auto& values = row.meas_report.meas_data[0].meas_record;
++    for (unsigned j = 0; j != 2; ++j) {
++      EXPECT_EQ(values[j].type(), i == 2 ? meas_record_item_c::types::no_value : meas_record_item_c::types::real);
++    }
++    if (i != 2) {
++      EXPECT_DOUBLE_EQ(values[0].real().value, i == 0 ? -13.125 : 0.0);
++      EXPECT_DOUBLE_EQ(values[1].real().value, i == 0 ? 21.75 : 0.0);
++    }
++  }
++}
++
++} // namespace
+diff --git a/tests/unittests/e2/e2sm_kpm_meas_provider_test.cpp b/tests/unittests/e2/e2sm_kpm_meas_provider_test.cpp
+index cea8f0a..2f91f7f 100644
+--- a/tests/unittests/e2/e2sm_kpm_meas_provider_test.cpp
++++ b/tests/unittests/e2/e2sm_kpm_meas_provider_test.cpp
+@@ -10,6 +10,7 @@
+ #include "ocudu/support/executors/task_worker.h"
+ #include "ocudu/support/ocudu_test.h"
+ #include <gtest/gtest.h>
++#include <fstream>
+ 
+ using namespace ocudu;
+ 
+@@ -537,8 +538,9 @@ TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
+   uint32_t expected_ul_used_prbs  = tot_ul_prbs / nof_slots;
+   uint32_t expected_dl_avail_prbs = nof_prbs - expected_dl_used_prbs;
+   uint32_t expected_ul_avail_prbs = nof_prbs - expected_ul_used_prbs;
+-  uint32_t expected_dl_tot_prbs   = 100.0 * expected_dl_used_prbs / nof_prbs;
+-  uint32_t expected_ul_tot_prbs   = 100.0 * expected_ul_used_prbs / nof_prbs;
++  // Use all PRB-slot observations; the integer PRB/slot display is already rounded down.
++  uint32_t expected_dl_tot_prbs   = uint64_t{100} * tot_dl_prbs / (nof_slots * nof_prbs);
++  uint32_t expected_ul_tot_prbs   = uint64_t{100} * tot_ul_prbs / (nof_slots * nof_prbs);
+ 
+   // Define E2SM_KPM action format 1.
+   asn1::e2sm::e2sm_kpm_action_definition_s action_def;
+@@ -615,6 +617,254 @@ TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
+   }
+ }
+ 
++TEST(cu_identity, standard_ueid_contains_amf_and_f1_and_real_state)
++{
++  e2sm_kpm_cu_cp_meas_provider_impl provider;
++  cu_cp_metrics_report report;
++  for (unsigned i = 0; i < 2; ++i) {
++    cu_cp_metrics_report::ue_info ue{};
++    ue.du_id = int_to_gnb_du_id(i + 1);
++    ue.ue_index = static_cast<cu_cp_ue_index_t>(42 + i);
++    ue.rrc_connection_state = ocucp::rrc_state::connected;
++    guami_t guami{};
++    guami.plmn = plmn_identity::parse("00101").value();
++    guami.amf_region_id = 2;
++    guami.amf_set_id = 1;
++    guami.amf_pointer = 0;
++    ue.identity = ocucp::cu_ue_identity{{(1ULL << 39) + i, 301 + i, guami}, {1007 + i, 8 + i}, ue.du_id};
++    ue.slice_ssts = {1};
++    report.ues.push_back(ue);
++  }
++  provider.report_metrics(report);
++  std::vector<asn1::e2sm::ue_id_c> ids;
++  asn1::e2sm::matching_ue_cond_per_sub_list_l conditions;
++  conditions.resize(1);
++  auto& condition = conditions[0].test_cond_info;
++  condition.test_type.set_snssai();
++  condition.test_expr_present = true;
++  condition.test_expr = asn1::e2sm::test_cond_expression_e::equal;
++  condition.test_value_present = true;
++  condition.test_value.set_value_int() = 1;
++  ASSERT_TRUE(provider.get_ues_matching_test_conditions(conditions, ids));
++  ASSERT_EQ(ids.size(), 2U);
++  ASSERT_EQ(ids[0].gnb_ue_id().amf_ue_ngap_id, 1ULL << 39);
++  ASSERT_EQ(ids[0].gnb_ue_id().gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id, 1007U);
++  ASSERT_TRUE(ids[0].gnb_ue_id().ran_ue_id_present);
++  ASSERT_EQ(ids[0].gnb_ue_id().ran_ue_id.to_number(), (uint64_t{1} << 28) | 42U);
++  ASSERT_EQ(ids[1].gnb_ue_id().ran_ue_id.to_number(), (uint64_t{2} << 28) | 43U);
++  ASSERT_TRUE(provider.is_ue_supported(ids[0]));
++
++  asn1::e2sm::label_info_list_l labels;
++  labels.resize(1);
++  labels[0].meas_label.no_label_present = true;
++  labels[0].meas_label.no_label = asn1::e2sm::meas_label_s::no_label_e_::true_value;
++  asn1::e2sm::meas_type_c metric;
++  metric.set_meas_name().from_string("FALCON.UE.RRCState");
++  std::vector<asn1::e2sm::meas_record_item_c> values;
++  ASSERT_TRUE(provider.get_meas_data(metric, labels, ids, {}, values));
++  ASSERT_EQ(values.size(), 2U);
++  ASSERT_EQ(values[0].integer(), 1U);
++
++  // Encode actual OCUDU ASN.1; optionally export to verify an independent FlexRIC decoder.
++  asn1::e2sm::e2sm_kpm_ind_msg_s message;
++  auto& rows = message.ind_msg_formats.set_ind_msg_format3().ue_meas_report_list;
++  rows.resize(2);
++  for (unsigned i = 0; i < 2; ++i) {
++    rows[i].ue_id = ids[i];
++    auto& measurement = rows[i].meas_report;
++    measurement.meas_info_list.resize(1);
++    measurement.meas_info_list[0].meas_type = metric;
++    measurement.meas_info_list[0].label_info_list = labels;
++    measurement.meas_data.resize(1);
++    measurement.meas_data[0].meas_record.push_back(values[i]);
++    measurement.granul_period_present = true;
++    measurement.granul_period = 1000;
++  }
++  byte_buffer encoded;
++  asn1::bit_ref writer(encoded);
++  ASSERT_EQ(message.pack(writer), asn1::OCUDUASN_SUCCESS);
++  asn1::e2sm::e2sm_kpm_ind_msg_s decoded;
++  asn1::cbit_ref reader(encoded);
++  ASSERT_EQ(decoded.unpack(reader), asn1::OCUDUASN_SUCCESS);
++  ASSERT_EQ(decoded.ind_msg_formats.ind_msg_format3().ue_meas_report_list[1].ue_id.gnb_ue_id().amf_ue_ngap_id,
++            (1ULL << 39) + 1);
++  if (const char* directory = std::getenv("FALCON_IDENTITY_FIXTURE_DIR")) {
++    std::ofstream msg(std::string(directory) + "/cu_message.asn", std::ios::binary);
++    for (auto b : encoded) msg.put(static_cast<char>(b));
++    ASSERT_TRUE(msg.good());
++    asn1::e2sm::e2sm_kpm_ind_hdr_s header;
++    header.ind_hdr_formats.ind_hdr_format1().collet_start_time.from_number(2208988900ULL << 32);
++    byte_buffer header_bytes;
++    asn1::bit_ref header_writer(header_bytes);
++    ASSERT_EQ(header.pack(header_writer), asn1::OCUDUASN_SUCCESS);
++    std::ofstream hdr(std::string(directory) + "/cu_header.asn", std::ios::binary);
++    for (auto b : header_bytes) hdr.put(static_cast<char>(b));
++    ASSERT_TRUE(hdr.good());
++  }
++
++  // A different requested slice cannot manufacture identities.
++  condition.test_value.set_value_int() = 2;
++  ASSERT_TRUE(provider.get_ues_matching_test_conditions(conditions, ids));
++  EXPECT_TRUE(ids.empty());
++  // Retirement invalidates the real state, even for an old subscribed UEID.
++  report.ues.clear();
++  provider.report_metrics(report);
++  values.clear();
++  std::vector<asn1::e2sm::ue_id_c> old_ids = {rows[0].ue_id};
++  ASSERT_TRUE(provider.get_meas_data(metric, labels, old_ids, {}, values));
++  EXPECT_EQ(values[0].type(), asn1::e2sm::meas_record_item_c::types::no_value);
++  EXPECT_FALSE(provider.is_ue_supported(old_ids[0]));
++}
++
++TEST(cu_identity, style4_subscription_repeated_collection_preserves_ue_identity)
++{
++  e2sm_kpm_cu_cp_meas_provider_impl provider;
++  e2sm_kpm_asn1_packer packer(provider);
++  e2sm_kpm_impl service(ocudulog::fetch_basic_logger("TEST"), packer, provider);
++  cu_cp_metrics_report report;
++  cu_cp_metrics_report::ue_info ue{};
++  ue.rrc_connection_state = ocucp::rrc_state::connected;
++  ue.ue_index = static_cast<cu_cp_ue_index_t>(7);
++  guami_t guami{};
++  guami.plmn = plmn_identity::parse("00101").value();
++  ue.identity = ocucp::cu_ue_identity{{0, 301, guami}, {1007, 9}, int_to_gnb_du_id(2)};
++  ue.slice_ssts = {1};
++  report.ues.push_back(ue);
++  provider.report_metrics(report);
++
++  asn1::e2sm::e2sm_kpm_action_definition_s action;
++  action.ric_style_type = 4;
++  auto& format = action.action_definition_formats.set_action_definition_format4();
++  format.matching_ue_cond_list.resize(1);
++  auto& condition = format.matching_ue_cond_list[0].test_cond_info;
++  condition.test_type.set_snssai();
++  condition.test_expr_present = true;
++  condition.test_expr = asn1::e2sm::test_cond_expression_e::equal;
++  condition.test_value_present = true;
++  condition.test_value.set_value_int() = 1;
++  format.sub_info.granul_period = 1000;
++  format.sub_info.meas_info_list.resize(1);
++  auto& metric = format.sub_info.meas_info_list[0];
++  metric.meas_type.set_meas_name().from_string("FALCON.UE.RRCState");
++  metric.label_info_list.resize(1);
++  metric.label_info_list[0].meas_label.no_label_present = true;
++  metric.label_info_list[0].meas_label.no_label = asn1::e2sm::meas_label_s::no_label_e_::true_value;
++  auto subscription = generate_e2sm_kpm_ric_action(action);
++  ASSERT_TRUE(service.action_supported(subscription));
++  EXPECT_FALSE(provider.is_metric_supported(metric.meas_type, metric.label_info_list[0].meas_label, E2_NODE_LEVEL, false));
++  auto collector = service.get_e2sm_report_service(subscription.ric_action_definition);
++  ASSERT_NE(collector, nullptr);
++  collector->collect_measurements();
++  collector->collect_measurements();
++  ASSERT_TRUE(collector->is_ind_msg_ready());
++  auto bytes = collector->get_indication_message();
++  asn1::cbit_ref reader(bytes);
++  asn1::e2sm::e2sm_kpm_ind_msg_s decoded;
++  ASSERT_EQ(decoded.unpack(reader), asn1::OCUDUASN_SUCCESS);
++  const auto& rows = decoded.ind_msg_formats.ind_msg_format3().ue_meas_report_list;
++  ASSERT_EQ(rows.size(), 1U);
++  EXPECT_EQ(rows[0].ue_id.gnb_ue_id().amf_ue_ngap_id, 0U);
++  EXPECT_EQ(rows[0].ue_id.gnb_ue_id().gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id, 1007U);
++  ASSERT_EQ(rows[0].meas_report.meas_data.size(), 2U);
++  EXPECT_EQ(rows[0].meas_report.meas_data[1].meas_record[0].integer(), 1U);
++}
++
++TEST(cu_identity, duplicate_per_du_f1_ids_have_distinct_scoped_ran_identities)
++{
++  e2sm_kpm_cu_cp_meas_provider_impl provider;
++  cu_cp_metrics_report report;
++  for (unsigned i = 0; i < 2; ++i) {
++    cu_cp_metrics_report::ue_info ue{};
++    ue.ue_index = static_cast<cu_cp_ue_index_t>(42 + i);
++    ue.rrc_connection_state = ocucp::rrc_state::connected;
++    guami_t guami{};
++    guami.plmn = plmn_identity::parse("00101").value();
++    guami.amf_region_id = 2;
++    guami.amf_set_id = 1;
++    guami.amf_pointer = 0;
++    ue.identity = ocucp::cu_ue_identity{{(1ULL << 39) + i, 301 + i, guami}, {1, 1}, int_to_gnb_du_id(i + 1)};
++    ue.slice_ssts = {1};
++    report.ues.push_back(ue);
++  }
++  provider.report_metrics(report);
++  std::vector<asn1::e2sm::ue_id_c> ids;
++  asn1::e2sm::matching_ue_cond_per_sub_list_l conditions;
++  ASSERT_TRUE(provider.get_ues_matching_test_conditions(conditions, ids));
++  ASSERT_EQ(ids.size(), 2U);
++  EXPECT_EQ(ids[0].gnb_ue_id().gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id, 1U);
++  EXPECT_EQ(ids[1].gnb_ue_id().gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id, 1U);
++  EXPECT_NE(ids[0].gnb_ue_id().ran_ue_id.to_number(), ids[1].gnb_ue_id().ran_ue_id.to_number());
++  asn1::e2sm::e2sm_kpm_ind_msg_s message;
++  auto& rows = message.ind_msg_formats.set_ind_msg_format3().ue_meas_report_list;
++  rows.resize(2);
++  for (unsigned i = 0; i < 2; ++i) {
++    rows[i].ue_id = ids[i];
++    auto& measurement = rows[i].meas_report;
++    measurement.meas_info_list.resize(1);
++    measurement.meas_info_list[0].meas_type.set_meas_name().from_string("FALCON.UE.RRCState");
++    measurement.meas_info_list[0].label_info_list.resize(1);
++    measurement.meas_info_list[0].label_info_list[0].meas_label.no_label_present = true;
++    measurement.meas_info_list[0].label_info_list[0].meas_label.no_label =
++        asn1::e2sm::meas_label_s::no_label_e_::true_value;
++    measurement.meas_data.resize(1);
++    asn1::e2sm::meas_record_item_c state;
++    state.set_integer() = 1;
++    measurement.meas_data[0].meas_record.push_back(state);
++    measurement.granul_period_present = true;
++    measurement.granul_period = 1000;
++  }
++  byte_buffer bytes;
++  asn1::bit_ref writer(bytes);
++  ASSERT_EQ(message.pack(writer), asn1::OCUDUASN_SUCCESS);
++  asn1::e2sm::e2sm_kpm_ind_msg_s decoded;
++  asn1::cbit_ref reader(bytes);
++  ASSERT_EQ(decoded.unpack(reader), asn1::OCUDUASN_SUCCESS);
++  const auto& result = decoded.ind_msg_formats.ind_msg_format3().ue_meas_report_list;
++  EXPECT_EQ(result[0].ue_id.gnb_ue_id().ran_ue_id.to_number(), (uint64_t{1} << 28) | 42U);
++  EXPECT_EQ(result[1].ue_id.gnb_ue_id().ran_ue_id.to_number(), (uint64_t{2} << 28) | 43U);
++  if (const char* directory = std::getenv("FALCON_IDENTITY_FIXTURE_DIR")) {
++    std::ofstream file(std::string(directory) + "/cu_scope_message.asn", std::ios::binary);
++    for (auto byte : bytes) file.put(static_cast<char>(byte));
++    ASSERT_TRUE(file.good());
++  }
++}
++
++TEST(cu_identity, incomplete_context_is_never_published)
++{
++  e2sm_kpm_cu_cp_meas_provider_impl provider;
++  cu_cp_metrics_report report;
++  report.ues.emplace_back();
++  report.ues[0].rrc_connection_state = ocucp::rrc_state::connected;
++  provider.report_metrics(report);
++  std::vector<asn1::e2sm::ue_id_c> ids;
++  asn1::e2sm::matching_ue_cond_per_sub_list_l conditions;
++  ASSERT_TRUE(provider.get_ues_matching_test_conditions(conditions, ids));
++  EXPECT_TRUE(ids.empty());
++}
++
++TEST(cu_identity, scoped_ran_identity_preserves_bounds_without_truncation)
++{
++  e2sm_kpm_cu_cp_meas_provider_impl provider;
++  cu_cp_metrics_report report;
++  cu_cp_metrics_report::ue_info ue{};
++  ue.ue_index = static_cast<cu_cp_ue_index_t>((uint64_t{1} << 28) - 1);
++  ue.rrc_connection_state = ocucp::rrc_state::connected;
++  guami_t guami{};
++  guami.plmn = plmn_identity::parse("00101").value();
++  ue.identity = ocucp::cu_ue_identity{{1, 2, guami}, {1, 1}, gnb_du_id_t::max};
++  report.ues.push_back(ue);
++  provider.report_metrics(report);
++  std::vector<asn1::e2sm::ue_id_c> ids;
++  asn1::e2sm::matching_ue_cond_per_sub_list_l conditions;
++  ASSERT_TRUE(provider.get_ues_matching_test_conditions(conditions, ids));
++  ASSERT_EQ(ids.size(), 1U);
++  EXPECT_EQ(ids[0].gnb_ue_id().ran_ue_id.to_number(), std::numeric_limits<uint64_t>::max());
++  report.ues[0].ue_index = static_cast<cu_cp_ue_index_t>(uint64_t{1} << 28);
++  provider.report_metrics(report);
++  ASSERT_TRUE(provider.get_ues_matching_test_conditions(conditions, ids));
++  EXPECT_TRUE(ids.empty());
++}
++
+ INSTANTIATE_TEST_SUITE_P(e2sm_kpm_du_meas_provider_test, e2_entity_test_with_pcap, testing::Values(g_pcap));
+ INSTANTIATE_TEST_SUITE_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_du_meas_provider_test, testing::Values(g_pcap));
+ 
+diff --git a/tests/unittests/f1ap/cu_cp/f1ap_cu_ue_context_release_procedure_test.cpp b/tests/unittests/f1ap/cu_cp/f1ap_cu_ue_context_release_procedure_test.cpp
+index 26e0bf7..6460fdb 100644
+--- a/tests/unittests/f1ap/cu_cp/f1ap_cu_ue_context_release_procedure_test.cpp
++++ b/tests/unittests/f1ap/cu_cp/f1ap_cu_ue_context_release_procedure_test.cpp
+@@ -13,10 +13,15 @@ using namespace ocucp;
+ /// Test the f1 UE context release procedure (gNB-CU initiated)
+ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_procedure_succeeds)
+ {
++  EXPECT_FALSE(f1ap->get_ue_identity_snapshot(cu_cp_ue_index_t::min).has_value());
+   // Action 1: Add UE
+   test_logger.info("Injecting Initial UL RRC message");
+   f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
+   f1ap->handle_message(init_ul_rrc_msg);
++  auto snapshot = f1ap->get_ue_identity_snapshot(cu_cp_ue_index_t::min);
++  ASSERT_TRUE(snapshot.has_value());
++  EXPECT_EQ(snapshot->cu_ue_f1ap_id, 0U);
++  EXPECT_EQ(snapshot->du_ue_f1ap_id, 41255U);
+ 
+   // Action 2: Start UE Context Release procedure
+   test_logger.info("Starting UE Context Release procedure");
+@@ -30,6 +35,7 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_procedure_succeeds)
+ 
+   // Status: Procedure not yet ready.
+   ASSERT_FALSE(t.ready());
++  EXPECT_FALSE(f1ap->get_ue_identity_snapshot(cu_cp_ue_index_t::min).has_value());
+ 
+   // Action 3: Inject UE Context Release Complete message
+   test_logger.info("Injecting UE Context Release Complete message");
+@@ -39,6 +45,8 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_procedure_succeeds)
+ 
+   ASSERT_TRUE(t.ready());
+   ASSERT_EQ(t.get(), cu_cp_ue_index_t::min);
++  EXPECT_FALSE(f1ap->get_ue_identity_snapshot(cu_cp_ue_index_t::min).has_value());
++  EXPECT_EQ(snapshot->du_ue_f1ap_id, 41255U);
+ }
+ 
+ TEST_F(f1ap_cu_test, when_f1ap_stopped_while_ue_context_release_in_flight_then_teardown_does_not_crash)
+diff --git a/tests/unittests/fapi/p7/builders/crc_indication_test.cpp b/tests/unittests/fapi/p7/builders/crc_indication_test.cpp
+index dd1e869..e2df38f 100644
+--- a/tests/unittests/fapi/p7/builders/crc_indication_test.cpp
++++ b/tests/unittests/fapi/p7/builders/crc_indication_test.cpp
+@@ -99,3 +99,27 @@ TEST(crc_indication_builder, valid_rapid_passes)
+ 
+   ASSERT_EQ(msg.pdu.rapid, rapid);
+ }
++
++TEST(crc_indication_builder, falcon_rf_measured_zero_is_distinct_from_missing_sentinels)
++{
++  crc_indication msg;
++  crc_indication_builder builder(msg);
++  builder.set_pdu(to_rnti(10), to_harq_id(0), false, 0.F, {}, {}, 0.F);
++  EXPECT_EQ(msg.pdu.ul_sinr_metric, 0);
++  EXPECT_EQ(msg.pdu.rsrp, 1280U);
++  builder.set_pdu(to_rnti(10), to_harq_id(0), false, {}, {}, {}, {});
++  EXPECT_EQ(msg.pdu.ul_sinr_metric, std::numeric_limits<int16_t>::min());
++  EXPECT_EQ(msg.pdu.rsrp, std::numeric_limits<uint16_t>::max());
++}
++
++TEST(crc_indication_builder, falcon_rf_wire_quantization_truncates_fractional_rsrp_and_signed_sinr)
++{
++  crc_indication msg;
++  crc_indication_builder builder(msg);
++  builder.set_pdu(to_rnti(10), to_harq_id(0), false, 1.235F, {}, {}, -13.125F);
++  EXPECT_EQ(msg.pdu.rsrp, 1148U);
++  EXPECT_EQ(msg.pdu.ul_sinr_metric, 617);
++  builder.set_pdu(to_rnti(10), to_harq_id(0), false, -1.235F, {}, {}, -13.125F);
++  EXPECT_EQ(msg.pdu.rsrp, 1148U);
++  EXPECT_EQ(msg.pdu.ul_sinr_metric, -617);
++}
+diff --git a/tests/unittests/fapi_adaptor/mac/p7/CMakeLists.txt b/tests/unittests/fapi_adaptor/mac/p7/CMakeLists.txt
+index 4571b2b..683ad40 100644
+--- a/tests/unittests/fapi_adaptor/mac/p7/CMakeLists.txt
++++ b/tests/unittests/fapi_adaptor/mac/p7/CMakeLists.txt
+@@ -8,10 +8,13 @@ set_directory_properties(PROPERTIES LABELS "fapi_adaptor")
+ add_subdirectory(pdu_translators)
+ 
+ add_executable(fapi_to_mac_indications_fastpath_translator_test fapi_to_mac_indications_fastpath_translator_test.cpp)
+-target_include_directories(fapi_to_mac_indications_fastpath_translator_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/fapi_adaptor/mac/p7)
++target_include_directories(fapi_to_mac_indications_fastpath_translator_test PRIVATE
++        ${CMAKE_SOURCE_DIR}/lib/fapi_adaptor/mac/p7
++        ${CMAKE_SOURCE_DIR}/lib/fapi_adaptor/phy/p7)
+ target_link_libraries(fapi_to_mac_indications_fastpath_translator_test PRIVATE
+         ocudu_support
+         ocudu_fapi_to_mac_p7_fastpath_translator
++        ocudu_phy_to_fapi_p7_fastpath_translator
+         ocudulog
+         ocudu_mac_translator_helpers
+         gtest
+diff --git a/tests/unittests/fapi_adaptor/mac/p7/fapi_to_mac_indications_fastpath_translator_test.cpp b/tests/unittests/fapi_adaptor/mac/p7/fapi_to_mac_indications_fastpath_translator_test.cpp
+index 3459324..160fab0 100644
+--- a/tests/unittests/fapi_adaptor/mac/p7/fapi_to_mac_indications_fastpath_translator_test.cpp
++++ b/tests/unittests/fapi_adaptor/mac/p7/fapi_to_mac_indications_fastpath_translator_test.cpp
+@@ -3,6 +3,9 @@
+ // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
+ 
+ #include "fapi_to_mac_indications_fastpath_translator.h"
++#include "phy_to_fapi_results_event_fastpath_translator.h"
++#include "ocudu/fapi/p7/messages/crc_indication.h"
++#include <optional>
+ #include "ocudu/fapi/p7/messages/rach_indication.h"
+ #include "ocudu/ocudulog/ocudulog.h"
+ #include <gtest/gtest.h>
+@@ -111,3 +114,126 @@ TEST_F(mac_rach_indication_fixture, CorrectMessageConvertsCorrectly)
+ {
+   test_pdu();
+ }
++
++namespace {
++class falcon_mac_crc_capture : public mac_cell_control_information_handler
++{
++public:
++  std::optional<mac_crc_indication_message> last;
++  void handle_crc(const mac_crc_indication_message& message) override { last = message; }
++  void handle_uci(const mac_uci_indication_message&) override {}
++  void handle_srs(const mac_srs_indication_message&) override {}
++};
++
++class falcon_fapi_crc_bridge : public fapi::p7_indications_notifier
++{
++public:
++  explicit falcon_fapi_crc_bridge(fapi_to_mac_indications_fastpath_translator& mac_) : mac(mac_) {}
++  std::optional<fapi::crc_indication> last;
++  void on_crc_indication(const fapi::crc_indication& message) override
++  {
++    last = message;
++    mac.on_crc_indication(message);
++  }
++  void on_rx_data_indication(const fapi::rx_data_indication&) override {}
++  void on_uci_indication(const fapi::uci_indication&) override {}
++  void on_srs_indication(const fapi::srs_indication&) override {}
++  void on_rach_indication(const fapi::rach_indication&) override {}
++
++private:
++  fapi_to_mac_indications_fastpath_translator& mac;
++};
++
++class falcon_rf_chain_test : public ::testing::Test
++{
++protected:
++  falcon_rf_chain_test() :
++    mac(0, ocudulog::fetch_basic_logger("FAPI")),
++    bridge(mac),
++    phy({0, 0.0F, 0.0F}, {ocudulog::fetch_basic_logger("FAPI")})
++  {
++    mac.set_cell_crc_handler(capture);
++    phy.set_p7_indications_notifier(bridge);
++  }
++
++  void send(std::optional<float> rsrp, std::optional<float> sinr, bool crc_ok = false)
++  {
++    // Zero calibration offsets preserve the normalized PHY measurement in dBFS.
++    // Both translators below are production classes; this test does not clamp or
++    // quantize the input itself.
++    auto result = ul_pusch_results_data::create_discarded(to_rnti(0x4601), slot_point(0, 11), to_harq_id(3));
++    result.csi = channel_state_information(channel_state_information::sinr_type::post_equalization);
++    if (rsrp.has_value()) {
++      result.csi.set_rsrp_dB(*rsrp);
++    }
++    if (sinr.has_value()) {
++      result.csi.set_sinr_dB(channel_state_information::sinr_type::post_equalization, *sinr);
++    }
++    result.decoder_result.tb_crc_ok = crc_ok;
++    bridge.last.reset();
++    capture.last.reset();
++    phy.on_new_pusch_results_data(result);
++  }
++
++  void expect_decoded(float rsrp, float sinr, bool crc_ok = false)
++  {
++    ASSERT_TRUE(bridge.last.has_value());
++    ASSERT_TRUE(capture.last.has_value());
++    ASSERT_EQ(capture.last->crcs.size(), 1U);
++    const auto& pdu = capture.last->crcs[0];
++    ASSERT_TRUE(bridge.last->pdu.rsrp.has_value());
++    ASSERT_TRUE(bridge.last->pdu.ul_sinr_metric_dB.has_value());
++    EXPECT_FLOAT_EQ(bridge.last->pdu.rsrp->to_dBFS(), rsrp);
++    EXPECT_FLOAT_EQ(*bridge.last->pdu.ul_sinr_metric_dB, sinr);
++    EXPECT_EQ(capture.last->sl_rx, slot_point(0, 11));
++    EXPECT_EQ(pdu.rnti, to_rnti(0x4601));
++    EXPECT_EQ(pdu.harq_id, to_harq_id(3));
++    EXPECT_EQ(pdu.tb_crc_success, crc_ok);
++    ASSERT_TRUE(pdu.ul_rsrp_dBFS.has_value());
++    ASSERT_TRUE(pdu.ul_sinr_dB.has_value());
++    EXPECT_FLOAT_EQ(*pdu.ul_rsrp_dBFS, rsrp);
++    EXPECT_FLOAT_EQ(*pdu.ul_sinr_dB, sinr);
++  }
++
++  falcon_mac_crc_capture capture;
++  fapi_to_mac_indications_fastpath_translator mac;
++  falcon_fapi_crc_bridge bridge;
++  phy_to_fapi_results_event_fastpath_translator phy;
++};
++
++TEST_F(falcon_rf_chain_test, missing_phy_values_survive_fapi_as_missing_mac_optionals)
++{
++  send({}, {});
++  ASSERT_TRUE(bridge.last.has_value());
++  ASSERT_TRUE(capture.last.has_value());
++  EXPECT_FALSE(bridge.last->pdu.rsrp.has_value());
++  EXPECT_FALSE(bridge.last->pdu.ul_sinr_metric_dB.has_value());
++  ASSERT_EQ(capture.last->crcs.size(), 1U);
++  EXPECT_FALSE(capture.last->crcs[0].ul_rsrp_dBFS.has_value());
++  EXPECT_FALSE(capture.last->crcs[0].ul_sinr_dB.has_value());
++}
++
++TEST_F(falcon_rf_chain_test, measured_phy_zero_survives_both_translators_with_failed_crc)
++{
++  send(0.F, 0.F);
++  expect_decoded(0.F, 0.F);
++}
++
++TEST_F(falcon_rf_chain_test, production_chain_preserves_float_rsrp_and_positive_negative_sinr)
++{
++  send(-13.125F, 1.235F);
++  expect_decoded(-13.125F, 1.235F);
++  send(-13.125F, -1.235F, true);
++  expect_decoded(-13.125F, -1.235F, true);
++}
++
++TEST_F(falcon_rf_chain_test, float_fapi_preserves_values_beyond_legacy_fixed_point_range)
++{
++  // The current FAPI uses optional floats rather than the older saturated
++  // fixed-point encoding. Exercise both signs through the production chain.
++  send(200.F, 200.F);
++  expect_decoded(200.F, 200.F);
++  send(-200.F, -200.F);
++  expect_decoded(-200.F, -200.F);
++}
++} // namespace
+diff --git a/tests/unittests/ngap/ngap_ue_context_management_procedure_test.cpp b/tests/unittests/ngap/ngap_ue_context_management_procedure_test.cpp
+index 30408ef..53b061c 100644
+--- a/tests/unittests/ngap/ngap_ue_context_management_procedure_test.cpp
++++ b/tests/unittests/ngap/ngap_ue_context_management_procedure_test.cpp
+@@ -115,6 +115,24 @@ protected:
+ //                             Initial Context Setup
+ ///////////////////////////////////////////////////////////////////////////////
+ 
++TEST_F(ngap_ue_context_management_procedure_test, identity_snapshot_requires_complete_context_and_retires_on_release)
++{
++  cu_cp_ue_index_t index = start_procedure();
++  EXPECT_FALSE(ngap->get_ue_identity_snapshot(index).has_value());
++  auto& ue = test_ues.at(index);
++  const auto amf_id = uint_to_amf_ue_id((1ULL << 40) - 1);
++  ngap->handle_message(generate_valid_initial_context_setup_request_message(amf_id, ue.ran_ue_id.value()));
++  auto snapshot = ngap->get_ue_identity_snapshot(index);
++  ASSERT_TRUE(snapshot.has_value());
++  EXPECT_EQ(snapshot->amf_ue_ngap_id, (1ULL << 40) - 1);
++  EXPECT_EQ(snapshot->ran_ue_ngap_id, ran_ue_id_to_uint(ue.ran_ue_id.value()));
++  EXPECT_NE(snapshot->ran_ue_ngap_id, snapshot->amf_ue_ngap_id);
++  ngap->handle_message(generate_valid_ue_context_release_command_with_ue_ngap_id_pair(amf_id, ue.ran_ue_id.value()));
++  EXPECT_FALSE(ngap->get_ue_identity_snapshot(index).has_value());
++  // The previously returned snapshot owns its data and survives context removal.
++  EXPECT_EQ(snapshot->amf_ue_ngap_id, (1ULL << 40) - 1);
++}
++
+ /// Test Initial Context Setup Request.
+ TEST_F(ngap_ue_context_management_procedure_test, when_valid_initial_context_setup_request_received_then_response_send)
+ {
+diff --git a/tests/unittests/scheduler/scheduler_metrics_handler_test.cpp b/tests/unittests/scheduler/scheduler_metrics_handler_test.cpp
+index 386c5bd..d6a4537 100644
+--- a/tests/unittests/scheduler/scheduler_metrics_handler_test.cpp
++++ b/tests/unittests/scheduler/scheduler_metrics_handler_test.cpp
+@@ -243,12 +243,16 @@ TEST_F(scheduler_metrics_handler_tester, compute_mcs)
+   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
+   ASSERT_EQ(ue_metrics.dl_mcs, dl_mcs);
+   ASSERT_EQ(ue_metrics.ul_mcs, ul_mcs);
++  ASSERT_GT(ue_metrics.nof_dl_mcs_reports, 0U);
++  ASSERT_GT(ue_metrics.nof_ul_mcs_reports, 0U);
+ 
+   this->get_next_metric();
+   ue_metrics = metrics_notif.last_report.ue_metrics[0];
+   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
+   ASSERT_EQ(ue_metrics.dl_mcs, 0) << "DL MCS not reset";
+   ASSERT_EQ(ue_metrics.ul_mcs, 0) << "UL MCS not reset";
++  ASSERT_EQ(ue_metrics.nof_dl_mcs_reports, 0U);
++  ASSERT_EQ(ue_metrics.nof_ul_mcs_reports, 0U);
+ }
+ 
+ TEST_F(scheduler_metrics_handler_tester, compute_bitrate)
+@@ -377,6 +381,143 @@ TEST_F(scheduler_metrics_handler_tester, compute_error_indications)
+   ASSERT_EQ(metrics_notif.last_report.nof_error_indications, 0);
+ }
+ 
++TEST_F(scheduler_metrics_handler_tester, falcon_rf_failed_crc_samples_contribute_independent_db_means)
++{
++  get_next_metric();
++  ul_crc_pdu_indication crc{};
++  crc.rnti = to_rnti(0x4601);
++  crc.ue_index = test_ue_index;
++  crc.tb_crc_success = false;
++  crc.ul_sinr_dB = 22.F;
++  crc.ul_rsrp_dBFS = -15.F;
++  metrics.handle_crc_indication(next_sl_tx.without_hyper_sfn() - 1, crc, units::bytes{1});
++  crc.tb_crc_success = true;
++  crc.ul_sinr_dB = 20.F;
++  crc.ul_rsrp_dBFS = -12.F;
++  metrics.handle_crc_indication(next_sl_tx.without_hyper_sfn() - 1, crc, units::bytes{1});
++  crc.tb_crc_success = false;
++  crc.ul_sinr_dB.reset();
++  crc.ul_rsrp_dBFS = 0.F;
++  metrics.handle_crc_indication(next_sl_tx.without_hyper_sfn() - 1, crc, units::bytes{1});
++  get_next_metric();
++  const auto& ue = metrics_notif.last_report.ue_metrics[0];
++  EXPECT_EQ(ue.ul_nof_ok, 1U);
++  EXPECT_EQ(ue.ul_nof_nok, 2U);
++  EXPECT_EQ(ue.nof_pusch_snr_reports, 2U);
++  EXPECT_FLOAT_EQ(ue.pusch_snr_db, 21.F);
++  EXPECT_FLOAT_EQ(ue.pusch_rsrp_db, -9.F);
++}
++
++TEST_F(scheduler_metrics_handler_tester, falcon_rf_valid_zero_has_a_sample_and_window_reset_clears_it)
++{
++  get_next_metric();
++  ul_crc_pdu_indication crc{};
++  crc.rnti = to_rnti(0x4601);
++  crc.ue_index = test_ue_index;
++  crc.tb_crc_success = false;
++  crc.ul_sinr_dB = 0.F;
++  crc.ul_rsrp_dBFS = 0.F;
++  metrics.handle_crc_indication(next_sl_tx.without_hyper_sfn() - 1, crc, units::bytes{1});
++  get_next_metric();
++  ASSERT_EQ(metrics_notif.last_report.ue_metrics.size(), 1U);
++  EXPECT_EQ(metrics_notif.last_report.ue_metrics[0].nof_pusch_snr_reports, 1U);
++  EXPECT_FLOAT_EQ(metrics_notif.last_report.ue_metrics[0].pusch_snr_db, 0.F);
++  EXPECT_FLOAT_EQ(metrics_notif.last_report.ue_metrics[0].pusch_rsrp_db, 0.F);
++  get_next_metric();
++  EXPECT_EQ(metrics_notif.last_report.ue_metrics[0].nof_pusch_snr_reports, 0U);
++  EXPECT_FLOAT_EQ(metrics_notif.last_report.ue_metrics[0].pusch_snr_db, 0.F);
++  EXPECT_EQ(metrics_notif.last_report.ue_metrics[0].pusch_rsrp_db, -std::numeric_limits<float>::infinity());
++}
++
++TEST_F(scheduler_metrics_handler_tester, falcon_rf_missing_optional_values_do_not_increment_snr_count)
++{
++  get_next_metric();
++  ul_crc_pdu_indication crc{};
++  crc.rnti = to_rnti(0x4601);
++  crc.ue_index = test_ue_index;
++  crc.tb_crc_success = true;
++  metrics.handle_crc_indication(next_sl_tx.without_hyper_sfn() - 1, crc, units::bytes{1});
++  get_next_metric();
++  EXPECT_EQ(metrics_notif.last_report.ue_metrics[0].nof_pusch_snr_reports, 0U);
++  EXPECT_EQ(metrics_notif.last_report.ue_metrics[0].pusch_rsrp_db, -std::numeric_limits<float>::infinity());
++}
++
++TEST_F(scheduler_metrics_handler_tester, persistent_indications_have_validity_and_monotonic_age)
++{
++  get_next_metric();
++  const auto& initial = metrics_notif.last_report.ue_metrics[0];
++  EXPECT_FALSE(initial.phr_age_ms.has_value());
++  EXPECT_FALSE(initial.bsr_age_ms.has_value());
++  EXPECT_FALSE(initial.dl_buffer_age_ms.has_value());
++
++  ul_bsr_indication_message bsr{};
++  bsr.ue_index = test_ue_index;
++  bsr.reported_lcgs.push_back({lcg_id_t{0}, 1000});
++  bsr.reported_lcgs.push_back({lcg_id_t{1}, 250});
++  metrics.handle_ul_bsr_indication(bsr);
++  dl_buffer_state_indication_message buffer{};
++  buffer.ue_index = test_ue_index;
++  buffer.lcid = lcid_t{4};
++  buffer.bs = 4096;
++  metrics.handle_dl_buffer_state_indication(buffer);
++  ul_phr_indication_message phr{};
++  phr.ue_index = test_ue_index;
++  phr.slot_rx = (next_sl_tx - 1).without_hyper_sfn();
++  phr.phr.set_se_phr({SERVING_PCELL_IDX, ph_field_type_t::type1, ph_db_range{-5, -3}, p_cmax_dbm_range{20, 22}});
++  metrics.handle_ul_phr_indication(phr);
++  get_next_metric();
++  auto first = metrics_notif.last_report.ue_metrics[0];
++  ASSERT_EQ(first.bsr, 1250U);
++  ASSERT_EQ(first.dl_bs, 4096U);
++  ASSERT_EQ(first.last_phr, -4);
++  ASSERT_TRUE(first.bsr_age_ms.has_value());
++  ASSERT_TRUE(first.phr_age_ms.has_value());
++  ASSERT_TRUE(first.dl_buffer_age_ms.has_value());
++  get_next_metric();
++  const auto& next = metrics_notif.last_report.ue_metrics[0];
++  EXPECT_EQ(next.bsr, first.bsr);
++  EXPECT_EQ(next.last_phr, first.last_phr);
++  EXPECT_GE(next.bsr_age_ms.value(), first.bsr_age_ms.value());
++  EXPECT_GE(next.phr_age_ms.value(), first.phr_age_ms.value());
++  EXPECT_GE(next.dl_buffer_age_ms.value(), first.dl_buffer_age_ms.value());
++
++  bsr.reported_lcgs.clear();
++  bsr.reported_lcgs.push_back({lcg_id_t{0}, 0});
++  metrics.handle_ul_bsr_indication(bsr);
++  get_next_metric();
++  EXPECT_EQ(metrics_notif.last_report.ue_metrics[0].bsr, 0U);
++  EXPECT_TRUE(metrics_notif.last_report.ue_metrics[0].bsr_age_ms.has_value());
++
++  metrics.handle_ue_deletion(test_ue_index);
++  metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0});
++  get_next_metric();
++  EXPECT_FALSE(metrics_notif.last_report.ue_metrics[0].bsr_age_ms.has_value());
++  EXPECT_FALSE(metrics_notif.last_report.ue_metrics[0].phr_age_ms.has_value());
++}
++
++TEST_F(scheduler_metrics_handler_tester, oversized_buffer_totals_are_unavailable_instead_of_wrapping)
++{
++  ul_bsr_indication_message bsr{};
++  bsr.ue_index = test_ue_index;
++  bsr.reported_lcgs.push_back({lcg_id_t{0}, std::numeric_limits<uint32_t>::max()});
++  metrics.handle_ul_bsr_indication(bsr);
++  get_next_metric();
++  EXPECT_EQ(metrics_notif.last_report.ue_metrics[0].bsr, std::numeric_limits<uint32_t>::max());
++  EXPECT_TRUE(metrics_notif.last_report.ue_metrics[0].bsr_age_ms.has_value());
++  bsr.reported_lcgs.push_back({lcg_id_t{1}, 1});
++  metrics.handle_ul_bsr_indication(bsr);
++  for (unsigned channel : {4U, 5U}) {
++    dl_buffer_state_indication_message buffer{};
++    buffer.ue_index = test_ue_index;
++    buffer.lcid = static_cast<lcid_t>(channel);
++    buffer.bs = std::numeric_limits<unsigned>::max();
++    metrics.handle_dl_buffer_state_indication(buffer);
++  }
++  get_next_metric();
++  EXPECT_FALSE(metrics_notif.last_report.ue_metrics[0].bsr_age_ms.has_value());
++  EXPECT_FALSE(metrics_notif.last_report.ue_metrics[0].dl_buffer_age_ms.has_value());
++}
++
+ TEST_F(scheduler_metrics_handler_tester, failed_pdcch_allocs_are_accumulated_per_dl_ul_and_common)
+ {
+   // Discard first report, as it may have not enough slots.

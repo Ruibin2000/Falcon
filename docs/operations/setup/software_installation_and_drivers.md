@@ -3,7 +3,7 @@
 Deployment context, October 30: use the [current two-link design](../../project_design_and_progress.md)
 and paired Spark/Laptop handbooks for DU1 3660 MHz / 20 MHz and DU2
 3600-MHz logical n78 interface / 40 MHz with its current 9250-MHz Pi-Radio
-OTA path and tuned TX 60 / RX 10. The October 29 direct-radio connections
+OTA path and configured TX 60 / RX 35. The October 29 direct-radio connections
 remain historical. The software-build
 records below retain their original dates and single-link preparation scope;
 their pending dual-UE statements describe those checkpoints.
@@ -30,7 +30,7 @@ For experiment startup, modem registration, PDU sessions, traffic, and shutdown,
 | Modem tools inspected on Spark | ModemManager 1.23.4, libqmi-utils 1.35.2, minicom 2.9 |
 | UE laptop | Ubuntu/Linux with USB serial and QMI kernel drivers; its kernel/version must be checked independently |
 
-Retain the NVIDIA kernel and system compiler defaults. Select Clang for OCUDU through CMake, rather than changing compiler alternatives. FlexRIC/C xApp use GCC selected per build; Python/CUDA remains a separate future AI stage. Installing a generic kernel, PREEMPT_RT, CUDA toolkit, or NVIDIA driver replacement is not part of this deployment.
+Retain the NVIDIA kernel and system compiler defaults. Select Clang for OCUDU through CMake, rather than changing compiler alternatives. FlexRIC/C xApp use GCC selected per build. The optional [CUDA uplink candidate](../cuda_ldpc.md) uses the installed CUDA 13 toolkit in a separate build. Installing a generic kernel, PREEMPT_RT, CUDA toolkit, or NVIDIA driver replacement is not part of this baseline deployment.
 
 `[SPARK]` Record the host and toolchain before installation:
 

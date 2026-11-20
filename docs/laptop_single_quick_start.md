@@ -4,7 +4,7 @@ Updated: 2026-11-01. Developer: Ruibin.
 
 The [current two-link design](project_design_and_progress.md) uses DU1 at
 3660 MHz / 20 MHz OTA and DU2 at 9250 MHz / 40 MHz OTA through Pi-Radio,
-with a 3600-MHz logical n78 interface. DU2 TX 60 / RX 10 applies to this
+with a 3600-MHz logical n78 interface. DU2 TX 60 / RX 35 applies to this
 modified FR3 path. The October 29 direct n78 connection test is historical;
 completed integrated FR3 connectivity still requires retained evidence.
 
@@ -223,7 +223,7 @@ sudo systemctl enable --now ModemManager
 | SSB NR-ARFCN / SCS | `643680` / 30 kHz | `638976` / 30 kHz |
 | Carrier NR-ARFCN | `644000` | `640000` |
 | Channel bandwidth / USRP sample rate | 20 MHz / 23.04 MS/s | 40 MHz / 46.08 MS/s |
-| Configured TX / RX gain | 70 / 35 dB | 60 / 10 dB |
+| Configured TX / RX gain | 70 / 25 dB | 60 / 35 dB |
 | Physical OTA center | 3660 MHz, direct | 9250 MHz via Pi-Radio conversion |
 | Independent reset block | priority `20151` | priority `20152` |
 
